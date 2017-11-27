@@ -1,0 +1,28 @@
+suite: test suite name
+files:
+  - a.yaml
+  - b.yaml
+tests:
+  - it: should ...
+    values:
+      - values.yaml
+    set:
+      a.b.c: ABC
+      x.y.z: XYZ
+    asserts:
+      - matchSnapshot:
+        documentIndex: 1
+        not: true
+      - matchValue:
+          path:
+          value:
+      - matchPattern:
+          path:
+          pattern:
+      - contain:
+      - containMap:
+      - isNotNull:
+      - isNotEmpty:
+      - isKindOf:
+      - isApiVersion:
+      - hasDocumentsCount:

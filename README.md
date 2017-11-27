@@ -2,15 +2,15 @@
 
 write the test:
 ```yaml
-suite: name
-range:
+name: name
+files:
 tests:
 - it: should ...
-  files:
+  values:
   set:
-  expects:
+  asserts:
     - matchSnapshot:
-      document:
+      documentIndex:
       not: true
     - matchValue:
         path:
