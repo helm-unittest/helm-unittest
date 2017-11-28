@@ -11,18 +11,20 @@ tests:
       x.y.z: XYZ
     asserts:
       - matchSnapshot:
-        documentIndex: 1
-        not: true
-      - matchValue:
+      - equal:
           path:
           value:
-      - matchPattern:
+      - notEqual:
+      - matchRegex:
           path:
           pattern:
-      - contain:
-      - containMap:
+      - notMatchRegex:
+      - contains:
+      - notContains:
+      - isNull:
       - isNotNull:
+      - empty:
       - isNotEmpty:
-      - isKindOf:
+      - isKind:
       - isApiVersion:
-      - hasDocumentsCount:
+      - hasDocuments:

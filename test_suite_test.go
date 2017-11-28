@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseTestSuiteFileOk(t *testing.T) {
@@ -22,6 +23,10 @@ func TestParseTestSuiteFileOk(t *testing.T) {
 			},
 			Assertions: []Assertion{
 				Assertion{DocumentIndex: 1, Not: true},
+				Assertion{DocumentIndex: 0, Not: false},
+				Assertion{DocumentIndex: 0, Not: false},
+				Assertion{DocumentIndex: 0, Not: false},
+				Assertion{DocumentIndex: 0, Not: false},
 				Assertion{DocumentIndex: 0, Not: false},
 				Assertion{DocumentIndex: 0, Not: false},
 				Assertion{DocumentIndex: 0, Not: false},

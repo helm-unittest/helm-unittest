@@ -12,17 +12,21 @@ tests:
     - matchSnapshot:
       documentIndex:
       not: true
-    - matchValue:
+    - equal:
         path:
         value:
-    - matchPattern:
+    - notEqual:
+    - matchRegex:
         path:
         pattern:
-    - contain:
-    - containMap:
+    - notMatchRegex:
+    - contains:
+    - notContains:
+    - isNull:
     - isNotNull:
+    - empty:
     - isNotEmpty:
-    - isKindOf:
+    - isKind:
     - isApiVersion:
-    - hasDocumentsCount:
+    - hasDocuments:
 ```
