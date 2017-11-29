@@ -1,9 +1,11 @@
-package main
+package helmtest_test
 
 import (
+	"testing"
+
+	. "github.com/lrills/helm-test/helmtest"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
-	"testing"
 )
 
 func TestUnmarshalableFromYAML(t *testing.T) {

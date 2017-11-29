@@ -1,4 +1,4 @@
-package main
+package helmtest
 
 type Assertable interface {
 	assert(manifest map[string]interface{}) error

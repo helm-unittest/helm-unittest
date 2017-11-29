@@ -10,7 +10,7 @@ tests:
       a.b.c: ABC
       x.y.z: XYZ
     asserts:
-      - matchSnapshot:
+      # - matchSnapshot:
       - equal:
           path:
           value:
@@ -26,5 +26,5 @@ tests:
       - empty:
       - isNotEmpty:
       - isKind:
-      - isApiVersion:
+      - isAPIVersion:
       - hasDocuments:

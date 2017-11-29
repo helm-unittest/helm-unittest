@@ -1,8 +1,9 @@
-package main
+package helmtest
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 type TestSuite struct {
