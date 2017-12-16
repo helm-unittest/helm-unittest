@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
-func GetValueOfSetPath(m map[string]interface{}, path string) (interface{}, error) {
+func GetValueOfSetPath(m map[interface{}]interface{}, path string) (interface{}, error) {
 	return fetchValueOfPath(bytes.NewBufferString(path), m, expectKey)
 }
 
@@ -16,6 +18,14 @@ const (
 	expectIndex      = iota
 	expectDenotation = iota
 )
+
+func get(data interface{}, key string) (interface{}, error) {
+	if d, ok := data.(map[interface{}]interface{}); ok {
+		return d[key], nil
+	}
+	dataYAML, _ := yaml.Marshal(data)
+	return nil, fmt.Errorf("can't get '%s' key from a non map type:\n%s", key, dataYAML)
+}
 
 func fetchValueOfPath(in io.RuneReader, data interface{}, state int) (interface{}, error) {
 	illegal := runeSet([]rune{',', '{', '}', '='})
@@ -29,7 +39,7 @@ func fetchValueOfPath(in io.RuneReader, data interface{}, state int) (interface{
 		if err == io.EOF {
 			switch {
 			case len(k) != 0 && state == expectKey:
-				return data.(map[string]interface{})[string(k)], nil
+				return get(data, string(k))
 			case len(k) == 0 && state == expectDenotation:
 				return data, nil
 			default:
@@ -70,10 +80,18 @@ func fetchValueOfPath(in io.RuneReader, data interface{}, state int) (interface{
 	case expectKey:
 		switch last {
 		case '.':
-			next = data.(map[string]interface{})[string(k)]
+			n, e := get(data, string(k))
+			if e != nil {
+				return nil, e
+			}
+			next = n
 			nextState = expectKey
 		case '[':
-			next = data.(map[string]interface{})[string(k)]
+			n, e := get(data, string(k))
+			if e != nil {
+				return nil, e
+			}
+			next = n
 			nextState = expectIndex
 		default:
 			return nil, fmt.Errorf("")

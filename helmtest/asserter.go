@@ -1,16 +1,88 @@
 package helmtest
 
+import (
+	"fmt"
+	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/pmezard/go-difflib/difflib"
+	"gopkg.in/yaml.v2"
+)
+
 type Assertable interface {
-	assert(manifest map[string]interface{}) error
+	Assert(docs []map[interface{}]interface{}, idx int) (bool, string)
 }
+
+func printFailf(format string, replacements ...string) string {
+	intentedFormat := strings.Trim(strings.Replace(format, "\n", "\n\t", -1), "\t")
+	indentedReplacements := make([]interface{}, len(replacements))
+	for i, r := range replacements {
+		indentedReplacements[i] = strings.Trim(strings.Replace(r, "\n", "\n\t\t", -1), "\n\t ")
+	}
+	return fmt.Sprintf(intentedFormat, indentedReplacements...)
+}
+
+func trustedMarshalYAML(d interface{}) string {
+	s, err := yaml.Marshal(d)
+	if err != nil {
+		panic(err)
+	}
+	return string(s)
+}
+
+func diff(expected string, actual string) string {
+	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A:        difflib.SplitLines(expected),
+		B:        difflib.SplitLines(actual),
+		FromFile: "Expected",
+		FromDate: "",
+		ToFile:   "Actual",
+		ToDate:   "",
+		Context:  1,
+	})
+	return diff
+}
+
+const errorFormat = `
+Error:
+	%s
+`
 
 type EqualAsserter struct {
 	Path  string
 	Value interface{}
 }
 
-func (a EqualAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const equalFailFormat = `
+Path: %s
+Expected:
+	%s
+Actual:
+	%s
+Diff:
+	%s
+`
+
+func (a EqualAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	if !reflect.DeepEqual(a.Value, actual) {
+		expectedYAML := trustedMarshalYAML(a.Value)
+		actualYAML := trustedMarshalYAML(actual)
+		return false, printFailf(
+			equalFailFormat,
+			a.Path,
+			expectedYAML,
+			actualYAML,
+			diff(expectedYAML, actualYAML),
+		)
+	}
+	return true, ""
 }
 
 type MatchRegexAsserter struct {
@@ -18,55 +90,166 @@ type MatchRegexAsserter struct {
 	Pattern string
 }
 
-func (a MatchRegexAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const regexFailFormat = `
+Path: %s
+Expected to Match: %s
+Actual: %s
+`
+
+func (a MatchRegexAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	p, err := regexp.Compile(a.Pattern)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	if s, ok := actual.(string); ok {
+		if p.MatchString(s) {
+			return true, ""
+		}
+		return false, printFailf(regexFailFormat, a.Path, a.Pattern, s)
+	}
+	return false, printFailf(errorFormat, fmt.Sprintf(
+		"expect '%s' to be a string, got:\n%s",
+		a.Path,
+		trustedMarshalYAML(actual),
+	))
 }
+
+const containsFailFormat = `
+Path: %s
+Expected Contains:
+	%s
+Actual:
+	%s
+`
 
 type ContainsAsserter struct {
 	Path    string
-	Content []interface{}
+	Content interface{}
 }
 
-func (a ContainsAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+func (a ContainsAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	if actual, ok := actual.([]interface{}); ok {
+		for _, ele := range actual {
+			if reflect.DeepEqual(ele, a.Content) {
+				return true, ""
+			}
+		}
+
+		return false, printFailf(
+			containsFailFormat,
+			a.Path,
+			trustedMarshalYAML([]interface{}{a.Content}),
+			trustedMarshalYAML(actual),
+		)
+	}
+	actualYAML, _ := yaml.Marshal(actual)
+	return false, printFailf(errorFormat, fmt.Sprintf(
+		"expect '%s' to be an array, got:\n%s",
+		a.Path,
+		string(actualYAML),
+	))
 }
 
 type IsNullAsserter struct {
 	Path string
 }
 
-func (a IsNullAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const isNullFailFormat = `
+Path: %s
+Expected: null
+Actual:
+	%s
+`
+
+func (a IsNullAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	if actual == nil {
+		return true, ""
+	}
+	return false, printFailf(isNullFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
 type IsEmptyAsserter struct {
 	Path string
 }
 
-func (a IsEmptyAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const isEmptyFailFormat = `
+Path: %s
+Expected to be empty, got:
+	%s
+`
+
+func (a IsEmptyAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+	if err != nil {
+		return false, printFailf(errorFormat, err.Error())
+	}
+
+	if actual == nil || actual == reflect.Zero(reflect.TypeOf(actual)).Interface() {
+		return true, ""
+	}
+	return false, printFailf(isEmptyFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
 type IsKindAsserter struct {
-	of string
+	Of string
 }
 
-func (a IsKindAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const isKindFailFormat = `
+Expected 'kind': %s
+Actual: %s
+`
+
+func (a IsKindAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	if kind, ok := docs[idx]["kind"].(string); ok && kind == a.Of {
+		return true, ""
+	}
+	return false, printFailf(isKindFailFormat, a.Of, trustedMarshalYAML(docs[idx]["kind"]))
 }
 
 type IsAPIVersionAsserter struct {
-	of string
+	Of string
 }
 
-func (a IsAPIVersionAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const isAPIVersionFailFormat = `
+Expected 'apiVersion': %s
+Actual: %s
+`
+
+func (a IsAPIVersionAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	if kind, ok := docs[idx]["apiVersion"].(string); ok && kind == a.Of {
+		return true, ""
+	}
+	return false, printFailf(isAPIVersionFailFormat, a.Of, trustedMarshalYAML(docs[idx]["apiVersion"]))
 }
 
 type HasDocumentsAsserter struct {
-	count int
+	Count int
 }
 
-func (a HasDocumentsAsserter) assert(manifest map[string]interface{}) error {
-	return nil
+const hasDocumentsFailFormat = `
+Expected: %s
+Actual: %s
+`
+
+func (a HasDocumentsAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+	if len(docs) == a.Count {
+		return true, ""
+	}
+	return false, printFailf(hasDocumentsFailFormat, strconv.Itoa(a.Count), strconv.Itoa(len(docs)))
 }
