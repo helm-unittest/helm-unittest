@@ -22,8 +22,25 @@ func TestGetValueOfSetPath(t *testing.T) {
 	}
 
 	for path, expect := range expectionsMapping {
-		result, err := GetValueOfSetPath(data, path)
-		a.Equal(result, expect)
+		actual, err := GetValueOfSetPath(data, path)
+		a.Equal(actual, expect)
+		a.Nil(err)
+	}
+}
+
+func TestBuildValueOfSetPath(t *testing.T) {
+	a := assert.New(t)
+	data := map[interface{}]interface{}{"foo": "bar"}
+
+	var expectionsMapping = map[string]interface{}{
+		"a.b":    map[interface{}]interface{}{"a": map[interface{}]interface{}{"b": data}},
+		"a[1]":   map[interface{}]interface{}{"a": []interface{}{nil, data}},
+		"a[1].b": map[interface{}]interface{}{"a": []interface{}{nil, map[interface{}]interface{}{"b": data}}},
+	}
+
+	for path, expected := range expectionsMapping {
+		actual, err := BuildValueOfSetPath(data, path)
+		a.Equal(actual, expected)
 		a.Nil(err)
 	}
 }

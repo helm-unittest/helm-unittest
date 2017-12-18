@@ -64,7 +64,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, `
 	Error:
-		can't get 'e' key from a non map type:
+		can't get ["e"] from a non map type:
 		- c: 123
 `, diff)
 }

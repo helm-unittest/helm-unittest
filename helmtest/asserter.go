@@ -24,14 +24,6 @@ func printFailf(format string, replacements ...string) string {
 	return fmt.Sprintf(intentedFormat, indentedReplacements...)
 }
 
-func trustedMarshalYAML(d interface{}) string {
-	s, err := yaml.Marshal(d)
-	if err != nil {
-		panic(err)
-	}
-	return string(s)
-}
-
 func diff(expected string, actual string) string {
 	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 		A:        difflib.SplitLines(expected),
