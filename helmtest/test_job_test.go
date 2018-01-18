@@ -1,6 +1,7 @@
 package helmtest_test
 
 import (
+	"bytes"
 	"testing"
 
 	. "github.com/lrills/helm-test/helmtest"
@@ -65,9 +66,59 @@ asserts:
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
-	pass, err := tj.Run(c)
 
 	a := assert.New(t)
+	var buf bytes.Buffer
+	pass, err := tj.Run(c, &buf)
+
 	a.Nil(err)
 	a.True(pass)
+	a.Equal("", buf.String())
+}
+
+func TestRunWithAssertionFail(t *testing.T) {
+	c, _ := chartutil.Load("../__fixtures__/basic")
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: WrongKind
+    file: deployment.yaml
+  - matchRegex:
+      path: metadata.name
+      pattern: pattern-not-match
+    file: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	a := assert.New(t)
+	var buf bytes.Buffer
+	pass, err := tj.Run(c, &buf)
+
+	a.Nil(err)
+	a.False(pass)
+	a.Equal(`
+"should work": failed
+- asserts[0] `+"`equal`"+` fail:
+
+	Path: kind
+	Expected:
+		WrongKind
+	Actual:
+		Deployment
+	Diff:
+		--- Expected
+		+++ Actual
+		@@ -1,2 +1,2 @@
+		-WrongKind
+		+Deployment
+
+- asserts[1] `+"`matchRegex`"+` fail:
+
+	Path: metadata.name
+	Expected to Match: pattern-not-match
+	Actual: RELEASE_NAME-basic
+`, buf.String())
 }

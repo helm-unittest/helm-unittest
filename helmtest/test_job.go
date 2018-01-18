@@ -2,6 +2,7 @@ package helmtest
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"path"
 	"reflect"
@@ -25,7 +26,7 @@ type TestJob struct {
 	Assertions  []Assertion `yaml:"asserts"`
 }
 
-func (t TestJob) Run(targetChart *chart.Chart) (bool, error) {
+func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
 	vv, err := t.vals()
 	if err != nil {
 		return false, err
@@ -83,16 +84,16 @@ func (t TestJob) Run(targetChart *chart.Chart) (bool, error) {
 		if pass, diff := assertion.Assert(manifestsOfFiles); !pass {
 			diffs = append(
 				diffs,
-				fmt.Sprintf("- asserts[%d] `%s` fail:\n%s", idx, assertion.AssertType, diff),
+				fmt.Sprintf("\n- asserts[%d] `%s` fail:\n%s", idx, assertion.AssertType, diff),
 			)
 			testPass = false
 		}
 	}
 
 	if !testPass {
-		fmt.Printf("\"%s\": failed\n", t.Name)
+		fmt.Fprintf(writer, "\n\"%s\": failed", t.Name)
 		for _, diff := range diffs {
-			fmt.Print(diff)
+			fmt.Fprint(writer, diff)
 		}
 	}
 
