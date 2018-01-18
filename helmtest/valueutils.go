@@ -9,7 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func GetValueOfSetPath(m map[interface{}]interface{}, path string) (interface{}, error) {
+func GetValueOfSetPath(m K8sManifest, path string) (interface{}, error) {
 	tr := fetchTraverser{m}
 	reader := bytes.NewBufferString(path)
 	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
@@ -18,7 +18,7 @@ func GetValueOfSetPath(m map[interface{}]interface{}, path string) (interface{},
 	return tr.data, nil
 }
 
-func BuildValueOfSetPath(val interface{}, path string) (interface{}, error) {
+func BuildValueOfSetPath(val interface{}, path string) (map[interface{}]interface{}, error) {
 	tr := buildTraverser{val, nil}
 	reader := bytes.NewBufferString(path)
 	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
@@ -38,6 +38,9 @@ type fetchTraverser struct {
 
 func (tr *fetchTraverser) traverseMapKey(key string) error {
 	if d, ok := tr.data.(map[interface{}]interface{}); ok {
+		tr.data = d[key]
+		return nil
+	} else if d, ok := tr.data.(K8sManifest); ok {
 		tr.data = d[key]
 		return nil
 	}
@@ -70,7 +73,7 @@ func (tr *buildTraverser) traverseListIdx(idx int) error {
 	return nil
 }
 
-func (tr buildTraverser) getBuildedData() interface{} {
+func (tr buildTraverser) getBuildedData() map[interface{}]interface{} {
 	builded := make(map[interface{}]interface{})
 	var current interface{} = builded
 	for depth, cursor := range tr.cursors {
@@ -173,11 +176,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	return nil
 }
 
-// func setValueOfSetPath(m map[string]interface{}, path string, value interface{}) error {
-//
-// }
-
-// copy from helm-template wich copied from helm
+// copied from helm
 func mergeValues(dest map[interface{}]interface{}, src map[interface{}]interface{}) map[interface{}]interface{} {
 	for k, v := range src {
 		// If the key doesn't exist already, then just set the key to that value

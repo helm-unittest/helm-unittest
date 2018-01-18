@@ -9,7 +9,7 @@ import (
 
 func TestGetValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
-	data := map[interface{}]interface{}{
+	data := K8sManifest{
 		"a": map[interface{}]interface{}{
 			"b": []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
 		},

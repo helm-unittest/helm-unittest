@@ -6,10 +6,11 @@ import (
 	. "github.com/lrills/helm-test/helmtest"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+
+	"k8s.io/helm/pkg/chartutil"
 )
 
 func TestUnmarshalableFromYAML(t *testing.T) {
-	a := assert.New(t)
 	manifest := `
 it: should do something
 values:
@@ -18,19 +19,17 @@ set:
   a.b.c: ABC
   x.y.z: XYZ
 asserts:
-  - matchSnapshot:
-    documentIndex: 1
-    not: true
-  - matchValue:
+  - equal:
       path: a.b
       value: c
-  - matchPattern:
+  - matchRegex:
       path: x.y
       pattern: /z/
 `
 	var tj TestJob
 	err := yaml.Unmarshal([]byte(manifest), &tj)
 
+	a := assert.New(t)
 	a.Nil(err)
 	a.Equal(tj.Name, "should do something")
 	a.Equal(tj.Values, []string{"values.yaml"})
@@ -38,9 +37,37 @@ asserts:
 		"a.b.c": "ABC",
 		"x.y.z": "XYZ",
 	})
-	a.Equal(tj.Assertions, []Assertion{
-		Assertion{DocumentIndex: 1, Not: true},
-		Assertion{DocumentIndex: 0, Not: false},
-		Assertion{DocumentIndex: 0, Not: false},
-	})
+	assertions := make([]Assertion, 2)
+	yaml.Unmarshal([]byte(`
+  - equal:
+      path: a.b
+      value: c
+  - matchRegex:
+      path: x.y
+      pattern: /z/
+`), &assertions)
+	a.Equal(tj.Assertions, assertions)
+}
+
+func TestRunOk(t *testing.T) {
+	c, _ := chartutil.Load("../__fixtures__/basic")
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    file: deployment.yaml
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic$
+    file: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+	pass, err := tj.Run(c)
+
+	a := assert.New(t)
+	a.Nil(err)
+	a.True(pass)
 }

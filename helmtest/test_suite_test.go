@@ -9,7 +9,7 @@ import (
 
 func TestParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	s, err := ParseTestSuiteFile("../__fixtures__/tests/basic.yaml")
+	s, err := ParseTestSuiteFile("../__fixtures__/basic/tests/list_all_field.yaml")
 
 	a.Nil(err)
 	a.Equal(s.Name, "test suite name")

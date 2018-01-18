@@ -2,23 +2,151 @@ package helmtest
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path"
 	"reflect"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	yaml "gopkg.in/yaml.v2"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/engine"
+	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/timeconv"
 )
 
+type K8sManifest map[string]interface{}
+
 type TestJob struct {
-	Name       string `yaml:"it"`
-	Values     []string
-	Set        map[string]interface{}
-	Assertions []Assertion `yaml:"asserts"`
+	defaultFile string
+	Name        string `yaml:"it"`
+	Values      []string
+	Set         map[string]interface{}
+	Assertions  []Assertion `yaml:"asserts"`
+}
+
+func (t TestJob) Run(targetChart *chart.Chart) (bool, error) {
+	vv, err := t.vals()
+	if err != nil {
+		return false, err
+	}
+
+	config := &chart.Config{Raw: string(vv), Values: map[string]*chart.Value{}}
+
+	// 	if flagVerbose {
+	// 		fmt.Println("---\n# merged values")
+	// 		fmt.Println(string(vv))
+	// }
+
+	options := chartutil.ReleaseOptions{
+		Name:      "RELEASE_NAME",
+		Time:      timeconv.Now(),
+		Namespace: "NAMESPACE",
+		//Revision:  1,
+		//IsInstall: true,
+	}
+
+	// Set up engine.
+	renderer := engine.New()
+
+	vals, err := chartutil.ToRenderValues(targetChart, config, options)
+	if err != nil {
+		return false, err
+	}
+
+	outputOfFiles, err := renderer.Render(targetChart, vals)
+	if err != nil {
+		return false, err
+	}
+
+	manifestsOfFiles := make(map[string][]K8sManifest)
+	for file, rendered := range outputOfFiles {
+		documents := strings.Split(rendered, "---")
+		manifests := make([]K8sManifest, len(documents))
+		for i, doc := range documents {
+			manifest := make(K8sManifest)
+			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
+				return false, err
+			}
+			manifests[i] = manifest
+		}
+		manifestsOfFiles[path.Base(file)] = manifests
+	}
+
+	testPass := true
+	diffs := []string{}
+	for idx, assertion := range t.Assertions {
+		if assertion.File == "" {
+			assertion.File = t.defaultFile
+		}
+
+		if pass, diff := assertion.Assert(manifestsOfFiles); !pass {
+			diffs = append(
+				diffs,
+				fmt.Sprintf("- asserts[%d] `%s` fail:\n%s", idx, assertion.AssertType, diff),
+			)
+			testPass = false
+		}
+	}
+
+	if !testPass {
+		fmt.Printf("\"%s\": failed\n", t.Name)
+		for _, diff := range diffs {
+			fmt.Print(diff)
+		}
+	}
+
+	return testPass, nil
+}
+
+// liberally borrows from helm-template
+func (t TestJob) vals() ([]byte, error) {
+	base := map[interface{}]interface{}{}
+
+	for _, valueFile := range t.Values {
+		currentMap := map[interface{}]interface{}{}
+		bytes, err := ioutil.ReadFile(valueFile)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
+			return []byte{}, fmt.Errorf("failed to parse %s: %s", valueFile, err)
+		}
+
+		base = mergeValues(base, currentMap)
+	}
+
+	for path, valus := range t.Set {
+		setMap, err := BuildValueOfSetPath(valus, path)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		base = mergeValues(base, setMap)
+	}
+	return yaml.Marshal(base)
 }
 
 type Assertion struct {
+	File          string
 	DocumentIndex int
 	Not           bool
 	AssertType    string
 	asserter      Assertable
+}
+
+func (a Assertion) Assert(docs map[string][]K8sManifest) (bool, string) {
+	if file, ok := docs[a.File]; ok {
+		return a.asserter.Assert(file, a.DocumentIndex)
+	}
+	return false, printFailf(
+		errorFormat,
+		fmt.Sprintf(
+			"file \"%s\" not exists or not selected in test suite",
+			a.File,
+		),
+	)
 }
 
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -33,6 +161,9 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if not, ok := assertDef["not"].(bool); ok {
 		a.Not = not
 	}
+	if file, ok := assertDef["file"].(string); ok {
+		a.File = file
+	}
 
 	for assertName, asserterDef := range asserterMapping {
 		if params, ok := assertDef[assertName]; ok {
@@ -42,6 +173,15 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			a.AssertType = assertName
 			a.configure(asserterDef.T, params, asserterDef.N)
 		}
+	}
+
+	if a.asserter == nil {
+		for key := range assertDef {
+			if key != "file" && key != "documentIndex" && key != "not" {
+				return fmt.Errorf("Assertion type `%s` is invalid", key)
+			}
+		}
+		return fmt.Errorf("No assertion type defined")
 	}
 
 	return nil

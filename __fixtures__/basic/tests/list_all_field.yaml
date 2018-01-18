@@ -23,7 +23,7 @@ tests:
       - notContains:
       - isNull:
       - isNotNull:
-      - empty:
+      - isEmpty:
       - isNotEmpty:
       - isKind:
       - isAPIVersion:

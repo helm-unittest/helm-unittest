@@ -12,7 +12,7 @@ import (
 )
 
 type Assertable interface {
-	Assert(docs []map[interface{}]interface{}, idx int) (bool, string)
+	Assert(docs []K8sManifest, idx int) (bool, string)
 }
 
 func printFailf(format string, replacements ...string) string {
@@ -57,7 +57,7 @@ Diff:
 	%s
 `
 
-func (a EqualAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a EqualAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -88,7 +88,7 @@ Expected to Match: %s
 Actual: %s
 `
 
-func (a MatchRegexAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a MatchRegexAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -125,12 +125,11 @@ type ContainsAsserter struct {
 	Content interface{}
 }
 
-func (a ContainsAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a ContainsAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
 	}
-
 	if actual, ok := actual.([]interface{}); ok {
 		for _, ele := range actual {
 			if reflect.DeepEqual(ele, a.Content) {
@@ -164,7 +163,7 @@ Actual:
 	%s
 `
 
-func (a IsNullAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a IsNullAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -186,7 +185,7 @@ Expected to be empty, got:
 	%s
 `
 
-func (a IsEmptyAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a IsEmptyAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -207,7 +206,7 @@ Expected 'kind': %s
 Actual: %s
 `
 
-func (a IsKindAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a IsKindAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	if kind, ok := docs[idx]["kind"].(string); ok && kind == a.Of {
 		return true, ""
 	}
@@ -223,7 +222,7 @@ Expected 'apiVersion': %s
 Actual: %s
 `
 
-func (a IsAPIVersionAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a IsAPIVersionAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	if kind, ok := docs[idx]["apiVersion"].(string); ok && kind == a.Of {
 		return true, ""
 	}
@@ -239,7 +238,7 @@ Expected: %s
 Actual: %s
 `
 
-func (a HasDocumentsAsserter) Assert(docs []map[interface{}]interface{}, idx int) (bool, string) {
+func (a HasDocumentsAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	if len(docs) == a.Count {
 		return true, ""
 	}
