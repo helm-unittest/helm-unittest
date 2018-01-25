@@ -78,6 +78,9 @@ func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
 	diffs := []string{}
 	for idx, assertion := range t.Assertions {
 		if assertion.File == "" {
+			if t.defaultFile == "" {
+				return false, fmt.Errorf("assertion.file must be given if testsuite.templates is empty")
+			}
 			assertion.File = t.defaultFile
 		}
 

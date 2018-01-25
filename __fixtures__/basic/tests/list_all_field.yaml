@@ -1,5 +1,5 @@
 suite: test suite name
-files:
+templates:
   - a.yaml
   - b.yaml
 tests:

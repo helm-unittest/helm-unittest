@@ -50,7 +50,7 @@ asserts:
 	a.Equal(tj.Assertions, assertions)
 }
 
-func TestRunOk(t *testing.T) {
+func TestRunJobOk(t *testing.T) {
 	c, _ := chartutil.Load("../__fixtures__/basic")
 	manifest := `
 it: should work
@@ -76,7 +76,7 @@ asserts:
 	a.Equal("", buf.String())
 }
 
-func TestRunWithAssertionFail(t *testing.T) {
+func TestRunJobWithAssertionFail(t *testing.T) {
 	c, _ := chartutil.Load("../__fixtures__/basic")
 	manifest := `
 it: should work
