@@ -11,8 +11,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Assertable interface {
-	Assert(docs []K8sManifest, idx int) (bool, string)
+type Validatable interface {
+	Validate(docs []K8sManifest, idx int) (bool, string)
 }
 
 func printFailf(format string, replacements ...string) string {
@@ -42,7 +42,7 @@ Error:
 	%s
 `
 
-type EqualAsserter struct {
+type EqualValidator struct {
 	Path  string
 	Value interface{}
 }
@@ -57,7 +57,7 @@ Diff:
 	%s
 `
 
-func (a EqualAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a EqualValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -77,7 +77,7 @@ func (a EqualAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	return true, ""
 }
 
-type MatchRegexAsserter struct {
+type MatchRegexValidator struct {
 	Path    string
 	Pattern string
 }
@@ -88,7 +88,7 @@ Expected to Match: %s
 Actual: %s
 `
 
-func (a MatchRegexAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a MatchRegexValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -120,12 +120,12 @@ Actual:
 	%s
 `
 
-type ContainsAsserter struct {
+type ContainsValidator struct {
 	Path    string
 	Content interface{}
 }
 
-func (a ContainsAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a ContainsValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -152,7 +152,7 @@ func (a ContainsAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	))
 }
 
-type IsNullAsserter struct {
+type IsNullValidator struct {
 	Path string
 }
 
@@ -163,7 +163,7 @@ Actual:
 	%s
 `
 
-func (a IsNullAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a IsNullValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -175,7 +175,7 @@ func (a IsNullAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	return false, printFailf(isNullFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
-type IsEmptyAsserter struct {
+type IsEmptyValidator struct {
 	Path string
 }
 
@@ -185,7 +185,7 @@ Expected to be empty, got:
 	%s
 `
 
-func (a IsEmptyAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a IsEmptyValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	actual, err := GetValueOfSetPath(docs[idx], a.Path)
 	if err != nil {
 		return false, printFailf(errorFormat, err.Error())
@@ -197,7 +197,7 @@ func (a IsEmptyAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
 	return false, printFailf(isEmptyFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
-type IsKindAsserter struct {
+type IsKindValidator struct {
 	Of string
 }
 
@@ -206,14 +206,14 @@ Expected 'kind': %s
 Actual: %s
 `
 
-func (a IsKindAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a IsKindValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	if kind, ok := docs[idx]["kind"].(string); ok && kind == a.Of {
 		return true, ""
 	}
 	return false, printFailf(isKindFailFormat, a.Of, trustedMarshalYAML(docs[idx]["kind"]))
 }
 
-type IsAPIVersionAsserter struct {
+type IsAPIVersionValidator struct {
 	Of string
 }
 
@@ -222,14 +222,14 @@ Expected 'apiVersion': %s
 Actual: %s
 `
 
-func (a IsAPIVersionAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a IsAPIVersionValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	if kind, ok := docs[idx]["apiVersion"].(string); ok && kind == a.Of {
 		return true, ""
 	}
 	return false, printFailf(isAPIVersionFailFormat, a.Of, trustedMarshalYAML(docs[idx]["apiVersion"]))
 }
 
-type HasDocumentsAsserter struct {
+type HasDocumentsValidator struct {
 	Count int
 }
 
@@ -238,7 +238,7 @@ Expected: %s
 Actual: %s
 `
 
-func (a HasDocumentsAsserter) Assert(docs []K8sManifest, idx int) (bool, string) {
+func (a HasDocumentsValidator) Validate(docs []K8sManifest, idx int) (bool, string) {
 	if len(docs) == a.Count {
 		return true, ""
 	}

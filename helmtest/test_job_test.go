@@ -11,7 +11,7 @@ import (
 	"k8s.io/helm/pkg/chartutil"
 )
 
-func TestUnmarshalableFromYAML(t *testing.T) {
+func TestUnmarshalableJobFromYAML(t *testing.T) {
 	manifest := `
 it: should do something
 values:
