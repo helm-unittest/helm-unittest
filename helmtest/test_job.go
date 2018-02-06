@@ -2,7 +2,6 @@ package helmtest
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -24,19 +23,15 @@ type TestJob struct {
 	Assertions  []Assertion `yaml:"asserts"`
 }
 
-func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
+func (t TestJob) Run(targetChart *chart.Chart) TestJobResult {
 	vv, err := t.vals()
 	if err != nil {
-		return false, err
+		return TestJobResult{
+			ExecError: err,
+		}
 	}
 
 	config := &chart.Config{Raw: string(vv), Values: map[string]*chart.Value{}}
-
-	// 	if flagVerbose {
-	// 		fmt.Println("---\n# merged values")
-	// 		fmt.Println(string(vv))
-	// }
-
 	options := chartutil.ReleaseOptions{
 		Name:      "RELEASE_NAME",
 		Time:      timeconv.Now(),
@@ -50,12 +45,16 @@ func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
 
 	vals, err := chartutil.ToRenderValues(targetChart, config, options)
 	if err != nil {
-		return false, err
+		return TestJobResult{
+			ExecError: err,
+		}
 	}
 
 	outputOfFiles, err := renderer.Render(targetChart, vals)
 	if err != nil {
-		return false, err
+		return TestJobResult{
+			ExecError: err,
+		}
 	}
 
 	manifestsOfFiles := make(map[string][]K8sManifest)
@@ -65,7 +64,9 @@ func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
 		for i, doc := range documents {
 			manifest := make(K8sManifest)
 			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
-				return false, err
+				return TestJobResult{
+					ExecError: err,
+				}
 			}
 			manifests[i] = manifest
 		}
@@ -73,32 +74,21 @@ func (t TestJob) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
 	}
 
 	testPass := true
-	diffs := []string{}
+	results := make([]AssertionResult, len(t.Assertions))
 	for idx, assertion := range t.Assertions {
 		if assertion.File == "" {
-			if t.defaultFile == "" {
-				return false, fmt.Errorf("assertion.file must be given if testsuite.templates is empty")
-			}
 			assertion.File = t.defaultFile
 		}
-
-		if pass, diff := assertion.Assert(manifestsOfFiles); !pass {
-			diffs = append(
-				diffs,
-				fmt.Sprintf("\n- asserts[%d] `%s` fail:\n%s", idx, assertion.AssertType, diff),
-			)
-			testPass = false
-		}
+		result := assertion.Assert(manifestsOfFiles)
+		results[idx] = result
+		testPass = testPass && result.Passed
 	}
 
-	if !testPass {
-		fmt.Fprintf(writer, "\n\"%s\": failed", t.Name)
-		for _, diff := range diffs {
-			fmt.Fprint(writer, diff)
-		}
+	return TestJobResult{
+		Passed:        testPass,
+		ExecError:     nil,
+		AssertsResult: results,
 	}
-
-	return testPass, nil
 }
 
 // liberally borrows from helm-template

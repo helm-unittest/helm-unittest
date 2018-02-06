@@ -1,7 +1,6 @@
 package helmtest_test
 
 import (
-	"bytes"
 	"testing"
 
 	. "github.com/lrills/helm-test/helmtest"
@@ -56,11 +55,10 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	var output bytes.Buffer
-	pass, err := testSuite.Run(c, &output)
+	suiteResult := testSuite.Run(c)
 
 	a := assert.New(t)
-	a.True(pass)
-	a.Equal("\x1b[30;42m Pass \x1b[0m \x1b[37mtest suite name\x1b[0m \n", output.String())
-	a.Nil(err)
+	a.True(suiteResult.Passed)
+	a.Nil(suiteResult.ExecError)
+	a.Equal(1, len(suiteResult.TestsResult))
 }

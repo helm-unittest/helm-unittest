@@ -1,7 +1,6 @@
 package helmtest
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -38,24 +37,28 @@ func ParseTestSuiteFile(path string) (TestSuite, error) {
 	return suite, nil
 }
 
-func (s TestSuite) Run(targetChart *chart.Chart, writer io.Writer) (bool, error) {
+func (s TestSuite) Run(targetChart *chart.Chart) TestSuiteResult {
 	preparedChart, err := s.prepareChart(targetChart)
 	if err != nil {
-		return false, err
+		return TestSuiteResult{ExecError: err}
 	}
 
 	suitePass := true
-	var testsWriter bytes.Buffer
-	for _, testJob := range s.Tests {
+	jobResults := make([]TestJobResult, len(s.Tests))
+	for idx, testJob := range s.Tests {
 		if len(s.Templates) > 0 {
 			testJob.defaultFile = s.Templates[0]
 		}
-		if jobPass, err := testJob.Run(preparedChart, &testsWriter); !jobPass || err != nil {
+		jobResult := testJob.Run(preparedChart)
+		jobResults[idx] = jobResult
+		if !jobResult.Passed {
 			suitePass = false
 		}
 	}
-	s.printResult(writer, suitePass, testsWriter.String())
-	return suitePass, nil
+	return TestSuiteResult{
+		Passed:      suitePass,
+		TestsResult: jobResults,
+	}
 }
 
 func (s TestSuite) printResult(writer io.Writer, pass bool, testsResult string) {

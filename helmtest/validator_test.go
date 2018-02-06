@@ -20,7 +20,7 @@ a:
 	a := EqualValidator{"a.b[0].c", 123}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, diff, "")
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestEqualValidatorWhenFail(t *testing.T) {
@@ -35,19 +35,19 @@ a:
 	a := EqualValidator{"a.b[0]", map[string]int{"d": 321}}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Path: a.b[0]
-	Expected:
-		d: 321
-	Actual:
-		c: 123
-	Diff:
-		--- Expected
-		+++ Actual
-		@@ -1,2 +1,2 @@
-		-d: 321
-		+c: 123
-`, diff)
+	assert.Equal(t, []string{
+		"Path:	a.b[0]",
+		"Expected:",
+		"	d: 321",
+		"Actual:",
+		"	c: 123",
+		"Diff:",
+		"	--- Expected",
+		"	+++ Actual",
+		"	@@ -1,2 +1,2 @@",
+		"	-d: 321",
+		"	+c: 123",
+	}, diff)
 }
 
 func TestEqualValidatorWhenWrongPath(t *testing.T) {
@@ -62,11 +62,11 @@ a:
 	a := EqualValidator{"a.b.e", map[string]int{"d": 321}}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Error:
-		can't get ["e"] from a non map type:
-		- c: 123
-`, diff)
+	assert.Equal(t, []string{
+		"Error:",
+		"	can't get [\"e\"] from a non map type:",
+		"	- c: 123",
+	}, diff)
 }
 
 func TestMatchRegexValidatorWhenOk(t *testing.T) {
@@ -81,7 +81,7 @@ a:
 	a := MatchRegexValidator{"a.b[0].c", "^hello"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, diff, "")
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestMatchRegexValidatorWhenRegexCompileFail(t *testing.T) {
@@ -90,9 +90,10 @@ func TestMatchRegexValidatorWhenRegexCompileFail(t *testing.T) {
 	a := MatchRegexValidator{"a", "+"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, diff, `
-	Error:
-		error parsing regexp: missing argument to repetition operator: `+"`+`\n")
+	assert.Equal(t, []string{
+		"Error:",
+		"	error parsing regexp: missing argument to repetition operator: `+`",
+	}, diff)
 }
 
 func TestMatchRegexValidatorWhenNotString(t *testing.T) {
@@ -105,11 +106,11 @@ a: 123.456
 	a := MatchRegexValidator{"a", "^foo"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, diff, `
-	Error:
-		expect 'a' to be a string, got:
-		123.456
-`)
+	assert.Equal(t, []string{
+		"Error:",
+		"	expect 'a' to be a string, got:",
+		"	123.456",
+	}, diff)
 }
 
 func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
@@ -124,11 +125,11 @@ a:
 	a := MatchRegexValidator{"a.b[0].c", "^bar"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Path: a.b[0].c
-	Expected to Match: ^bar
-	Actual: foo
-`, diff)
+	assert.Equal(t, []string{
+		"Path:	a.b[0].c",
+		"Expected to Match:	^bar",
+		"Actual:	foo",
+	}, diff)
 }
 
 func TestContainsValidatorWhenOk(t *testing.T) {
@@ -144,7 +145,7 @@ a:
 	a := ContainsValidator{"a.b", map[interface{}]interface{}{"d": "foo bar"}}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, "", diff)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestContainsValidatorWhenFail(t *testing.T) {
@@ -160,14 +161,14 @@ a:
 	a := ContainsValidator{"a.b", K8sManifest{"e": "bar bar"}}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Path: a.b
-	Expected Contains:
-		- e: bar bar
-	Actual:
-		- c: hello world
-		- d: foo bar
-`, diff)
+	assert.Equal(t, []string{
+		"Path:	a.b",
+		"Expected Contains:",
+		"	- e: bar bar",
+		"Actual:",
+		"	- c: hello world",
+		"	- d: foo bar",
+	}, diff)
 }
 
 func TestMatchContainsValidatorWhenNotAnArray(t *testing.T) {
@@ -183,12 +184,12 @@ a:
 	a := ContainsValidator{"a.b", K8sManifest{"d": "foo bar"}}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Error:
-		expect 'a.b' to be an array, got:
-		c: hello world
-		d: foo bar
-`, diff)
+	assert.Equal(t, []string{
+		"Error:",
+		"	expect 'a.b' to be an array, got:",
+		"	c: hello world",
+		"	d: foo bar",
+	}, diff)
 }
 
 func TestIsNullValidatorWhenOk(t *testing.T) {
@@ -199,7 +200,7 @@ func TestIsNullValidatorWhenOk(t *testing.T) {
 	a := IsNullValidator{"a"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, "", diff)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsNullValidatorWhenFail(t *testing.T) {
@@ -210,12 +211,12 @@ func TestIsNullValidatorWhenFail(t *testing.T) {
 	a := IsNullValidator{"a"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Path: a
-	Expected: null
-	Actual:
-		A
-`, diff)
+	assert.Equal(t, []string{
+		"Path:	a",
+		"Expected:	null",
+		"Actual:",
+		"	A",
+	}, diff)
 }
 
 func TestIsEmptyValidatorWhenOk(t *testing.T) {
@@ -231,22 +232,22 @@ d: null
 	a := IsEmptyValidator{"a"}
 	aPass, aDiff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, aPass)
-	assert.Equal(t, "", aDiff)
+	assert.Equal(t, []string{}, aDiff)
 
 	b := IsEmptyValidator{"b"}
 	bPass, bDiff := b.Validate([]K8sManifest{data}, 0)
 	assert.True(t, bPass)
-	assert.Equal(t, "", bDiff)
+	assert.Equal(t, []string{}, bDiff)
 
 	c := IsEmptyValidator{"c"}
 	cPass, cDiff := c.Validate([]K8sManifest{data}, 0)
 	assert.True(t, cPass)
-	assert.Equal(t, "", cDiff)
+	assert.Equal(t, []string{}, cDiff)
 
 	d := IsEmptyValidator{"d"}
 	dPass, dDiff := d.Validate([]K8sManifest{data}, 0)
 	assert.True(t, dPass)
-	assert.Equal(t, "", dDiff)
+	assert.Equal(t, []string{}, dDiff)
 }
 
 func TestIsEmptyValidatorWhenFail(t *testing.T) {
@@ -257,11 +258,11 @@ func TestIsEmptyValidatorWhenFail(t *testing.T) {
 	a := IsEmptyValidator{"a"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Path: a
-	Expected to be empty, got:
-		1
-`, diff)
+	assert.Equal(t, []string{
+		"Path:	a",
+		"Expected to be empty, got:",
+		"	1",
+	}, diff)
 }
 
 func TestIsKindValidatorWhenOk(t *testing.T) {
@@ -272,7 +273,7 @@ func TestIsKindValidatorWhenOk(t *testing.T) {
 	a := IsKindValidator{"Pod"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, "", diff)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsKindValidatorWhenFail(t *testing.T) {
@@ -283,10 +284,10 @@ func TestIsKindValidatorWhenFail(t *testing.T) {
 	a := IsKindValidator{"Service"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Expected 'kind': Service
-	Actual: Pod
-`, diff)
+	assert.Equal(t, []string{
+		"Expected kind:	Service",
+		"Actual:	Pod",
+	}, diff)
 }
 
 func TestIsAPiVersionValidatorWhenOk(t *testing.T) {
@@ -297,7 +298,7 @@ func TestIsAPiVersionValidatorWhenOk(t *testing.T) {
 	a := IsAPIVersionValidator{"v1"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, "", diff)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
@@ -308,10 +309,10 @@ func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
 	a := IsAPIVersionValidator{"v2"}
 	pass, diff := a.Validate([]K8sManifest{data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Expected 'apiVersion': v2
-	Actual: v1
-`, diff)
+	assert.Equal(t, []string{
+		"Expected apiVersion:	v2",
+		"Actual:	v1",
+	}, diff)
 }
 
 func TestHasDocumentsValidatorOk(t *testing.T) {
@@ -320,7 +321,7 @@ func TestHasDocumentsValidatorOk(t *testing.T) {
 	a := HasDocumentsValidator{2}
 	pass, diff := a.Validate([]K8sManifest{data, data}, 0)
 	assert.True(t, pass)
-	assert.Equal(t, "", diff)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestHasDocumentsValidatorFail(t *testing.T) {
@@ -329,8 +330,8 @@ func TestHasDocumentsValidatorFail(t *testing.T) {
 	a := HasDocumentsValidator{1}
 	pass, diff := a.Validate([]K8sManifest{data, data}, 0)
 	assert.False(t, pass)
-	assert.Equal(t, `
-	Expected: 1
-	Actual: 2
-`, diff)
+	assert.Equal(t, []string{
+		"Expected:	1",
+		"Actual:	2",
+	}, diff)
 }
