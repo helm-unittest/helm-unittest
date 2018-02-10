@@ -15,14 +15,12 @@ type Assertion struct {
 	validator     Validatable
 }
 
-func (a Assertion) Assert(docs map[string][]K8sManifest) AssertionResult {
+func (a Assertion) Assert(docs map[string][]K8sManifest, result *AssertionResult) *AssertionResult {
+	result.AssertType = a.AssertType
+
 	if file, ok := docs[a.File]; ok {
-		passed, info := a.validator.Validate(file, a.DocumentIndex)
-		return AssertionResult{
-			FailInfo:   info,
-			Passed:     passed,
-			AssertType: a.AssertType,
-		}
+		result.Passed, result.FailInfo = a.validator.Validate(file, a.DocumentIndex)
+		return result
 	}
 
 	var noFileErrMsg string
@@ -34,10 +32,8 @@ func (a Assertion) Assert(docs map[string][]K8sManifest) AssertionResult {
 	} else {
 		noFileErrMsg = "\tassertion.file must be given if testsuite.templates is empty"
 	}
-	return AssertionResult{
-		AssertType: a.AssertType,
-		FailInfo:   []string{"Error:", noFileErrMsg},
-	}
+	result.FailInfo = []string{"Error:", noFileErrMsg}
+	return result
 }
 
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {

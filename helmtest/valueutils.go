@@ -9,8 +9,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func GetValueOfSetPath(m K8sManifest, path string) (interface{}, error) {
-	tr := fetchTraverser{m}
+func GetValueOfSetPath(manifest K8sManifest, path string) (interface{}, error) {
+	if path == "" {
+		return manifest, nil
+	}
+	tr := fetchTraverser{manifest}
 	reader := bytes.NewBufferString(path)
 	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
 		return nil, e
@@ -19,10 +22,13 @@ func GetValueOfSetPath(m K8sManifest, path string) (interface{}, error) {
 }
 
 func BuildValueOfSetPath(val interface{}, path string) (map[interface{}]interface{}, error) {
+	if path == "" {
+		return nil, fmt.Errorf("set path is empty")
+	}
 	tr := buildTraverser{val, nil}
 	reader := bytes.NewBufferString(path)
-	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
-		return nil, e
+	if err := traverseSetPath(reader, &tr, expectKey); err != nil {
+		return nil, err
 	}
 	return tr.getBuildedData(), nil
 }

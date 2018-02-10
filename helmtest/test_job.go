@@ -23,12 +23,13 @@ type TestJob struct {
 	Assertions  []Assertion `yaml:"asserts"`
 }
 
-func (t TestJob) Run(targetChart *chart.Chart) TestJobResult {
+func (t TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
+	result.DisplayName = t.Name
+
 	vv, err := t.vals()
 	if err != nil {
-		return TestJobResult{
-			ExecError: err,
-		}
+		result.ExecError = err
+		return result
 	}
 
 	config := &chart.Config{Raw: string(vv), Values: map[string]*chart.Value{}}
@@ -45,16 +46,14 @@ func (t TestJob) Run(targetChart *chart.Chart) TestJobResult {
 
 	vals, err := chartutil.ToRenderValues(targetChart, config, options)
 	if err != nil {
-		return TestJobResult{
-			ExecError: err,
-		}
+		result.ExecError = err
+		return result
 	}
 
 	outputOfFiles, err := renderer.Render(targetChart, vals)
 	if err != nil {
-		return TestJobResult{
-			ExecError: err,
-		}
+		result.ExecError = err
+		return result
 	}
 
 	manifestsOfFiles := make(map[string][]K8sManifest)
@@ -64,9 +63,8 @@ func (t TestJob) Run(targetChart *chart.Chart) TestJobResult {
 		for i, doc := range documents {
 			manifest := make(K8sManifest)
 			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
-				return TestJobResult{
-					ExecError: err,
-				}
+				result.ExecError = err
+				return result
 			}
 			manifests[i] = manifest
 		}
@@ -74,21 +72,19 @@ func (t TestJob) Run(targetChart *chart.Chart) TestJobResult {
 	}
 
 	testPass := true
-	results := make([]AssertionResult, len(t.Assertions))
+	assertsResult := make([]*AssertionResult, len(t.Assertions))
 	for idx, assertion := range t.Assertions {
 		if assertion.File == "" {
 			assertion.File = t.defaultFile
 		}
-		result := assertion.Assert(manifestsOfFiles)
-		results[idx] = result
+		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
+		assertsResult[idx] = result
 		testPass = testPass && result.Passed
 	}
 
-	return TestJobResult{
-		Passed:        testPass,
-		ExecError:     nil,
-		AssertsResult: results,
-	}
+	result.Passed = testPass
+	result.AssertsResult = assertsResult
+	return result
 }
 
 // liberally borrows from helm-template

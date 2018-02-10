@@ -55,7 +55,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	suiteResult := testSuite.Run(c)
+	suiteResult := testSuite.Run(c, &TestSuiteResult{})
 
 	a := assert.New(t)
 	a.True(suiteResult.Passed)

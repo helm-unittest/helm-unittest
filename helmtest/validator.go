@@ -197,7 +197,10 @@ func (a IsEmptyValidator) Validate(docs []K8sManifest, idx int) (bool, []string)
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	if actual == nil || actual == reflect.Zero(reflect.TypeOf(actual)).Interface() {
+	if actual == nil || reflect.DeepEqual(
+		actual,
+		reflect.Zero(reflect.TypeOf(actual)).Interface(),
+	) {
 		return true, []string{}
 	}
 	return false, splitInfof(isEmptyFailFormat, a.Path, trustedMarshalYAML(actual))

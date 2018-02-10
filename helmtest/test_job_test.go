@@ -66,7 +66,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c)
+	testResult := tj.Run(c, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
@@ -91,7 +91,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c)
+	testResult := tj.Run(c, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
