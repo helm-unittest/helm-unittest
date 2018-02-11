@@ -1,0 +1,37 @@
+suite: test suite name
+templates:
+  - deployment.yaml
+tests:
+  - it: should ...
+    # values:
+    #   - values.yaml
+    # set:
+    #   a.b.c: ABC
+    #   x.y.z: XYZ
+    asserts:
+      # - matchSnapshot:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: basic
+      # - notEqual:
+      - matchRegex:
+          path: metadata.name
+          pattern: -basic$
+      # - notMatchRegex:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 80
+      # - notContains:
+      - isNull:
+          path: spec.template.nodeSelector
+      # - isNotNull:
+      - isEmpty:
+          path: spec.template.spec.containers[0].resources
+      # - isNotEmpty:
+      - isKind:
+          of: Deployment
+      - isAPIVersion:
+          of: extensions/v1beta1
+      - hasDocuments:
+          count: 1

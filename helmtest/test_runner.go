@@ -46,5 +46,5 @@ func (tr TestRunner) Run(logger loggable) bool {
 			result.print(logger, 0)
 		}
 	}
-	return false
+	return allPassed
 }

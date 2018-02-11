@@ -197,10 +197,21 @@ func (a IsEmptyValidator) Validate(docs []K8sManifest, idx int) (bool, []string)
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	if actual == nil || reflect.DeepEqual(
-		actual,
-		reflect.Zero(reflect.TypeOf(actual)).Interface(),
-	) {
+	if actual == nil {
+		return true, []string{}
+	}
+
+	actualValue := reflect.ValueOf(actual)
+	var ok bool
+	switch actualValue.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice:
+		ok = actualValue.Len() == 0
+	default:
+		zero := reflect.Zero(actualValue.Type())
+		ok = reflect.DeepEqual(actual, zero.Interface())
+	}
+
+	if ok {
 		return true, []string{}
 	}
 	return false, splitInfof(isEmptyFailFormat, a.Path, trustedMarshalYAML(actual))
