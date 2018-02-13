@@ -13,22 +13,31 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].name
           value: basic
-      # - notEqual:
+      - notEqual:
+          path: spec.template.spec.containers[0].name
+          value: xxx
       - matchRegex:
           path: metadata.name
           pattern: -basic$
-      # - notMatchRegex:
+      - notMatchRegex:
+          path: metadata.name
+          pattern: -xxx$
       - contains:
           path: spec.template.spec.containers[0].ports
           content:
             containerPort: 80
-      # - notContains:
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8080
       - isNull:
           path: spec.template.nodeSelector
-      # - isNotNull:
+      - isNotNull:
+          path: spec.template
       - isEmpty:
           path: spec.template.spec.containers[0].resources
-      # - isNotEmpty:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0]
       - isKind:
           of: Deployment
       - isAPIVersion:

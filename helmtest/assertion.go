@@ -13,27 +13,34 @@ type Assertion struct {
 	Not           bool
 	AssertType    string
 	validator     Validatable
+	antonym       bool
 }
 
 func (a Assertion) Assert(docs map[string][]K8sManifest, result *AssertionResult) *AssertionResult {
 	result.AssertType = a.AssertType
+	result.Not = a.Not
 
 	if file, ok := docs[a.File]; ok {
-		result.Passed, result.FailInfo = a.validator.Validate(file, a.DocumentIndex)
+		result.Passed, result.FailInfo = a.validator.Validate(
+			file,
+			a.DocumentIndex,
+			a.Not != a.antonym,
+		)
 		return result
 	}
 
-	var noFileErrMsg string
+	result.FailInfo = []string{"Error:", a.noFileErrMessage()}
+	return result
+}
+
+func (a Assertion) noFileErrMessage() string {
 	if a.File != "" {
-		noFileErrMsg = fmt.Sprintf(
+		return fmt.Sprintf(
 			"\tfile \"%s\" not exists or not selected in test suite",
 			a.File,
 		)
-	} else {
-		noFileErrMsg = "\tassertion.file must be given if testsuite.templates is empty"
 	}
-	result.FailInfo = []string{"Error:", noFileErrMsg}
-	return result
+	return "\tassertion.file must be given if testsuite.templates is empty"
 }
 
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -69,42 +76,47 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
-	for assertName, correspondDef := range validatorMapping {
+	for assertName, correspondDef := range assertTypeMapping {
 		if params, ok := assertDef[assertName]; ok {
 			if a.validator != nil {
-				return fmt.Errorf("Assertion type `%s` and `%s` is declared duplicated", a.AssertType, assertName)
+				return fmt.Errorf(
+					"Assertion type `%s` and `%s` is declared duplicately",
+					a.AssertType,
+					assertName,
+				)
 			}
-			a.AssertType = assertName
 
-			validator := reflect.New(correspondDef.Type).Interface()
+			validator := reflect.New(correspondDef.validatorType).Interface()
 			if err := mapstructure.Decode(params, validator); err != nil {
 				return err
 			}
+
+			a.AssertType = assertName
 			a.validator = validator.(Validatable)
-			a.Not = a.Not != correspondDef.Not
+			a.antonym = correspondDef.antonym
 		}
 	}
 	return nil
 }
 
-type validatorDef struct {
-	Type reflect.Type
-	Not  bool
+type assertTypeDef struct {
+	validatorType reflect.Type
+	antonym       bool
 }
 
-var validatorMapping = map[string]validatorDef{
-	// "matchSnapshot": validatorDef{reflect.TypeOf(MatchSnapshotValidator{}), false},
-	"equal":         validatorDef{reflect.TypeOf(EqualValidator{}), false},
-	"notEqual":      validatorDef{reflect.TypeOf(EqualValidator{}), true},
-	"matchRegex":    validatorDef{reflect.TypeOf(MatchRegexValidator{}), false},
-	"notMatchRegex": validatorDef{reflect.TypeOf(MatchRegexValidator{}), true},
-	"contains":      validatorDef{reflect.TypeOf(ContainsValidator{}), false},
-	"notContains":   validatorDef{reflect.TypeOf(ContainsValidator{}), true},
-	"isNull":        validatorDef{reflect.TypeOf(IsNullValidator{}), false},
-	"isNotNull":     validatorDef{reflect.TypeOf(IsNullValidator{}), true},
-	"isEmpty":       validatorDef{reflect.TypeOf(IsEmptyValidator{}), false},
-	"isNotEmpty":    validatorDef{reflect.TypeOf(IsEmptyValidator{}), true},
-	"isKind":        validatorDef{reflect.TypeOf(IsKindValidator{}), false},
-	"isAPIVersion":  validatorDef{reflect.TypeOf(IsAPIVersionValidator{}), false},
-	"hasDocuments":  validatorDef{reflect.TypeOf(HasDocumentsValidator{}), false},
+var assertTypeMapping = map[string]assertTypeDef{
+	// "matchSnapshot": assertTypeDef{reflect.TypeOf(MatchSnapshotValidator{}), false},
+	"equal":         assertTypeDef{reflect.TypeOf(EqualValidator{}), false},
+	"notEqual":      assertTypeDef{reflect.TypeOf(EqualValidator{}), true},
+	"matchRegex":    assertTypeDef{reflect.TypeOf(MatchRegexValidator{}), false},
+	"notMatchRegex": assertTypeDef{reflect.TypeOf(MatchRegexValidator{}), true},
+	"contains":      assertTypeDef{reflect.TypeOf(ContainsValidator{}), false},
+	"notContains":   assertTypeDef{reflect.TypeOf(ContainsValidator{}), true},
+	"isNull":        assertTypeDef{reflect.TypeOf(IsNullValidator{}), false},
+	"isNotNull":     assertTypeDef{reflect.TypeOf(IsNullValidator{}), true},
+	"isEmpty":       assertTypeDef{reflect.TypeOf(IsEmptyValidator{}), false},
+	"isNotEmpty":    assertTypeDef{reflect.TypeOf(IsEmptyValidator{}), true},
+	"isKind":        assertTypeDef{reflect.TypeOf(IsKindValidator{}), false},
+	"isAPIVersion":  assertTypeDef{reflect.TypeOf(IsAPIVersionValidator{}), false},
+	"hasDocuments":  assertTypeDef{reflect.TypeOf(HasDocumentsValidator{}), false},
 }

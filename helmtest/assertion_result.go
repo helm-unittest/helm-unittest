@@ -7,6 +7,7 @@ type AssertionResult struct {
 	FailInfo   []string
 	Passed     bool
 	AssertType string
+	Not        bool
 	CustomInfo string
 }
 
@@ -18,7 +19,11 @@ func (ar AssertionResult) print(printer loggable, verbosity int) {
 	if ar.CustomInfo != "" {
 		title = ar.CustomInfo
 	} else {
-		title = fmt.Sprintf("- asserts[%d] `%s` fail", ar.Index, ar.AssertType)
+		var notAnnotation string
+		if ar.Not {
+			notAnnotation = " NOT"
+		}
+		title = fmt.Sprintf("- asserts[%d]%s `%s` fail", ar.Index, notAnnotation, ar.AssertType)
 	}
 	printer.println(printer.danger(title+"\n"), 2)
 	for _, infoLine := range ar.FailInfo {

@@ -33,11 +33,7 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 	for idx, assertion := range assertions {
 		_, ok := assertionsAsMap[idx][assertion.AssertType]
 		a.True(ok)
-		if idx >= 10 || idx%2 == 0 {
-			a.False(assertion.Not)
-		} else {
-			a.True(assertion.Not)
-		}
+		a.False(assertion.Not)
 	}
 }
 
@@ -74,12 +70,8 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
-	for idx, assertion := range assertions {
-		if idx >= 10 || idx%2 == 0 {
-			a.True(assertion.Not)
-		} else {
-			a.False(assertion.Not)
-		}
+	for _, assertion := range assertions {
+		a.True(assertion.Not)
 	}
 }
 
