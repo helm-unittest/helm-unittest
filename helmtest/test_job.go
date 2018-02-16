@@ -16,12 +16,12 @@ import (
 type K8sManifest map[string]interface{}
 
 type TestJob struct {
-	Name                string `yaml:"it"`
-	Values              []string
-	Set                 map[string]interface{}
-	Assertions          []Assertion `yaml:"asserts"`
-	definitionFile      string
-	defaultFileToAssert string
+	Name                    string `yaml:"it"`
+	Values                  []string
+	Set                     map[string]interface{}
+	Assertions              []Assertion `yaml:"asserts"`
+	definitionFile          string
+	defaultTemplateToAssert string
 }
 
 func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
@@ -75,8 +75,8 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
 	for idx, assertion := range t.Assertions {
-		if assertion.File == "" {
-			assertion.File = t.defaultFileToAssert
+		if assertion.Template == "" {
+			assertion.Template = t.defaultTemplateToAssert
 		}
 		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
 		assertsResult[idx] = result

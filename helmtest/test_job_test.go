@@ -57,11 +57,11 @@ asserts:
   - equal:
       path: kind
       value: Deployment
-    file: deployment.yaml
+    template: deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: -basic$
-    file: deployment.yaml
+    template: deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)

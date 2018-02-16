@@ -68,7 +68,7 @@ func (s *TestSuite) polishTestJob() {
 	for _, test := range s.Tests {
 		test.definitionFile = s.definitionFile
 		if len(s.Templates) > 0 {
-			test.defaultFileToAssert = s.Templates[0]
+			test.defaultTemplateToAssert = s.Templates[0]
 		}
 	}
 }

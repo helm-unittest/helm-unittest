@@ -8,7 +8,7 @@ import (
 )
 
 type Assertion struct {
-	File          string
+	Template      string
 	DocumentIndex int
 	Not           bool
 	AssertType    string
@@ -16,13 +16,17 @@ type Assertion struct {
 	antonym       bool
 }
 
-func (a Assertion) Assert(docs map[string][]K8sManifest, result *AssertionResult) *AssertionResult {
+func (a Assertion) Assert(
+	templatesResult map[string][]K8sManifest,
+	result *AssertionResult,
+) *AssertionResult {
+
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
-	if file, ok := docs[a.File]; ok {
+	if rendered, ok := templatesResult[a.Template]; ok {
 		result.Passed, result.FailInfo = a.validator.Validate(
-			file,
+			rendered,
 			a.DocumentIndex,
 			a.Not != a.antonym,
 		)
@@ -34,13 +38,13 @@ func (a Assertion) Assert(docs map[string][]K8sManifest, result *AssertionResult
 }
 
 func (a Assertion) noFileErrMessage() string {
-	if a.File != "" {
+	if a.Template != "" {
 		return fmt.Sprintf(
-			"\tfile \"%s\" not exists or not selected in test suite",
-			a.File,
+			"\ttemplate \"%s\" not exists or not selected in test suite",
+			a.Template,
 		)
 	}
-	return "\tassertion.file must be given if testsuite.templates is empty"
+	return "\tassertion.template must be given if testsuite.templates is empty"
 }
 
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -55,8 +59,8 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if not, ok := assertDef["not"].(bool); ok {
 		a.Not = not
 	}
-	if file, ok := assertDef["file"].(string); ok {
-		a.File = file
+	if template, ok := assertDef["template"].(string); ok {
+		a.Template = template
 	}
 
 	if err := a.constructValidator(assertDef); err != nil {
