@@ -10,6 +10,6 @@ import (
 
 func TestTestRunner(t *testing.T) {
 	runner := TestRunner{ChartsPath: []string{"../__fixtures__/basic"}}
-	passed := runner.Run(&Printer{Writer: os.Stdout, Colored: true})
+	passed := runner.Run(&Printer{Writer: os.Stdout, Colored: true}, TestConfig{})
 	assert.True(t, passed)
 }

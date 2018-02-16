@@ -9,8 +9,25 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-func getTestSuiteFiles(chartPath string) ([]string, error) {
-	return filepath.Glob(filepath.Join(chartPath, "tests", "*.yaml"))
+func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
+	filesSet := map[string]bool{}
+	for _, pattern := range patterns {
+		files, err := filepath.Glob(filepath.Join(chartPath, pattern))
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range files {
+			filesSet[file] = true
+		}
+	}
+
+	resultFiles := make([]string, len(filesSet))
+	idx := 0
+	for file := range filesSet {
+		resultFiles[idx] = file
+		idx++
+	}
+	return resultFiles, nil
 }
 
 type testUnitCounting struct {
@@ -42,7 +59,7 @@ type TestRunner struct {
 	chartCounting testUnitCounting
 }
 
-func (tr *TestRunner) Run(logger loggable) bool {
+func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 	allPassed := true
 	start := time.Now()
 	for _, chartPath := range tr.ChartsPath {
@@ -54,7 +71,7 @@ func (tr *TestRunner) Run(logger loggable) bool {
 			continue
 		}
 
-		suiteFiles, err := getTestSuiteFiles(chartPath)
+		suiteFiles, err := getTestSuiteFiles(chartPath, config.TestFiles)
 		if err != nil {
 			tr.printErroredChartHeader(logger, err)
 			tr.countChart(false, err)

@@ -19,8 +19,9 @@ type loggable interface {
 }
 
 type Printer struct {
-	Writer  io.Writer
-	Colored bool
+	Writer       io.Writer
+	Colored      bool
+	ColredForced bool
 }
 
 func (p *Printer) println(content string, indentLevel int) {
@@ -32,10 +33,7 @@ func (p *Printer) println(content string, indentLevel int) {
 }
 
 func (p Printer) success(content string) string {
-	if p.Colored {
-		return color.GreenString(content)
-	}
-	return content
+	return color.GreenString(content)
 }
 
 var greenBgBlackFg = color.New(color.BgGreen, color.FgBlack)
@@ -44,14 +42,11 @@ func (p Printer) successBackground(content string) string {
 	if p.Colored {
 		return greenBgBlackFg.Sprint(content)
 	}
-	return content
+	return "[" + content + "]"
 }
 
 func (p Printer) danger(content string) string {
-	if p.Colored {
-		return color.RedString(content)
-	}
-	return content
+	return color.RedString(content)
 }
 
 var redBgWhiteFg = color.New(color.BgRed, color.FgWhite)
@@ -60,14 +55,11 @@ func (p Printer) dangerBackground(content string) string {
 	if p.Colored {
 		return redBgWhiteFg.Sprint(content)
 	}
-	return content
+	return "[" + content + "]"
 }
 
 func (p Printer) warning(content string) string {
-	if p.Colored {
-		return color.YellowString(content)
-	}
-	return content
+	return color.YellowString(content)
 }
 
 var yellowBgBlackFg = color.New(color.BgYellow, color.FgBlack)
@@ -76,12 +68,9 @@ func (p Printer) warningBackground(content string) string {
 	if p.Colored {
 		return yellowBgBlackFg.Sprint(content)
 	}
-	return content
+	return "[" + content + "]"
 }
 
 func (p Printer) highlight(content string) string {
-	if p.Colored {
-		return color.WhiteString(content)
-	}
-	return content
+	return color.WhiteString(content)
 }
