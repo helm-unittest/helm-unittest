@@ -3,25 +3,25 @@ templates:
   - deployment.yaml
 tests:
   - it: should ...
-    # values:
-    #   - values.yaml
-    # set:
-    #   a.b.c: ABC
-    #   x.y.z: XYZ
+    values:
+      - ./values/image.yaml
+    set:
+      a.b.c: ABC
+      x.y.z: XYZ
     asserts:
       # - matchSnapshot:
       - equal:
-          path: spec.template.spec.containers[0].name
-          value: basic
+          path: spec.template.spec.containers[0].image
+          value: apache:latest
       - notEqual:
-          path: spec.template.spec.containers[0].name
-          value: xxx
+          path: spec.template.spec.containers[0].image
+          value: nginx:stable
       - matchRegex:
-          path: metadata.name
-          pattern: -basic$
+          path: spec.template.spec.containers[0].image
+          pattern: apache.*
       - notMatchRegex:
-          path: metadata.name
-          pattern: -xxx$
+          path: spec.template.spec.containers[0].image
+          pattern: nginx.*
       - contains:
           path: spec.template.spec.containers[0].ports
           content:

@@ -3,7 +3,7 @@ package helmtest
 import (
 	"fmt"
 	"io/ioutil"
-	"path"
+	"path/filepath"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -16,14 +16,15 @@ import (
 type K8sManifest map[string]interface{}
 
 type TestJob struct {
-	defaultFile string
-	Name        string `yaml:"it"`
-	Values      []string
-	Set         map[string]interface{}
-	Assertions  []Assertion `yaml:"asserts"`
+	Name                string `yaml:"it"`
+	Values              []string
+	Set                 map[string]interface{}
+	Assertions          []Assertion `yaml:"asserts"`
+	definitionFile      string
+	defaultFileToAssert string
 }
 
-func (t TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
+func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
 	result.DisplayName = t.Name
 
 	vv, err := t.vals()
@@ -68,14 +69,14 @@ func (t TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobRe
 			}
 			manifests[i] = manifest
 		}
-		manifestsOfFiles[path.Base(file)] = manifests
+		manifestsOfFiles[filepath.Base(file)] = manifests
 	}
 
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
 	for idx, assertion := range t.Assertions {
 		if assertion.File == "" {
-			assertion.File = t.defaultFile
+			assertion.File = t.defaultFileToAssert
 		}
 		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
 		assertsResult[idx] = result
@@ -88,12 +89,14 @@ func (t TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobRe
 }
 
 // liberally borrows from helm-template
-func (t TestJob) vals() ([]byte, error) {
+func (t *TestJob) vals() ([]byte, error) {
 	base := map[interface{}]interface{}{}
 
 	for _, valueFile := range t.Values {
 		currentMap := map[interface{}]interface{}{}
-		bytes, err := ioutil.ReadFile(valueFile)
+		fmt.Print(t.definitionFile)
+		valueFilePath := filepath.Join(filepath.Dir(t.definitionFile), valueFile)
+		bytes, err := ioutil.ReadFile(valueFilePath)
 		if err != nil {
 			return []byte{}, err
 		}

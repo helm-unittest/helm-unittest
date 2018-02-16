@@ -12,35 +12,37 @@ import (
 )
 
 type TestSuite struct {
-	Name      string `yaml:"suite"`
-	Templates []string
-	Tests     []TestJob
-	filePath  string
+	Name           string `yaml:"suite"`
+	Templates      []string
+	Tests          []*TestJob
+	definitionFile string
 }
 
-func ParseTestSuiteFile(path string) (TestSuite, error) {
+func ParseTestSuiteFile(path string) (*TestSuite, error) {
 	var suite TestSuite
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return TestSuite{}, err
+		return &suite, err
 	}
 
 	cwd, _ := os.Getwd()
 	absPath, _ := filepath.Abs(path)
-	suite.filePath, err = filepath.Rel(cwd, absPath)
+	suite.definitionFile, err = filepath.Rel(cwd, absPath)
 	if err != nil {
-		return TestSuite{}, err
+		return &suite, err
 	}
 
 	if err := yaml.Unmarshal(content, &suite); err != nil {
-		return TestSuite{}, err
+		return &suite, err
 	}
 
-	return suite, nil
+	return &suite, nil
 }
 
-func (s TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestSuiteResult {
+func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestSuiteResult {
 	result.DisplayName = s.Name
+	result.FilePath = s.definitionFile
+	s.polishTestJob()
 
 	preparedChart, err := s.prepareChart(targetChart)
 	if err != nil {
@@ -51,9 +53,6 @@ func (s TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestS
 	suitePass := true
 	jobResults := make([]*TestJobResult, len(s.Tests))
 	for idx, testJob := range s.Tests {
-		if len(s.Templates) > 0 {
-			testJob.defaultFile = s.Templates[0]
-		}
 		jobResult := testJob.Run(preparedChart, &TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 		if !jobResult.Passed {
@@ -65,7 +64,16 @@ func (s TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestS
 	return result
 }
 
-func (s TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error) {
+func (s *TestSuite) polishTestJob() {
+	for _, test := range s.Tests {
+		test.definitionFile = s.definitionFile
+		if len(s.Templates) > 0 {
+			test.defaultFileToAssert = s.Templates[0]
+		}
+	}
+}
+
+func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error) {
 	copiedChart := new(chart.Chart)
 	copiedChart = targetChart
 

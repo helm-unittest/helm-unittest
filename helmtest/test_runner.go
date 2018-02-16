@@ -99,7 +99,7 @@ func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger 
 				ExecError: err,
 			}
 		}
-		result := testSuite.Run(chart, &TestSuiteResult{FilePath: file})
+		result := testSuite.Run(chart, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		suitesResult[idx] = result
 	}
