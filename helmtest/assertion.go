@@ -7,6 +7,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+type AssertInfoProvider interface {
+	GetManifest(manifests []K8sManifest) (K8sManifest, error)
+	IsNegative() bool
+}
+
 type Assertion struct {
 	Template      string
 	DocumentIndex int
@@ -16,7 +21,7 @@ type Assertion struct {
 	antonym       bool
 }
 
-func (a Assertion) Assert(
+func (a *Assertion) Assert(
 	templatesResult map[string][]K8sManifest,
 	result *AssertionResult,
 ) *AssertionResult {
@@ -25,11 +30,7 @@ func (a Assertion) Assert(
 	result.Not = a.Not
 
 	if rendered, ok := templatesResult[a.Template]; ok {
-		result.Passed, result.FailInfo = a.validator.Validate(
-			rendered,
-			a.DocumentIndex,
-			a.Not != a.antonym,
-		)
+		result.Passed, result.FailInfo = a.validator.Validate(rendered, a)
 		return result
 	}
 
@@ -37,7 +38,18 @@ func (a Assertion) Assert(
 	return result
 }
 
-func (a Assertion) noFileErrMessage() string {
+func (a *Assertion) GetManifest(manifests []K8sManifest) (K8sManifest, error) {
+	if len(manifests) > a.DocumentIndex {
+		return manifests[a.DocumentIndex], nil
+	}
+	return nil, fmt.Errorf("documentIndex %d out of range", a.DocumentIndex)
+}
+
+func (a *Assertion) IsNegative() bool {
+	return a.Not != a.antonym
+}
+
+func (a *Assertion) noFileErrMessage() string {
 	if a.Template != "" {
 		return fmt.Sprintf(
 			"\ttemplate \"%s\" not exists or not selected in test suite",

@@ -12,7 +12,7 @@ import (
 )
 
 type Validatable interface {
-	Validate(docs []K8sManifest, idx int, not bool) (bool, []string)
+	Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string)
 }
 
 func splitInfof(format string, replacements ...string) []string {
@@ -82,11 +82,18 @@ Diff:
 	return splitInfof(failFormat, a.Path, expectedYAML)
 }
 
-func (a EqualValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+func (a EqualValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
+
+	actual, err := GetValueOfSetPath(manifest, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	not := assert.IsNegative()
 	if reflect.DeepEqual(a.Value, actual) == not {
 		return false, a.failInfo(actual, not)
 	}
@@ -111,8 +118,13 @@ Actual:%s
 	return splitInfof(regexFailFormat, a.Path, a.Pattern, actual)
 }
 
-func (a MatchRegexValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+func (a MatchRegexValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	actual, err := GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -122,6 +134,7 @@ func (a MatchRegexValidator) Validate(docs []K8sManifest, idx int, not bool) (bo
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
+	not := assert.IsNegative()
 	if s, ok := actual.(string); ok {
 		if p.MatchString(s) != not {
 			return true, []string{}
@@ -160,11 +173,18 @@ Actual:
 	)
 }
 
-func (a ContainsValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+func (a ContainsValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
+
+	actual, err := GetValueOfSetPath(manifest, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	not := assert.IsNegative()
 	if actual, ok := actual.([]interface{}); ok {
 		found := false
 		for _, ele := range actual {
@@ -177,6 +197,7 @@ func (a ContainsValidator) Validate(docs []K8sManifest, idx int, not bool) (bool
 		}
 		return false, a.failInfo(actual, not)
 	}
+
 	actualYAML, _ := yaml.Marshal(actual)
 	return false, splitInfof(errorFormat, fmt.Sprintf(
 		"expect '%s' to be an array, got:\n%s",
@@ -203,12 +224,18 @@ Expected` + notAnnotation + ` to be null, got:
 	return splitInfof(isNullFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
-func (a IsNullValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+func (a IsNullValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
+	actual, err := GetValueOfSetPath(manifest, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	not := assert.IsNegative()
 	if actual == nil != not {
 		return true, []string{}
 	}
@@ -233,8 +260,13 @@ Expected` + notAnnotation + ` to be empty, got:
 	return splitInfof(isEmptyFailFormat, a.Path, trustedMarshalYAML(actual))
 }
 
-func (a IsEmptyValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	actual, err := GetValueOfSetPath(docs[idx], a.Path)
+func (a IsEmptyValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	actual, err := GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -251,6 +283,7 @@ func (a IsEmptyValidator) Validate(docs []K8sManifest, idx int, not bool) (bool,
 		isEmpty = reflect.DeepEqual(actual, zero.Interface())
 	}
 
+	not := assert.IsNegative()
 	if isEmpty != not {
 		return true, []string{}
 	}
@@ -273,11 +306,17 @@ func (a IsKindValidator) failInfo(actual interface{}, not bool) []string {
 	return splitInfof(isKindFailFormat+"\nActual:%s", a.Of, trustedMarshalYAML(actual))
 }
 
-func (a IsKindValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	if kind, ok := docs[idx]["kind"].(string); (ok && kind == a.Of) != not {
+func (a IsKindValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	not := assert.IsNegative()
+	if kind, ok := manifest["kind"].(string); (ok && kind == a.Of) != not {
 		return true, []string{}
 	}
-	return false, a.failInfo(docs[idx]["kind"], not)
+	return false, a.failInfo(manifest["kind"], not)
 }
 
 type IsAPIVersionValidator struct {
@@ -296,11 +335,17 @@ func (a IsAPIVersionValidator) failInfo(actual interface{}, not bool) []string {
 	return splitInfof(isAPIVersionFailFormat+"\nActual:%s", a.Of, trustedMarshalYAML(actual))
 }
 
-func (a IsAPIVersionValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
-	if kind, ok := docs[idx]["apiVersion"].(string); (ok && kind == a.Of) != not {
+func (a IsAPIVersionValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	manifest, err := assert.GetManifest(docs)
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+
+	not := assert.IsNegative()
+	if kind, ok := manifest["apiVersion"].(string); (ok && kind == a.Of) != not {
 		return true, []string{}
 	}
-	return false, a.failInfo(docs[idx]["apiVersion"], not)
+	return false, a.failInfo(manifest["apiVersion"], not)
 }
 
 type HasDocumentsValidator struct {
@@ -323,7 +368,8 @@ func (a HasDocumentsValidator) failInfo(actual int, not bool) []string {
 	)
 }
 
-func (a HasDocumentsValidator) Validate(docs []K8sManifest, idx int, not bool) (bool, []string) {
+func (a HasDocumentsValidator) Validate(docs []K8sManifest, assert AssertInfoProvider) (bool, []string) {
+	not := assert.IsNegative()
 	if len(docs) == a.Count != not {
 		return true, []string{}
 	}

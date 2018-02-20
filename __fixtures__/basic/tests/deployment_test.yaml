@@ -1,8 +1,8 @@
-suite: test suite name
+suite: test deployment
 templates:
   - deployment.yaml
 tests:
-  - it: should ...
+  - it: should pass all assertions
     values:
       - ./values/image.yaml
     set:

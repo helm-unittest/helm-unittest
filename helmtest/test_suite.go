@@ -75,7 +75,7 @@ func (s *TestSuite) polishTestJob() {
 
 func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error) {
 	copiedChart := new(chart.Chart)
-	copiedChart = targetChart
+	*copiedChart = *targetChart
 
 	if len(s.Templates) > 0 {
 		filteredTemplate := make([]*chart.Template, len(s.Templates))

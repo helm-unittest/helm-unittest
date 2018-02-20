@@ -61,15 +61,21 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 	for file, rendered := range outputOfFiles {
 		documents := strings.Split(rendered, "---")
 		manifests := make([]K8sManifest, len(documents))
-		for i, doc := range documents {
+
+		manifestCount := 0
+		for _, doc := range documents {
 			manifest := make(K8sManifest)
 			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
 				result.ExecError = err
 				return result
 			}
-			manifests[i] = manifest
+
+			if len(manifest) > 0 {
+				manifests[manifestCount] = manifest
+				manifestCount++
+			}
 		}
-		manifestsOfFiles[filepath.Base(file)] = manifests
+		manifestsOfFiles[filepath.Base(file)] = manifests[:manifestCount]
 	}
 
 	testPass := true
@@ -94,7 +100,6 @@ func (t *TestJob) vals() ([]byte, error) {
 
 	for _, valueFile := range t.Values {
 		currentMap := map[interface{}]interface{}{}
-		fmt.Print(t.definitionFile)
 		valueFilePath := filepath.Join(filepath.Dir(t.definitionFile), valueFile)
 		bytes, err := ioutil.ReadFile(valueFilePath)
 		if err != nil {

@@ -14,9 +14,9 @@ func TestParseTestSuiteFileOk(t *testing.T) {
 	s, err := ParseTestSuiteFile("../__fixtures__/basic/tests/deployment_test.yaml")
 
 	a.Nil(err)
-	a.Equal(s.Name, "test suite name")
+	a.Equal(s.Name, "test deployment")
 	a.Equal(s.Templates, []string{"deployment.yaml"})
-	a.Equal(s.Tests[0].Name, "should ...")
+	a.Equal(s.Tests[0].Name, "should pass all assertions")
 	// a.Equal(s.Tests[0].Values, []string{"values.yaml"})
 	// a.Equal(s.Tests[0].Set, map[string]interface{}{
 	// 	"a.b.c": "ABC",
