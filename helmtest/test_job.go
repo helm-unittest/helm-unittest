@@ -16,10 +16,16 @@ import (
 type K8sManifest map[string]interface{}
 
 type TestJob struct {
-	Name                    string `yaml:"it"`
-	Values                  []string
-	Set                     map[string]interface{}
-	Assertions              []Assertion `yaml:"asserts"`
+	Name       string `yaml:"it"`
+	Values     []string
+	Set        map[string]interface{}
+	Assertions []Assertion `yaml:"asserts"`
+	Release    struct {
+		Name      string
+		Namespace string
+		Revision  int
+		IsUpgrade bool
+	}
 	definitionFile          string
 	defaultTemplateToAssert string
 }
@@ -34,13 +40,7 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 	}
 
 	config := &chart.Config{Raw: string(vv), Values: map[string]*chart.Value{}}
-	options := chartutil.ReleaseOptions{
-		Name:      "RELEASE_NAME",
-		Time:      timeconv.Now(),
-		Namespace: "NAMESPACE",
-		//Revision:  1,
-		//IsInstall: true,
-	}
+	options := *t.releaseOption()
 
 	// Set up engine.
 	renderer := engine.New()
@@ -122,4 +122,22 @@ func (t *TestJob) vals() ([]byte, error) {
 		base = mergeValues(base, setMap)
 	}
 	return yaml.Marshal(base)
+}
+
+func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
+	options := chartutil.ReleaseOptions{
+		Name:      "RELEASE-NAME",
+		Namespace: "NAMESPACE",
+		Time:      timeconv.Now(),
+		Revision:  t.Release.Revision,
+		IsInstall: !t.Release.IsUpgrade,
+		IsUpgrade: t.Release.IsUpgrade,
+	}
+	if t.Release.Name != "" {
+		options.Name = t.Release.Name
+	}
+	if t.Release.Namespace != "" {
+		options.Namespace = t.Release.Namespace
+	}
+	return &options
 }

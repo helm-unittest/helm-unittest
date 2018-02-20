@@ -98,3 +98,26 @@ asserts:
 	a.False(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
+
+func TestRunJobWithReleaseSetting(t *testing.T) {
+	c, _ := chartutil.Load("../__fixtures__/basic")
+	manifest := `
+it: should work
+release:
+  name: my-release
+asserts:
+  - equal:
+      path: metadata.name
+      value: my-release-basic
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.Run(c, &TestJobResult{})
+
+	a := assert.New(t)
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
