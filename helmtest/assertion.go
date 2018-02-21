@@ -4,28 +4,23 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/lrills/helm-test/helmtest/common"
+	"github.com/lrills/helm-test/helmtest/validators"
+
 	"github.com/mitchellh/mapstructure"
 )
-
-type AssertInfoProvider interface {
-	GetManifest(manifests []K8sManifest) (K8sManifest, error)
-	IsNegative() bool
-}
 
 type Assertion struct {
 	Template      string
 	DocumentIndex int
 	Not           bool
 	AssertType    string
-	validator     Validatable
+	validator     validators.Validatable
 	antonym       bool
 }
 
-func (a *Assertion) Assert(
-	templatesResult map[string][]K8sManifest,
-	result *AssertionResult,
-) *AssertionResult {
-
+// Assert validate the rendered manifests with validator
+func (a *Assertion) Assert(templatesResult map[string][]common.K8sManifest, result *AssertionResult) *AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
@@ -38,7 +33,7 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) GetManifest(manifests []K8sManifest) (K8sManifest, error) {
+func (a *Assertion) GetManifest(manifests []common.K8sManifest) (common.K8sManifest, error) {
 	if len(manifests) > a.DocumentIndex {
 		return manifests[a.DocumentIndex], nil
 	}
@@ -59,6 +54,7 @@ func (a *Assertion) noFileErrMessage() string {
 	return "\tassertion.template must be given if testsuite.templates is empty"
 }
 
+// UnmarshalYAML implement yaml.Unmalshaler, construct validator according to the assert type
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	assertDef := make(map[string]interface{})
 	if err := unmarshal(&assertDef); err != nil {
@@ -108,7 +104,7 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 			}
 
 			a.AssertType = assertName
-			a.validator = validator.(Validatable)
+			a.validator = validator.(validators.Validatable)
 			a.antonym = correspondDef.antonym
 		}
 	}
@@ -121,18 +117,18 @@ type assertTypeDef struct {
 }
 
 var assertTypeMapping = map[string]assertTypeDef{
-	// "matchSnapshot": {reflect.TypeOf(MatchSnapshotValidator{}), false},
-	"equal":         {reflect.TypeOf(EqualValidator{}), false},
-	"notEqual":      {reflect.TypeOf(EqualValidator{}), true},
-	"matchRegex":    {reflect.TypeOf(MatchRegexValidator{}), false},
-	"notMatchRegex": {reflect.TypeOf(MatchRegexValidator{}), true},
-	"contains":      {reflect.TypeOf(ContainsValidator{}), false},
-	"notContains":   {reflect.TypeOf(ContainsValidator{}), true},
-	"isNull":        {reflect.TypeOf(IsNullValidator{}), false},
-	"isNotNull":     {reflect.TypeOf(IsNullValidator{}), true},
-	"isEmpty":       {reflect.TypeOf(IsEmptyValidator{}), false},
-	"isNotEmpty":    {reflect.TypeOf(IsEmptyValidator{}), true},
-	"isKind":        {reflect.TypeOf(IsKindValidator{}), false},
-	"isAPIVersion":  {reflect.TypeOf(IsAPIVersionValidator{}), false},
-	"hasDocuments":  {reflect.TypeOf(HasDocumentsValidator{}), false},
+	// "matchSnapshot": {reflect.TypeOf(validators.MatchSnapshotValidator{}), false},
+	"equal":         {reflect.TypeOf(validators.EqualValidator{}), false},
+	"notEqual":      {reflect.TypeOf(validators.EqualValidator{}), true},
+	"matchRegex":    {reflect.TypeOf(validators.MatchRegexValidator{}), false},
+	"notMatchRegex": {reflect.TypeOf(validators.MatchRegexValidator{}), true},
+	"contains":      {reflect.TypeOf(validators.ContainsValidator{}), false},
+	"notContains":   {reflect.TypeOf(validators.ContainsValidator{}), true},
+	"isNull":        {reflect.TypeOf(validators.IsNullValidator{}), false},
+	"isNotNull":     {reflect.TypeOf(validators.IsNullValidator{}), true},
+	"isEmpty":       {reflect.TypeOf(validators.IsEmptyValidator{}), false},
+	"isNotEmpty":    {reflect.TypeOf(validators.IsEmptyValidator{}), true},
+	"isKind":        {reflect.TypeOf(validators.IsKindValidator{}), false},
+	"isAPIVersion":  {reflect.TypeOf(validators.IsAPIVersionValidator{}), false},
+	"hasDocuments":  {reflect.TypeOf(validators.HasDocumentsValidator{}), false},
 }

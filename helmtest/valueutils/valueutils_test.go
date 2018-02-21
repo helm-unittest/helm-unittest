@@ -1,15 +1,16 @@
-package helmtest_test
+package valueutils_test
 
 import (
 	"testing"
 
-	. "github.com/lrills/helm-test/helmtest"
+	"github.com/lrills/helm-test/helmtest/common"
+	. "github.com/lrills/helm-test/helmtest/valueutils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
-	data := K8sManifest{
+	data := common.K8sManifest{
 		"a": map[interface{}]interface{}{
 			"b": []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
 		},

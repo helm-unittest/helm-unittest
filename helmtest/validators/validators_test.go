@@ -1,9 +1,10 @@
-package helmtest_test
+package validators_test
 
 import (
 	"testing"
 
-	. "github.com/lrills/helm-test/helmtest"
+	"github.com/lrills/helm-test/helmtest/common"
+	. "github.com/lrills/helm-test/helmtest/validators"
 	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -12,7 +13,7 @@ type MockAssertInfoProvider struct {
 	not bool
 }
 
-func (m MockAssertInfoProvider) GetManifest(manifests []K8sManifest) (K8sManifest, error) {
+func (m MockAssertInfoProvider) GetManifest(manifests []common.K8sManifest) (common.K8sManifest, error) {
 	return manifests[0], nil
 }
 
@@ -26,11 +27,11 @@ a:
   b:
     - c: 123
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := EqualValidator{"a.b[0].c", 123}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
@@ -41,11 +42,11 @@ a:
   b:
     - c: 123
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := EqualValidator{"a.b[0].c", 321}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
@@ -56,11 +57,11 @@ a:
   b:
     - c: 123
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := EqualValidator{"a.b[0]", map[interface{}]interface{}{"d": 321}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b[0]",
@@ -83,11 +84,11 @@ a:
   b:
     - c: 123
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := EqualValidator{"a.b[0]", map[interface{}]interface{}{"c": 123}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b[0]",
@@ -102,11 +103,11 @@ a:
   b:
     - c: 123
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := EqualValidator{"a.b.e", map[string]int{"d": 321}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
@@ -121,11 +122,11 @@ a:
   b:
     - c: hello world
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := MatchRegexValidator{"a.b[0].c", "^hello"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
@@ -136,20 +137,20 @@ a:
   b:
     - c: hello world
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := MatchRegexValidator{"a.b[0].c", "^foo"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestMatchRegexValidatorWhenRegexCompileFail(t *testing.T) {
-	data := K8sManifest{"a": "A"}
+	data := common.K8sManifest{"a": "A"}
 
 	a := MatchRegexValidator{"a", "+"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
@@ -161,11 +162,11 @@ func TestMatchRegexValidatorWhenNotString(t *testing.T) {
 	manifest := `
 a: 123.456
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := MatchRegexValidator{"a", "^foo"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
@@ -180,11 +181,11 @@ a:
   b:
     - c: foo
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := MatchRegexValidator{"a.b[0].c", "^bar"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b[0].c",
@@ -199,11 +200,11 @@ a:
   b:
     - c: foo
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := MatchRegexValidator{"a.b[0].c", "^foo"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b[0].c",
@@ -219,11 +220,11 @@ a:
     - c: hello world
     - d: foo bar
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := ContainsValidator{"a.b", map[interface{}]interface{}{"d": "foo bar"}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
@@ -235,11 +236,11 @@ a:
     - c: hello world
     - d: foo bar
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := ContainsValidator{"a.b", map[interface{}]interface{}{"d": "hello bar"}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
@@ -251,11 +252,11 @@ a:
     - c: hello world
     - d: foo bar
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := ContainsValidator{"a.b", map[interface{}]interface{}{"e": "bar bar"}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b",
@@ -274,11 +275,11 @@ a:
     - c: hello world
     - d: foo bar
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := ContainsValidator{"a.b", map[interface{}]interface{}{"d": "foo bar"}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a.b",
@@ -297,11 +298,11 @@ a:
     c: hello world
     d: foo bar
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
-	a := ContainsValidator{"a.b", K8sManifest{"d": "foo bar"}}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	a := ContainsValidator{"a.b", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
@@ -313,33 +314,33 @@ a:
 
 func TestIsNullValidatorWhenOk(t *testing.T) {
 	manifest := "a:"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsNullValidator{"a"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsNullValidatorWhenNotOk(t *testing.T) {
 	manifest := "a: 0"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsNullValidator{"a"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsNullValidatorWhenFail(t *testing.T) {
 	manifest := "a: A"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsNullValidator{"a"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a",
@@ -350,11 +351,11 @@ func TestIsNullValidatorWhenFail(t *testing.T) {
 
 func TestIsNullValidatorWhenNOTFail(t *testing.T) {
 	manifest := "a:"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsNullValidator{"a"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Path:	a",
@@ -372,12 +373,12 @@ d: null
 e: []
 f: {}
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	for key := range data {
 		validator := IsEmptyValidator{key}
-		pass, diff := validator.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+		pass, diff := validator.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 		assert.True(t, pass)
 		assert.Equal(t, []string{}, diff)
 	}
@@ -390,12 +391,12 @@ b: "b"
 c: 1
 d: [d]
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	for key := range data {
 		validator := IsEmptyValidator{key}
-		pass, diff := validator.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+		pass, diff := validator.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 		assert.True(t, pass)
 		assert.Equal(t, []string{}, diff)
 	}
@@ -408,14 +409,14 @@ b: "b"
 c: 1
 d: [d]
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	for key, value := range data {
 		validator := IsEmptyValidator{key}
 		marshaledValue, _ := yaml.Marshal(value)
 		valueYAML := string(marshaledValue)
-		pass, diff := validator.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+		pass, diff := validator.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"Path:	" + key,
@@ -434,14 +435,14 @@ d: null
 e: []
 f: {}
 `
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	for key, value := range data {
 		validator := IsEmptyValidator{key}
 		marshaledValue, _ := yaml.Marshal(value)
 		valueYAML := string(marshaledValue)
-		pass, diff := validator.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+		pass, diff := validator.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"Path:	" + key,
@@ -453,33 +454,33 @@ f: {}
 
 func TestIsKindValidatorWhenOk(t *testing.T) {
 	manifest := "kind: Pod"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsKindValidator{"Pod"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsKindValidatorWhenNotOk(t *testing.T) {
 	manifest := "kind: Service"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsKindValidator{"Pod"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsKindValidatorWhenFail(t *testing.T) {
 	manifest := "kind: Pod"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsKindValidator{"Service"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected kind:	Service",
@@ -489,11 +490,11 @@ func TestIsKindValidatorWhenFail(t *testing.T) {
 
 func TestIsKindValidatorWhenNotFail(t *testing.T) {
 	manifest := "kind: Pod"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsKindValidator{"Pod"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected NOT to be kind:	Pod",
@@ -502,33 +503,33 @@ func TestIsKindValidatorWhenNotFail(t *testing.T) {
 
 func TestIsAPiVersionValidatorWhenOk(t *testing.T) {
 	manifest := "apiVersion: v1"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsAPIVersionValidator{"v1"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsAPiVersionValidatorWhenNotOk(t *testing.T) {
 	manifest := "apiVersion: v1"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsAPIVersionValidator{"v2"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
 	manifest := "apiVersion: v1"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsAPIVersionValidator{"v2"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected apiVersion:	v2",
@@ -538,11 +539,11 @@ func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
 
 func TestIsAPIVersionValidatorWhenNOTFail(t *testing.T) {
 	manifest := "apiVersion: v1"
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifest), &data)
 
 	a := IsAPIVersionValidator{"v1"}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected NOT to be apiVersion:	v1",
@@ -550,28 +551,28 @@ func TestIsAPIVersionValidatorWhenNOTFail(t *testing.T) {
 }
 
 func TestHasDocumentsValidatorOk(t *testing.T) {
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 
 	a := HasDocumentsValidator{2}
-	pass, diff := a.Validate([]K8sManifest{data, data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data, data}, MockAssertInfoProvider{})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestHasDocumentsValidatorNotOk(t *testing.T) {
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 
 	a := HasDocumentsValidator{2}
-	pass, diff := a.Validate([]K8sManifest{data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data}, MockAssertInfoProvider{not: true})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
 
 func TestHasDocumentsValidatorFail(t *testing.T) {
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 
 	a := HasDocumentsValidator{1}
-	pass, diff := a.Validate([]K8sManifest{data, data}, MockAssertInfoProvider{})
+	pass, diff := a.Validate([]common.K8sManifest{data, data}, MockAssertInfoProvider{})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected documents count:	1",
@@ -580,10 +581,10 @@ func TestHasDocumentsValidatorFail(t *testing.T) {
 }
 
 func TestHasDocumentsValidatorNotFail(t *testing.T) {
-	data := K8sManifest{}
+	data := common.K8sManifest{}
 
 	a := HasDocumentsValidator{2}
-	pass, diff := a.Validate([]K8sManifest{data, data}, MockAssertInfoProvider{not: true})
+	pass, diff := a.Validate([]common.K8sManifest{data, data}, MockAssertInfoProvider{not: true})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Expected documents count NOT to be:	2",

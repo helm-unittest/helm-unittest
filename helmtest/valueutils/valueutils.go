@@ -1,4 +1,4 @@
-package helmtest
+package valueutils
 
 import (
 	"bytes"
@@ -6,10 +6,11 @@ import (
 	"io"
 	"strconv"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/lrills/helm-test/helmtest/common"
 )
 
-func GetValueOfSetPath(manifest K8sManifest, path string) (interface{}, error) {
+// GetValueOfSetPath get the value of the `--set` format path from a manifest
+func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, error) {
 	if path == "" {
 		return manifest, nil
 	}
@@ -21,6 +22,7 @@ func GetValueOfSetPath(manifest K8sManifest, path string) (interface{}, error) {
 	return tr.data, nil
 }
 
+// BuildValueOfSetPath build the complete form the `--set` format path and its value
 func BuildValueOfSetPath(val interface{}, path string) (map[interface{}]interface{}, error) {
 	if path == "" {
 		return nil, fmt.Errorf("set path is empty")
@@ -46,22 +48,28 @@ func (tr *fetchTraverser) traverseMapKey(key string) error {
 	if d, ok := tr.data.(map[interface{}]interface{}); ok {
 		tr.data = d[key]
 		return nil
-	} else if d, ok := tr.data.(K8sManifest); ok {
+	} else if d, ok := tr.data.(common.K8sManifest); ok {
 		tr.data = d[key]
 		return nil
 	}
-	return fmt.Errorf("can't get [\"%s\"] from a non map type:\n%s", key, trustedMarshalYAML(tr.data))
+	return fmt.Errorf(
+		"can't get [\"%s\"] from a non map type:\n%s",
+		key, common.TrustedMarshalYAML(tr.data),
+	)
 }
 
 func (tr *fetchTraverser) traverseListIdx(idx int) error {
 	if d, ok := tr.data.([]interface{}); ok {
 		if idx < 0 || idx >= len(d) {
-			return fmt.Errorf("[%d] :\n%s", idx, trustedMarshalYAML(d))
+			return fmt.Errorf("[%d] :\n%s", idx, common.TrustedMarshalYAML(d))
 		}
 		tr.data = d[idx]
 		return nil
 	}
-	return fmt.Errorf("can't get [%d] from a non array type:\n%s", idx, trustedMarshalYAML(tr.data))
+	return fmt.Errorf(
+		"can't get [%d] from a non array type:\n%s",
+		idx, common.TrustedMarshalYAML(tr.data),
+	)
 }
 
 type buildTraverser struct {
@@ -182,8 +190,8 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	return nil
 }
 
-// copied from helm
-func mergeValues(dest map[interface{}]interface{}, src map[interface{}]interface{}) map[interface{}]interface{} {
+// MergeValues deeply merge values, copied from helm
+func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface{}) map[interface{}]interface{} {
 	for k, v := range src {
 		// If the key doesn't exist already, then just set the key to that value
 		if _, exists := dest[k]; !exists {
@@ -209,7 +217,7 @@ func mergeValues(dest map[interface{}]interface{}, src map[interface{}]interface
 			continue
 		}
 		// If we got to this point, it is a map in both, so merge them
-		dest[k] = mergeValues(destMap, nextMap)
+		dest[k] = MergeValues(destMap, nextMap)
 	}
 	return dest
 }
@@ -253,12 +261,4 @@ func runeSet(r []rune) map[rune]bool {
 		s[rr] = true
 	}
 	return s
-}
-
-func trustedMarshalYAML(d interface{}) string {
-	s, err := yaml.Marshal(d)
-	if err != nil {
-		panic(err)
-	}
-	return string(s)
 }

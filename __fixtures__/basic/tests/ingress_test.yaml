@@ -4,8 +4,5 @@ templates:
 tests:
   - it: should render nothing
     asserts:
-      - equal:
-          path: a
-          value: b
       - hasDocuments:
           count: 0

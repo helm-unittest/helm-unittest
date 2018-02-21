@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lrills/helm-test/helmtest/common"
+	"github.com/lrills/helm-test/helmtest/valueutils"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
 )
-
-type K8sManifest map[string]interface{}
 
 type TestJob struct {
 	Name       string `yaml:"it"`
@@ -33,17 +33,14 @@ type TestJob struct {
 func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
 	result.DisplayName = t.Name
 
-	vv, err := t.vals()
+	userValues, err := t.getUserValues()
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 
-	config := &chart.Config{Raw: string(vv), Values: map[string]*chart.Value{}}
+	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
 	options := *t.releaseOption()
-
-	// Set up engine.
-	renderer := engine.New()
 
 	vals, err := chartutil.ToRenderValues(targetChart, config, options)
 	if err != nil {
@@ -51,51 +48,25 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 		return result
 	}
 
+	renderer := engine.New()
 	outputOfFiles, err := renderer.Render(targetChart, vals)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 
-	manifestsOfFiles := make(map[string][]K8sManifest)
-	for file, rendered := range outputOfFiles {
-		documents := strings.Split(rendered, "---")
-		manifests := make([]K8sManifest, len(documents))
-
-		manifestCount := 0
-		for _, doc := range documents {
-			manifest := make(K8sManifest)
-			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
-				result.ExecError = err
-				return result
-			}
-
-			if len(manifest) > 0 {
-				manifests[manifestCount] = manifest
-				manifestCount++
-			}
-		}
-		manifestsOfFiles[filepath.Base(file)] = manifests[:manifestCount]
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
+	if err != nil {
+		result.ExecError = err
+		return result
 	}
 
-	testPass := true
-	assertsResult := make([]*AssertionResult, len(t.Assertions))
-	for idx, assertion := range t.Assertions {
-		if assertion.Template == "" {
-			assertion.Template = t.defaultTemplateToAssert
-		}
-		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
-		assertsResult[idx] = result
-		testPass = testPass && result.Passed
-	}
-
-	result.Passed = testPass
-	result.AssertsResult = assertsResult
+	result.Passed, result.AssertsResult = t.runAssertions(manifestsOfFiles)
 	return result
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) vals() ([]byte, error) {
+func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[interface{}]interface{}{}
 
 	for _, valueFile := range t.Values {
@@ -109,17 +80,16 @@ func (t *TestJob) vals() ([]byte, error) {
 		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
 			return []byte{}, fmt.Errorf("failed to parse %s: %s", valueFile, err)
 		}
-
-		base = mergeValues(base, currentMap)
+		base = valueutils.MergeValues(base, currentMap)
 	}
 
 	for path, valus := range t.Set {
-		setMap, err := BuildValueOfSetPath(valus, path)
+		setMap, err := valueutils.BuildValueOfSetPath(valus, path)
 		if err != nil {
 			return []byte{}, err
 		}
 
-		base = mergeValues(base, setMap)
+		base = valueutils.MergeValues(base, setMap)
 	}
 	return yaml.Marshal(base)
 }
@@ -140,4 +110,41 @@ func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
 		options.Namespace = t.Release.Namespace
 	}
 	return &options
+}
+
+func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (map[string][]common.K8sManifest, error) {
+	manifestsOfFiles := make(map[string][]common.K8sManifest)
+	for file, rendered := range outputOfFiles {
+		documents := strings.Split(rendered, "---")
+		manifests := make([]common.K8sManifest, len(documents))
+
+		manifestCount := 0
+		for _, doc := range documents {
+			manifest := make(common.K8sManifest)
+			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
+				return nil, err
+			}
+
+			if len(manifest) > 0 {
+				manifests[manifestCount] = manifest
+				manifestCount++
+			}
+		}
+		manifestsOfFiles[filepath.Base(file)] = manifests[:manifestCount]
+	}
+	return manifestsOfFiles, nil
+}
+
+func (t *TestJob) runAssertions(manifestsOfFiles map[string][]common.K8sManifest) (bool, []*AssertionResult) {
+	testPass := true
+	assertsResult := make([]*AssertionResult, len(t.Assertions))
+	for idx, assertion := range t.Assertions {
+		if assertion.Template == "" {
+			assertion.Template = t.defaultTemplateToAssert
+		}
+		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
+		assertsResult[idx] = result
+		testPass = testPass && result.Passed
+	}
+	return testPass, assertsResult
 }

@@ -80,7 +80,9 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 		}
 
 		tr.printChartHeader(logger, chart, chartPath)
-		chartPassed := tr.runSuites(suiteFiles, chart, logger)
+		chartPassed, suitesResult := tr.runSuites(suiteFiles, chart, logger)
+		tr.printSuiteResult(logger, suitesResult)
+
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
 	}
@@ -88,7 +90,7 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 	return allPassed
 }
 
-func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger loggable) bool {
+func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger loggable) (bool, []*TestSuiteResult) {
 	chartPassed := true
 	suitesResult := make([]*TestSuiteResult, len(suiteFiles))
 	for idx, file := range suiteFiles {
@@ -104,6 +106,10 @@ func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger 
 		suitesResult[idx] = result
 	}
 
+	return chartPassed, suitesResult
+}
+
+func (tr *TestRunner) printSuiteResult(logger loggable, suitesResult []*TestSuiteResult) {
 	for _, suiteResult := range suitesResult {
 		suiteResult.print(logger, 0)
 		tr.countSuite(suiteResult)
@@ -111,7 +117,6 @@ func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger 
 			tr.countTest(testsResult)
 		}
 	}
-	return chartPassed
 }
 
 func (tr *TestRunner) printSummary(logger loggable, elapsed time.Duration) {

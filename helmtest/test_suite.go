@@ -50,17 +50,7 @@ func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *Test
 		return result
 	}
 
-	suitePass := true
-	jobResults := make([]*TestJobResult, len(s.Tests))
-	for idx, testJob := range s.Tests {
-		jobResult := testJob.Run(preparedChart, &TestJobResult{Index: idx})
-		jobResults[idx] = jobResult
-		if !jobResult.Passed {
-			suitePass = false
-		}
-	}
-	result.Passed = suitePass
-	result.TestsResult = jobResults
+	result.Passed, result.TestsResult = s.runTestJobs(preparedChart)
 	return result
 }
 
@@ -104,4 +94,17 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 		copiedChart.Templates = filteredTemplate
 	}
 	return copiedChart, nil
+}
+
+func (s *TestSuite) runTestJobs(chart *chart.Chart) (bool, []*TestJobResult) {
+	suitePass := true
+	jobResults := make([]*TestJobResult, len(s.Tests))
+	for idx, testJob := range s.Tests {
+		jobResult := testJob.Run(chart, &TestJobResult{Index: idx})
+		jobResults[idx] = jobResult
+		if !jobResult.Passed {
+			suitePass = false
+		}
+	}
+	return suitePass, jobResults
 }
