@@ -3,8 +3,8 @@ package validators
 import (
 	"reflect"
 
-	"github.com/lrills/helm-test/helmtest/common"
-	"github.com/lrills/helm-test/helmtest/valueutils"
+	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/valueutils"
 )
 
 // EqualValidator validate whether the value of Path equal to Value

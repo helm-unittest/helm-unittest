@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/lrills/helm-test/helmtest"
+	"github.com/lrills/helm-unittest/unittest"
 )
 
 func main() {
-	helmtest.Execute()
+	unittest.Execute()
 }

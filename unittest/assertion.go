@@ -1,11 +1,11 @@
-package helmtest
+package unittest
 
 import (
 	"fmt"
 	"reflect"
 
-	"github.com/lrills/helm-test/helmtest/common"
-	"github.com/lrills/helm-test/helmtest/validators"
+	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/validators"
 
 	"github.com/mitchellh/mapstructure"
 )

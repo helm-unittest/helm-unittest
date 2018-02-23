@@ -1,9 +1,9 @@
-package helmtest_test
+package unittest_test
 
 import (
 	"testing"
 
-	. "github.com/lrills/helm-test/helmtest"
+	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 

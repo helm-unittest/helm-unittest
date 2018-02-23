@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lrills/helm-test/helmtest/common"
+	"github.com/lrills/helm-unittest/unittest/common"
 	"github.com/pmezard/go-difflib/difflib"
 )
 

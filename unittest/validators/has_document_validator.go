@@ -3,7 +3,7 @@ package validators
 import (
 	"strconv"
 
-	"github.com/lrills/helm-test/helmtest/common"
+	"github.com/lrills/helm-unittest/unittest/common"
 )
 
 // HasDocumentsValidator validate whether the count of manifests rendered form template is Count

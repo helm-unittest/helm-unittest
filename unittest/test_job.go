@@ -1,4 +1,4 @@
-package helmtest
+package unittest
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lrills/helm-test/helmtest/common"
-	"github.com/lrills/helm-test/helmtest/valueutils"
+	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/valueutils"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"

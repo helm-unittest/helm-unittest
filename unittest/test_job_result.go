@@ -1,4 +1,4 @@
-package helmtest
+package unittest
 
 type TestJobResult struct {
 	DisplayName   string

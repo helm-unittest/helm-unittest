@@ -1,8 +1,8 @@
 package validators
 
 import (
-	"github.com/lrills/helm-test/helmtest/common"
-	"github.com/lrills/helm-test/helmtest/valueutils"
+	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/valueutils"
 )
 
 // IsNullValidator validate value of Path id kind
