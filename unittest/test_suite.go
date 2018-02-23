@@ -11,13 +11,6 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-type TestSuite struct {
-	Name           string `yaml:"suite"`
-	Templates      []string
-	Tests          []*TestJob
-	definitionFile string
-}
-
 func ParseTestSuiteFile(path string) (*TestSuite, error) {
 	var suite TestSuite
 	content, err := ioutil.ReadFile(path)
@@ -36,13 +29,20 @@ func ParseTestSuiteFile(path string) (*TestSuite, error) {
 		return &suite, err
 	}
 
+	suite.polishTestJobs()
 	return &suite, nil
+}
+
+type TestSuite struct {
+	Name           string `yaml:"suite"`
+	Templates      []string
+	Tests          []*TestJob
+	definitionFile string
 }
 
 func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestSuiteResult {
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
-	s.polishTestJob()
 
 	preparedChart, err := s.prepareChart(targetChart)
 	if err != nil {
@@ -54,12 +54,13 @@ func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *Test
 	return result
 }
 
-func (s *TestSuite) polishTestJob() {
+func (s *TestSuite) polishTestJobs() {
 	for _, test := range s.Tests {
 		test.definitionFile = s.definitionFile
 		if len(s.Templates) > 0 {
 			test.defaultTemplateToAssert = s.Templates[0]
 		}
+		test.polishAssertions()
 	}
 }
 

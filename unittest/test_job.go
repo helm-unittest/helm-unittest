@@ -139,12 +139,17 @@ func (t *TestJob) runAssertions(manifestsOfFiles map[string][]common.K8sManifest
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
 	for idx, assertion := range t.Assertions {
-		if assertion.Template == "" {
-			assertion.Template = t.defaultTemplateToAssert
-		}
 		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
 		assertsResult[idx] = result
 		testPass = testPass && result.Passed
 	}
 	return testPass, assertsResult
+}
+
+func (t *TestJob) polishAssertions() {
+	for _, assertion := range t.Assertions {
+		if assertion.Template == "" {
+			assertion.Template = t.defaultTemplateToAssert
+		}
+	}
 }
