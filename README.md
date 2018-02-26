@@ -1,13 +1,51 @@
 # helm unittest
 
+Unit test for *helm chart* in YAML with ease to keep your chart functional and robust!
+
+Feature:
+  - write test file in pure YAML
+  - render locally with no need of *tiller*
+  - create **nothing** on your cluster
+  - define values and release options
+  - [snapshot testing](#snapshot-testing)
+
+## Install
+
 ## Get Started
+
+Add the folowing test file to `$YOUR_CHART/tests/deployment_test.yaml`:
+
+```yaml
+suite: test deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: metadata.name
+          pattern: -my-chart$
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx:stable
+```
+and run:
+
+```
+$ helm unittest $YOUR_CHART
+```
+
+Now there is your first test! ;)  
+Please read the brief document below to learn writing your own tests.
 
 ## Test Suite
 
 A test suite is a collection of tests with the same purpose and scope defined in one single file. The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files, like:
 
 ```bash
-  helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
+$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
 ```
 
 The root structure of a test suite is like below:
@@ -24,13 +62,13 @@ tests:
 
 - **suite**: *string, optional*. The suite name to show on test result output.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite, only the ones specified here is rendered during testing. If omitted, all template files are rendered.
+- **templates**: *array of string, recommended*. The template files scope to test in this suite, only the ones specified here is rendered during testing. If omitted, all template files are rendered. File suffixed with `.tpl` is added automatically, you don't need to add them again.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
 ## Test Job
 
-The test job is the base unit for running unittest. Your chart is **rendered each time a test job run**, and validated with assertions defined in the test. You can setup your values used to render the chart in the test job with external values files or directly in the test job definition. Below is a test job example with all of its options defined:
+The test job is the base unit for rendering chart for testing. Your chart is **rendered each time a test job run**, and validated with assertions defined in the test. You can setup your values used to render the chart in the test job with external values files or directly in the test job definition. Below is a test job example with all of its options defined:
 
 ```yaml
 ...
@@ -43,7 +81,7 @@ tests:
       resources:
         limits:
           memory: 128Mi
-    releaseOption:
+    release:
       name: my-release
       namespace:
       revision: 9
@@ -60,7 +98,7 @@ tests:
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object.
 
-- **releaseOption**: *object, optional*. Define the `{{ .Release }}` object.
+- **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
@@ -117,6 +155,9 @@ Available assertion types are listed below:
 | `isKind` | **of**: *String*. Expected `kind` of manifest. | Assert the `kind` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: kind<br/>  value: ...<br/> | <pre>isKind:<br/>  of: Deployment</pre> |
 | `isApiVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isApiVersion:<br/>  of: v2</pre> |
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
+| `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
+
+### Antonym and `not`
 
 Notice that there are some antonym assertions, the following two assertions actually have same effect:
 ```yaml
@@ -129,3 +170,32 @@ Notice that there are some antonym assertions, the following two assertions actu
     path: kind
     value: Pod
 ```
+
+### Snapshot Testing
+
+Sometimes you just want to keep the rendered manifest not changed between editings without every details asserted. That's the reason for snapshot testing! Check the tests below:
+
+```yaml
+templates:
+  - deployment.yaml
+tests:
+  - it: pod spec should match snapshot
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
+  # or you can snapshot the whole manifest
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+```
+
+The `matchSnapshot` assertion validate the content rendered the same as cached last time. It fails if the content changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
+
+```
+$ helm unittest -u my-chart
+```
+The cache files is stored as `__snapshot__/my_deploy_test.yaml.snap` at the directory your test file placed, you should always add them in source control with your chart.
+
+## Contributing
+
+
