@@ -2,8 +2,6 @@ package validators
 
 import (
 	"strconv"
-
-	"github.com/lrills/helm-unittest/unittest/common"
 )
 
 // HasDocumentsValidator validate whether the count of manifests rendered form template is Count
@@ -28,10 +26,9 @@ func (a HasDocumentsValidator) failInfo(actual int, not bool) []string {
 }
 
 // Validate implement Validatable
-func (a HasDocumentsValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	not := assert.IsNegative()
-	if len(docs) == a.Count != not {
+func (a HasDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
+	if len(context.Docs) == a.Count != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(len(docs), not)
+	return false, a.failInfo(len(context.Docs), context.Negative)
 }

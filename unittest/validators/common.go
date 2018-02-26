@@ -5,16 +5,23 @@ import (
 	"strings"
 
 	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
-type AssertInfoProvider interface {
-	GetManifest(manifests []common.K8sManifest) (common.K8sManifest, error)
-	IsNegative() bool
+type SnapshotComparer interface {
+	CompareToSnapshot(content interface{}) *snapshot.SnapshotCompareResult
+}
+
+type ValidateContext struct {
+	Docs     []common.K8sManifest
+	Index    int
+	Negative bool
+	SnapshotComparer
 }
 
 type Validatable interface {
-	Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string)
+	Validate(context *ValidateContext) (bool, []string)
 }
 
 func splitInfof(format string, replacements ...string) []string {

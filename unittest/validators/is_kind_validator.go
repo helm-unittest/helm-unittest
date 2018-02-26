@@ -20,15 +20,11 @@ func (a IsKindValidator) failInfo(actual interface{}, not bool) []string {
 }
 
 // Validate implement Validatable
-func (a IsKindValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+func (a IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 
-	not := assert.IsNegative()
-	if kind, ok := manifest["kind"].(string); (ok && kind == a.Of) != not {
+	if kind, ok := manifest["kind"].(string); (ok && kind == a.Of) != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(manifest["kind"], not)
+	return false, a.failInfo(manifest["kind"], context.Negative)
 }

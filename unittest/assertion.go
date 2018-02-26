@@ -20,28 +20,35 @@ type Assertion struct {
 }
 
 // Assert validate the rendered manifests with validator
-func (a *Assertion) Assert(templatesResult map[string][]common.K8sManifest, result *AssertionResult) *AssertionResult {
+func (a *Assertion) Assert(
+	templatesResult map[string][]common.K8sManifest,
+	snapshotComparer validators.SnapshotComparer,
+	result *AssertionResult,
+) *AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
-	if rendered, ok := templatesResult[a.Template]; ok {
-		result.Passed, result.FailInfo = a.validator.Validate(rendered, a)
+	rendered, ok := templatesResult[a.Template]
+	if !ok {
+		result.FailInfo = []string{"Error:", a.noFileErrMessage()}
 		return result
 	}
 
-	result.FailInfo = []string{"Error:", a.noFileErrMessage()}
-	return result
-}
-
-func (a *Assertion) GetManifest(manifests []common.K8sManifest) (common.K8sManifest, error) {
-	if len(manifests) > a.DocumentIndex {
-		return manifests[a.DocumentIndex], nil
+	if len(rendered) <= a.DocumentIndex {
+		result.FailInfo = []string{
+			"Error:",
+			fmt.Sprintf("\tdocumentIndex %d out of range", a.DocumentIndex),
+		}
+		return result
 	}
-	return nil, fmt.Errorf("documentIndex %d out of range", a.DocumentIndex)
-}
 
-func (a *Assertion) IsNegative() bool {
-	return a.Not != a.antonym
+	result.Passed, result.FailInfo = a.validator.Validate(&validators.ValidateContext{
+		Docs:             rendered,
+		Index:            a.DocumentIndex,
+		Negative:         a.Not != a.antonym,
+		SnapshotComparer: snapshotComparer,
+	})
+	return result
 }
 
 func (a *Assertion) noFileErrMessage() string {
@@ -117,7 +124,7 @@ type assertTypeDef struct {
 }
 
 var assertTypeMapping = map[string]assertTypeDef{
-	// "matchSnapshot": {reflect.TypeOf(validators.MatchSnapshotValidator{}), false},
+	"matchSnapshot": {reflect.TypeOf(validators.MatchSnapshotValidator{}), false},
 	"equal":         {reflect.TypeOf(validators.EqualValidator{}), false},
 	"notEqual":      {reflect.TypeOf(validators.EqualValidator{}), true},
 	"matchRegex":    {reflect.TypeOf(validators.MatchRegexValidator{}), false},

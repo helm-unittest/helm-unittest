@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/lrills/helm-unittest/unittest"
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -37,7 +38,7 @@ asserts:
 		"a.b.c": "ABC",
 		"x.y.z": "XYZ",
 	})
-	assertions := make([]Assertion, 2)
+	assertions := make([]*Assertion, 2)
 	yaml.Unmarshal([]byte(`
   - equal:
       path: a.b
@@ -66,7 +67,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
@@ -91,7 +92,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
@@ -114,7 +115,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)

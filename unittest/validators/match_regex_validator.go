@@ -28,11 +28,8 @@ Actual:%s
 }
 
 // Validate implement Validatable
-func (a MatchRegexValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+func (a MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
@@ -44,13 +41,13 @@ func (a MatchRegexValidator) Validate(docs []common.K8sManifest, assert AssertIn
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	not := assert.IsNegative()
 	if s, ok := actual.(string); ok {
-		if p.MatchString(s) != not {
+		if p.MatchString(s) != context.Negative {
 			return true, []string{}
 		}
-		return false, a.failInfo(s, not)
+		return false, a.failInfo(s, context.Negative)
 	}
+
 	return false, splitInfof(errorFormat, fmt.Sprintf(
 		"expect '%s' to be a string, got:\n%s",
 		a.Path,

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/lrills/helm-unittest/unittest/common"
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/lrills/helm-unittest/unittest/valueutils"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/chartutil"
@@ -15,11 +16,23 @@ import (
 	"k8s.io/helm/pkg/timeconv"
 )
 
+type orderedSnapshotComparer struct {
+	cache   *snapshot.SnapshotCache
+	test    string
+	counter int
+}
+
+func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.SnapshotCompareResult {
+	s.counter++
+	return s.cache.Compare(s.test, s.counter, content)
+}
+
+// TestJob defintion of a test, including values and assertions
 type TestJob struct {
 	Name       string `yaml:"it"`
 	Values     []string
 	Set        map[string]interface{}
-	Assertions []Assertion `yaml:"asserts"`
+	Assertions []*Assertion `yaml:"asserts"`
 	Release    struct {
 		Name      string
 		Namespace string
@@ -30,7 +43,12 @@ type TestJob struct {
 	defaultTemplateToAssert string
 }
 
-func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobResult {
+// Run run the test
+func (t *TestJob) Run(
+	targetChart *chart.Chart,
+	cache *snapshot.SnapshotCache,
+	result *TestJobResult,
+) *TestJobResult {
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -39,17 +57,7 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 		return result
 	}
 
-	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
-	options := *t.releaseOption()
-
-	vals, err := chartutil.ToRenderValues(targetChart, config, options)
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
-	renderer := engine.New()
-	outputOfFiles, err := renderer.Render(targetChart, vals)
+	outputOfFiles, err := t.renderChart(targetChart, userValues)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -61,7 +69,7 @@ func (t *TestJob) Run(targetChart *chart.Chart, result *TestJobResult) *TestJobR
 		return result
 	}
 
-	result.Passed, result.AssertsResult = t.runAssertions(manifestsOfFiles)
+	result.Passed, result.AssertsResult = t.runAssertions(manifestsOfFiles, cache)
 	return result
 }
 
@@ -92,6 +100,23 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		base = valueutils.MergeValues(base, setMap)
 	}
 	return yaml.Marshal(base)
+}
+
+func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[string]string, error) {
+	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
+	options := *t.releaseOption()
+
+	vals, err := chartutil.ToRenderValues(targetChart, config, options)
+	if err != nil {
+		return nil, err
+	}
+
+	renderer := engine.New()
+	outputOfFiles, err := renderer.Render(targetChart, vals)
+	if err != nil {
+		return nil, err
+	}
+	return outputOfFiles, nil
 }
 
 func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
@@ -135,11 +160,19 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 	return manifestsOfFiles, nil
 }
 
-func (t *TestJob) runAssertions(manifestsOfFiles map[string][]common.K8sManifest) (bool, []*AssertionResult) {
+func (t *TestJob) runAssertions(
+	manifestsOfFiles map[string][]common.K8sManifest,
+	cache *snapshot.SnapshotCache,
+) (bool, []*AssertionResult) {
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
+
 	for idx, assertion := range t.Assertions {
-		result := assertion.Assert(manifestsOfFiles, &AssertionResult{Index: idx})
+		result := assertion.Assert(
+			manifestsOfFiles,
+			&orderedSnapshotComparer{cache: cache, test: t.Name},
+			&AssertionResult{Index: idx},
+		)
 		assertsResult[idx] = result
 		testPass = testPass && result.Passed
 	}

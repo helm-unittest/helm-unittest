@@ -24,39 +24,36 @@ Expected` + notAnnotation + `:
 %s`
 
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
-	if !not {
-		actualYAML := common.TrustedMarshalYAML(actual)
-		return splitInfof(
-			failFormat+`
+	if not {
+		return splitInfof(failFormat, a.Path, expectedYAML)
+	}
+
+	actualYAML := common.TrustedMarshalYAML(actual)
+	return splitInfof(
+		failFormat+`
 Actual:
 %s
 Diff:
 %s
 `,
-			a.Path,
-			expectedYAML,
-			actualYAML,
-			diff(expectedYAML, actualYAML),
-		)
-	}
-	return splitInfof(failFormat, a.Path, expectedYAML)
+		a.Path,
+		expectedYAML,
+		actualYAML,
+		diff(expectedYAML, actualYAML),
+	)
 }
 
 // Validate implement Validatable
-func (a EqualValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	not := assert.IsNegative()
-	if reflect.DeepEqual(a.Value, actual) == not {
-		return false, a.failInfo(actual, not)
+	if reflect.DeepEqual(a.Value, actual) == context.Negative {
+		return false, a.failInfo(actual, context.Negative)
 	}
 	return true, []string{}
 }

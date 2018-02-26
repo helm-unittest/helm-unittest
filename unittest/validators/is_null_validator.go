@@ -25,20 +25,15 @@ Expected` + notAnnotation + ` to be null, got:
 }
 
 // Validate implement Validatable
-func (a IsNullValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
-
+func (a IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	not := assert.IsNegative()
-	if actual == nil != not {
+	if actual == nil != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(actual, not)
+	return false, a.failInfo(actual, context.Negative)
 }

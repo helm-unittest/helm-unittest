@@ -27,11 +27,8 @@ Expected` + notAnnotation + ` to be empty, got:
 }
 
 // Validate implement Validatable
-func (a IsEmptyValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+func (a IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
@@ -50,9 +47,8 @@ func (a IsEmptyValidator) Validate(docs []common.K8sManifest, assert AssertInfoP
 		isEmpty = reflect.DeepEqual(actual, zero.Interface())
 	}
 
-	not := assert.IsNegative()
-	if isEmpty != not {
+	if isEmpty != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(actual, not)
+	return false, a.failInfo(actual, context.Negative)
 }

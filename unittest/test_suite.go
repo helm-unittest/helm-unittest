@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -29,7 +30,6 @@ func ParseTestSuiteFile(path string) (*TestSuite, error) {
 		return &suite, err
 	}
 
-	suite.polishTestJobs()
 	return &suite, nil
 }
 
@@ -41,8 +41,13 @@ type TestSuite struct {
 }
 
 func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestSuiteResult {
+	s.polishTestJobs()
+
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
+
+	snapshotCache, _ := snapshot.CreateSnapshotOfFile(s.definitionFile)
+	// TODO: should print warning
 
 	preparedChart, err := s.prepareChart(targetChart)
 	if err != nil {
@@ -50,7 +55,7 @@ func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *Test
 		return result
 	}
 
-	result.Passed, result.TestsResult = s.runTestJobs(preparedChart)
+	result.Passed, result.TestsResult = s.runTestJobs(preparedChart, snapshotCache)
 	return result
 }
 
@@ -97,11 +102,11 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 	return copiedChart, nil
 }
 
-func (s *TestSuite) runTestJobs(chart *chart.Chart) (bool, []*TestJobResult) {
+func (s *TestSuite) runTestJobs(chart *chart.Chart, cache *snapshot.SnapshotCache) (bool, []*TestJobResult) {
 	suitePass := true
 	jobResults := make([]*TestJobResult, len(s.Tests))
 	for idx, testJob := range s.Tests {
-		jobResult := testJob.Run(chart, &TestJobResult{Index: idx})
+		jobResult := testJob.Run(chart, cache, &TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 		if !jobResult.Passed {
 			suitePass = false

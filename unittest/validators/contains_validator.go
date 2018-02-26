@@ -36,18 +36,14 @@ Actual:
 }
 
 // Validate implement Validatable
-func (a ContainsValidator) Validate(docs []common.K8sManifest, assert AssertInfoProvider) (bool, []string) {
-	manifest, err := assert.GetManifest(docs)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+func (a ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
+	manifest := context.Docs[context.Index]
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	not := assert.IsNegative()
 	if actual, ok := actual.([]interface{}); ok {
 		found := false
 		for _, ele := range actual {
@@ -55,10 +51,10 @@ func (a ContainsValidator) Validate(docs []common.K8sManifest, assert AssertInfo
 				found = true
 			}
 		}
-		if found != not {
+		if found != context.Negative {
 			return true, []string{}
 		}
-		return false, a.failInfo(actual, not)
+		return false, a.failInfo(actual, context.Negative)
 	}
 
 	actualYAML, _ := yaml.Marshal(actual)
