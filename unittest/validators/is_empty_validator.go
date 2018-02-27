@@ -12,7 +12,7 @@ type IsEmptyValidator struct {
 	Path string
 }
 
-func (a IsEmptyValidator) failInfo(actual interface{}, not bool) []string {
+func (v IsEmptyValidator) failInfo(actual interface{}, not bool) []string {
 	var notAnnotation string
 	if not {
 		notAnnotation = " NOT"
@@ -23,14 +23,14 @@ Path:%s
 Expected` + notAnnotation + ` to be empty, got:
 %s
 `
-	return splitInfof(isEmptyFailFormat, a.Path, common.TrustedMarshalYAML(actual))
+	return splitInfof(isEmptyFailFormat, v.Path, common.TrustedMarshalYAML(actual))
 }
 
 // Validate implement Validatable
-func (a IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifest := context.Docs[context.Index]
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -50,5 +50,5 @@ func (a IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 	if isEmpty != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(actual, context.Negative)
+	return false, v.failInfo(actual, context.Negative)
 }

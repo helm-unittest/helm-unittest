@@ -12,7 +12,7 @@ type MatchSnapshotValidator struct {
 	Path string
 }
 
-func (a MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
+func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
 	var notAnnotation = ""
 	if not {
 		notAnnotation = " NOT"
@@ -28,14 +28,14 @@ Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(compared.Index)
 	} else {
 		infoToShow = diff(compared.Cached, compared.New)
 	}
-	return splitInfof(snapshotFailFormat, a.Path, infoToShow)
+	return splitInfof(snapshotFailFormat, v.Path, infoToShow)
 }
 
 // Validate implement Validatable
-func (a MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifest := context.Docs[context.Index]
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -45,5 +45,5 @@ func (a MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 	if result.Passed != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(result, context.Negative)
+	return false, v.failInfo(result, context.Negative)
 }

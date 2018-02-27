@@ -9,7 +9,8 @@ import (
 const snapshotDirName = "__snapshot__"
 const snapshotFileExt = ".snap"
 
-func CreateSnapshotOfFile(path string, isUpdating bool) (*Cache, error) {
+// CreateSnapshotOfSuite retruns snapshot.Cache for suite file, create `__snapshot__` dir if not existed
+func CreateSnapshotOfSuite(path string, isUpdating bool) (*Cache, error) {
 	cacheDir := filepath.Join(filepath.Dir(path), snapshotDirName)
 	if err := ensureDir(cacheDir); err != nil {
 		return nil, err

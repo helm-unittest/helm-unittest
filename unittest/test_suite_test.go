@@ -57,7 +57,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfFile(os.TempDir()+"my_test.yaml", false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(os.TempDir()+"my_test.yaml", false)
 	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)

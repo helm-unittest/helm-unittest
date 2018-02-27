@@ -14,7 +14,7 @@ type MatchRegexValidator struct {
 	Pattern string
 }
 
-func (a MatchRegexValidator) failInfo(actual string, not bool) []string {
+func (v MatchRegexValidator) failInfo(actual string, not bool) []string {
 	var notAnnotation = ""
 	if not {
 		notAnnotation = " NOT"
@@ -24,19 +24,19 @@ Path:%s
 Expected` + notAnnotation + ` to match:%s
 Actual:%s
 `
-	return splitInfof(regexFailFormat, a.Path, a.Pattern, actual)
+	return splitInfof(regexFailFormat, v.Path, v.Pattern, actual)
 }
 
 // Validate implement Validatable
-func (a MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifest := context.Docs[context.Index]
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	p, err := regexp.Compile(a.Pattern)
+	p, err := regexp.Compile(v.Pattern)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -45,12 +45,12 @@ func (a MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 		if p.MatchString(s) != context.Negative {
 			return true, []string{}
 		}
-		return false, a.failInfo(s, context.Negative)
+		return false, v.failInfo(s, context.Negative)
 	}
 
 	return false, splitInfof(errorFormat, fmt.Sprintf(
 		"expect '%s' to be a string, got:\n%s",
-		a.Path,
+		v.Path,
 		common.TrustedMarshalYAML(actual),
 	))
 }

@@ -15,7 +15,7 @@ type ContainsValidator struct {
 	Content interface{}
 }
 
-func (a ContainsValidator) failInfo(actual interface{}, not bool) []string {
+func (v ContainsValidator) failInfo(actual interface{}, not bool) []string {
 	var notAnnotation string
 	if not {
 		notAnnotation = " NOT"
@@ -29,17 +29,17 @@ Actual:
 `
 	return splitInfof(
 		containsFailFormat,
-		a.Path,
-		common.TrustedMarshalYAML([]interface{}{a.Content}),
+		v.Path,
+		common.TrustedMarshalYAML([]interface{}{v.Content}),
 		common.TrustedMarshalYAML(actual),
 	)
 }
 
 // Validate implement Validatable
-func (a ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifest := context.Docs[context.Index]
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -47,20 +47,20 @@ func (a ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	if actual, ok := actual.([]interface{}); ok {
 		found := false
 		for _, ele := range actual {
-			if reflect.DeepEqual(ele, a.Content) {
+			if reflect.DeepEqual(ele, v.Content) {
 				found = true
 			}
 		}
 		if found != context.Negative {
 			return true, []string{}
 		}
-		return false, a.failInfo(actual, context.Negative)
+		return false, v.failInfo(actual, context.Negative)
 	}
 
 	actualYAML, _ := yaml.Marshal(actual)
 	return false, splitInfof(errorFormat, fmt.Sprintf(
 		"expect '%s' to be an array, got:\n%s",
-		a.Path,
+		v.Path,
 		string(actualYAML),
 	))
 }

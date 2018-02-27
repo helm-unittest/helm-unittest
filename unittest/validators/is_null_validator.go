@@ -10,7 +10,7 @@ type IsNullValidator struct {
 	Path string
 }
 
-func (a IsNullValidator) failInfo(actual interface{}, not bool) []string {
+func (v IsNullValidator) failInfo(actual interface{}, not bool) []string {
 	var notAnnotation string
 	if not {
 		notAnnotation = " NOT"
@@ -21,13 +21,13 @@ Path:%s
 Expected` + notAnnotation + ` to be null, got:
 %s
 `
-	return splitInfof(isNullFailFormat, a.Path, common.TrustedMarshalYAML(actual))
+	return splitInfof(isNullFailFormat, v.Path, common.TrustedMarshalYAML(actual))
 }
 
 // Validate implement Validatable
-func (a IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifest := context.Docs[context.Index]
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
@@ -35,5 +35,5 @@ func (a IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 	if actual == nil != context.Negative {
 		return true, []string{}
 	}
-	return false, a.failInfo(actual, context.Negative)
+	return false, v.failInfo(actual, context.Negative)
 }

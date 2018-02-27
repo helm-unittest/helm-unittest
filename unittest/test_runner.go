@@ -109,7 +109,7 @@ func (tr *TestRunner) runSuites(
 			}
 		}
 
-		snapshotCache, _ := snapshot.CreateSnapshotOfFile(file, config.UpdateSnapshot)
+		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, config.UpdateSnapshot)
 		// TODO: should print warning
 
 		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
