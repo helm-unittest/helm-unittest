@@ -10,15 +10,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateSnapshotOfFileWhenNoCacheDir(t *testing.T) {
+func TestCreateSnapshotOfFileReturnCacheRight(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "test")
-	cache, err := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"))
+	cache, err := CreateSnapshotOfFile(filepath.Join(dir, "my_test.yaml"), true)
+	cache2, err2 := CreateSnapshotOfFile(filepath.Join(dir, "another_test.yaml"), false)
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.Equal(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), cache.Filepath)
+	a.Equal(filepath.Join(dir, "__snapshot__", "my_test.yaml.snap"), cache.Filepath)
+	a.True(cache.IsUpdating)
+
+	a.Nil(err2)
+	a.Equal(filepath.Join(dir, "__snapshot__", "another_test.yaml.snap"), cache2.Filepath)
+	a.False(cache2.IsUpdating)
+}
+
+func TestCreateSnapshotOfFileWhenNoCacheDir(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "test")
+	cache, _ := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
+
+	a := assert.New(t)
 	a.Nil(err)
 	a.True(info.IsDir())
 
@@ -32,13 +45,11 @@ func TestCreateSnapshotOfFileWhenNoCacheDir(t *testing.T) {
 func TestCreateSnapshotOfFileWhenCacheDirExisted(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "test")
 	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
-	cache, err := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"))
-
-	a := assert.New(t)
-	a.Nil(err)
-	a.Equal(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), cache.Filepath)
+	cache, _ := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
+
+	a := assert.New(t)
 	a.Nil(err)
 	a.True(info.IsDir())
 
@@ -52,19 +63,16 @@ func TestCreateSnapshotOfFileWhenCacheDirExisted(t *testing.T) {
 func TestCreateSnapshotOfFileWhenCacheFileExisted(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "test")
 	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
-	err := ioutil.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
+	ioutil.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
   1: |
     a:
       b: c
 `), os.ModePerm)
-
-	cache, err := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"))
-
-	a := assert.New(t)
-	a.Nil(err)
-	a.Equal(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), cache.Filepath)
+	cache, _ := CreateSnapshotOfFile(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
+
+	a := assert.New(t)
 	a.Nil(err)
 	a.True(info.IsDir())
 

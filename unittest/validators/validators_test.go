@@ -585,9 +585,9 @@ type mockSnapshotComparer struct {
 	mock.Mock
 }
 
-func (m *mockSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.SnapshotCompareResult {
+func (m *mockSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
 	args := m.Called(content)
-	return args.Get(0).(*snapshot.SnapshotCompareResult)
+	return args.Get(0).(*snapshot.CompareResult)
 }
 
 func TestSnapshotValidatorWhenOk(t *testing.T) {
@@ -595,8 +595,8 @@ func TestSnapshotValidatorWhenOk(t *testing.T) {
 	v := MatchSnapshotValidator{Path: "a"}
 
 	mockComparer := new(mockSnapshotComparer)
-	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.SnapshotCompareResult{
-		Matched: true,
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed: true,
 	})
 
 	pass, diff := v.Validate(&ValidateContext{
@@ -615,10 +615,10 @@ func TestSnapshotValidatorWhenNotOk(t *testing.T) {
 	v := MatchSnapshotValidator{Path: "a"}
 
 	mockComparer := new(mockSnapshotComparer)
-	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.SnapshotCompareResult{
-		Matched: false,
-		Cached:  "a:\n  b: c\n",
-		New:     "x:\n  y: x\n",
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed: false,
+		Cached: "a:\n  b: c\n",
+		New:    "x:\n  y: x\n",
 	})
 
 	pass, diff := v.Validate(&ValidateContext{
@@ -638,10 +638,10 @@ func TestSnapshotValidatorWhenFail(t *testing.T) {
 	v := MatchSnapshotValidator{Path: "a"}
 
 	mockComparer := new(mockSnapshotComparer)
-	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.SnapshotCompareResult{
-		Matched: false,
-		Cached:  "a:\n  b: c\n",
-		New:     "x:\n  y: x\n",
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed: false,
+		Cached: "a:\n  b: c\n",
+		New:    "x:\n  y: x\n",
 	})
 
 	pass, diff := v.Validate(&ValidateContext{
@@ -671,10 +671,10 @@ func TestSnapshotValidatorWhenNotFail(t *testing.T) {
 
 	cached := "a:\n  b: c\n"
 	mockComparer := new(mockSnapshotComparer)
-	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.SnapshotCompareResult{
-		Matched: true,
-		Cached:  cached,
-		New:     cached,
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed: true,
+		Cached: cached,
+		New:    cached,
 	})
 
 	pass, diff := v.Validate(&ValidateContext{

@@ -8,23 +8,27 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type SnapshotCompareResult struct {
-	Test    string
-	Index   int
-	Matched bool
-	New     string
-	Cached  string
+// CompareResult result return by Cache.Compare
+type CompareResult struct {
+	Passed bool
+	Test   string
+	Index  int
+	New    string
+	Cached string
 }
 
-type SnapshotCache struct {
-	Filepath string
-	Existed  bool
-	cached   map[string]map[int]string
-	new      map[string]map[int]string
-	updated  bool
+// Cache manage snapshot caching
+type Cache struct {
+	Filepath   string
+	Existed    bool
+	IsUpdating bool
+	cached     map[string]map[int]string
+	new        map[string]map[int]string
+	updated    bool
 }
 
-func (s *SnapshotCache) RestoreFromFile() error {
+// RestoreFromFile restore cached snapshot from cache file
+func (s *Cache) RestoreFromFile() error {
 	content, err := ioutil.ReadFile(s.Filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -40,7 +44,7 @@ func (s *SnapshotCache) RestoreFromFile() error {
 	return nil
 }
 
-func (s *SnapshotCache) getCached(test string, idx int) (string, bool) {
+func (s *Cache) getCached(test string, idx int) (string, bool) {
 	if cachedByTest, ok := s.cached[test]; ok {
 		if cachedOfAssertion, ok := cachedByTest[idx]; ok {
 			return cachedOfAssertion, true
@@ -49,19 +53,20 @@ func (s *SnapshotCache) getCached(test string, idx int) (string, bool) {
 	return "", false
 }
 
-func (s *SnapshotCache) Compare(test string, idx int, content interface{}) *SnapshotCompareResult {
+// Compare compare content to cached last time, return CompareResult
+func (s *Cache) Compare(test string, idx int, content interface{}) *CompareResult {
 	newSnapshot := s.saveNewCache(test, idx, content)
 	match, cachedSnapshot := s.compareToCached(test, idx, newSnapshot)
-	return &SnapshotCompareResult{
-		Test:    test,
-		Index:   idx,
-		Matched: match,
-		Cached:  cachedSnapshot,
-		New:     newSnapshot,
+	return &CompareResult{
+		Passed: s.IsUpdating || match,
+		Test:   test,
+		Index:  idx,
+		Cached: cachedSnapshot,
+		New:    newSnapshot,
 	}
 }
 
-func (s *SnapshotCache) compareToCached(test string, idx int, snapshot string) (bool, string) {
+func (s *Cache) compareToCached(test string, idx int, snapshot string) (bool, string) {
 	cached, ok := s.getCached(test, idx)
 	if !ok {
 		s.updated = true
@@ -75,7 +80,7 @@ func (s *SnapshotCache) compareToCached(test string, idx int, snapshot string) (
 	return true, cached
 }
 
-func (s *SnapshotCache) saveNewCache(test string, idx int, content interface{}) string {
+func (s *Cache) saveNewCache(test string, idx int, content interface{}) string {
 	snapshot := common.TrustedMarshalYAML(content)
 	if s.new == nil {
 		s.new = make(map[string]map[int]string)
@@ -88,7 +93,8 @@ func (s *SnapshotCache) saveNewCache(test string, idx int, content interface{}) 
 	return snapshot
 }
 
-func (s *SnapshotCache) ShouldUpdate() bool {
+// Changed check if content have changed according to all Compare called
+func (s *Cache) Changed() bool {
 	if s.updated {
 		return true
 	}
@@ -106,7 +112,8 @@ func (s *SnapshotCache) ShouldUpdate() bool {
 	return false
 }
 
-func (s *SnapshotCache) StoreToFile() error {
+// StoreToFile store new cache to file
+func (s *Cache) StoreToFile() error {
 	cacheData, err := yaml.Marshal(s.new)
 	if err != nil {
 		return err

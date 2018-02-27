@@ -44,3 +44,4 @@ tests:
           of: extensions/v1beta1
       - hasDocuments:
           count: 1
+      - matchSnapshot: {}

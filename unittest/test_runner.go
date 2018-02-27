@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -80,7 +81,7 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 		}
 
 		tr.printChartHeader(logger, chart, chartPath)
-		chartPassed, suitesResult := tr.runSuites(suiteFiles, chart, logger)
+		chartPassed, suitesResult := tr.runSuites(suiteFiles, chart, logger, config)
 		tr.printSuiteResult(logger, suitesResult)
 
 		tr.countChart(chartPassed, nil)
@@ -90,9 +91,15 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 	return allPassed
 }
 
-func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger loggable) (bool, []*TestSuiteResult) {
+func (tr *TestRunner) runSuites(
+	suiteFiles []string,
+	chart *chart.Chart,
+	logger loggable,
+	config TestConfig,
+) (bool, []*TestSuiteResult) {
 	chartPassed := true
 	suitesResult := make([]*TestSuiteResult, len(suiteFiles))
+
 	for idx, file := range suiteFiles {
 		testSuite, err := ParseTestSuiteFile(file)
 		if err != nil {
@@ -101,9 +108,17 @@ func (tr *TestRunner) runSuites(suiteFiles []string, chart *chart.Chart, logger 
 				ExecError: err,
 			}
 		}
-		result := testSuite.Run(chart, &TestSuiteResult{})
+
+		snapshotCache, _ := snapshot.CreateSnapshotOfFile(file, config.UpdateSnapshot)
+		// TODO: should print warning
+
+		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		suitesResult[idx] = result
+
+		if config.UpdateSnapshot && snapshotCache.Changed() {
+			snapshotCache.StoreToFile()
+		}
 	}
 
 	return chartPassed, suitesResult

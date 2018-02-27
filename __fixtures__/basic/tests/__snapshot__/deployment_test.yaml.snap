@@ -1,0 +1,34 @@
+should pass all assertions:
+  1: |
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    metadata:
+      labels:
+        app: basic
+        chart: basic-0.1.0
+        heritage: Tiller
+        release: RELEASE-NAME
+      name: RELEASE-NAME-basic
+    spec:
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: basic
+            release: RELEASE-NAME
+        spec:
+          containers:
+          - image: apache:latest
+            imagePullPolicy: Always
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 80
+            name: basic
+            ports:
+            - containerPort: 80
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 80
+            resources: {}

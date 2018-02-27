@@ -40,14 +40,15 @@ type TestSuite struct {
 	definitionFile string
 }
 
-func (s *TestSuite) Run(targetChart *chart.Chart, result *TestSuiteResult) *TestSuiteResult {
+func (s *TestSuite) Run(
+	targetChart *chart.Chart,
+	snapshotCache *snapshot.Cache,
+	result *TestSuiteResult,
+) *TestSuiteResult {
 	s.polishTestJobs()
 
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
-
-	snapshotCache, _ := snapshot.CreateSnapshotOfFile(s.definitionFile)
-	// TODO: should print warning
 
 	preparedChart, err := s.prepareChart(targetChart)
 	if err != nil {
@@ -102,7 +103,7 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 	return copiedChart, nil
 }
 
-func (s *TestSuite) runTestJobs(chart *chart.Chart, cache *snapshot.SnapshotCache) (bool, []*TestJobResult) {
+func (s *TestSuite) runTestJobs(chart *chart.Chart, cache *snapshot.Cache) (bool, []*TestJobResult) {
 	suitePass := true
 	jobResults := make([]*TestJobResult, len(s.Tests))
 	for idx, testJob := range s.Tests {

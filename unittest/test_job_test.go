@@ -67,7 +67,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
@@ -92,7 +92,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)
@@ -115,7 +115,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.SnapshotCache{}, &TestJobResult{})
+	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
 	a.Nil(testResult.ExecError)

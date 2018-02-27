@@ -9,14 +9,15 @@ import (
 const snapshotDirName = "__snapshot__"
 const snapshotFileExt = ".snap"
 
-func CreateSnapshotOfFile(path string) (*SnapshotCache, error) {
+func CreateSnapshotOfFile(path string, isUpdating bool) (*Cache, error) {
 	cacheDir := filepath.Join(filepath.Dir(path), snapshotDirName)
 	if err := ensureDir(cacheDir); err != nil {
 		return nil, err
 	}
 	cacheFileName := filepath.Base(path) + snapshotFileExt
-	cache := &SnapshotCache{
-		Filepath: filepath.Join(cacheDir, cacheFileName),
+	cache := &Cache{
+		Filepath:   filepath.Join(cacheDir, cacheFileName),
+		IsUpdating: isUpdating,
 	}
 
 	if err := cache.RestoreFromFile(); err != nil {

@@ -7,12 +7,12 @@ import (
 	"github.com/lrills/helm-unittest/unittest/valueutils"
 )
 
-// MatchSnapshotValidator
+// MatchSnapshotValidator validate snapshot of value of Path the same as cached
 type MatchSnapshotValidator struct {
 	Path string
 }
 
-func (a MatchSnapshotValidator) failInfo(compared *snapshot.SnapshotCompareResult, not bool) []string {
+func (a MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
 	var notAnnotation = ""
 	if not {
 		notAnnotation = " NOT"
@@ -42,7 +42,7 @@ func (a MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 
 	result := context.CompareToSnapshot(actual)
 
-	if result.Matched != context.Negative {
+	if result.Passed != context.Negative {
 		return true, []string{}
 	}
 	return false, a.failInfo(result, context.Negative)

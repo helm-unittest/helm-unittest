@@ -17,12 +17,12 @@ import (
 )
 
 type orderedSnapshotComparer struct {
-	cache   *snapshot.SnapshotCache
+	cache   *snapshot.Cache
 	test    string
 	counter int
 }
 
-func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.SnapshotCompareResult {
+func (s orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
 	s.counter++
 	return s.cache.Compare(s.test, s.counter, content)
 }
@@ -46,7 +46,7 @@ type TestJob struct {
 // Run run the test
 func (t *TestJob) Run(
 	targetChart *chart.Chart,
-	cache *snapshot.SnapshotCache,
+	cache *snapshot.Cache,
 	result *TestJobResult,
 ) *TestJobResult {
 	result.DisplayName = t.Name
@@ -137,7 +137,10 @@ func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
 	return &options
 }
 
-func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (map[string][]common.K8sManifest, error) {
+func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
+	map[string][]common.K8sManifest,
+	error,
+) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 	for file, rendered := range outputOfFiles {
 		documents := strings.Split(rendered, "---")
@@ -162,7 +165,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
-	cache *snapshot.SnapshotCache,
+	cache *snapshot.Cache,
 ) (bool, []*AssertionResult) {
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))

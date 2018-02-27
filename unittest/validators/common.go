@@ -9,10 +9,12 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
+// SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
-	CompareToSnapshot(content interface{}) *snapshot.SnapshotCompareResult
+	CompareToSnapshot(content interface{}) *snapshot.CompareResult
 }
 
+// ValidateContext the context passed to validators
 type ValidateContext struct {
 	Docs     []common.K8sManifest
 	Index    int
@@ -20,6 +22,7 @@ type ValidateContext struct {
 	SnapshotComparer
 }
 
+// Validatable all validators must implement Validate method
 type Validatable interface {
 	Validate(context *ValidateContext) (bool, []string)
 }

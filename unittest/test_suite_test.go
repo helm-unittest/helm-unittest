@@ -1,9 +1,11 @@
 package unittest_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/lrills/helm-unittest/unittest"
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/chartutil"
@@ -55,7 +57,8 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	suiteResult := testSuite.Run(c, &TestSuiteResult{})
+	cache, _ := snapshot.CreateSnapshotOfFile(os.TempDir()+"my_test.yaml", false)
+	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)
 	a.True(suiteResult.Passed)

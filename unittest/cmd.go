@@ -10,8 +10,9 @@ import (
 )
 
 type TestConfig struct {
-	Colored   bool
-	TestFiles []string
+	Colored        bool
+	UpdateSnapshot bool
+	TestFiles      []string
 }
 
 var testConfig = TestConfig{}
@@ -71,16 +72,20 @@ func Execute() {
 	}
 }
 
-var Colored bool
-
 func init() {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.Colored, "color", false,
-		"enforce printing colored output even stdout is not a tty. Set to false to disable color.",
+		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
 	)
+
 	defaultFilePattern := filepath.Join("tests", "*_test.yaml")
 	cmd.PersistentFlags().StringArrayVarP(
 		&testConfig.TestFiles, "file", "f", []string{defaultFilePattern},
 		"glob paths of test files location, default to "+defaultFilePattern,
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.UpdateSnapshot, "update-snapshot", "u", false,
+		"update the snapshot cached if needed, make sure you review the change before update",
 	)
 }
