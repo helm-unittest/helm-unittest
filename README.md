@@ -11,6 +11,12 @@ Feature:
 
 ## Install
 
+```
+$ helm plugin install https://github.com/lrills/helm-unittest
+```
+
+It will install latest version of binary into helm plugin directory.
+
 ## Get Started
 
 Add the folowing test file to `$YOUR_CHART/tests/deployment_test.yaml`:
@@ -38,7 +44,7 @@ $ helm unittest $YOUR_CHART
 ```
 
 Now there is your first test! ;)  
-Please read the brief document below to learn writing your own tests.
+Please read the brief [document](#testing-document) below to learn writing your own tests.
 
 ## Test Suite
 
@@ -197,5 +203,3 @@ $ helm unittest -u my-chart
 The cache files is stored as `__snapshot__/my_deploy_test.yaml.snap` at the directory your test file placed, you should always add them in source control with your chart.
 
 ## Contributing
-
-
