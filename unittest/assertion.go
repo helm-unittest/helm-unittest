@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// Assertion defines target and metrics to validate rendered result
 type Assertion struct {
 	Template      string
 	DocumentIndex int

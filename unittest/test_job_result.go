@@ -1,5 +1,6 @@
 package unittest
 
+// TestJobResult result return by TestJob.Run
 type TestJobResult struct {
 	DisplayName         string
 	Index               int

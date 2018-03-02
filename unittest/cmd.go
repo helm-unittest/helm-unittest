@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TestConfig stores config setup by user in command line
 type TestConfig struct {
 	Colored        bool
 	UpdateSnapshot bool
@@ -51,13 +52,13 @@ Check https://github.com/lrills/helm-unittest for more detail
 about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, chartsPath []string) {
+	Run: func(cmd *cobra.Command, chartPaths []string) {
 		if cmd.PersistentFlags().Changed("color") {
 			color.NoColor = !testConfig.Colored
 		}
-		runner := TestRunner{ChartsPath: chartsPath}
 		printer := Printer{Writer: os.Stdout, Colored: !color.NoColor}
-		passed := runner.Run(&printer, testConfig)
+		runner := TestRunner{Logger: &printer, Config: testConfig}
+		passed := runner.Run(chartPaths)
 
 		if !passed {
 			os.Exit(1)
@@ -65,6 +66,7 @@ about how to write tests.
 	},
 }
 
+// Execute execute unittest command
 func Execute() {
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)

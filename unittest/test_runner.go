@@ -44,7 +44,7 @@ type testUnitCounting struct {
 func (counting testUnitCounting) sprint(logger loggable) string {
 	var failedLabel string
 	if counting.failed > 0 {
-		failedLabel = logger.danger(fmt.Sprintf("%d failed, ", counting.failed))
+		failedLabel = logger.danger("%d failed, ", counting.failed)
 	}
 	var erroredLabel string
 	if counting.errored > 0 {
@@ -63,52 +63,50 @@ type testUnitCountingWithSnapshot struct {
 	snapshotFailed uint
 }
 
+// TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
-	ChartsPath       []string
+	Logger           loggable
+	Config           TestConfig
 	suiteCounting    testUnitCountingWithSnapshot
 	testCounting     testUnitCountingWithSnapshot
 	chartCounting    testUnitCounting
 	snapshotCounting testUnitCounting
 }
 
-func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
+// Run test suites in chart in ChartPaths
+func (tr *TestRunner) Run(ChartPaths []string) bool {
 	allPassed := true
 	start := time.Now()
-	for _, chartPath := range tr.ChartsPath {
+	for _, chartPath := range ChartPaths {
 		chart, err := chartutil.Load(chartPath)
 		if err != nil {
-			tr.printErroredChartHeader(logger, err)
+			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
 			continue
 		}
 
-		suiteFiles, err := getTestSuiteFiles(chartPath, config.TestFiles)
+		suiteFiles, err := getTestSuiteFiles(chartPath, tr.Config.TestFiles)
 		if err != nil {
-			tr.printErroredChartHeader(logger, err)
+			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
 			continue
 		}
 
-		tr.printChartHeader(logger, chart, chartPath)
-		chartPassed := tr.runSuitesOfChart(suiteFiles, chart, logger, config)
+		tr.printChartHeader(chart, chartPath)
+		chartPassed := tr.runSuitesOfChart(suiteFiles, chart)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
 	}
-	tr.printSnapshotSummary(logger)
-	tr.printSummary(logger, time.Now().Sub(start))
+	tr.printSnapshotSummary()
+	tr.printSummary(time.Now().Sub(start))
 	return allPassed
 }
 
-// runSuitesOfChart rusn suite files of the chart and print output
-func (tr *TestRunner) runSuitesOfChart(
-	suiteFiles []string,
-	chart *chart.Chart,
-	logger loggable,
-	config TestConfig,
-) bool {
+// runSuitesOfChart runs suite files of the chart and print output
+func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) bool {
 	chartPassed := true
 	for _, file := range suiteFiles {
 		testSuite, err := ParseTestSuiteFile(file)
@@ -116,17 +114,17 @@ func (tr *TestRunner) runSuitesOfChart(
 			tr.handleSuiteResult(&TestSuiteResult{
 				FilePath:  file,
 				ExecError: err,
-			}, logger)
+			})
 		}
 
-		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, config.UpdateSnapshot)
+		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, tr.Config.UpdateSnapshot)
 		// TODO: should print warning
 
 		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
-		tr.handleSuiteResult(result, logger)
+		tr.handleSuiteResult(result)
 
-		if config.UpdateSnapshot && snapshotCache.Changed() {
+		if tr.Config.UpdateSnapshot && snapshotCache.Changed() {
 			snapshotCache.StoreToFile()
 		}
 	}
@@ -135,8 +133,8 @@ func (tr *TestRunner) runSuitesOfChart(
 }
 
 // handleSuiteResult print suite result and count suites and tests status
-func (tr *TestRunner) handleSuiteResult(result *TestSuiteResult, logger loggable) {
-	result.print(logger, 0)
+func (tr *TestRunner) handleSuiteResult(result *TestSuiteResult) {
+	result.print(tr.Logger, 0)
 	tr.countSuite(result)
 	for _, testsResult := range result.TestsResult {
 		tr.countTest(testsResult)
@@ -144,7 +142,7 @@ func (tr *TestRunner) handleSuiteResult(result *TestSuiteResult, logger loggable
 }
 
 //printSummary print summary footer
-func (tr *TestRunner) printSummary(logger loggable, elapsed time.Duration) {
+func (tr *TestRunner) printSummary(elapsed time.Duration) {
 	summaryFormat := `
 Charts:      %s
 Test Suites: %s
@@ -152,13 +150,13 @@ Tests:       %s
 Snapshot:    %s
 Time:        %s
 `
-	logger.println(
+	tr.Logger.println(
 		fmt.Sprintf(
 			summaryFormat,
-			tr.chartCounting.sprint(logger),
-			tr.suiteCounting.sprint(logger),
-			tr.testCounting.sprint(logger),
-			tr.snapshotCounting.sprint(logger),
+			tr.chartCounting.sprint(tr.Logger),
+			tr.suiteCounting.sprint(tr.Logger),
+			tr.testCounting.sprint(tr.Logger),
+			tr.snapshotCounting.sprint(tr.Logger),
 			elapsed.String(),
 		),
 		0,
@@ -167,34 +165,38 @@ Time:        %s
 }
 
 // printChartHeader print header before suite result of a chart
-func (tr *TestRunner) printChartHeader(logger loggable, chart *chart.Chart, path string) {
+func (tr *TestRunner) printChartHeader(chart *chart.Chart, path string) {
 	headerFormat := `
 ### Chart [ %s ] %s
 `
-	header := fmt.Sprintf(headerFormat, logger.highlight(chart.Metadata.Name), logger.faint(path))
-	logger.println(header, 0)
+	header := fmt.Sprintf(
+		headerFormat,
+		tr.Logger.highlight(chart.Metadata.Name),
+		tr.Logger.faint(path),
+	)
+	tr.Logger.println(header, 0)
 }
 
 // printErroredChartHeader if chart has exexution error print header with error
-func (tr *TestRunner) printErroredChartHeader(logger loggable, err error) {
+func (tr *TestRunner) printErroredChartHeader(err error) {
 	headerFormat := `
-### ` + logger.danger("Error: ") + ` %s
+### ` + tr.Logger.danger("Error: ") + ` %s
 `
 	header := fmt.Sprintf(headerFormat, err)
-	logger.println(header, 0)
+	tr.Logger.println(header, 0)
 }
 
 // printSnapshotSummary print snapshot summary in footer
-func (tr *TestRunner) printSnapshotSummary(logger loggable) {
+func (tr *TestRunner) printSnapshotSummary() {
 	if tr.snapshotCounting.failed > 0 {
 		snapshotFormat := `
 		Snapshot Summary: %s`
 
-		summary := logger.danger(fmt.Sprintf("%d snapshot failed", tr.snapshotCounting.failed)) +
+		summary := tr.Logger.danger("%d snapshot failed", tr.snapshotCounting.failed) +
 			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
-			logger.faint(" Check changes and use `-u` to update snapshot.")
+			tr.Logger.faint(" Check changes and use `-u` to update snapshot.")
 
-		logger.println(fmt.Sprintf(snapshotFormat, summary), 0)
+		tr.Logger.println(fmt.Sprintf(snapshotFormat, summary), 0)
 	}
 }
 

@@ -56,7 +56,7 @@ type TestJob struct {
 	defaultTemplateToAssert string
 }
 
-// Run run the test
+// Run render the chart and validate it with assertions in TestJob
 func (t *TestJob) Run(
 	targetChart *chart.Chart,
 	cache *snapshot.Cache,

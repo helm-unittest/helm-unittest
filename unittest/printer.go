@@ -7,18 +7,20 @@ import (
 	"github.com/fatih/color"
 )
 
+// loggable simple printing interface
 type loggable interface {
 	println(content string, indentLevel int)
-	success(content string) string
-	successBackground(content string) string
-	danger(content string) string
-	dangerBackground(content string) string
-	warning(content string) string
-	warningBackground(content string) string
-	highlight(content string) string
-	faint(content string) string
+	success(format string, a ...interface{}) string
+	successLabel(format string, a ...interface{}) string
+	danger(format string, a ...interface{}) string
+	dangerLabel(format string, a ...interface{}) string
+	warning(format string, a ...interface{}) string
+	warningLabel(format string, a ...interface{}) string
+	highlight(format string, a ...interface{}) string
+	faint(format string, a ...interface{}) string
 }
 
+// Printer simple printing implement
 type Printer struct {
 	Writer       io.Writer
 	Colored      bool
@@ -33,53 +35,53 @@ func (p *Printer) println(content string, indentLevel int) {
 	fmt.Fprintln(p.Writer, indent+content)
 }
 
-func (p Printer) success(content string) string {
-	return color.GreenString(content)
+func (p Printer) success(format string, a ...interface{}) string {
+	return color.GreenString(format, a...)
 }
 
 var greenBgBlackFg = color.New(color.BgGreen, color.FgBlack)
 
-func (p Printer) successBackground(content string) string {
+func (p Printer) successLabel(format string, a ...interface{}) string {
 	if p.Colored {
-		return greenBgBlackFg.Sprint(content)
+		return greenBgBlackFg.Sprintf(format, a...)
 	}
-	return "[" + content + "]"
+	return "[" + fmt.Sprintf(format, a...) + "]"
 }
 
-func (p Printer) danger(content string) string {
-	return color.RedString(content)
+func (p Printer) danger(format string, a ...interface{}) string {
+	return color.RedString(format, a...)
 }
 
 var redBgWhiteFg = color.New(color.BgRed, color.FgWhite)
 
-func (p Printer) dangerBackground(content string) string {
+func (p Printer) dangerLabel(format string, a ...interface{}) string {
 	if p.Colored {
-		return redBgWhiteFg.Sprint(content)
+		return redBgWhiteFg.Sprintf(format, a...)
 	}
-	return "[" + content + "]"
+	return "[" + fmt.Sprintf(format, a...) + "]"
 }
 
-func (p Printer) warning(content string) string {
-	return color.YellowString(content)
+func (p Printer) warning(format string, a ...interface{}) string {
+	return color.YellowString(format, a...)
 }
 
 var yellowBgBlackFg = color.New(color.BgYellow, color.FgBlack)
 
-func (p Printer) warningBackground(content string) string {
+func (p Printer) warningLabel(format string, a ...interface{}) string {
 	if p.Colored {
-		return yellowBgBlackFg.Sprint(content)
+		return yellowBgBlackFg.Sprintf(format, a...)
 	}
-	return "[" + content + "]"
+	return "[" + fmt.Sprintf(format, a...) + "]"
 }
 
 var bold = color.New(color.Bold)
 
-func (p Printer) highlight(content string) string {
-	return bold.Sprint(content)
+func (p Printer) highlight(format string, a ...interface{}) string {
+	return bold.Sprintf(format, a...)
 }
 
 var faint = color.New(color.Faint)
 
-func (p Printer) faint(content string) string {
-	return faint.Sprint(content)
+func (p Printer) faint(format string, a ...interface{}) string {
+	return faint.Sprintf(format, a...)
 }
