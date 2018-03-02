@@ -10,6 +10,7 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
+// getTestSuiteFiles return test files of the chart which matched patterns
 func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
 	filesSet := map[string]bool{}
 	for _, pattern := range patterns {
@@ -31,6 +32,7 @@ func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
 	return resultFiles, nil
 }
 
+// testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
 	passed         uint
 	failed         uint
@@ -38,6 +40,7 @@ type testUnitCounting struct {
 	snapshotFailed uint
 }
 
+// sprint returns string of counting result
 func (counting testUnitCounting) sprint(logger loggable) string {
 	var failedLabel string
 	if counting.failed > 0 {
@@ -54,6 +57,7 @@ func (counting testUnitCounting) sprint(logger loggable) string {
 	)
 }
 
+// testUnitCountingWithSnapshot store testUnitCounting with snapshotFailed field
 type testUnitCountingWithSnapshot struct {
 	testUnitCounting
 	snapshotFailed uint
@@ -88,8 +92,7 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 		}
 
 		tr.printChartHeader(logger, chart, chartPath)
-		chartPassed, suitesResult := tr.testChart(suiteFiles, chart, logger, config)
-		tr.printSuiteResult(logger, suitesResult)
+		chartPassed := tr.runSuitesOfChart(suiteFiles, chart, logger, config)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -99,22 +102,21 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 	return allPassed
 }
 
-func (tr *TestRunner) testChart(
+// runSuitesOfChart rusn suite files of the chart and print output
+func (tr *TestRunner) runSuitesOfChart(
 	suiteFiles []string,
 	chart *chart.Chart,
 	logger loggable,
 	config TestConfig,
-) (bool, []*TestSuiteResult) {
+) bool {
 	chartPassed := true
-	suitesResult := make([]*TestSuiteResult, len(suiteFiles))
-
-	for idx, file := range suiteFiles {
+	for _, file := range suiteFiles {
 		testSuite, err := ParseTestSuiteFile(file)
 		if err != nil {
-			suitesResult[idx] = &TestSuiteResult{
+			tr.handleSuiteResult(&TestSuiteResult{
 				FilePath:  file,
 				ExecError: err,
-			}
+			}, logger)
 		}
 
 		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, config.UpdateSnapshot)
@@ -122,26 +124,26 @@ func (tr *TestRunner) testChart(
 
 		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
-		suitesResult[idx] = result
+		tr.handleSuiteResult(result, logger)
 
 		if config.UpdateSnapshot && snapshotCache.Changed() {
 			snapshotCache.StoreToFile()
 		}
 	}
 
-	return chartPassed, suitesResult
+	return chartPassed
 }
 
-func (tr *TestRunner) printSuiteResult(logger loggable, suitesResult []*TestSuiteResult) {
-	for _, suiteResult := range suitesResult {
-		suiteResult.print(logger, 0)
-		tr.countSuite(suiteResult)
-		for _, testsResult := range suiteResult.TestsResult {
-			tr.countTest(testsResult)
-		}
+// handleSuiteResult print suite result and count suites and tests status
+func (tr *TestRunner) handleSuiteResult(result *TestSuiteResult, logger loggable) {
+	result.print(logger, 0)
+	tr.countSuite(result)
+	for _, testsResult := range result.TestsResult {
+		tr.countTest(testsResult)
 	}
 }
 
+//printSummary print summary footer
 func (tr *TestRunner) printSummary(logger loggable, elapsed time.Duration) {
 	summaryFormat := `
 Charts:      %s
@@ -164,6 +166,7 @@ Time:        %s
 
 }
 
+// printChartHeader print header before suite result of a chart
 func (tr *TestRunner) printChartHeader(logger loggable, chart *chart.Chart, path string) {
 	headerFormat := `
 ### Chart [ %s ] %s
@@ -172,6 +175,7 @@ func (tr *TestRunner) printChartHeader(logger loggable, chart *chart.Chart, path
 	logger.println(header, 0)
 }
 
+// printErroredChartHeader if chart has exexution error print header with error
 func (tr *TestRunner) printErroredChartHeader(logger loggable, err error) {
 	headerFormat := `
 ### ` + logger.danger("Error: ") + ` %s
@@ -180,6 +184,7 @@ func (tr *TestRunner) printErroredChartHeader(logger loggable, err error) {
 	logger.println(header, 0)
 }
 
+// printSnapshotSummary print snapshot summary in footer
 func (tr *TestRunner) printSnapshotSummary(logger loggable) {
 	if tr.snapshotCounting.failed > 0 {
 		snapshotFormat := `
