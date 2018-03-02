@@ -34,14 +34,6 @@ func (a *Assertion) Assert(
 		return result
 	}
 
-	if len(rendered) <= a.DocumentIndex {
-		result.FailInfo = []string{
-			"Error:",
-			fmt.Sprintf("\tdocumentIndex %d out of range", a.DocumentIndex),
-		}
-		return result
-	}
-
 	result.Passed, result.FailInfo = a.validator.Validate(&validators.ValidateContext{
 		Docs:             rendered,
 		Index:            a.DocumentIndex,

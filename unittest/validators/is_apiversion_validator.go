@@ -21,7 +21,10 @@ func (v IsAPIVersionValidator) failInfo(actual interface{}, not bool) []string {
 
 // Validate implement Validatable
 func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest := context.Docs[context.Index]
+	manifest, err := context.getManifest()
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
 
 	if kind, ok := manifest["apiVersion"].(string); (ok && kind == v.Of) != context.Negative {
 		return true, []string{}
