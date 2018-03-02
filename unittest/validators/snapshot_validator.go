@@ -19,7 +19,7 @@ func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, not b
 	}
 	snapshotFailFormat := `
 Path:%s
-Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(compared.Index) + `:
+Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(int(compared.Index)) + `:
 %s
 `
 	var infoToShow string

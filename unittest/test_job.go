@@ -8,6 +8,7 @@ import (
 
 	"github.com/lrills/helm-unittest/unittest/common"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
+	"github.com/lrills/helm-unittest/unittest/validators"
 	"github.com/lrills/helm-unittest/unittest/valueutils"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/chartutil"
@@ -17,14 +18,26 @@ import (
 )
 
 type orderedSnapshotComparer struct {
-	cache   *snapshot.Cache
-	test    string
-	counter int
+	cache       *snapshot.Cache
+	test        string
+	counter     uint
+	failedCount uint
 }
 
-func (s orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
+func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
 	s.counter++
-	return s.cache.Compare(s.test, s.counter, content)
+	result := s.cache.Compare(s.test, s.counter, content)
+	if !result.Passed {
+		s.failedCount++
+	}
+	return result
+}
+
+func (s orderedSnapshotComparer) TatalCount() uint {
+	return s.counter
+}
+func (s orderedSnapshotComparer) FailedCount() uint {
+	return s.failedCount
 }
 
 // TestJob defintion of a test, including values and assertions
@@ -69,7 +82,15 @@ func (t *TestJob) Run(
 		return result
 	}
 
-	result.Passed, result.AssertsResult = t.runAssertions(manifestsOfFiles, cache)
+	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
+	result.Passed, result.AssertsResult = t.runAssertions(
+		manifestsOfFiles,
+		snapshotComparer,
+	)
+
+	result.FailedSnapshotCount = snapshotComparer.FailedCount()
+	result.TotalSnapshotCount = snapshotComparer.TatalCount()
+
 	return result
 }
 
@@ -165,7 +186,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
-	cache *snapshot.Cache,
+	comparer validators.SnapshotComparer,
 ) (bool, []*AssertionResult) {
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
@@ -173,9 +194,10 @@ func (t *TestJob) runAssertions(
 	for idx, assertion := range t.Assertions {
 		result := assertion.Assert(
 			manifestsOfFiles,
-			&orderedSnapshotComparer{cache: cache, test: t.Name},
+			comparer,
 			&AssertionResult{Index: idx},
 		)
+
 		assertsResult[idx] = result
 		testPass = testPass && result.Passed
 	}

@@ -16,6 +16,7 @@ type loggable interface {
 	warning(content string) string
 	warningBackground(content string) string
 	highlight(content string) string
+	faint(content string) string
 }
 
 type Printer struct {
@@ -71,6 +72,14 @@ func (p Printer) warningBackground(content string) string {
 	return "[" + content + "]"
 }
 
+var bold = color.New(color.Bold)
+
 func (p Printer) highlight(content string) string {
-	return color.WhiteString(content)
+	return bold.Sprint(content)
+}
+
+var faint = color.New(color.Faint)
+
+func (p Printer) faint(content string) string {
+	return faint.Sprint(content)
 }

@@ -12,7 +12,7 @@ import (
 type CompareResult struct {
 	Passed bool
 	Test   string
-	Index  int
+	Index  uint
 	New    string
 	Cached string
 }
@@ -22,8 +22,8 @@ type Cache struct {
 	Filepath   string
 	Existed    bool
 	IsUpdating bool
-	cached     map[string]map[int]string
-	new        map[string]map[int]string
+	cached     map[string]map[uint]string
+	new        map[string]map[uint]string
 	updated    bool
 }
 
@@ -44,7 +44,7 @@ func (s *Cache) RestoreFromFile() error {
 	return nil
 }
 
-func (s *Cache) getCached(test string, idx int) (string, bool) {
+func (s *Cache) getCached(test string, idx uint) (string, bool) {
 	if cachedByTest, ok := s.cached[test]; ok {
 		if cachedOfAssertion, ok := cachedByTest[idx]; ok {
 			return cachedOfAssertion, true
@@ -54,7 +54,7 @@ func (s *Cache) getCached(test string, idx int) (string, bool) {
 }
 
 // Compare compare content to cached last time, return CompareResult
-func (s *Cache) Compare(test string, idx int, content interface{}) *CompareResult {
+func (s *Cache) Compare(test string, idx uint, content interface{}) *CompareResult {
 	newSnapshot := s.saveNewCache(test, idx, content)
 	match, cachedSnapshot := s.compareToCached(test, idx, newSnapshot)
 	return &CompareResult{
@@ -66,7 +66,7 @@ func (s *Cache) Compare(test string, idx int, content interface{}) *CompareResul
 	}
 }
 
-func (s *Cache) compareToCached(test string, idx int, snapshot string) (bool, string) {
+func (s *Cache) compareToCached(test string, idx uint, snapshot string) (bool, string) {
 	cached, ok := s.getCached(test, idx)
 	if !ok {
 		s.updated = true
@@ -80,15 +80,15 @@ func (s *Cache) compareToCached(test string, idx int, snapshot string) (bool, st
 	return true, cached
 }
 
-func (s *Cache) saveNewCache(test string, idx int, content interface{}) string {
+func (s *Cache) saveNewCache(test string, idx uint, content interface{}) string {
 	snapshot := common.TrustedMarshalYAML(content)
 	if s.new == nil {
-		s.new = make(map[string]map[int]string)
+		s.new = make(map[string]map[uint]string)
 	}
 	if newCacheOfTest, ok := s.new[test]; ok {
 		newCacheOfTest[idx] = snapshot
 	} else {
-		s.new[test] = map[int]string{idx: snapshot}
+		s.new[test] = map[uint]string{idx: snapshot}
 	}
 	return snapshot
 }

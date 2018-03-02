@@ -32,9 +32,10 @@ func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
 }
 
 type testUnitCounting struct {
-	passed  uint
-	failed  uint
-	errored uint
+	passed         uint
+	failed         uint
+	errored        uint
+	snapshotFailed uint
 }
 
 func (counting testUnitCounting) sprint(logger loggable) string {
@@ -53,11 +54,17 @@ func (counting testUnitCounting) sprint(logger loggable) string {
 	)
 }
 
+type testUnitCountingWithSnapshot struct {
+	testUnitCounting
+	snapshotFailed uint
+}
+
 type TestRunner struct {
-	ChartsPath    []string
-	suiteCounting testUnitCounting
-	testCounting  testUnitCounting
-	chartCounting testUnitCounting
+	ChartsPath       []string
+	suiteCounting    testUnitCountingWithSnapshot
+	testCounting     testUnitCountingWithSnapshot
+	chartCounting    testUnitCounting
+	snapshotCounting testUnitCounting
 }
 
 func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
@@ -81,17 +88,18 @@ func (tr *TestRunner) Run(logger loggable, config TestConfig) bool {
 		}
 
 		tr.printChartHeader(logger, chart, chartPath)
-		chartPassed, suitesResult := tr.runSuites(suiteFiles, chart, logger, config)
+		chartPassed, suitesResult := tr.testChart(suiteFiles, chart, logger, config)
 		tr.printSuiteResult(logger, suitesResult)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
 	}
+	tr.printSnapshotSummary(logger)
 	tr.printSummary(logger, time.Now().Sub(start))
 	return allPassed
 }
 
-func (tr *TestRunner) runSuites(
+func (tr *TestRunner) testChart(
 	suiteFiles []string,
 	chart *chart.Chart,
 	logger loggable,
@@ -139,6 +147,7 @@ func (tr *TestRunner) printSummary(logger loggable, elapsed time.Duration) {
 Charts:      %s
 Test Suites: %s
 Tests:       %s
+Snapshot:    %s
 Time:        %s
 `
 	logger.println(
@@ -147,6 +156,7 @@ Time:        %s
 			tr.chartCounting.sprint(logger),
 			tr.suiteCounting.sprint(logger),
 			tr.testCounting.sprint(logger),
+			tr.snapshotCounting.sprint(logger),
 			elapsed.String(),
 		),
 		0,
@@ -158,7 +168,7 @@ func (tr *TestRunner) printChartHeader(logger loggable, chart *chart.Chart, path
 	headerFormat := `
 ### Chart [ %s ] %s
 `
-	header := fmt.Sprintf(headerFormat, logger.highlight(chart.Metadata.Name), path)
+	header := fmt.Sprintf(headerFormat, logger.highlight(chart.Metadata.Name), logger.faint(path))
 	logger.println(header, 0)
 }
 
@@ -170,6 +180,19 @@ func (tr *TestRunner) printErroredChartHeader(logger loggable, err error) {
 	logger.println(header, 0)
 }
 
+func (tr *TestRunner) printSnapshotSummary(logger loggable) {
+	if tr.snapshotCounting.failed > 0 {
+		snapshotFormat := `
+		Snapshot Summary: %s`
+
+		summary := logger.danger(fmt.Sprintf("%d snapshot failed", tr.snapshotCounting.failed)) +
+			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
+			logger.faint(" Check changes and use `-u` to update snapshot.")
+
+		logger.println(fmt.Sprintf(snapshotFormat, summary), 0)
+	}
+}
+
 func (tr *TestRunner) countSuite(suite *TestSuiteResult) {
 	if suite.Passed {
 		tr.suiteCounting.passed++
@@ -177,6 +200,9 @@ func (tr *TestRunner) countSuite(suite *TestSuiteResult) {
 		tr.suiteCounting.failed++
 		if suite.ExecError != nil {
 			tr.suiteCounting.errored++
+		}
+		if suite.HasSnapshotFail {
+			tr.suiteCounting.snapshotFailed++
 		}
 	}
 }
@@ -189,7 +215,12 @@ func (tr *TestRunner) countTest(test *TestJobResult) {
 		if test.ExecError != nil {
 			tr.testCounting.errored++
 		}
+		if test.FailedSnapshotCount > 0 {
+			tr.testCounting.snapshotFailed++
+		}
 	}
+	tr.snapshotCounting.failed += test.FailedSnapshotCount
+	tr.snapshotCounting.passed += test.TotalSnapshotCount - test.FailedSnapshotCount
 }
 
 func (tr *TestRunner) countChart(passed bool, err error) {

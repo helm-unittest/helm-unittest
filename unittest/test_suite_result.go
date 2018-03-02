@@ -7,11 +7,12 @@ import (
 )
 
 type TestSuiteResult struct {
-	DisplayName string
-	FilePath    string
-	Passed      bool
-	ExecError   error
-	TestsResult []*TestJobResult
+	DisplayName     string
+	FilePath        string
+	Passed          bool
+	ExecError       error
+	TestsResult     []*TestJobResult
+	HasSnapshotFail bool
 }
 
 func (tsr TestSuiteResult) print(printer loggable, verbosity int) {
@@ -36,9 +37,8 @@ func (tsr TestSuiteResult) printTitle(printer loggable) {
 	}
 	var pathToPrint string
 	if tsr.FilePath != "" {
-		pathToPrint = filepath.Dir(tsr.FilePath) +
-			string(os.PathSeparator) +
-			printer.highlight(filepath.Base(tsr.FilePath))
+		pathToPrint = printer.faint(filepath.Dir(tsr.FilePath)+string(os.PathSeparator)) +
+			filepath.Base(tsr.FilePath)
 	}
 	name := printer.highlight(tsr.DisplayName)
 	printer.println(

@@ -56,7 +56,10 @@ func (s *TestSuite) Run(
 		return result
 	}
 
-	result.Passed, result.TestsResult = s.runTestJobs(preparedChart, snapshotCache)
+	result.Passed, result.HasSnapshotFail, result.TestsResult = s.runTestJobs(
+		preparedChart,
+		snapshotCache,
+	)
 	return result
 }
 
@@ -103,15 +106,24 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 	return copiedChart, nil
 }
 
-func (s *TestSuite) runTestJobs(chart *chart.Chart, cache *snapshot.Cache) (bool, []*TestJobResult) {
+func (s *TestSuite) runTestJobs(
+	chart *chart.Chart,
+	cache *snapshot.Cache,
+) (bool, bool, []*TestJobResult) {
 	suitePass := true
+	hasSnapshotFail := false
 	jobResults := make([]*TestJobResult, len(s.Tests))
+
 	for idx, testJob := range s.Tests {
 		jobResult := testJob.Run(chart, cache, &TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
+
 		if !jobResult.Passed {
 			suitePass = false
+			if jobResult.FailedSnapshotCount > 0 {
+				hasSnapshotFail = true
+			}
 		}
 	}
-	return suitePass, jobResults
+	return suitePass, hasSnapshotFail, jobResults
 }

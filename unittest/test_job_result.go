@@ -1,11 +1,13 @@
 package unittest
 
 type TestJobResult struct {
-	DisplayName   string
-	Index         int
-	Passed        bool
-	ExecError     error
-	AssertsResult []*AssertionResult
+	DisplayName         string
+	Index               int
+	Passed              bool
+	ExecError           error
+	AssertsResult       []*AssertionResult
+	TotalSnapshotCount  uint
+	FailedSnapshotCount uint
 }
 
 func (tjr TestJobResult) print(printer loggable, verbosity int) {

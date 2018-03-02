@@ -9,7 +9,6 @@ tests:
       a.b.c: ABC
       x.y.z: XYZ
     asserts:
-      # - matchSnapshot:
       - equal:
           path: spec.template.spec.containers[0].image
           value: apache:latest
