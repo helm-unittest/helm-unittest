@@ -23,8 +23,9 @@ var cmd = &cobra.Command{
 	Short: "unittest for helm charts",
 	Long: `Running chart unittest written in YAML.
 
-This renders your chart locally (without tiller) and runs tests
-defined in test suite files. Simplest test suite file looks like
+This renders your charts locally (without tiller) and
+validates the rendered output with the tests defined in
+test suite files. Simplest test suite file looks like
 below:
 
 ---
@@ -39,8 +40,8 @@ tests:
           of: Deployment
 ---
 
-Put the test files in "tests" directory under your chart with
-suffix "_test.yaml", and run:
+Put the test files in "tests" directory under your chart
+with suffix "_test.yaml", and run:
 
 $ helm unittest my-chart
 
@@ -48,8 +49,8 @@ Or specify the suite files glob path pattern:
 
 $ helm unittest -f 'my-tests/*.yaml' my-chart
 
-Check https://github.com/lrills/helm-unittest for more detail
-about how to write tests.
+Check https://github.com/lrills/helm-unittest for more
+details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, chartPaths []string) {
