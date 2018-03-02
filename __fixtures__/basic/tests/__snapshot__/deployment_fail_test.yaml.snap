@@ -1,6 +1,6 @@
-should pass all assertions:
+should fail all assertions:
   1: |
-    replicas: 1
+    replicas: 999
     template:
       metadata:
         labels:

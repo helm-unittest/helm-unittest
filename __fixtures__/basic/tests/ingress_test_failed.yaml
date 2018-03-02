@@ -1,32 +1,30 @@
-suite: test ingress
+suite: test ingress that should fail
 templates:
   - ingress.yaml
 tests:
-  - it: should render nothing if not enabled
+  - it: should fail render nothing if not enabled
     asserts:
       - hasDocuments:
-          count: 0
+          count: 1
 
-  - it: should render ingress right if enabled
+  - it: should fail render ingress right if enabled
     set:
       ingress.enabled: true
       service.externalPort: 12345
     release:
       name: my-release
     asserts:
-      - hasDocuments:
-          count: 1
       - contains:
           path: spec.rules[0].http.paths
           content:
             path: /
             backend:
               serviceName: my-release-basic
-              servicePort: 12345
-      - isNull:
+              servicePort: 54321
+      - isNotNull:
           path: spec.tls
 
-  - it: should set annotations if given
+  - it: should fail set annotations if given
     set:
       ingress.enabled: true
       ingress.annotations:
@@ -35,17 +33,13 @@ tests:
     release:
       name: my-release
     asserts:
-      - equal:
+      - isEmpty:
           path: metadata.annotations
-          value:
-            ingress.kubernetes.io/rewrite-target: /
-            nginx.ingress.kubernetes.io/affinity: cookie
 
-  - it: should set tls if given
+  - it: should fail set tls if given
     set:
       ingress.enabled: true
-      ingress.tls:
-        - secretName: my-tls-secret
+
     release:
       name: my-release
     asserts:
