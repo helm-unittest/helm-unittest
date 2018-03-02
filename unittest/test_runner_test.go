@@ -11,7 +11,9 @@ import (
 func TestTestRunner(t *testing.T) {
 	runner := TestRunner{
 		Logger: &Printer{Writer: os.Stdout, Colored: true},
-		Config: TestConfig{},
+		Config: TestConfig{
+			TestFiles: []string{"tests/*_test.yaml"},
+		},
 	}
 	passed := runner.Run([]string{"../__fixtures__/basic"})
 	assert.True(t, passed)

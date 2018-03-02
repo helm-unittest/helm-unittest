@@ -115,6 +115,7 @@ func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) 
 				FilePath:  file,
 				ExecError: err,
 			})
+			continue
 		}
 
 		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, tr.Config.UpdateSnapshot)
@@ -190,7 +191,7 @@ func (tr *TestRunner) printErroredChartHeader(err error) {
 func (tr *TestRunner) printSnapshotSummary() {
 	if tr.snapshotCounting.failed > 0 {
 		snapshotFormat := `
-		Snapshot Summary: %s`
+Snapshot Summary: %s`
 
 		summary := tr.Logger.danger("%d snapshot failed", tr.snapshotCounting.failed) +
 			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
