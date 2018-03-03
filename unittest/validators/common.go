@@ -22,11 +22,19 @@ type ValidateContext struct {
 	SnapshotComparer
 }
 
+func (c *ValidateContext) getManifest() (common.K8sManifest, error) {
+	if len(c.Docs) <= c.Index {
+		return nil, fmt.Errorf("documentIndex %d out of range", c.Index)
+	}
+	return c.Docs[c.Index], nil
+}
+
 // Validatable all validators must implement Validate method
 type Validatable interface {
 	Validate(context *ValidateContext) (bool, []string)
 }
 
+// splitInfof split multi line string into array of string
 func splitInfof(format string, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")
 	indentedReplacements := make([]interface{}, len(replacements))
@@ -42,6 +50,7 @@ func splitInfof(format string, replacements ...string) []string {
 	)
 }
 
+// diff return diff result for assertion
 func diff(expected string, actual string) string {
 	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 		A:        difflib.SplitLines(expected),

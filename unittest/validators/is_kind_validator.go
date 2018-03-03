@@ -21,7 +21,10 @@ func (v IsKindValidator) failInfo(actual interface{}, not bool) []string {
 
 // Validate implement Validatable
 func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest := context.Docs[context.Index]
+	manifest, err := context.getManifest()
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
 
 	if kind, ok := manifest["kind"].(string); (ok && kind == v.Of) != context.Negative {
 		return true, []string{}

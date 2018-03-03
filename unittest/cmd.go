@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TestConfig stores config setup by user in command line
 type TestConfig struct {
 	Colored        bool
 	UpdateSnapshot bool
@@ -22,8 +23,9 @@ var cmd = &cobra.Command{
 	Short: "unittest for helm charts",
 	Long: `Running chart unittest written in YAML.
 
-This renders your chart locally (without tiller) and runs tests
-defined in test suite files. Simplest test suite file looks like
+This renders your charts locally (without tiller) and
+validates the rendered output with the tests defined in
+test suite files. Simplest test suite file looks like
 below:
 
 ---
@@ -38,8 +40,8 @@ tests:
           of: Deployment
 ---
 
-Put the test files in "tests" directory under your chart with
-suffix "_test.yaml", and run:
+Put the test files in "tests" directory under your chart
+with suffix "_test.yaml", and run:
 
 $ helm unittest my-chart
 
@@ -47,17 +49,17 @@ Or specify the suite files glob path pattern:
 
 $ helm unittest -f 'my-tests/*.yaml' my-chart
 
-Check https://github.com/lrills/helm-unittest for more detail
-about how to write tests.
+Check https://github.com/lrills/helm-unittest for more
+details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, chartsPath []string) {
+	Run: func(cmd *cobra.Command, chartPaths []string) {
 		if cmd.PersistentFlags().Changed("color") {
 			color.NoColor = !testConfig.Colored
 		}
-		runner := TestRunner{ChartsPath: chartsPath}
 		printer := Printer{Writer: os.Stdout, Colored: !color.NoColor}
-		passed := runner.Run(&printer, testConfig)
+		runner := TestRunner{Logger: &printer, Config: testConfig}
+		passed := runner.Run(chartPaths)
 
 		if !passed {
 			os.Exit(1)
@@ -65,6 +67,7 @@ about how to write tests.
 	},
 }
 
+// Execute execute unittest command
 func Execute() {
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)

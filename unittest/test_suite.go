@@ -12,6 +12,7 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
+// ParseTestSuiteFile parse a suite file at path and returns TestSuite
 func ParseTestSuiteFile(path string) (*TestSuite, error) {
 	var suite TestSuite
 	content, err := ioutil.ReadFile(path)
@@ -33,6 +34,7 @@ func ParseTestSuiteFile(path string) (*TestSuite, error) {
 	return &suite, nil
 }
 
+// TestSuite defines scope and templates to render and tests to run
 type TestSuite struct {
 	Name           string `yaml:"suite"`
 	Templates      []string
@@ -40,6 +42,7 @@ type TestSuite struct {
 	definitionFile string
 }
 
+// Run runs all the test jobs defined in TestSuite
 func (s *TestSuite) Run(
 	targetChart *chart.Chart,
 	snapshotCache *snapshot.Cache,

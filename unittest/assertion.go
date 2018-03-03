@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// Assertion defines target and metrics to validate rendered result
 type Assertion struct {
 	Template      string
 	DocumentIndex int
@@ -31,14 +32,6 @@ func (a *Assertion) Assert(
 	rendered, ok := templatesResult[a.Template]
 	if !ok {
 		result.FailInfo = []string{"Error:", a.noFileErrMessage()}
-		return result
-	}
-
-	if len(rendered) <= a.DocumentIndex {
-		result.FailInfo = []string{
-			"Error:",
-			fmt.Sprintf("\tdocumentIndex %d out of range", a.DocumentIndex),
-		}
 		return result
 	}
 

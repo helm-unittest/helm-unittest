@@ -2,6 +2,7 @@ package unittest
 
 import "fmt"
 
+// AssertionResult result return by Assertion.Assert
 type AssertionResult struct {
 	Index      int
 	FailInfo   []string

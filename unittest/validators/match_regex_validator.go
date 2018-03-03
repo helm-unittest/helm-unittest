@@ -29,7 +29,10 @@ Actual:%s
 
 // Validate implement Validatable
 func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest := context.Docs[context.Index]
+	manifest, err := context.getManifest()
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {

@@ -1,8 +1,8 @@
-suite: test deployment
+suite: test deployment that would be fail
 templates:
   - deployment.yaml
 tests:
-  - it: should pass all assertions
+  - it: should fail all assertions
     values:
       - ./values/image.yaml
     set:
@@ -10,37 +10,37 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: apache:latest
+          value: nginx:stable
       - notEqual:
           path: spec.template.spec.containers[0].image
-          value: nginx:stable
+          value: apache:latest
       - matchRegex:
           path: metadata.name
-          pattern: ^.*-basic$
+          pattern: ^.*-foobar$
       - notMatchRegex:
           path: metadata.name
-          pattern: ^.*-foobar$
+          pattern: ^.*-basic$
       - contains:
           path: spec.template.spec.containers[0].ports
           content:
-            containerPort: 8080
+            containerPort: 80
       - notContains:
           path: spec.template.spec.containers[0].ports
           content:
-            containerPort: 80
+            containerPort: 8080
       - isNull:
-          path: spec.template.nodeSelector
-      - isNotNull:
           path: spec.template
+      - isNotNull:
+          path: spec.template.nodeSelector
       - isEmpty:
-          path: spec.template.spec.containers[0].resources
-      - isNotEmpty:
           path: spec.template.spec.containers[0]
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].resources
       - isKind:
-          of: Deployment
+          of: Pod
       - isAPIVersion:
-          of: extensions/v1beta1
+          of: v2
       - hasDocuments:
-          count: 1
+          count: 2
       - matchSnapshot:
           path: spec

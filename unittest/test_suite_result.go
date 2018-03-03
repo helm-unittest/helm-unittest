@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// TestSuiteResult result return by TestSuite.Run
 type TestSuiteResult struct {
 	DisplayName     string
 	FilePath        string
@@ -31,9 +32,9 @@ func (tsr TestSuiteResult) print(printer loggable, verbosity int) {
 func (tsr TestSuiteResult) printTitle(printer loggable) {
 	var label string
 	if tsr.Passed {
-		label = printer.successBackground(" PASS ")
+		label = printer.successLabel(" PASS ")
 	} else {
-		label = printer.dangerBackground(" FAIL ")
+		label = printer.dangerLabel(" FAIL ")
 	}
 	var pathToPrint string
 	if tsr.FilePath != "" {

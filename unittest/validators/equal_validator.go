@@ -45,7 +45,10 @@ Diff:
 
 // Validate implement Validatable
 func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest := context.Docs[context.Index]
+	manifest, err := context.getManifest()
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
 
 	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {

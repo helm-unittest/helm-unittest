@@ -46,6 +46,26 @@ $ helm unittest $YOUR_CHART
 Now there is your first test! ;)  
 Please read the brief [document](#testing-document) below to learn writing your own tests.
 
+## Usage
+
+```
+$ helm unittest [flags] CHART [...]
+```
+
+This renders your charts locally (without tiller) and runs tests
+defined in test suite files.
+
+### Flags
+
+```
+--color              enforce printing colored output even stdout is not a tty. Set to false to disable color
+-f, --file stringArray   glob paths of test files location, default to tests/*_test.yaml (default [tests/*_test.yaml])
+-h, --help               help for unittest
+-u, --update-snapshot    update the snapshot cached if needed, make sure you review the change before update
+```
+
+# Testing Document
+
 ## Test Suite
 
 A test suite is a collection of tests with the same purpose and scope defined in one single file. The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files, like:
@@ -202,4 +222,10 @@ $ helm unittest -u my-chart
 ```
 The cache files is stored as `__snapshot__/my_deploy_test.yaml.snap` at the directory your test file placed, you should always add them in source control with your chart.
 
+## License
+
+MIT
+
 ## Contributing
+
+Issues and PRs are welcome!
