@@ -11,7 +11,7 @@ type TestJobResult struct {
 	FailedSnapshotCount uint
 }
 
-func (tjr TestJobResult) print(printer loggable, verbosity int) {
+func (tjr TestJobResult) print(printer *Printer, verbosity int) {
 	if tjr.Passed {
 		return
 	}

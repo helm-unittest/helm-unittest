@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -54,11 +53,12 @@ details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, chartPaths []string) {
+		var colored *bool
 		if cmd.PersistentFlags().Changed("color") {
-			color.NoColor = !testConfig.Colored
+			colored = &testConfig.Colored
 		}
-		printer := Printer{Writer: os.Stdout, Colored: !color.NoColor}
-		runner := TestRunner{Logger: &printer, Config: testConfig}
+		printer := NewPrinter(os.Stdout, colored)
+		runner := TestRunner{Printer: printer, Config: testConfig}
 		passed := runner.Run(chartPaths)
 
 		if !passed {

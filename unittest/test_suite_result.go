@@ -16,7 +16,7 @@ type TestSuiteResult struct {
 	HasSnapshotFail bool
 }
 
-func (tsr TestSuiteResult) print(printer loggable, verbosity int) {
+func (tsr TestSuiteResult) print(printer *Printer, verbosity int) {
 	tsr.printTitle(printer)
 	if tsr.ExecError != nil {
 		printer.println(printer.highlight("- Execution Error: "), 1)
@@ -29,7 +29,7 @@ func (tsr TestSuiteResult) print(printer loggable, verbosity int) {
 	}
 }
 
-func (tsr TestSuiteResult) printTitle(printer loggable) {
+func (tsr TestSuiteResult) printTitle(printer *Printer) {
 	var label string
 	if tsr.Passed {
 		label = printer.successLabel(" PASS ")
@@ -43,7 +43,7 @@ func (tsr TestSuiteResult) printTitle(printer loggable) {
 	}
 	name := printer.highlight(tsr.DisplayName)
 	printer.println(
-		fmt.Sprintf("%s %s %s", label, name, pathToPrint),
+		fmt.Sprintf("%s %s\t%s", label, name, pathToPrint),
 		0,
 	)
 }

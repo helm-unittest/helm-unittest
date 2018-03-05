@@ -12,7 +12,7 @@ type AssertionResult struct {
 	CustomInfo string
 }
 
-func (ar AssertionResult) print(printer loggable, verbosity int) {
+func (ar AssertionResult) print(printer *Printer, verbosity int) {
 	if ar.Passed {
 		return
 	}

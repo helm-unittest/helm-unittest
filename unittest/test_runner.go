@@ -41,10 +41,10 @@ type testUnitCounting struct {
 }
 
 // sprint returns string of counting result
-func (counting testUnitCounting) sprint(logger loggable) string {
+func (counting testUnitCounting) sprint(printer *Printer) string {
 	var failedLabel string
 	if counting.failed > 0 {
-		failedLabel = logger.danger("%d failed, ", counting.failed)
+		failedLabel = printer.danger("%d failed, ", counting.failed)
 	}
 	var erroredLabel string
 	if counting.errored > 0 {
@@ -65,7 +65,7 @@ type testUnitCountingWithSnapshot struct {
 
 // TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
-	Logger           loggable
+	Printer          *Printer
 	Config           TestConfig
 	suiteCounting    testUnitCountingWithSnapshot
 	testCounting     testUnitCountingWithSnapshot
@@ -135,7 +135,7 @@ func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) 
 
 // handleSuiteResult print suite result and count suites and tests status
 func (tr *TestRunner) handleSuiteResult(result *TestSuiteResult) {
-	result.print(tr.Logger, 0)
+	result.print(tr.Printer, 0)
 	tr.countSuite(result)
 	for _, testsResult := range result.TestsResult {
 		tr.countTest(testsResult)
@@ -151,13 +151,13 @@ Tests:       %s
 Snapshot:    %s
 Time:        %s
 `
-	tr.Logger.println(
+	tr.Printer.println(
 		fmt.Sprintf(
 			summaryFormat,
-			tr.chartCounting.sprint(tr.Logger),
-			tr.suiteCounting.sprint(tr.Logger),
-			tr.testCounting.sprint(tr.Logger),
-			tr.snapshotCounting.sprint(tr.Logger),
+			tr.chartCounting.sprint(tr.Printer),
+			tr.suiteCounting.sprint(tr.Printer),
+			tr.testCounting.sprint(tr.Printer),
+			tr.snapshotCounting.sprint(tr.Printer),
 			elapsed.String(),
 		),
 		0,
@@ -172,19 +172,19 @@ func (tr *TestRunner) printChartHeader(chart *chart.Chart, path string) {
 `
 	header := fmt.Sprintf(
 		headerFormat,
-		tr.Logger.highlight(chart.Metadata.Name),
-		tr.Logger.faint(path),
+		tr.Printer.highlight(chart.Metadata.Name),
+		tr.Printer.faint(path),
 	)
-	tr.Logger.println(header, 0)
+	tr.Printer.println(header, 0)
 }
 
 // printErroredChartHeader if chart has exexution error print header with error
 func (tr *TestRunner) printErroredChartHeader(err error) {
 	headerFormat := `
-### ` + tr.Logger.danger("Error: ") + ` %s
+### ` + tr.Printer.danger("Error: ") + ` %s
 `
 	header := fmt.Sprintf(headerFormat, err)
-	tr.Logger.println(header, 0)
+	tr.Printer.println(header, 0)
 }
 
 // printSnapshotSummary print snapshot summary in footer
@@ -193,11 +193,11 @@ func (tr *TestRunner) printSnapshotSummary() {
 		snapshotFormat := `
 Snapshot Summary: %s`
 
-		summary := tr.Logger.danger("%d snapshot failed", tr.snapshotCounting.failed) +
+		summary := tr.Printer.danger("%d snapshot failed", tr.snapshotCounting.failed) +
 			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
-			tr.Logger.faint(" Check changes and use `-u` to update snapshot.")
+			tr.Printer.faint(" Check changes and use `-u` to update snapshot.")
 
-		tr.Logger.println(fmt.Sprintf(snapshotFormat, summary), 0)
+		tr.Printer.println(fmt.Sprintf(snapshotFormat, summary), 0)
 	}
 }
 
