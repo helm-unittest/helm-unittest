@@ -12,7 +12,16 @@ jobs:
             curl -o install-dep.sh https://raw.githubusercontent.com/golang/dep/master/install.sh
             chmod +x install-dep.sh
             ./install-dep.sh
+      - restore_cache:
+          keys:
+            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+            - helm-untt-deps-{{ .Branch }}-
+            - helm-untt-deps-
       - run: dep ensure
+      - save_cache:
+          key: helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+          paths:
+            - /go/src/github.com/lrills/helm-unittest/vendor
       - run:
           name: Test
           command: go test -v ./unittest/...
