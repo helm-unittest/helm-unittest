@@ -18,4 +18,4 @@ jobs:
           command: go test -v ./unittest/...
       - run:
           name: Check formated
-          command: ! gofmt -l . 2>&1 | read
+          command: "! gofmt -l . 2>&1 | read"
