@@ -9,9 +9,9 @@ jobs:
       - run:
           name: Get dep
           command: |
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh
-            chmod +x install.sh
-            ./install.sh
+            curl -o install-dep.sh https://raw.githubusercontent.com/golang/dep/master/install.sh
+            chmod +x install-dep.sh
+            ./install-dep.sh
       - run: dep ensure
       - run:
           name: Test
