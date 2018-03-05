@@ -1,4 +1,4 @@
-should fail all assertions:
+should fail all kinds of assertion:
   1: |
     replicas: 999
     template:

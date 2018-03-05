@@ -1,4 +1,4 @@
-should pass all assertions:
+should pass all kinds of assertion:
   1: |
     replicas: 1
     template:

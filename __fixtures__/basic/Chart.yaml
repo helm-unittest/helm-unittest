@@ -1,4 +1,4 @@
 apiVersion: v1
-description: A Helm chart for Kubernetes
+description: A basic example chart to demonstrate unittest plugin
 name: basic
 version: 0.1.0

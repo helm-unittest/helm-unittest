@@ -2,27 +2,27 @@ suite: test service
 templates:
   - service.yaml
 tests:
-  - it: should pass
+  - it: should failed
     release:
       name: my-release
     asserts:
-      - contains:
+      - notContains:
           path: spec.ports
           content:
             port: 80
             targetPort: 80
             protocol: TCP
             name: nginx
-      - equal:
+      - notEqual:
           path: spec.type
           value: ClusterIP
-      - equal:
+      - notEqual:
           path: spec.selector
           value:
             app: basic
             release: my-release
 
-  - it: should render right if values given
+  - it: should fail renders right if values given
     set:
       service:
         type: NodePort
@@ -30,13 +30,13 @@ tests:
         externalPort: 4321
         name: cool-service
     asserts:
-      - contains:
+      - notContains:
           path: spec.ports
           content:
             port: 4321
             targetPort: 1234
             protocol: TCP
             name: cool-service
-      - equal:
+      - notEqual:
           path: spec.type
           value: NodePort

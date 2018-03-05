@@ -13,7 +13,7 @@ Feature:
 
 ## Get Started
 
-Add the folowing test file to `$YOUR_CHART/tests/deployment_test.yaml`:
+Add `tests` in `.helmignore` of your chart, and create the following test file at `$YOUR_CHART/tests/deployment_test.yaml`:
 
 ```yaml
 suite: test deployment
@@ -57,6 +57,10 @@ defined in test suite files.
 -h, --help               help for unittest
 -u, --update-snapshot    update the snapshot cached if needed, make sure you review the change before update
 ```
+
+## Example
+
+Check [`__fixtures__/basic/`](https://github.com/lrills/helm-unittest/tree/master/__fixtures__/basic) for some basic use cases of a simple chart.
 
 # Testing Document
 
@@ -214,7 +218,20 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 ```
 $ helm unittest -u my-chart
 ```
-The cache files is stored as `__snapshot__/my_deploy_test.yaml.snap` at the directory your test file placed, you should always add them in source control with your chart.
+The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+
+## Related Projects / Commands
+
+This plugin is inspired by [helm-template](https://github.com/technosophos/helm-template), and the idea of snapshot testing and some printing format comes from [jest](https://github.com/facebook/jest).
+
+
+And there are some other helm commands you might want to use:
+
+- [`helm template`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_template.md): render the chart and print the output.
+
+- [`helm lint`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_lint.md): examines a chart for possible issues, useful to validate chart dependencies.
+
+- [`helm test`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_test.md): test a release with testing pod defined in chart. Note this does create resources on your cluster to verify if your release is correct. Check the [doc](https://github.com/kubernetes/helm/blob/master/docs/chart_tests.md).
 
 ## License
 
@@ -222,4 +239,25 @@ MIT
 
 ## Contributing
 
-Issues and PRs are welcome!
+Issues and PRs are welcome!  
+Before start developing this plugin, you must have [go](https://golang.org/doc/install) and [dep](https://github.com/golang/dep#installation) installed, and run:
+
+```
+git clone git@github.com:lrills/helm-unittest.git
+cd helm-unittest
+dep ensure
+```
+
+And please make CI passed when request a PR which would check following things:
+
+- `dep status` passed. Make sure you run `dep ensure` if new dependencies added.
+- `gofmt` no changes needed. Please run `gofmt -w -s` before you commit.
+- `go test ./unittest/...` passed.
+
+In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
+
+```
+UPDATE_SNAPSHOTS=true go test ./unittest/...
+```
+
+This update the snapshot cache file and please add them before you commit.
