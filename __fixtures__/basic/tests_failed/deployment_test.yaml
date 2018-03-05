@@ -2,7 +2,7 @@ suite: test deployment that would be fail
 templates:
   - deployment.yaml
 tests:
-  - it: should fail all assertions
+  - it: should fail all kinds of assertion
     values:
       - ./values/image.yaml
     set:
