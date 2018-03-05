@@ -17,7 +17,12 @@ jobs:
             - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
             - helm-untt-deps-{{ .Branch }}-
             - helm-untt-deps-
-      - run: dep ensure
+      - run:
+          name: Check dep status
+          command: dep status -v
+      - run:
+          name: Ensure dep
+          command: dep ensure -vendor-only -v
       - save_cache:
           key: helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
           paths:
