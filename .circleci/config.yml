@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/lrills/helm-unittest
+    steps:
+      - checkout
+      - run:
+          name: Get dep
+          command: |
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh
+            chmod +x install.sh
+            ./install.sh
+      - run: dep ensure
+      - run:
+          name: Test
+          command: go test -v ./unittest/...
+      - run:
+          name: Check formated
+          command: ! gofmt -l . 2>&1 | read
