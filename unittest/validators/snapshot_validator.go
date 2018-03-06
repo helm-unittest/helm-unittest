@@ -24,9 +24,9 @@ Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(int(compared.In
 `
 	var infoToShow string
 	if not {
-		infoToShow = compared.Cached
+		infoToShow = compared.CachedSnapshot
 	} else {
-		infoToShow = diff(compared.Cached, compared.New)
+		infoToShow = diff(compared.CachedSnapshot, compared.NewSnapshot)
 	}
 	return splitInfof(snapshotFailFormat, v.Path, infoToShow)
 }

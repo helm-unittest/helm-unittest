@@ -125,9 +125,7 @@ func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) 
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 
-		if tr.Config.UpdateSnapshot && snapshotCache.Changed() {
-			snapshotCache.StoreToFile()
-		}
+		snapshotCache.StoreToFileIfNeeded()
 	}
 
 	return chartPassed

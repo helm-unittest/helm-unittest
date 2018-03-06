@@ -45,9 +45,9 @@ func TestSnapshotValidatorWhenNegativeAndOk(t *testing.T) {
 
 	mockComparer := new(mockSnapshotComparer)
 	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
-		Passed: false,
-		Cached: "a:\n  b: c\n",
-		New:    "x:\n  y: x\n",
+		Passed:         false,
+		CachedSnapshot: "a:\n  b: c\n",
+		NewSnapshot:    "x:\n  y: x\n",
 	})
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -68,9 +68,9 @@ func TestSnapshotValidatorWhenFail(t *testing.T) {
 
 	mockComparer := new(mockSnapshotComparer)
 	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
-		Passed: false,
-		Cached: "a:\n  b: c\n",
-		New:    "x:\n  y: x\n",
+		Passed:         false,
+		CachedSnapshot: "a:\n  b: c\n",
+		NewSnapshot:    "x:\n  y: x\n",
 	})
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -101,9 +101,9 @@ func TestSnapshotValidatorWhenNegativeAndFail(t *testing.T) {
 	cached := "a:\n  b: c\n"
 	mockComparer := new(mockSnapshotComparer)
 	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
-		Passed: true,
-		Cached: cached,
-		New:    cached,
+		Passed:         true,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
 	})
 
 	pass, diff := validator.Validate(&ValidateContext{
