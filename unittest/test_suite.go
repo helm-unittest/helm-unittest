@@ -59,10 +59,12 @@ func (s *TestSuite) Run(
 		return result
 	}
 
-	result.Passed, result.HasSnapshotFail, result.TestsResult = s.runTestJobs(
+	result.Passed, result.TestsResult = s.runTestJobs(
 		preparedChart,
 		snapshotCache,
 	)
+
+	countSnapshot(result, snapshotCache)
 	return result
 }
 
@@ -112,9 +114,8 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 func (s *TestSuite) runTestJobs(
 	chart *chart.Chart,
 	cache *snapshot.Cache,
-) (bool, bool, []*TestJobResult) {
+) (bool, []*TestJobResult) {
 	suitePass := true
-	hasSnapshotFail := false
 	jobResults := make([]*TestJobResult, len(s.Tests))
 
 	for idx, testJob := range s.Tests {
@@ -123,10 +124,14 @@ func (s *TestSuite) runTestJobs(
 
 		if !jobResult.Passed {
 			suitePass = false
-			if jobResult.FailedSnapshotCount > 0 {
-				hasSnapshotFail = true
-			}
 		}
 	}
-	return suitePass, hasSnapshotFail, jobResults
+	return suitePass, jobResults
+}
+
+func countSnapshot(result *TestSuiteResult, cache *snapshot.Cache) {
+	result.SnapshotCounting.Created = cache.InsertedCount()
+	result.SnapshotCounting.Failed = cache.FailedCount()
+	result.SnapshotCounting.Total = cache.CurrentCount()
+	result.SnapshotCounting.Vanished = cache.VanishedCount()
 }

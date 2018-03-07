@@ -18,26 +18,14 @@ import (
 )
 
 type orderedSnapshotComparer struct {
-	cache       *snapshot.Cache
-	test        string
-	counter     uint
-	failedCount uint
+	cache   *snapshot.Cache
+	test    string
+	counter uint
 }
 
 func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
 	s.counter++
-	result := s.cache.Compare(s.test, s.counter, content)
-	if !result.Passed {
-		s.failedCount++
-	}
-	return result
-}
-
-func (s orderedSnapshotComparer) TatalCount() uint {
-	return s.counter
-}
-func (s orderedSnapshotComparer) FailedCount() uint {
-	return s.failedCount
+	return s.cache.Compare(s.test, s.counter, content)
 }
 
 // TestJob defintion of a test, including values and assertions
@@ -87,9 +75,6 @@ func (t *TestJob) Run(
 		manifestsOfFiles,
 		snapshotComparer,
 	)
-
-	result.FailedSnapshotCount = snapshotComparer.FailedCount()
-	result.TotalSnapshotCount = snapshotComparer.TatalCount()
 
 	return result
 }

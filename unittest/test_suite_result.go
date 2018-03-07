@@ -8,12 +8,17 @@ import (
 
 // TestSuiteResult result return by TestSuite.Run
 type TestSuiteResult struct {
-	DisplayName     string
-	FilePath        string
-	Passed          bool
-	ExecError       error
-	TestsResult     []*TestJobResult
-	HasSnapshotFail bool
+	DisplayName      string
+	FilePath         string
+	Passed           bool
+	ExecError        error
+	TestsResult      []*TestJobResult
+	SnapshotCounting struct {
+		Total    uint
+		Failed   uint
+		Created  uint
+		Vanished uint
+	}
 }
 
 func (tsr TestSuiteResult) print(printer *Printer, verbosity int) {

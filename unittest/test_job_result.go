@@ -2,13 +2,11 @@ package unittest
 
 // TestJobResult result return by TestJob.Run
 type TestJobResult struct {
-	DisplayName         string
-	Index               int
-	Passed              bool
-	ExecError           error
-	AssertsResult       []*AssertionResult
-	TotalSnapshotCount  uint
-	FailedSnapshotCount uint
+	DisplayName   string
+	Index         int
+	Passed        bool
+	ExecError     error
+	AssertsResult []*AssertionResult
 }
 
 func (tjr TestJobResult) print(printer *Printer, verbosity int) {

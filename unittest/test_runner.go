@@ -34,10 +34,9 @@ func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
 
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
-	passed         uint
-	failed         uint
-	errored        uint
-	snapshotFailed uint
+	passed  uint
+	failed  uint
+	errored uint
 }
 
 // sprint returns string of counting result
@@ -57,20 +56,27 @@ func (counting testUnitCounting) sprint(printer *Printer) string {
 	)
 }
 
-// testUnitCountingWithSnapshot store testUnitCounting with snapshotFailed field
-type testUnitCountingWithSnapshot struct {
+// testUnitCountingWithSnapshotFailed store testUnitCounting with snapshotFailed field
+type testUnitCountingWithSnapshotFailed struct {
 	testUnitCounting
 	snapshotFailed uint
+}
+
+// totalSnapshotCounting store testUnitCounting with snapshotFailed field
+type totalSnapshotCounting struct {
+	testUnitCounting
+	created  uint
+	vanished uint
 }
 
 // TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
 	Printer          *Printer
 	Config           TestConfig
-	suiteCounting    testUnitCountingWithSnapshot
-	testCounting     testUnitCountingWithSnapshot
+	suiteCounting    testUnitCountingWithSnapshotFailed
+	testCounting     testUnitCounting
 	chartCounting    testUnitCounting
-	snapshotCounting testUnitCounting
+	snapshotCounting totalSnapshotCounting
 }
 
 // Run test suites in chart in ChartPaths
@@ -118,8 +124,14 @@ func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) 
 			continue
 		}
 
-		snapshotCache, _ := snapshot.CreateSnapshotOfSuite(file, tr.Config.UpdateSnapshot)
-		// TODO: should print warning
+		snapshotCache, err := snapshot.CreateSnapshotOfSuite(file, tr.Config.UpdateSnapshot)
+		if err != nil {
+			tr.handleSuiteResult(&TestSuiteResult{
+				FilePath:  file,
+				ExecError: err,
+			})
+			continue
+		}
 
 		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
@@ -207,10 +219,14 @@ func (tr *TestRunner) countSuite(suite *TestSuiteResult) {
 		if suite.ExecError != nil {
 			tr.suiteCounting.errored++
 		}
-		if suite.HasSnapshotFail {
+		if suite.SnapshotCounting.Failed > 0 {
 			tr.suiteCounting.snapshotFailed++
 		}
 	}
+	tr.snapshotCounting.failed += suite.SnapshotCounting.Failed
+	tr.snapshotCounting.passed += suite.SnapshotCounting.Total - suite.SnapshotCounting.Failed
+	tr.snapshotCounting.created += suite.SnapshotCounting.Created
+	tr.snapshotCounting.vanished += suite.SnapshotCounting.Vanished
 }
 
 func (tr *TestRunner) countTest(test *TestJobResult) {
@@ -221,12 +237,7 @@ func (tr *TestRunner) countTest(test *TestJobResult) {
 		if test.ExecError != nil {
 			tr.testCounting.errored++
 		}
-		if test.FailedSnapshotCount > 0 {
-			tr.testCounting.snapshotFailed++
-		}
 	}
-	tr.snapshotCounting.failed += test.FailedSnapshotCount
-	tr.snapshotCounting.passed += test.TotalSnapshotCount - test.FailedSnapshotCount
 }
 
 func (tr *TestRunner) countChart(passed bool, err error) {

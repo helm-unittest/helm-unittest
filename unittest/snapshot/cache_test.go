@@ -357,12 +357,22 @@ func TestCacheWhenNewOneAtMiddle(t *testing.T) {
 	a.Equal(uint(0), cache.VanishedCount())
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
-	a.False(stored)
+	a.True(stored)
 	a.Nil(storeErr)
 	a.True(cache.Existed)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
-	a.Equal(lastTimeContent, string(bytes))
+	a.Equal(`cached before:
+  1: |
+    a:
+      b: c
+  2: |
+    d:
+      e: f
+  3: |
+    d:
+      e: f
+`, string(bytes))
 }
 
 func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
