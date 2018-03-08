@@ -3,7 +3,7 @@ templates:
   - ingress.yaml
 tests:
   - it: should fail render nothing if not enabled
-    asserts:
+    expects:
       - hasDocuments:
           count: 1
 
@@ -13,7 +13,7 @@ tests:
       service.externalPort: 12345
     release:
       name: my-release
-    asserts:
+    expects:
       - contains:
           path: spec.rules[0].http.paths
           content:
@@ -33,7 +33,7 @@ tests:
         ingress.kubernetes.io/rewrite-target: /
     release:
       name: my-release
-    asserts:
+    expects:
       - isEmpty:
           path: metadata.annotations
 
@@ -43,7 +43,7 @@ tests:
 
     release:
       name: my-release
-    asserts:
+    expects:
       - equal:
           path: spec.tls
           value:

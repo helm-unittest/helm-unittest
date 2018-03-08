@@ -3,7 +3,7 @@ templates:
   - ingress.yaml
 tests:
   - it: should render nothing if not enabled
-    asserts:
+    expects:
       - hasDocuments:
           count: 0
 
@@ -13,7 +13,7 @@ tests:
       service.externalPort: 12345
     release:
       name: my-release
-    asserts:
+    expects:
       - hasDocuments:
           count: 1
       - isKind:
@@ -35,7 +35,7 @@ tests:
         kubernetes.io/ingress.class: nginx
         kubernetes.io/tls-acme: "true"
         ingress.kubernetes.io/rewrite-target: /
-    asserts:
+    expects:
       - equal:
           path: metadata.annotations
           value:
@@ -48,7 +48,7 @@ tests:
       ingress.enabled: true
       ingress.tls:
         - secretName: my-tls-secret
-    asserts:
+    expects:
       - equal:
           path: spec.tls
           value:

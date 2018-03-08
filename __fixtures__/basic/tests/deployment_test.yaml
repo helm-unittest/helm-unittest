@@ -7,7 +7,7 @@ tests:
       - ./values/image.yaml
     set:
       service.internalPort: 8080
-    asserts:
+    expects:
       - equal:
           path: spec.template.spec.containers[0].image
           value: apache:latest

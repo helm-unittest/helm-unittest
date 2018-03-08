@@ -21,7 +21,7 @@ templates:
   - deployment.yaml
 tests:
   - it: should work
-    asserts:
+    expects:
       - isKind:
           of: Deployment
       - matchRegex:
@@ -110,7 +110,7 @@ tests:
       namespace:
       revision: 9
       isUpgrade: true
-    asserts:
+    expects:
       - equal:
           path: metadata.name
           value: my-deploy
@@ -128,7 +128,7 @@ tests:
   - **revision**: *string, optional*. The revision of current build, default to `0`.
   - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
-- **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
+- **expects**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
 ## Assertion
 
@@ -140,7 +140,7 @@ templates:
   - service.yaml
 tests:
   - it: should pass
-    asserts:
+    expects:
       - equal:
           path: metadata.name
           value: my-deploy
@@ -204,12 +204,12 @@ templates:
   - deployment.yaml
 tests:
   - it: pod spec should match snapshot
-    asserts:
+    expects:
       - matchSnapshot:
           path: spec.template.spec
   # or you can snapshot the whole manifest
   - it: manifest should match snapshot
-    asserts:
+    expects:
       - matchSnapshot: {}
 ```
 
