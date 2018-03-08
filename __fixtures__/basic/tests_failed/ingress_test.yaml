@@ -28,8 +28,9 @@ tests:
     set:
       ingress.enabled: true
       ingress.annotations:
+        kubernetes.io/ingress.class: nginx
+        kubernetes.io/tls-acme: "true"
         ingress.kubernetes.io/rewrite-target: /
-        nginx.ingress.kubernetes.io/affinity: cookie
     release:
       name: my-release
     asserts:
