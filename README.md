@@ -11,6 +11,12 @@ Feature:
 
 ## Install
 
+```
+$ helm plugin install https://github.com/lrills/helm-unittest
+```
+
+It will install latest version of binary into helm plugin directory.
+
 ## Get Started
 
 Add `tests` in `.helmignore` of your chart, and create the following test file at `$YOUR_CHART/tests/deployment_test.yaml`:
@@ -38,7 +44,7 @@ $ helm unittest $YOUR_CHART
 ```
 
 Now there is your first test! ;)  
-Please read the brief document below to learn writing your own tests.
+Please read the brief [document](#testing-document) below to learn writing your own tests.
 
 ## Usage
 
