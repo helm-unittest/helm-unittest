@@ -33,7 +33,7 @@ type TestJob struct {
 	Name       string `yaml:"it"`
 	Values     []string
 	Set        map[string]interface{}
-	Assertions []*Assertion `yaml:"asserts"`
+	Assertions []*Assertion `yaml:"expects"`
 	Release    struct {
 		Name      string
 		Namespace string

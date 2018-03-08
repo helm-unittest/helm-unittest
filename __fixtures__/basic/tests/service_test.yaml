@@ -5,7 +5,7 @@ tests:
   - it: should pass
     release:
       name: my-release
-    asserts:
+    expects:
       - contains:
           path: spec.ports
           content:
@@ -29,7 +29,7 @@ tests:
         internalPort: 1234
         externalPort: 4321
         name: cool-service
-    asserts:
+    expects:
       - contains:
           path: spec.ports
           content:
