@@ -67,6 +67,7 @@ The test suite file is written in pure YAML, and default placed under the `tests
 ```bash
 $ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
 ```
+Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
 
 ## Usage
 
