@@ -6,7 +6,7 @@ Feature:
   - write test file in pure YAML
   - render locally with no need of *tiller*
   - create **nothing** on your cluster
-  - define values and release options
+  - [define values and release options](./DOCUMENT.md#test-job)
   - [snapshot testing](#snapshot-testing)
 
 ## Documentation
@@ -42,6 +42,8 @@ templates:
   - deployment.yaml
 tests:
   - it: should work
+    set:
+      image.tag: latest
     asserts:
       - isKind:
           of: Deployment
@@ -50,7 +52,7 @@ tests:
           pattern: -my-chart$
       - equal:
           path: spec.template.spec.containers[0].image
-          value: nginx:stable
+          value: nginx:latest
 ```
 and run:
 
