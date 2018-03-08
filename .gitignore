@@ -6,3 +6,5 @@ _dist/
 untt
 untt.exe
 _dist
+
+.DS_Store
