@@ -11,7 +11,7 @@ PROJECT_GH="lrills/$PROJECT_NAME"
 # available. This is the case when using MSYS2 or Cygwin
 # on Windows where helm returns a Windows path but we
 # need a Unix path
-if type cygpath > /dev/null; then
+if type cygpath &> /dev/null; then
   HELM_PLUGIN_PATH=$(cygpath -u $HELM_PLUGIN_PATH)
 fi
 
