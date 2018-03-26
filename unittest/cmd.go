@@ -12,6 +12,7 @@ import (
 type TestConfig struct {
 	Colored        bool
 	UpdateSnapshot bool
+	WithSubChart   bool
 	TestFiles      []string
 }
 
@@ -90,5 +91,10 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.UpdateSnapshot, "update-snapshot", "u", false,
 		"update the snapshot cached if needed, make sure you review the change before update",
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.WithSubChart, "with-subchart", "s", false,
+		"include tests of the subcharts within `charts` folder",
 	)
 }
