@@ -115,7 +115,7 @@ Available assertion types are listed below:
 | `isEmpty` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is empty (`null`, `""`, `0`, `[]`, `{}`). |<pre>isEmpty:<br/>  path: spec.tls</pre> |
 | `isNotEmpty` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT empty (`null`, `""`, `0`, `[]`, `{}`). |<pre>isNotEmpty:<br/>  path: spec.selector</pre> |
 | `isKind` | **of**: *String*. Expected `kind` of manifest. | Assert the `kind` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: kind<br/>  value: ...<br/> | <pre>isKind:<br/>  of: Deployment</pre> |
-| `isApiVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isApiVersion:<br/>  of: v2</pre> |
+| `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
 | `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
 
