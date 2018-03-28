@@ -1,6 +1,7 @@
 
 ### Chart [ basic ] ../__fixtures__/basic
 
+
  FAIL  test deployment that would be fail	../__fixtures__/basic/tests_failed/deployment_test.yaml
 	- should fail all kinds of assertion
 
@@ -133,7 +134,6 @@
 				-replicas: 999
 				+replicas: 1
 				 template:
-
  FAIL  test ingress that should fail	../__fixtures__/basic/tests_failed/ingress_test.yaml
 	- should fail render nothing if not enabled
 
@@ -189,7 +189,6 @@
 				@@ -1,2 +1,2 @@
 				-- secretName: my-tls-secret
 				+null
-
  FAIL  test service	../__fixtures__/basic/tests_failed/service_test.yaml
 	- should failed
 
@@ -243,12 +242,14 @@
 				NodePort
 
 
+
 Snapshot Summary: 1 snapshot failed in 1 test suite. Check changes and use `-u` to update snapshot.
+
 
 Charts:      1 failed, 0 passed, 1 total
 Test Suites: 3 failed, 0 passed, 3 total
 Tests:       7 failed, 0 passed, 7 total
 Snapshot:    1 failed, 0 passed, 1 total
-Time:        9.882282ms
+Time:        XX.XXXms
 
 
