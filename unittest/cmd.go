@@ -94,7 +94,7 @@ func init() {
 	)
 
 	cmd.PersistentFlags().BoolVarP(
-		&testConfig.WithSubChart, "with-subchart", "s", false,
+		&testConfig.WithSubChart, "with-subchart", "s", true,
 		"include tests of the subcharts within `charts` folder",
 	)
 }

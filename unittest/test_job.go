@@ -42,8 +42,10 @@ type TestJob struct {
 	}
 	// route indicate which chart in the dependency hierarchy
 	// like "parant-chart", "parent-charts/charts/child-chart"
-	chartRoute              string
-	definitionFile          string
+	chartRoute string
+	// where the test suite file located
+	definitionFile string
+	// template assertion should assert if not specified
 	defaultTemplateToAssert string
 }
 
@@ -53,7 +55,7 @@ func (t *TestJob) Run(
 	cache *snapshot.Cache,
 	result *TestJobResult,
 ) *TestJobResult {
-	t.polishAssertions(targetChart)
+	t.polishAssertionsTemplate(targetChart)
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -179,7 +181,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 // run Assert of all assertions of test
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
-	comparer validators.SnapshotComparer,
+	snapshotComparer validators.SnapshotComparer,
 ) (bool, []*AssertionResult) {
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
@@ -187,7 +189,7 @@ func (t *TestJob) runAssertions(
 	for idx, assertion := range t.Assertions {
 		result := assertion.Assert(
 			manifestsOfFiles,
-			comparer,
+			snapshotComparer,
 			&AssertionResult{Index: idx},
 		)
 
@@ -197,8 +199,8 @@ func (t *TestJob) runAssertions(
 	return testPass, assertsResult
 }
 
-// add prefix to Assertion.Template if needed
-func (t *TestJob) polishAssertions(targetChart *chart.Chart) {
+// add prefix to Assertion.Template
+func (t *TestJob) polishAssertionsTemplate(targetChart *chart.Chart) {
 	if t.chartRoute == "" {
 		t.chartRoute = targetChart.Metadata.Name
 	}
