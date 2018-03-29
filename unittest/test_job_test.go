@@ -1,8 +1,11 @@
 package unittest_test
 
 import (
+	"fmt"
+	"io/ioutil"
 	"testing"
 
+	"github.com/bradleyjkemp/cupaloy"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
@@ -70,6 +73,8 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
+	cupaloy.SnapshotT(t, testResult)
+
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
@@ -95,9 +100,64 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
+	cupaloy.SnapshotT(t, testResult)
+
 	a.Nil(testResult.ExecError)
 	a.False(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestRunJobWithValueSet(t *testing.T) {
+	c, _ := chartutil.Load("../__fixtures__/basic")
+	manifest := `
+it: should work
+set:
+  nameOverride: john-doe
+asserts:
+  - equal:
+      path: metadata.name
+      value: RELEASE-NAME-john-doe
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, testResult)
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestRunJobWithValuesFile(t *testing.T) {
+	c, _ := chartutil.Load("../__fixtures__/basic")
+	manifest := `
+it: should work
+values:
+  - %s
+asserts:
+  - equal:
+      path: metadata.name
+      value: RELEASE-NAME-mary-jane
+    template: deployment.yaml
+`
+	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
+	file.WriteString("nameOverride: mary-jane")
+
+	var tj TestJob
+	yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
+
+	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, testResult)
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
 }
 
 func TestRunJobWithReleaseSetting(t *testing.T) {
@@ -118,6 +178,8 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
+	cupaloy.SnapshotT(t, testResult)
+
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))

@@ -3,17 +3,17 @@ templates:
   - deployment.yaml
 tests:
   - it: should pass all kinds of assertion
+    values:
+      - ./values/image.yaml
     set:
-      childchart:
-        service:
-          internalPort: 8080
+      childchart.service.internalPort: 8080
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: nginx:stable
+          value: apache:latest
       - notEqual:
           path: spec.template.spec.containers[0].image
-          value: apache:latest
+          value: nginx:stable
       - matchRegex:
           path: metadata.name
           pattern: ^.*-childchart$

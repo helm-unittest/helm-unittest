@@ -3,6 +3,7 @@ package unittest
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -89,16 +90,22 @@ func (t *TestJob) Run(
 func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[interface{}]interface{}{}
 
-	for _, valueFile := range t.Values {
+	for _, specifiedPath := range t.Values {
 		currentMap := map[interface{}]interface{}{}
-		valueFilePath := filepath.Join(filepath.Dir(t.definitionFile), valueFile)
+		var valueFilePath string
+		if path.IsAbs(specifiedPath) {
+			valueFilePath = specifiedPath
+		} else {
+			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
+		}
+
 		bytes, err := ioutil.ReadFile(valueFilePath)
 		if err != nil {
 			return []byte{}, err
 		}
 
 		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
-			return []byte{}, fmt.Errorf("failed to parse %s: %s", valueFile, err)
+			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 		base = valueutils.MergeValues(base, currentMap)
 	}
