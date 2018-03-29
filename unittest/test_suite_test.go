@@ -16,7 +16,7 @@ var tmpdir, _ = ioutil.TempDir("", "_suite_tests")
 
 func TestParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	s, err := ParseTestSuiteFile("../__fixtures__/basic/tests/deployment_test.yaml")
+	s, err := ParseTestSuiteFile("../__fixtures__/basic/tests/deployment_test.yaml", "../__fixtures__/basic")
 
 	a.Nil(err)
 	a.Equal(s.Name, "test deployment")

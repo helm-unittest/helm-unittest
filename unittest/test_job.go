@@ -40,7 +40,12 @@ type TestJob struct {
 		Revision  int
 		IsUpgrade bool
 	}
-	definitionFile          string
+	// route indicate which chart in the dependency hierarchy
+	// like "parant-chart", "parent-charts/charts/child-chart"
+	chartRoute string
+	// where the test suite file located
+	definitionFile string
+	// template assertion should assert if not specified
 	defaultTemplateToAssert string
 }
 
@@ -50,6 +55,7 @@ func (t *TestJob) Run(
 	cache *snapshot.Cache,
 	result *TestJobResult,
 ) *TestJobResult {
+	t.polishAssertionsTemplate(targetChart)
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -108,6 +114,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	return yaml.Marshal(base)
 }
 
+// render the chart and return result map
 func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[string]string, error) {
 	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
 	options := *t.releaseOption()
@@ -125,6 +132,7 @@ func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[
 	return outputOfFiles, nil
 }
 
+// get chartutil.ReleaseOptions ready for render
 func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
 	options := chartutil.ReleaseOptions{
 		Name:      "RELEASE-NAME",
@@ -143,35 +151,37 @@ func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
 	return &options
 }
 
+// parse rendered manifest if it's yaml
 func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
 	map[string][]common.K8sManifest,
 	error,
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 	for file, rendered := range outputOfFiles {
-		documents := strings.Split(rendered, "---")
-		manifests := make([]common.K8sManifest, len(documents))
+		if filepath.Ext(file) == ".yaml" {
+			documents := strings.Split(rendered, "---")
+			manifests := make([]common.K8sManifest, 0, len(documents))
 
-		manifestCount := 0
-		for _, doc := range documents {
-			manifest := make(common.K8sManifest)
-			if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
-				return nil, err
-			}
+			for _, doc := range documents {
+				manifest := make(common.K8sManifest)
+				if err := yaml.Unmarshal([]byte(doc), manifest); err != nil {
+					return nil, err
+				}
 
-			if len(manifest) > 0 {
-				manifests[manifestCount] = manifest
-				manifestCount++
+				if len(manifest) > 0 {
+					manifests = append(manifests, manifest)
+				}
 			}
+			manifestsOfFiles[file] = manifests
 		}
-		manifestsOfFiles[filepath.Base(file)] = manifests[:manifestCount]
 	}
 	return manifestsOfFiles, nil
 }
 
+// run Assert of all assertions of test
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
-	comparer validators.SnapshotComparer,
+	snapshotComparer validators.SnapshotComparer,
 ) (bool, []*AssertionResult) {
 	testPass := true
 	assertsResult := make([]*AssertionResult, len(t.Assertions))
@@ -179,7 +189,7 @@ func (t *TestJob) runAssertions(
 	for idx, assertion := range t.Assertions {
 		result := assertion.Assert(
 			manifestsOfFiles,
-			comparer,
+			snapshotComparer,
 			&AssertionResult{Index: idx},
 		)
 
@@ -189,10 +199,21 @@ func (t *TestJob) runAssertions(
 	return testPass, assertsResult
 }
 
-func (t *TestJob) polishAssertions() {
+// add prefix to Assertion.Template
+func (t *TestJob) polishAssertionsTemplate(targetChart *chart.Chart) {
+	if t.chartRoute == "" {
+		t.chartRoute = targetChart.Metadata.Name
+	}
 	for _, assertion := range t.Assertions {
+		var templateToAssert string
 		if assertion.Template == "" {
-			assertion.Template = t.defaultTemplateToAssert
+			if t.defaultTemplateToAssert == "" {
+				return
+			}
+			templateToAssert = t.defaultTemplateToAssert
+		} else {
+			templateToAssert = assertion.Template
 		}
+		assertion.Template = filepath.Join(t.chartRoute, "templates", templateToAssert)
 	}
 }

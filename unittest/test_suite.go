@@ -13,15 +13,15 @@ import (
 )
 
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(path string) (*TestSuite, error) {
-	var suite TestSuite
-	content, err := ioutil.ReadFile(path)
+func ParseTestSuiteFile(suiteFilePath, chartRoute string) (*TestSuite, error) {
+	suite := TestSuite{chartRoute: chartRoute}
+	content, err := ioutil.ReadFile(suiteFilePath)
 	if err != nil {
 		return &suite, err
 	}
 
 	cwd, _ := os.Getwd()
-	absPath, _ := filepath.Abs(path)
+	absPath, _ := filepath.Abs(suiteFilePath)
 	suite.definitionFile, err = filepath.Rel(cwd, absPath)
 	if err != nil {
 		return &suite, err
@@ -36,10 +36,14 @@ func ParseTestSuiteFile(path string) (*TestSuite, error) {
 
 // TestSuite defines scope and templates to render and tests to run
 type TestSuite struct {
-	Name           string `yaml:"suite"`
-	Templates      []string
-	Tests          []*TestJob
+	Name      string `yaml:"suite"`
+	Templates []string
+	Tests     []*TestJob
+	// where the test suite file located
 	definitionFile string
+	// route indicate which chart in the dependency hierarchy
+	// like "parant-chart", "parent-charts/charts/child-chart"
+	chartRoute string
 }
 
 // Run runs all the test jobs defined in TestSuite
@@ -48,7 +52,7 @@ func (s *TestSuite) Run(
 	snapshotCache *snapshot.Cache,
 	result *TestSuiteResult,
 ) *TestSuiteResult {
-	s.polishTestJobs()
+	s.polishTestJobsPathInfo()
 
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
@@ -68,13 +72,14 @@ func (s *TestSuite) Run(
 	return result
 }
 
-func (s *TestSuite) polishTestJobs() {
+// fill file path related info of TestJob
+func (s *TestSuite) polishTestJobsPathInfo() {
 	for _, test := range s.Tests {
+		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
 		if len(s.Templates) > 0 {
 			test.defaultTemplateToAssert = s.Templates[0]
 		}
-		test.polishAssertions()
 	}
 }
 

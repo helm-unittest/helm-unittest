@@ -10,28 +10,6 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// getTestSuiteFiles return test files of the chart which matched patterns
-func getTestSuiteFiles(chartPath string, patterns []string) ([]string, error) {
-	filesSet := map[string]bool{}
-	for _, pattern := range patterns {
-		files, err := filepath.Glob(filepath.Join(chartPath, pattern))
-		if err != nil {
-			return nil, err
-		}
-		for _, file := range files {
-			filesSet[file] = true
-		}
-	}
-
-	resultFiles := make([]string, len(filesSet))
-	idx := 0
-	for file := range filesSet {
-		resultFiles[idx] = file
-		idx++
-	}
-	return resultFiles, nil
-}
-
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
 	passed  uint
@@ -92,7 +70,7 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 			continue
 		}
 
-		suiteFiles, err := getTestSuiteFiles(chartPath, tr.Config.TestFiles)
+		testSuites, err := tr.getTestSuites(chartPath, chart.Metadata.Name, chart)
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
@@ -101,7 +79,7 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 		}
 
 		tr.printChartHeader(chart, chartPath)
-		chartPassed := tr.runSuitesOfChart(suiteFiles, chart)
+		chartPassed := tr.runSuitesOfChart(testSuites, chart)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -111,29 +89,63 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 	return allPassed
 }
 
+// getTestSuites return test files of the chart which matched patterns
+func (tr *TestRunner) getTestSuites(chartPath, chartRoute string, chart *chart.Chart) ([]*TestSuite, error) {
+	filesSet := map[string]bool{}
+	for _, pattern := range tr.Config.TestFiles {
+		files, err := filepath.Glob(filepath.Join(chartPath, pattern))
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range files {
+			filesSet[file] = true
+		}
+	}
+
+	resultSuites := make([]*TestSuite, 0, len(filesSet))
+	for file := range filesSet {
+		suite, err := ParseTestSuiteFile(file, chartRoute)
+		if err != nil {
+			tr.handleSuiteResult(&TestSuiteResult{
+				FilePath:  file,
+				ExecError: err,
+			})
+			continue
+		}
+		resultSuites = append(resultSuites, suite)
+	}
+
+	if tr.Config.WithSubChart {
+		for _, subchart := range chart.Dependencies {
+			subchartSuites, err := tr.getTestSuites(
+				filepath.Join(chartPath, "charts", subchart.Metadata.Name),
+				filepath.Join(chartRoute, "charts", subchart.Metadata.Name),
+				subchart,
+			)
+			if err != nil {
+				continue
+			}
+			resultSuites = append(resultSuites, subchartSuites...)
+		}
+	}
+
+	return resultSuites, nil
+}
+
 // runSuitesOfChart runs suite files of the chart and print output
-func (tr *TestRunner) runSuitesOfChart(suiteFiles []string, chart *chart.Chart) bool {
+func (tr *TestRunner) runSuitesOfChart(suites []*TestSuite, chart *chart.Chart) bool {
 	chartPassed := true
-	for _, file := range suiteFiles {
-		testSuite, err := ParseTestSuiteFile(file)
+	for _, suite := range suites {
+		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.definitionFile, tr.Config.UpdateSnapshot)
 		if err != nil {
 			tr.handleSuiteResult(&TestSuiteResult{
-				FilePath:  file,
+				FilePath:  suite.definitionFile,
 				ExecError: err,
 			})
 			continue
 		}
 
-		snapshotCache, err := snapshot.CreateSnapshotOfSuite(file, tr.Config.UpdateSnapshot)
-		if err != nil {
-			tr.handleSuiteResult(&TestSuiteResult{
-				FilePath:  file,
-				ExecError: err,
-			})
-			continue
-		}
-
-		result := testSuite.Run(chart, snapshotCache, &TestSuiteResult{})
+		result := suite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 
