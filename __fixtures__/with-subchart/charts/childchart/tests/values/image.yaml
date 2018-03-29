@@ -1,5 +1,4 @@
-childchart:
-  image:
-    repository: apache
-    tag: latest
-    pullPolicy: Always
+image:
+  repository: apache
+  tag: latest
+  pullPolicy: Always

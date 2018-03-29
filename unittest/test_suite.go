@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"gopkg.in/yaml.v2"
@@ -68,7 +69,7 @@ func (s *TestSuite) Run(
 		snapshotCache,
 	)
 
-	countSnapshot(result, snapshotCache)
+	result.countSnapshot(snapshotCache)
 	return result
 }
 
@@ -87,13 +88,20 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 	copiedChart := new(chart.Chart)
 	*copiedChart = *targetChart
 
-	if len(s.Templates) > 0 {
-		filteredTemplate := make([]*chart.Template, len(s.Templates))
-		for idx, fileName := range s.Templates {
+	suiteIsFromRootChart := len(strings.Split(s.chartRoute, string(filepath.Separator))) <= 1
+
+	if len(s.Templates) == 0 && suiteIsFromRootChart {
+		return copiedChart, nil
+	}
+
+	filteredTemplate := make([]*chart.Template, 0, len(s.Templates))
+	// check templates and add them in chart dependencies, if from subchart leave it empty
+	if suiteIsFromRootChart {
+		for _, fileName := range s.Templates {
 			found := false
 			for _, template := range targetChart.Templates {
 				if filepath.Base(template.Name) == fileName {
-					filteredTemplate[idx] = template
+					filteredTemplate = append(filteredTemplate, template)
 					found = true
 					break
 				}
@@ -105,14 +113,16 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 				)
 			}
 		}
-
-		for _, template := range targetChart.Templates {
-			if path.Ext(template.Name) == ".tpl" {
-				filteredTemplate = append(filteredTemplate, template)
-			}
-		}
-		copiedChart.Templates = filteredTemplate
 	}
+
+	// add templates with extension .tpl
+	for _, template := range targetChart.Templates {
+		if path.Ext(template.Name) == ".tpl" {
+			filteredTemplate = append(filteredTemplate, template)
+		}
+	}
+	copiedChart.Templates = filteredTemplate
+
 	return copiedChart, nil
 }
 
@@ -132,11 +142,4 @@ func (s *TestSuite) runTestJobs(
 		}
 	}
 	return suitePass, jobResults
-}
-
-func countSnapshot(result *TestSuiteResult, cache *snapshot.Cache) {
-	result.SnapshotCounting.Created = cache.InsertedCount()
-	result.SnapshotCounting.Failed = cache.FailedCount()
-	result.SnapshotCounting.Total = cache.CurrentCount()
-	result.SnapshotCounting.Vanished = cache.VanishedCount()
 }

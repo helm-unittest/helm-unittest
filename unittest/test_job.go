@@ -89,9 +89,10 @@ func (t *TestJob) Run(
 // liberally borrows from helm-template
 func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[interface{}]interface{}{}
+	routes := spliteChartRoutes(t.chartRoute)
 
 	for _, specifiedPath := range t.Values {
-		currentMap := map[interface{}]interface{}{}
+		value := map[interface{}]interface{}{}
 		var valueFilePath string
 		if path.IsAbs(specifiedPath) {
 			valueFilePath = specifiedPath
@@ -104,10 +105,10 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			return []byte{}, err
 		}
 
-		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
+		if err := yaml.Unmarshal(bytes, &value); err != nil {
 			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
-		base = valueutils.MergeValues(base, currentMap)
+		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
 	}
 
 	for path, valus := range t.Set {
@@ -116,7 +117,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			return []byte{}, err
 		}
 
-		base = valueutils.MergeValues(base, setMap)
+		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 	return yaml.Marshal(base)
 }

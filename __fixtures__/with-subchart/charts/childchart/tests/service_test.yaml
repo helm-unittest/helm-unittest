@@ -24,12 +24,11 @@ tests:
 
   - it: should render right if values given
     set:
-      childchart:
-        service:
-          type: NodePort
-          internalPort: 1234
-          externalPort: 4321
-          name: cool-service
+      service:
+        type: NodePort
+        internalPort: 1234
+        externalPort: 4321
+        name: cool-service
     asserts:
       - contains:
           path: spec.ports

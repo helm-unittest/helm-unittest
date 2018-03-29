@@ -91,7 +91,7 @@ defined in test suite files.
 
 ## Example
 
-Check [`__fixtures__/basic/`](https://github.com/lrills/helm-unittest/tree/master/__fixtures__/basic) for some basic use cases of a simple chart.
+Check [`__fixtures__/basic/`](./__fixtures__/basic) for some basic use cases of a simple chart.
 
 ## Snapshot Testing
 
@@ -117,6 +117,24 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 $ helm unittest -u my-chart
 ```
 The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+
+## Tests within subchart
+
+If you have customized subchart (not installed via `helm dependency`) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
+
+```yaml
+# parent-chart/charts/child-chart/tests/xxx_test.yaml
+templates:
+  - xxx.yaml
+tests:
+  - it:
+    set:
+      # no need to prefix with "child-chart."
+      somevalue: should_be_scoped
+    asserts:
+      - ...
+```
+Check [`__fixtures__/with-subchart/`](./__fixtures__/with-subchart) as an example.
 
 ## Related Projects / Commands
 
