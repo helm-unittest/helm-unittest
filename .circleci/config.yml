@@ -1,8 +1,8 @@
 version: 2
 jobs:
-  build:
+  test:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.10
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
@@ -33,3 +33,41 @@ jobs:
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
+
+  distribute:
+    docker:
+      - image: golang:1.10
+    working_directory: /go/src/github.com/lrills/helm-unittest
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+            - helm-untt-deps-{{ .Branch }}-
+            - helm-untt-deps-
+      - run:
+          name: Insatll ghr
+          command: go get -u github.com/tcnksm/ghr
+      - run:
+          name: Build binaries
+          command: make dist
+      - run:
+          name: Upload binaries
+          command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+
+workflows:
+  version: 2
+  test-and-build:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /.*/
+      - distribute:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)?/
+            branches:
+              ignore: /.*/
