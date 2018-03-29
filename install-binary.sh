@@ -67,6 +67,10 @@ verifySupported() {
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
+  local version=$(git describe --tags --exact-match 2>/dev/null)
+  if [ -n "$version" ]; then
+    url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+  fi
   if type "curl" > /dev/null; then
     DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" > /dev/null; then
