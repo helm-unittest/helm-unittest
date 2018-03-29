@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lrills/helm-unittest/unittest/snapshot"
 )
 
 // TestSuiteResult result return by TestSuite.Run
@@ -51,4 +53,11 @@ func (tsr TestSuiteResult) printTitle(printer *Printer) {
 		fmt.Sprintf("%s %s\t%s", label, name, pathToPrint),
 		0,
 	)
+}
+
+func (tsr *TestSuiteResult) countSnapshot(cache *snapshot.Cache) {
+	tsr.SnapshotCounting.Created = cache.InsertedCount()
+	tsr.SnapshotCounting.Failed = cache.FailedCount()
+	tsr.SnapshotCounting.Total = cache.CurrentCount()
+	tsr.SnapshotCounting.Vanished = cache.VanishedCount()
 }

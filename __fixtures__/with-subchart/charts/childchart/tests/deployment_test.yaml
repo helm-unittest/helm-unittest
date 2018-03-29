@@ -6,7 +6,7 @@ tests:
     values:
       - ./values/image.yaml
     set:
-      childchart.service.internalPort: 8080
+      service.internalPort: 8080
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
