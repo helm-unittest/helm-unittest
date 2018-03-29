@@ -8,8 +8,8 @@ should pass all kinds of assertion:
           release: RELEASE-NAME
       spec:
         containers:
-        - image: nginx:stable
-          imagePullPolicy: IfNotPresent
+        - image: apache:latest
+          imagePullPolicy: Always
           livenessProbe:
             httpGet:
               path: /

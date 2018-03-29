@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/bradleyjkemp/cupaloy"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +17,12 @@ var tmpdir, _ = ioutil.TempDir("", "_suite_tests")
 
 func TestParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	s, err := ParseTestSuiteFile("../__fixtures__/basic/tests/deployment_test.yaml", "../__fixtures__/basic")
+	suite, err := ParseTestSuiteFile("../__fixtures__/basic/tests/deployment_test.yaml", "basic")
 
 	a.Nil(err)
-	a.Equal(s.Name, "test deployment")
-	a.Equal(s.Templates, []string{"deployment.yaml"})
-	a.Equal(s.Tests[0].Name, "should pass all kinds of assertion")
+	a.Equal(suite.Name, "test deployment")
+	a.Equal(suite.Templates, []string{"deployment.yaml"})
+	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
 }
 
 func TestRunSuiteWhenPass(t *testing.T) {
@@ -45,6 +46,8 @@ tests:
 	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)
+	cupaloy.SnapshotT(t, suiteResult)
+
 	a.True(suiteResult.Passed)
 	a.Nil(suiteResult.ExecError)
 	a.Equal(1, len(suiteResult.TestsResult))
@@ -76,6 +79,8 @@ tests:
 	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)
+	cupaloy.SnapshotT(t, *suiteResult)
+
 	a.False(suiteResult.Passed)
 	a.Nil(suiteResult.ExecError)
 	a.Equal(1, len(suiteResult.TestsResult))
