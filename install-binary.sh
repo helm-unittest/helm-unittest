@@ -57,7 +57,7 @@ verifySupported() {
     exit 1
   fi
 
-  if ! type "curl" > /dev/null && ! type "wget" > /dev/null; then
+  if ! type "curl" >/dev/null 2>&1 && ! type "wget" >/dev/null 2>&1; then
     echo "Either curl or wget is required"
     exit 1
   fi
@@ -71,9 +71,9 @@ getDownloadURL() {
   if [ -n "$version" ]; then
     url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
   fi
-  if type "curl" > /dev/null; then
+  if type "curl" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
-  elif type "wget" > /dev/null; then
+  elif type "wget" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
@@ -83,9 +83,9 @@ getDownloadURL() {
 downloadFile() {
   PLUGIN_TMP_FILE="/tmp/${PROJECT_NAME}.tgz"
   echo "Downloading $DOWNLOAD_URL"
-  if type "curl" > /dev/null; then
+  if type "curl" >/dev/null 2>&1; then
     curl -L "$DOWNLOAD_URL" -o "$PLUGIN_TMP_FILE"
-  elif type "wget" > /dev/null; then
+  elif type "wget" >/dev/null 2>&1; then
     wget -q -O "$PLUGIN_TMP_FILE" "$DOWNLOAD_URL"
   fi
 }
@@ -100,6 +100,7 @@ installFile() {
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file withe the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }
 
 # fail_trap is executed if an error occurs.
@@ -107,20 +108,17 @@ fail_trap() {
   result=$?
   if [ "$result" != "0" ]; then
     echo "Failed to install $PROJECT_NAME"
-    echo "\tFor support, go to https://github.com/kubernetes/helm."
+    echo "For support, go to https://github.com/kubernetes/helm"
   fi
   exit $result
 }
 
 # testVersion tests the installed client to make sure it is working.
 testVersion() {
-  set +e
-  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH/$PROJECT_NAME"
   # To avoid to keep track of the Windows suffix,
   # call the plugin assuming it is in the PATH
   PATH=$PATH:$HELM_PLUGIN_PATH
   untt -h
-  set -e
 }
 
 # Execution
