@@ -3,6 +3,8 @@ package validators
 import (
 	"strconv"
 
+	"fmt"
+	"github.com/lrills/helm-unittest/unittest/common"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/lrills/helm-unittest/unittest/valueutils"
 )
@@ -38,12 +40,31 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
+	allManifests, err := context.getAllManifests()
+	if err != nil {
+		return false, splitInfof(errorFormat, err.Error())
+	}
+	var allActual []common.K8sManifest
+
 	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+	if v.Path == "ALL" {
+		allActual = allManifests
+	}
+	// fmt.Println("Start")
+	fmt.Println(allActual)
+	// fmt.Println("End")
+
 	if err != nil {
 		return false, splitInfof(errorFormat, err.Error())
 	}
 
-	result := context.CompareToSnapshot(actual)
+	var result *snapshot.CompareResult
+
+	if v.Path == "ALL" {
+		result = context.CompareToSnapshot(allActual)
+	}else {
+		result = context.CompareToSnapshot(actual);	
+	}
 
 	if result.Passed != context.Negative {
 		return true, []string{}

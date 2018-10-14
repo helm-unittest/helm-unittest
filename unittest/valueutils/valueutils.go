@@ -22,6 +22,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, e
 	return tr.data, nil
 }
 
+
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
 func BuildValueOfSetPath(val interface{}, path string) (map[interface{}]interface{}, error) {
 	if path == "" {

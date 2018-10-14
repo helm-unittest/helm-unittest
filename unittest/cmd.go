@@ -21,7 +21,7 @@ var testConfig = TestConfig{}
 var cmd = &cobra.Command{
 	Use:   "unittest [flags] CHART [...]",
 	Short: "unittest for helm charts",
-	Long: `Running chart unittest written in YAML.
+	Long: `Running chart unittest written in YAML. (Ravi's version 1)
 
 This renders your charts locally (without tiller) and
 validates the rendered output with the tests defined in
