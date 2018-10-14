@@ -29,6 +29,13 @@ func (c *ValidateContext) getManifest() (common.K8sManifest, error) {
 	return c.Docs[c.Index], nil
 }
 
+func (c *ValidateContext) getAllManifests() ([]common.K8sManifest, error) {
+	if len(c.Docs) <= 0 {
+		return nil, fmt.Errorf("no documents found")
+	}
+	return c.Docs, nil
+}
+
 // Validatable all validators must implement Validate method
 type Validatable interface {
 	Validate(context *ValidateContext) (bool, []string)

@@ -39,6 +39,27 @@ func TestSnapshotValidatorWhenOk(t *testing.T) {
 	mockComparer.AssertExpectations(t)
 }
 
+func TestSnapshotValidatorWhenOkWithPathAll(t *testing.T) {
+	doc1 := common.K8sManifest{"a": "b"}
+	doc2 := common.K8sManifest{"c": "d"}
+	validator := MatchSnapshotValidator{Path: "ALL"}
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", mock.AnythingOfType("[]common.K8sManifest")).Return(&snapshot.CompareResult{
+		Passed: true,
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{doc1, doc2},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mockComparer.AssertExpectations(t)
+}
+
 func TestSnapshotValidatorWhenNegativeAndOk(t *testing.T) {
 	data := common.K8sManifest{"a": "b"}
 	validator := MatchSnapshotValidator{Path: "a"}
@@ -122,3 +143,5 @@ func TestSnapshotValidatorWhenNegativeAndFail(t *testing.T) {
 
 	mockComparer.AssertExpectations(t)
 }
+
+

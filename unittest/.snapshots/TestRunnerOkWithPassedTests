@@ -2,14 +2,20 @@
 ### Chart [ basic ] ../__fixtures__/basic
 
 
- PASS  test deployment	../__fixtures__/basic/tests/deployment_test.yaml
+ FAIL  test deployment	../__fixtures__/basic/tests/deployment_test.yaml
+	- should pass all kinds of assertion
+
+		- asserts[12] `hasDocuments` fail
+
+			Expected documents count:	1
+			Actual:	2
  PASS  test ingress	../__fixtures__/basic/tests/ingress_test.yaml
  PASS  test service	../__fixtures__/basic/tests/service_test.yaml
 
 
-Charts:      1 passed, 1 total
-Test Suites: 3 passed, 3 total
-Tests:       7 passed, 7 total
+Charts:      1 failed, 0 passed, 1 total
+Test Suites: 1 failed, 2 passed, 3 total
+Tests:       1 failed, 6 passed, 7 total
 Snapshot:    1 passed, 1 total
 Time:        XX.XXXms
 

@@ -35,3 +35,12 @@ spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
     {{- end }}
+
+---------
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-example
+data:
+  9000: "default/example-go:8080"

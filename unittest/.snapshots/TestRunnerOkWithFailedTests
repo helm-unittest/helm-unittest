@@ -119,11 +119,6 @@
 			Expected apiVersion:	v2
 			Actual:	extensions/v1beta1
 
-		- asserts[12] `hasDocuments` fail
-
-			Expected documents count:	2
-			Actual:	1
-
 		- asserts[13] `matchSnapshot` fail
 
 			Path:	spec
