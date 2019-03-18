@@ -41,6 +41,6 @@ tests:
       - isAPIVersion:
           of: v2
       - hasDocuments:
-          count: 2
+          count: 1
       - matchSnapshot:
           path: spec
