@@ -21,9 +21,8 @@
   digest = "1:8b99c3c677dfb27dbf56f7e1a32523924cd8be6a17b4a1fdd0d1270c16f0b432"
   name = "github.com/Masterminds/sprig"
   packages = ["."]
-  pruneopts = ""
-  revision = "b217b9c388de2cacde4354c536e520c52c055563"
-  version = "v2.14.1"
+  revision = "6b2a58267f6a8b1dc8e2eb5519b984008fa85e8c"
+  version = "v2.15.0"
 
 [[projects]]
   digest = "1:24cff84fefa06791f78f9bc6e05c2a3a90710c81ae6b76225280daf33b267d36"
@@ -93,6 +92,12 @@
   ]
   pruneopts = ""
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+
+[[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
 
 [[projects]]
   branch = "master"
@@ -241,9 +246,8 @@
     "pkg/timeconv",
     "pkg/version",
   ]
-  pruneopts = ""
-  revision = "a80231648a1473929271764b920a8e346f6de844"
-  version = "v2.8.2"
+  revision = "20adb27c7c5868466912eebdf6664e7390ebe710"
+  version = "v2.9.1"
 
 [solve-meta]
   analyzer-name = "dep"
