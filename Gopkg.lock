@@ -21,6 +21,7 @@
   digest = "1:8b99c3c677dfb27dbf56f7e1a32523924cd8be6a17b4a1fdd0d1270c16f0b432"
   name = "github.com/Masterminds/sprig"
   packages = ["."]
+  pruneopts = ""
   revision = "6b2a58267f6a8b1dc8e2eb5519b984008fa85e8c"
   version = "v2.15.0"
 
@@ -94,8 +95,10 @@
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
+  digest = "1:c1d7e883c50a26ea34019320d8ae40fad86c9e5d56e63a1ba2cb618cef43e986"
   name = "github.com/google/uuid"
   packages = ["."]
+  pruneopts = ""
   revision = "064e2069ce9c359c118179501254f67d7d37ba24"
   version = "0.2"
 
@@ -246,6 +249,7 @@
     "pkg/timeconv",
     "pkg/version",
   ]
+  pruneopts = ""
   revision = "20adb27c7c5868466912eebdf6664e7390ebe710"
   version = "v2.9.1"
 
