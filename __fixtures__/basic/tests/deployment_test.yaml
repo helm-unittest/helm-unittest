@@ -41,6 +41,6 @@ tests:
       - isAPIVersion:
           of: extensions/v1beta1
       - hasDocuments:
-          count: 1
+          count: 2
       - matchSnapshot:
           path: spec
