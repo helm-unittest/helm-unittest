@@ -222,8 +222,10 @@ func (t *TestJob) polishAssertionsTemplate(targetChart *chart.Chart) {
 	if t.chartRoute == "" {
 		t.chartRoute = targetChart.Metadata.Name
 	}
+
 	for _, assertion := range t.Assertions {
 		var templateToAssert string
+
 		if assertion.Template == "" {
 			if t.defaultTemplateToAssert == "" {
 				return
@@ -232,6 +234,10 @@ func (t *TestJob) polishAssertionsTemplate(targetChart *chart.Chart) {
 		} else {
 			templateToAssert = assertion.Template
 		}
-		assertion.Template = filepath.Join(t.chartRoute, "templates", templateToAssert)
+
+		// map the file name to the path of helm rendered result
+		assertion.Template = filepath.ToSlash(
+			filepath.Join(t.chartRoute, "templates", templateToAssert),
+		)
 	}
 }
