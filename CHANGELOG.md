@@ -1,3 +1,12 @@
+0.1.3 / 2019-03-29
+==================
+- use yaml.Decoder to parse multi doc manifest (#66)
+- fix doc typo (#56, #63)
+- upgrade sprig and helm (#49)
+- fix static linking of building (#46)
+- enhance install script (#43)
+- standard dockerfile for running (#42)
+
 0.1.2 / 2018-03-29
 ==================
 - feature: recursively find test suite files along dependencies in `charts`
