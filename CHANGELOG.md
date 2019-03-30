@@ -1,3 +1,8 @@
+0.1.4 / 2019-03-30
+==================
+- fix slash problem in windows (#70)
+- add update plugin hook, enable `helm plugin update` (#69)
+
 0.1.3 / 2019-03-29
 ==================
 - use yaml.Decoder to parse multi doc manifest (#66)
