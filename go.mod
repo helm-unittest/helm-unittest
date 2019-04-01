@@ -1,0 +1,33 @@
+module github.com/lrills/helm-unittest
+
+require (
+	github.com/BurntSushi/toml v0.3.0
+	github.com/Masterminds/goutils v1.1.0
+	github.com/Masterminds/semver v1.4.0
+	github.com/Masterminds/sprig v2.18.0+incompatible
+	github.com/bradleyjkemp/cupaloy v2.0.0+incompatible
+	github.com/cyphar/filepath-securejoin v0.2.2
+	github.com/davecgh/go-spew v1.1.0
+	github.com/fatih/color v1.5.0
+	github.com/ghodss/yaml v1.0.0
+	github.com/gobwas/glob v0.2.2
+	github.com/golang/protobuf v1.3.1
+	github.com/google/uuid v1.1.1
+	github.com/huandu/xstrings v1.2.0
+	github.com/imdario/mergo v0.3.7
+	github.com/inconshreveable/mousetrap v1.0.0
+	github.com/mattn/go-colorable v0.0.9
+	github.com/mattn/go-isatty v0.0.3
+	github.com/mitchellh/mapstructure v1.1.2
+	github.com/pkg/errors v0.8.1
+	github.com/pmezard/go-difflib v1.0.0
+	github.com/spf13/cobra v0.0.1
+	github.com/spf13/pflag v1.0.0
+	github.com/stretchr/objx v0.1.0
+	github.com/stretchr/testify v1.1.4
+	golang.org/x/crypto v0.0.0-20171128194009-94eea52f7b74
+	golang.org/x/sys v0.0.0-20180122081959-af50095a40f9
+	gopkg.in/yaml.v2 v2.2.2
+	k8s.io/apimachinery v0.0.0-20171217074029-5250765d28a6
+	k8s.io/helm v2.13.1+incompatible
+)
