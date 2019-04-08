@@ -12,6 +12,7 @@ service:
   externalPort: 80
   internalPort: 80
 ingress:
+  class: foo
   enabled: false
   # Used to create an Ingress record.
   hosts:

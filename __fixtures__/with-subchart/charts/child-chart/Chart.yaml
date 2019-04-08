@@ -1,4 +1,4 @@
 apiVersion: v1
 description: An customized subchart
-name: childchart
+name: child-chart
 version: 0.1.0

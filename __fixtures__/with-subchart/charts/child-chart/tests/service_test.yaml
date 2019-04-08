@@ -19,7 +19,7 @@ tests:
       - equal:
           path: spec.selector
           value:
-            app: childchart
+            app: child-chart
             release: my-release
 
   - it: should render right if values given

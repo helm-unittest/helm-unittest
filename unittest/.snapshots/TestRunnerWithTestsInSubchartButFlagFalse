@@ -1,5 +1,5 @@
 
-### Chart [ with-subchart ] ../__fixtures__/with-subchart
+### Chart [ parent-chart ] ../__fixtures__/with-subchart
 
 
  PASS  test deployment	../__fixtures__/with-subchart/tests/deployment_test.yaml

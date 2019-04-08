@@ -1,12 +1,12 @@
 {{- if .Values.ingress.enabled -}}
-{{- $serviceName := include "basic.fullname" . -}}
+{{- $serviceName := include "parent-chart.fullname" . -}}
 {{- $servicePort := .Values.service.externalPort -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "basic.fullname" . }}
+  name: {{ template "parent-chart.fullname" . }}
   labels:
-    app: {{ template "basic.name" . }}
+    app: {{ template "parent-chart.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
