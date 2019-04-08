@@ -135,20 +135,6 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:f4150581ce227173caaf4c54d07ddcf681b4d135eb63c2fe4a8c7b10c447b959"
-  name = "github.com/lrills/helm-unittest"
-  packages = [
-    "unittest",
-    "unittest/common",
-    "unittest/snapshot",
-    "unittest/validators",
-    "unittest/valueutils",
-  ]
-  pruneopts = ""
-  revision = "a6c8ada5c8939c8be739ac02f3801d5483e4e4d7"
-  version = "v0.1.4"
-
-[[projects]]
   digest = "1:9ea83adf8e96d6304f394d40436f2eb44c1dc3250d223b74088cc253a6cd0a1c"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -281,11 +267,6 @@
   input-imports = [
     "github.com/bradleyjkemp/cupaloy",
     "github.com/fatih/color",
-    "github.com/lrills/helm-unittest/unittest",
-    "github.com/lrills/helm-unittest/unittest/common",
-    "github.com/lrills/helm-unittest/unittest/snapshot",
-    "github.com/lrills/helm-unittest/unittest/validators",
-    "github.com/lrills/helm-unittest/unittest/valueutils",
     "github.com/mitchellh/mapstructure",
     "github.com/pmezard/go-difflib/difflib",
     "github.com/spf13/cobra",
