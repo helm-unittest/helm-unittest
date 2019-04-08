@@ -1,12 +1,12 @@
 
-### Chart [ with-subchart ] ../__fixtures__/with-subchart
+### Chart [ parent-chart ] ../__fixtures__/with-subchart
 
 
- PASS  test deployment	../__fixtures__/with-subchart/charts/childchart/tests/deployment_test.yaml
+ PASS  test deployment	../__fixtures__/with-subchart/charts/child-chart/tests/deployment_test.yaml
  PASS  test deployment	../__fixtures__/with-subchart/tests/deployment_test.yaml
- PASS  test ingress	../__fixtures__/with-subchart/charts/childchart/tests/ingress_test.yaml
+ PASS  test ingress	../__fixtures__/with-subchart/charts/child-chart/tests/ingress_test.yaml
  PASS  test ingress	../__fixtures__/with-subchart/tests/ingress_test.yaml
- PASS  test service	../__fixtures__/with-subchart/charts/childchart/tests/service_test.yaml
+ PASS  test service	../__fixtures__/with-subchart/charts/child-chart/tests/service_test.yaml
  PASS  test service	../__fixtures__/with-subchart/tests/service_test.yaml
 
 

@@ -1,19 +1,17 @@
 {{- if .Values.ingress.enabled -}}
-{{- $serviceName := include "basic.fullname" . -}}
+{{- $serviceName := include "child-chart.fullname" . -}}
 {{- $servicePort := .Values.service.externalPort -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "basic.fullname" . }}
+  name: {{ template "child-chart.fullname" . }}
   labels:
-    app: {{ template "basic.name" . }}
+    app: {{ template "child-chart.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    {{- range $key, $value := .Values.ingress.annotations }}
-      {{ $key }}: {{ $value | quote }}
-    {{- end }}
+    kubernetes.io/ingress.class: {{ template "child-chart.ingressClass" . }}
 spec:
   rules:
     {{- range $host := .Values.ingress.hosts }}

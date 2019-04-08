@@ -1,4 +1,4 @@
 apiVersion: v1
 description: An example chart with customized subchart
-name: with-subchart
+name: parent-chart
 version: 0.1.0
