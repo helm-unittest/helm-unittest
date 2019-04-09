@@ -4,7 +4,7 @@ should pass all kinds of assertion:
     template:
       metadata:
         labels:
-          app: childchart
+          app: child-chart
           release: RELEASE-NAME
       spec:
         containers:
@@ -14,7 +14,7 @@ should pass all kinds of assertion:
             httpGet:
               path: /
               port: 8080
-          name: childchart
+          name: child-chart
           ports:
           - containerPort: 8080
           readinessProbe:
