@@ -12,7 +12,8 @@ func TestGetValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
 	data := common.K8sManifest{
 		"a": map[interface{}]interface{}{
-			"b": []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+			"x.y": "ok",
 		},
 	}
 
@@ -20,6 +21,7 @@ func TestGetValueOfSetPath(t *testing.T) {
 		"a.b[1].c": "yes",
 		"a.b[0]":   "_",
 		"a.b":      []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+		"a.x\\.y":  "ok",
 	}
 
 	for path, expect := range expectionsMapping {
