@@ -14,6 +14,7 @@ type TestConfig struct {
 	UpdateSnapshot bool
 	WithSubChart   bool
 	TestFiles      []string
+	OutputFile     string
 }
 
 var testConfig = TestConfig{}
@@ -58,8 +59,10 @@ details about how to write tests.
 		if cmd.PersistentFlags().Changed("color") {
 			colored = &testConfig.Colored
 		}
+
+		formatter := NewFormatter(testConfig.OutputFile)
 		printer := NewPrinter(os.Stdout, colored)
-		runner := TestRunner{Printer: printer, Config: testConfig}
+		runner := TestRunner{Printer: printer, Formatter: formatter, Config: testConfig}
 		passed := runner.Run(chartPaths)
 
 		if !passed {
@@ -96,5 +99,10 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.WithSubChart, "with-subchart", "s", true,
 		"include tests of the subcharts within `charts` folder",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.OutputFile, "output-file", "o", "",
+		"output-file the file where testresults are written in JUnit format, defaults no output is written to file",
 	)
 }

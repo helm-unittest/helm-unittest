@@ -245,7 +245,7 @@
   revision = "10bf64c7018d1bf6b021767df5126dec74b08010"
 
 [[projects]]
-  digest = "1:93dacf333c11ff29b3a336c1bbff8f2f1dc689a47a49f9e58a183202eaeae184"
+  digest = "1:18c5ed628f64365e67293ac1e8b536803e83c50b7b2b5cb319ffdde680d1efd0"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",

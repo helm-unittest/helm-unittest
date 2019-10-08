@@ -1,5 +1,7 @@
 package unittest
 
+import "time"
+
 // TestJobResult result return by TestJob.Run
 type TestJobResult struct {
 	DisplayName   string
@@ -7,6 +9,7 @@ type TestJobResult struct {
 	Passed        bool
 	ExecError     error
 	AssertsResult []*AssertionResult
+	Duration      time.Duration
 }
 
 func (tjr TestJobResult) print(printer *Printer, verbosity int) {

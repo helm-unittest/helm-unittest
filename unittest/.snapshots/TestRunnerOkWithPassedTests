@@ -2,9 +2,9 @@
 ### Chart [ basic ] ../__fixtures__/basic
 
 
- PASS  test deployment	../__fixtures__/basic/tests/deployment_test.yaml
- PASS  test ingress	../__fixtures__/basic/tests/ingress_test.yaml
- PASS  test service	../__fixtures__/basic/tests/service_test.yaml
+ PASS  test deployment	..\__fixtures__\basic\tests\deployment_test.yaml
+ PASS  test ingress	..\__fixtures__\basic\tests\ingress_test.yaml
+ PASS  test service	..\__fixtures__\basic\tests\service_test.yaml
 
 
 Charts:      1 passed, 1 total

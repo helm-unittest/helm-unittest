@@ -28,7 +28,8 @@
           Not: (bool) false,
           CustomInfo: (string) ""
         })
-      }
+      },
+      Duration: (time.Duration) 0s
     })
   },
   SnapshotCounting: (struct { Total uint; Failed uint; Created uint; Vanished uint }) {
