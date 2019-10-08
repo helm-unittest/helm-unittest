@@ -22,5 +22,6 @@
       Not: (bool) false,
       CustomInfo: (string) ""
     })
-  }
+  },
+  Duration: (time.Duration) 0s
 })

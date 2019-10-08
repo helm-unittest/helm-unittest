@@ -4,8 +4,9 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
+	"time"
 
-	"github.com/bradleyjkemp/cupaloy"
+	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,15 @@ import (
 )
 
 var tmpdir, _ = ioutil.TempDir("", "_suite_tests")
+
+func makeTestSuiteResultSnapshotable(result *TestSuiteResult) *TestSuiteResult {
+
+	for _, test := range result.TestsResult {
+		test.Duration, _ = time.ParseDuration("0s")
+	}
+
+	return result
+}
 
 func TestParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
@@ -46,7 +56,7 @@ tests:
 	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, suiteResult)
+	cupaloy.SnapshotT(t, makeTestSuiteResultSnapshotable(suiteResult))
 
 	a.True(suiteResult.Passed)
 	a.Nil(suiteResult.ExecError)
@@ -79,7 +89,7 @@ tests:
 	suiteResult := testSuite.Run(c, cache, &TestSuiteResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, *suiteResult)
+	cupaloy.SnapshotT(t, makeTestSuiteResultSnapshotable(suiteResult))
 
 	a.False(suiteResult.Passed)
 	a.Nil(suiteResult.ExecError)

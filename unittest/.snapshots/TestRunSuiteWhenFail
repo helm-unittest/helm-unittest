@@ -1,4 +1,4 @@
-(unittest.TestSuiteResult) {
+(*unittest.TestSuiteResult)({
   DisplayName: (string) (len=15) "test suite name",
   FilePath: (string) "",
   Passed: (bool) false,
@@ -30,7 +30,8 @@
           Not: (bool) false,
           CustomInfo: (string) ""
         })
-      }
+      },
+      Duration: (time.Duration) 0s
     })
   },
   SnapshotCounting: (struct { Total uint; Failed uint; Created uint; Vanished uint }) {
@@ -39,4 +40,4 @@
     Created: (uint) 0,
     Vanished: (uint) 0
   }
-}
+})

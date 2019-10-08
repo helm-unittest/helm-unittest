@@ -2,6 +2,7 @@ package unittest
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -50,11 +51,13 @@ type totalSnapshotCounting struct {
 // TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
 	Printer          *Printer
+    Formatter        Formatter
 	Config           TestConfig
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
 	chartCounting    testUnitCounting
 	snapshotCounting totalSnapshotCounting
+	testResults      []*TestSuiteResult
 }
 
 // Run test suites in chart in ChartPaths
@@ -69,8 +72,8 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 			allPassed = false
 			continue
 		}
-
-		testSuites, err := tr.getTestSuites(chartPath, chart.Metadata.Name, chart)
+		chartRoute := chart.Metadata.Name
+		testSuites, err := tr.getTestSuites(chartPath, chartRoute, chart)
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
@@ -84,6 +87,7 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
 	}
+    tr.writeTestOutput()
 	tr.printSnapshotSummary()
 	tr.printSummary(time.Now().Sub(start))
 	return allPassed
@@ -148,6 +152,7 @@ func (tr *TestRunner) runSuitesOfChart(suites []*TestSuite, chart *chart.Chart) 
 		result := suite.Run(chart, snapshotCache, &TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
+		tr.testResults = append(tr.testResults, result)
 
 		snapshotCache.StoreToFileIfNeeded()
 	}
@@ -261,4 +266,22 @@ func (tr *TestRunner) countChart(passed bool, err error) {
 			tr.chartCounting.errored++
 		}
 	}
+}
+
+func (tr *TestRunner) writeTestOutput() {
+    // Check if formatter exits to write
+    if (tr.Formatter != nil) {
+	    // Create outputfile for testsuite
+	    writer, ferr := os.Create(tr.Config.OutputFile)
+	    if ferr != nil {
+		    fmt.Printf("Error writing testfile")
+	    }
+	    defer writer.Close()
+
+	    //
+	    jerr := tr.Formatter.WriteTestOutput(tr.testResults, true, writer)
+	    if jerr != nil {
+		    fmt.Printf("Error parsing testresults.")
+	    }
+    }
 }

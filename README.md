@@ -83,10 +83,12 @@ defined in test suite files.
 ### Flags
 
 ```
---color              enforce printing colored output even stdout is not a tty. Set to false to disable color
--f, --file stringArray   glob paths of test files location, default to tests/*_test.yaml (default [tests/*_test.yaml])
--h, --help               help for unittest
--u, --update-snapshot    update the snapshot cached if needed, make sure you review the change before update
+      --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
+  -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
+  -h, --help                   help for unittest
+  -o, --output-file string     output-file the file where testresults are written in JUnit format, defaults no output is written to file
+  -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
+  -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
 ```
 
 ## Example
@@ -156,17 +158,15 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!  
-Before start developing this plugin, you must have [go](https://golang.org/doc/install) and [dep](https://github.com/golang/dep#installation) installed, and run:
+Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.12 installed, and run:
 
 ```
 git clone git@github.com:lrills/helm-unittest.git
 cd helm-unittest
-dep ensure
 ```
 
 And please make CI passed when request a PR which would check following things:
 
-- `dep status` passed. Make sure you run `dep ensure` if new dependencies added.
 - `gofmt` no changes needed. Please run `gofmt -w -s` before you commit.
 - `go test ./unittest/...` passed.
 

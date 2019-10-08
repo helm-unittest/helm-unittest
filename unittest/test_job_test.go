@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+	"time"
 
-	"github.com/bradleyjkemp/cupaloy"
+	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,11 @@ import (
 
 	"k8s.io/helm/pkg/chartutil"
 )
+
+func makeTestJobResultSnapshotable(result *TestJobResult) *TestJobResult {
+	result.Duration, _ = time.ParseDuration("0s")
+	return result
+}
 
 func TestUnmarshalableJobFromYAML(t *testing.T) {
 	manifest := `
@@ -73,7 +79,7 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
@@ -98,9 +104,10 @@ asserts:
 	yaml.Unmarshal([]byte(manifest), &tj)
 
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	// Write Buffer
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.False(testResult.Passed)
@@ -125,7 +132,7 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
@@ -153,7 +160,7 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
@@ -178,7 +185,7 @@ asserts:
 	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)

@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/lrills/helm-unittest/unittest/common"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
@@ -57,6 +58,7 @@ func (t *TestJob) Run(
 	cache *snapshot.Cache,
 	result *TestJobResult,
 ) *TestJobResult {
+	startTestRun := time.Now()
 	t.polishAssertionsTemplate(targetChart)
 	result.DisplayName = t.Name
 
@@ -84,6 +86,7 @@ func (t *TestJob) Run(
 		snapshotComparer,
 	)
 
+	result.Duration = time.Now().Sub(startTestRun)
 	return result
 }
 
