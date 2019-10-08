@@ -158,17 +158,15 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!  
-Before start developing this plugin, you must have [go](https://golang.org/doc/install) and [dep](https://github.com/golang/dep#installation) installed, and run:
+Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.12 installed, and run:
 
 ```
 git clone git@github.com:lrills/helm-unittest.git
 cd helm-unittest
-dep ensure
 ```
 
 And please make CI passed when request a PR which would check following things:
 
-- `dep status` passed. Make sure you run `dep ensure` if new dependencies added.
 - `gofmt` no changes needed. Please run `gofmt -w -s` before you commit.
 - `go test ./unittest/...` passed.
 
