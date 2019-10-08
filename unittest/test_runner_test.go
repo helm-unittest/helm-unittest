@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bradleyjkemp/cupaloy"
+	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/stretchr/testify/assert"
 )

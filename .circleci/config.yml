@@ -7,27 +7,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get dep
-          command: |
-            curl -o install-dep.sh https://raw.githubusercontent.com/golang/dep/master/install.sh
-            chmod +x install-dep.sh
-            ./install-dep.sh
-      - restore_cache:
-          keys:
-            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-            - helm-untt-deps-{{ .Branch }}-
-            - helm-untt-deps-
-      - run:
-          name: Check dep status
-          command: dep status -v
-      - run:
-          name: Ensure dep
-          command: dep ensure -vendor-only -v
-      - save_cache:
-          key: helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-          paths:
-            - /go/src/github.com/lrills/helm-unittest/vendor
-      - run:
           name: Test
           command: go test -v ./unittest/...
       - run:
@@ -36,15 +15,10 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.10
+      - image: golang:1.12
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-            - helm-untt-deps-{{ .Branch }}-
-            - helm-untt-deps-
       - run:
           name: Insatll ghr
           command: go get -u github.com/tcnksm/ghr
