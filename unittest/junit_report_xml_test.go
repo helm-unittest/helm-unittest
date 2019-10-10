@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpTestDir, _ = ioutil.TempDir("", "_suite_tests")
+var tmpJUnitTestDir, _ = ioutil.TempDir("", "_suite_tests")
 
-func TestWriteTestOutputMinimalSuccess(t *testing.T) {
+func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpTestDir, "Test_Output.xml")
+	outputFile := path.Join(tmpJUnitTestDir, "Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 
@@ -88,9 +88,9 @@ func TestWriteTestOutputMinimalSuccess(t *testing.T) {
 	os.Remove(outputFile)
 }
 
-func TestWriteTestOutputWithFailures(t *testing.T) {
+func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpTestDir, "Test_Failure_Output.xml")
+	outputFile := path.Join(tmpJUnitTestDir, "Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"

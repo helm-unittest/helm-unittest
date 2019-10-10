@@ -32,3 +32,23 @@ func (ar AssertionResult) print(printer *Printer, verbosity int) {
 	}
 	printer.println("", 0)
 }
+
+// ToString writing the object to a customized formatted string.
+func (ar AssertionResult) stringify() string {
+	content := ""
+	if ar.CustomInfo != "" {
+		content += fmt.Sprintf("\t\t %s \n", ar.CustomInfo)
+	} else {
+		var notAnnotation string
+		if ar.Not {
+			notAnnotation = " NOT"
+		}
+		content += fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n", ar.Index, notAnnotation, ar.AssertType)
+	}
+
+	for _, infoLine := range ar.FailInfo {
+		content += fmt.Sprintf("\t\t\t %s \n", infoLine)
+	}
+
+	return content
+}

@@ -72,7 +72,7 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		ts := JUnitTestSuite{
 			Tests:      len(testSuiteResult.TestsResult),
 			Failures:   0,
-			Time:       j.formatTestSuiteDuration(testSuiteResult),
+			Time:       j.formatTime(testSuiteResult.calculateTestSuiteDuration()),
 			Name:       testSuiteResult.DisplayName,
 			Properties: []JUnitProperty{},
 			TestCases:  []JUnitTestCase{},
@@ -101,7 +101,7 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 				testCase.Failure = &JUnitFailure{
 					Message:  "Failed",
 					Type:     "",
-					Contents: j.formatTestJobFailure(test),
+					Contents: test.stringify(),
 				}
 			}
 
@@ -132,45 +132,4 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 
 func (j *jUnitReportXML) formatTime(d time.Duration) string {
 	return fmt.Sprintf("%.3f", d.Seconds())
-}
-
-func (j *jUnitReportXML) formatTestSuiteDuration(testSuiteResult *TestSuiteResult) string {
-	var totalDuration time.Duration
-	for _, test := range testSuiteResult.TestsResult {
-		totalDuration += test.Duration
-	}
-
-	return j.formatTime(totalDuration)
-}
-
-func (j *jUnitReportXML) formatTestJobFailure(tjr *TestJobResult) string {
-	content := ""
-	if tjr.ExecError != nil {
-		content += tjr.ExecError.Error() + "\n"
-	}
-
-	for _, assertResult := range tjr.AssertsResult {
-		content += j.formatAssertsResult(assertResult)
-	}
-
-	return content
-}
-
-func (j *jUnitReportXML) formatAssertsResult(ar *AssertionResult) string {
-	content := ""
-	if ar.CustomInfo != "" {
-		content += "\t\t" + ar.CustomInfo + "\n"
-	} else {
-		var notAnnotation string
-		if ar.Not {
-			notAnnotation = " NOT"
-		}
-		content += fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n", ar.Index, notAnnotation, ar.AssertType)
-	}
-
-	for _, infoLine := range ar.FailInfo {
-		content += fmt.Sprintf("\t\t\t %s \n", infoLine)
-	}
-
-	return content
 }
