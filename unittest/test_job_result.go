@@ -32,3 +32,17 @@ func (tjr TestJobResult) print(printer *Printer, verbosity int) {
 		assertResult.print(printer, verbosity)
 	}
 }
+
+// ToString writing the object to a customized formatted string.
+func (tjr TestJobResult) stringify() string {
+	content := ""
+	if tjr.ExecError != nil {
+		content += tjr.ExecError.Error() + "\n"
+	}
+
+	for _, assertResult := range tjr.AssertsResult {
+		content += assertResult.stringify()
+	}
+
+	return content
+}

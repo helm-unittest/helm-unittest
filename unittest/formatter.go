@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Formatter Interface.
@@ -13,7 +14,7 @@ type Formatter interface {
 }
 
 // NewFormatter create a new Formatter.
-func NewFormatter(outputFile string) Formatter {
+func NewFormatter(outputFile, outputType string) Formatter {
 	if outputFile != "" {
 		// Ensure the directory of the outputFile is created
 		outputDirectory := filepath.Dir(outputFile)
@@ -22,7 +23,14 @@ func NewFormatter(outputFile string) Formatter {
 			log.Fatal(err)
 		}
 
-		return NewJUnitReportXML()
+		switch strings.ToLower(outputType) {
+		case "junit":
+			return NewJUnitReportXML()
+		case "nunit":
+			return NewNUnitReportXML()
+		default:
+			return nil
+		}
 	}
 
 	return nil

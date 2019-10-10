@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 )
@@ -60,4 +61,14 @@ func (tsr *TestSuiteResult) countSnapshot(cache *snapshot.Cache) {
 	tsr.SnapshotCounting.Failed = cache.FailedCount()
 	tsr.SnapshotCounting.Total = cache.CurrentCount()
 	tsr.SnapshotCounting.Vanished = cache.VanishedCount()
+}
+
+// CalculateTestSuiteDuration to calculate the total duration of the testsuite.
+func (tsr *TestSuiteResult) calculateTestSuiteDuration() time.Duration {
+	var totalDuration time.Duration
+	for _, test := range tsr.TestsResult {
+		totalDuration += test.Duration
+	}
+
+	return totalDuration
 }
