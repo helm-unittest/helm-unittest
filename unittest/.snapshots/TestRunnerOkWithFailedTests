@@ -2,7 +2,7 @@
 ### Chart [ basic ] ../__fixtures__/basic
 
 
- FAIL  test deployment that would be fail	../__fixtures__/basic/tests_failed/deployment_test.yaml
+ FAIL  test deployment that would be fail	..\__fixtures__\basic\tests_failed\deployment_test.yaml
 	- should fail all kinds of assertion
 
 		- asserts[0] `equal` fail
@@ -134,7 +134,7 @@
 				-replicas: 999
 				+replicas: 1
 				 template:
- FAIL  test ingress that should fail	../__fixtures__/basic/tests_failed/ingress_test.yaml
+ FAIL  test ingress that should fail	..\__fixtures__\basic\tests_failed\ingress_test.yaml
 	- should fail render nothing if not enabled
 
 		- asserts[0] `hasDocuments` fail
@@ -189,7 +189,7 @@
 				@@ -1,2 +1,2 @@
 				-- secretName: my-tls-secret
 				+null
- FAIL  test service	../__fixtures__/basic/tests_failed/service_test.yaml
+ FAIL  test service	..\__fixtures__\basic\tests_failed\service_test.yaml
 	- should failed
 
 		- asserts[0] `notContains` fail

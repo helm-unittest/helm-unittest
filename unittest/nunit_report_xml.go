@@ -151,7 +151,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			Name:        testSuiteResult.DisplayName,
 			Description: testSuiteResult.FilePath,
 			Success:     strconv.FormatBool(testSuiteResult.Passed),
-			Time:        j.formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+			Time:        formatDuration(testSuiteResult.calculateTestSuiteDuration()),
 			Executed:    "true",
 			Result:      j.formatResult(testSuiteResult.Passed),
 		}
@@ -169,7 +169,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 				Name:        test.DisplayName,
 				Description: fmt.Sprintf("%s.%s", classname, test.DisplayName),
 				Success:     strconv.FormatBool(test.Passed),
-				Time:        j.formatDuration(test.Duration),
+				Time:        formatDuration(test.Duration),
 				Executed:    "true",
 				Asserts:     "0",
 				Result:      j.formatResult(test.Passed),
@@ -220,8 +220,8 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		Ignored:      0,
 		Skipped:      0,
 		Invalid:      0,
-		Date:         j.formatDate(currentTime),
-		Time:         j.formatTime(currentTime),
+		Date:         formatDate(currentTime),
+		Time:         formatTime(currentTime),
 	}
 
 	// to xml
@@ -255,18 +255,6 @@ func (j *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
 	}
 
 	return domainName, userName
-}
-
-func (j *nUnitReportXML) formatDate(t time.Time) string {
-	return t.Format("2006-01-02")
-}
-
-func (j *nUnitReportXML) formatTime(t time.Time) string {
-	return t.Format("15:04:05")
-}
-
-func (j *nUnitReportXML) formatDuration(d time.Duration) string {
-	return fmt.Sprintf("%.3f", d.Seconds())
 }
 
 func (j *nUnitReportXML) formatResult(b bool) string {

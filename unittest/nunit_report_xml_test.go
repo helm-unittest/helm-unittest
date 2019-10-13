@@ -12,12 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//var tmpNunitTestDir, _ = ioutil.TempDir("", "_suite_tests")
-var tmpNunitTestDir = "./"
+var tmpNunitTestDir, _ = ioutil.TempDir("", "_suite_tests")
 
 func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "Test_Output.xml")
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 
@@ -69,7 +68,8 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 
 	// Test the formatter
 	sut := NewNUnitReportXML()
-	sut.WriteTestOutput(given, false, writer)
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
 
 	// Don't defer, as we want to close it before stopping the test.
 	writer.Close()
@@ -95,7 +95,7 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "Test_Failure_Output.xml")
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -180,7 +180,8 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 
 	// Test the formatter
 	sut := NewNUnitReportXML()
-	sut.WriteTestOutput(given, false, writer)
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
 
 	// Don't defer, as we want to close it before stopping the test.
 	writer.Close()
@@ -201,7 +202,7 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 
 	testResult.Close()
-	os.Remove(outputFile)
+	//	os.Remove(outputFile)
 }
 
 func validateNUnitTestSuite(assert *assert.Assertions, expected, actual []NUnitTestSuite) {

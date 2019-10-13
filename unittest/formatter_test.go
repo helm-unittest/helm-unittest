@@ -43,3 +43,14 @@ func TestNewFormatterWithOutputFileAndOutputTypeNUnit(t *testing.T) {
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)
 }
+
+func TestNewFormatterWithOutputFileAndOutputTypeXUnit(t *testing.T) {
+	assert := assert.New(t)
+	outputType := "XUnit"
+	given := "../__fixtures__/test-output/test_output.xml"
+	givenDirectory := filepath.Dir(given)
+	defer os.Remove(givenDirectory)
+	sut := NewFormatter(given, outputType)
+	assert.NotNil(sut)
+	assert.DirExists(givenDirectory)
+}

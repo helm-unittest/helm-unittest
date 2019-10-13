@@ -16,7 +16,7 @@ var tmpJUnitTestDir, _ = ioutil.TempDir("", "_suite_tests")
 
 func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "Test_Output.xml")
+	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 
@@ -61,7 +61,8 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 
 	// Test the formatter
 	sut := NewJUnitReportXML()
-	sut.WriteTestOutput(given, false, writer)
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
 
 	// Don't defer, as we want to close it before stopping the test.
 	writer.Close()
@@ -76,13 +77,7 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	var actual JUnitTestSuites
 	xml.Unmarshal(bytevalue, &actual)
 
-	assert.Equal(expected.Suites[0].Tests, actual.Suites[0].Tests)
-	assert.Equal(expected.Suites[0].Failures, actual.Suites[0].Failures)
-	assert.Equal(expected.Suites[0].Name, actual.Suites[0].Name)
-	assert.Equal(expected.Suites[0].Properties[0].Name, actual.Suites[0].Properties[0].Name)
-	assert.Equal(expected.Suites[0].Properties[0].Value, actual.Suites[0].Properties[0].Value)
-	assert.Equal(expected.Suites[0].TestCases[0].Classname, actual.Suites[0].TestCases[0].Classname)
-	assert.Equal(expected.Suites[0].TestCases[0].Name, actual.Suites[0].TestCases[0].Name)
+	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 
 	testResult.Close()
 	os.Remove(outputFile)
@@ -90,7 +85,7 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "Test_Failure_Output.xml")
+	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -164,7 +159,8 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 
 	// Test the formatter
 	sut := NewJUnitReportXML()
-	sut.WriteTestOutput(given, false, writer)
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
 
 	// Don't defer, as we want to close it before stopping the test.
 	writer.Close()
@@ -179,19 +175,68 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	var actual JUnitTestSuites
 	xml.Unmarshal(bytevalue, &actual)
 
-	assert.Equal(expected.Suites[0].Tests, actual.Suites[0].Tests)
-	assert.Equal(expected.Suites[0].Failures, actual.Suites[0].Failures)
-	assert.Equal(expected.Suites[0].Name, actual.Suites[0].Name)
-	assert.Equal(expected.Suites[0].Properties[0].Name, actual.Suites[0].Properties[0].Name)
-	assert.Equal(expected.Suites[0].Properties[0].Value, actual.Suites[0].Properties[0].Value)
-	assert.Equal(expected.Suites[0].TestCases[0].Classname, actual.Suites[0].TestCases[0].Classname)
-	assert.Equal(expected.Suites[0].TestCases[0].Name, actual.Suites[0].TestCases[0].Name)
-	assert.Equal(expected.Suites[0].TestCases[1].Classname, actual.Suites[0].TestCases[1].Classname)
-	assert.Equal(expected.Suites[0].TestCases[1].Name, actual.Suites[0].TestCases[1].Name)
-	assert.Equal(expected.Suites[0].TestCases[1].Failure.Message, actual.Suites[0].TestCases[1].Failure.Message)
-	assert.Equal(expected.Suites[0].TestCases[1].Failure.Type, actual.Suites[0].TestCases[1].Failure.Type)
-	assert.Equal(expected.Suites[0].TestCases[1].Failure.Contents, actual.Suites[0].TestCases[1].Failure.Contents)
+	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 
 	testResult.Close()
 	os.Remove(outputFile)
+}
+
+func assertJUnitTestSuite(assert *assert.Assertions, expected, actual []JUnitTestSuite) {
+
+	if expected != nil && actual != nil {
+		actualLength := len(actual)
+		assert.Equal(len(expected), actualLength)
+
+		for i := 0; i < actualLength; i++ {
+			assert.Equal(expected[i].Tests, actual[i].Tests)
+			assert.Equal(expected[i].Failures, actual[i].Failures)
+			assert.Equal(expected[i].Name, actual[i].Name)
+
+			assertJUnitProperty(assert, expected[i].Properties, actual[i].Properties)
+			assertJUnitTestCase(assert, expected[i].TestCases, actual[i].TestCases)
+		}
+	} else {
+		// Verify if both are nil, otherwise it's still a failure.
+		assert.True(expected == nil && actual == nil)
+	}
+}
+
+func assertJUnitTestCase(assert *assert.Assertions, expected, actual []JUnitTestCase) {
+
+	if expected != nil && actual != nil {
+		actualLength := len(actual)
+		assert.Equal(len(expected), actualLength)
+
+		for i := 0; i < actualLength; i++ {
+			assert.Equal(expected[i].Classname, actual[i].Classname)
+			assert.Equal(expected[i].Name, actual[i].Name)
+
+			if expected[i].Failure != nil && actual[i].Failure != nil {
+				assert.Equal(expected[i].Failure.Message, actual[i].Failure.Message)
+				assert.Equal(expected[i].Failure.Type, actual[i].Failure.Type)
+				assert.Equal(expected[i].Failure.Contents, actual[i].Failure.Contents)
+			} else {
+				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+			}
+		}
+	} else {
+		// Verify if both are nil, otherwise it's still a failure.
+		assert.True(expected == nil && actual == nil)
+	}
+}
+
+func assertJUnitProperty(assert *assert.Assertions, expected, actual []JUnitProperty) {
+
+	if expected != nil && actual != nil {
+		actualLength := len(actual)
+		assert.Equal(len(expected), actualLength)
+
+		for i := 0; i < actualLength; i++ {
+			assert.Equal(expected[i].Name, actual[i].Name)
+			assert.Equal(expected[i].Value, actual[i].Value)
+		}
+	} else {
+		// Verify if both are nil, otherwise it's still a failure.
+		assert.True(expected == nil && actual == nil)
+	}
 }

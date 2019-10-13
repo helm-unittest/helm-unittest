@@ -3,7 +3,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PROJECT_NAME="helm-unittest"
-PROJECT_GH="lrills/$PROJECT_NAME"
+PROJECT_GH="quintush/$PROJECT_NAME"
 
 : ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-unittest"}
 
