@@ -30,7 +30,7 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
-// TestJob defintion of a test, including values and assertions
+// TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name       string `yaml:"it"`
 	Values     []string
@@ -41,6 +41,9 @@ type TestJob struct {
 		Namespace string
 		Revision  int
 		IsUpgrade bool
+	}
+	Capabilities struct {
+		APIVersions []string
 	}
 	// route indicate which chart in the dependency hierarchy
 	// like "parant-chart", "parent-charts/charts/child-chart"
@@ -112,8 +115,8 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
 	}
 
-	for path, valus := range t.Set {
-		setMap, err := valueutils.BuildValueOfSetPath(valus, path)
+	for path, values := range t.Set {
+		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -127,8 +130,9 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[string]string, error) {
 	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
 	options := *t.releaseOption()
+	caps := *t.capabilityOption()
 
-	vals, err := chartutil.ToRenderValues(targetChart, config, options)
+	vals, err := chartutil.ToRenderValuesCaps(targetChart, config, options, &caps)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +161,18 @@ func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
 	}
 	if t.Release.Namespace != "" {
 		options.Namespace = t.Release.Namespace
+	}
+	return &options
+}
+
+// get chartutil.CapabilityOptions ready for render
+// Only supports APIVersions for now
+func (t *TestJob) capabilityOption() *chartutil.Capabilities {
+	options := chartutil.Capabilities{APIVersions: chartutil.DefaultVersionSet}
+	if len(t.Capabilities.APIVersions) > 0 {
+		var arr []string
+		arr = append(t.Capabilities.APIVersions, "v1")
+		options.APIVersions = chartutil.NewVersionSet(arr...)
 	}
 	return &options
 }
