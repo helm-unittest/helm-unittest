@@ -217,6 +217,235 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 	os.Remove(outputFile)
 }
 
+func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_And_Error_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	testCaseErrorDisplayName := "TestCaseError"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	errorMessage := "An Error Occurred."
+	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
+	totalTests := 3
+	totalPassed := 1
+	totalFailed := 1
+	totalErrors := 1
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				SkippedTests: totalSkipped,
+				FailedTests:  totalFailed,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							{
+								Name:    testCaseSuccessDisplayName,
+								Type:    testSuiteDisplayName,
+								Method:  "Helm-Validation",
+								Result:  "Pass",
+								Failure: nil,
+							},
+							{
+								Name:   testCaseFailureDisplayName,
+								Type:   testSuiteDisplayName,
+								Method: "Helm-Validation",
+								Result: "Fail",
+								Failure: &XUnitFailure{
+									ExceptionType: "Helm-Validation",
+									Message: &XUnitFailureMessage{
+										Data: "Failed",
+									},
+									StackTrace: &XUnitFailureStackTrace{
+										Data: failureContent,
+									},
+								},
+							},
+							{
+								Name:   testCaseErrorDisplayName,
+								Type:   testSuiteDisplayName,
+								Method: "Helm-Validation",
+								Result: "Fail",
+								Failure: &XUnitFailure{
+									ExceptionType: "Helm-Validation",
+									Message: &XUnitFailureMessage{
+										Data: "Failed",
+									},
+									StackTrace: &XUnitFailureStackTrace{
+										Data: failureErrorContent,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			TestsResult: []*TestJobResult{
+				{
+					DisplayName: testCaseSuccessDisplayName,
+					Passed:      true,
+				},
+				{
+					DisplayName: testCaseFailureDisplayName,
+					Passed:      false,
+					AssertsResult: []*AssertionResult{
+						{
+							Index: 0,
+							FailInfo: []string{
+								assertionFailure,
+							},
+							Passed:     false,
+							AssertType: assertionType,
+							Not:        false,
+						},
+					},
+				},
+				{
+					DisplayName: testCaseErrorDisplayName,
+					Passed:      false,
+					AssertsResult: []*AssertionResult{
+						{
+							Index: 0,
+							FailInfo: []string{
+								assertionFailure,
+							},
+							Passed:     false,
+							AssertType: assertionType,
+							Not:        false,
+						},
+					},
+					ExecError: fmt.Errorf("%s", errorMessage),
+				},
+			},
+		},
+	}
+
+	writer, cerr := os.Create(outputFile)
+	assert.Nil(cerr)
+
+	// Test the formatter
+	sut := NewXUnitReportXML()
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
+
+	// Don't defer, as we want to close it before stopping the test.
+	writer.Close()
+
+	assert.FileExists(outputFile)
+
+	// Unmarshall and validate the output with expected.
+	testResult, rerr := os.Open(outputFile)
+	assert.Nil(rerr)
+	bytevalue, _ := ioutil.ReadAll(testResult)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+
+	testResult.Close()
+	os.Remove(outputFile)
+}
+
+func TestWriteTestOutputAsXUnitWithErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Error_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	errorMessage := "An Error Occurred."
+	totalTests := 1
+	totalPassed := 0
+	totalFailed := 0
+	totalErrors := 1
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				SkippedTests: totalSkipped,
+				FailedTests:  totalFailed,
+				ErrorsTests:  totalErrors,
+				Errors: []XUnitError{
+					{
+						Type: "Error",
+						Name: "Error",
+						Failure: &XUnitFailure{
+							ExceptionType: "Helm-Validation-Error",
+							Message: &XUnitFailureMessage{
+								Data: "Failed",
+							},
+							StackTrace: &XUnitFailureStackTrace{
+								Data: errorMessage,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			ExecError:   fmt.Errorf("%s", errorMessage),
+		},
+	}
+
+	writer, cerr := os.Create(outputFile)
+	assert.Nil(cerr)
+
+	// Test the formatter
+	sut := NewXUnitReportXML()
+	serr := sut.WriteTestOutput(given, false, writer)
+	assert.Nil(serr)
+
+	// Don't defer, as we want to close it before stopping the test.
+	writer.Close()
+
+	assert.FileExists(outputFile)
+
+	// Unmarshall and validate the output with expected.
+	testResult, rerr := os.Open(outputFile)
+	assert.Nil(rerr)
+	bytevalue, _ := ioutil.ReadAll(testResult)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+
+	testResult.Close()
+	os.Remove(outputFile)
+}
+
 func assertXUnitTestAssemblies(assert *assert.Assertions, expected, actual []XUnitAssembly) {
 
 	if expected != nil && actual != nil {

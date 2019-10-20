@@ -122,7 +122,6 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	// convert TestSuiteResults to NUnit test suites
 	for _, testSuiteResult := range testSuiteResults {
 		totalTime := formatDuration(testSuiteResult.calculateTestSuiteDuration())
-		totalTests := len(testSuiteResult.TestsResult)
 
 		ts := XUnitAssembly{
 			Name:          testSuiteResult.FilePath,
@@ -132,21 +131,11 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			RunDate:       formatDate(currentTime),
 			RunTime:       formatTime(currentTime),
 			Time:          totalTime,
-			TotalTests:    totalTests,
-			PassedTests:   totalTests,
+			TotalTests:    0,
+			PassedTests:   0,
 			FailedTests:   0,
 			SkippedTests:  0,
-			TestRuns: []XUnitTestRun{
-				{
-					Name:         testSuiteResult.DisplayName,
-					Time:         totalTime,
-					TotalTests:   totalTests,
-					PassedTests:  totalTests,
-					FailedTests:  0,
-					SkippedTests: 0,
-					TestCases:    []XUnitTestCase{},
-				},
-			},
+			ErrorsTests:   0,
 		}
 
 		classname := testSuiteResult.DisplayName
@@ -154,41 +143,77 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			classname = testSuiteResult.DisplayName[idx+1:]
 		}
 
-		// individual test cases
-		for _, test := range testSuiteResult.TestsResult {
-			testCase := XUnitTestCase{
-				Name:    test.DisplayName,
-				Type:    classname,
-				Method:  "Helm-Validation",
-				Time:    formatDuration(test.Duration),
-				Result:  x.formatResult(test.Passed),
-				Failure: nil,
+		if testSuiteResult.ExecError != nil {
+			ts.TotalTests++
+			ts.ErrorsTests++
+			ts.Errors = []XUnitError{
+				{
+					Type: "Error",
+					Name: "Error",
+					Failure: &XUnitFailure{
+						ExceptionType: "Helm-Validation-Error",
+						Message: &XUnitFailureMessage{
+							Data: "Error",
+						},
+						StackTrace: &XUnitFailureStackTrace{
+							Data: testSuiteResult.ExecError.Error(),
+						},
+					},
+				},
+			}
+		} else {
+			ts.TestRuns = []XUnitTestRun{
+				{
+					Name:         testSuiteResult.DisplayName,
+					Time:         totalTime,
+					TotalTests:   0,
+					PassedTests:  0,
+					FailedTests:  0,
+					SkippedTests: 0,
+					TestCases:    []XUnitTestCase{},
+				},
 			}
 
-			// Write when a test is failed
-			if !test.Passed {
-				ts.PassedTests--
-				ts.FailedTests++
-				ts.TestRuns[0].PassedTests--
-				ts.TestRuns[0].FailedTests++
+			// individual test cases
+			for _, test := range testSuiteResult.TestsResult {
+				ts.TotalTests++
+				ts.TestRuns[0].TotalTests++
 
-				testCase.Failure = &XUnitFailure{
-					ExceptionType: "Helm-Validation",
-					Message: &XUnitFailureMessage{
-						Data: "Failed",
-					},
-					StackTrace: &XUnitFailureStackTrace{
-						Data: test.stringify(),
-					},
+				testCase := XUnitTestCase{
+					Name:    test.DisplayName,
+					Type:    classname,
+					Method:  "Helm-Validation",
+					Time:    formatDuration(test.Duration),
+					Result:  x.formatResult(test.Passed),
+					Failure: nil,
 				}
-			}
 
-			// Update error count
-			if test.ExecError != nil {
-				ts.ErrorsTests++
-			}
+				// Write when a test is failed
+				if !test.Passed {
+					// Update error count
+					if test.ExecError != nil {
+						ts.ErrorsTests++
+					} else {
+						ts.FailedTests++
+						ts.TestRuns[0].FailedTests++
+					}
 
-			ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
+					testCase.Failure = &XUnitFailure{
+						ExceptionType: "Helm-Validation",
+						Message: &XUnitFailureMessage{
+							Data: "Failed",
+						},
+						StackTrace: &XUnitFailureStackTrace{
+							Data: test.stringify(),
+						},
+					}
+				} else {
+					ts.PassedTests++
+					ts.TestRuns[0].PassedTests++
+				}
+
+				ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
+			}
 		}
 
 		testAssemblies = append(testAssemblies, ts)
