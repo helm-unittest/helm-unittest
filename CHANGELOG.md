@@ -1,6 +1,6 @@
-0.1.6 / 2019-10-08
+0.1.6 / 2019-10-14
 ==================
-- added xml output (JUnit format, #51)
+- added xml outputs JUnit, NUnit, XUnit and update project to use modules (#51, #78)
 
 0.1.5 / 2019-04-09
 ==================

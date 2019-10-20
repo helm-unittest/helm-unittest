@@ -108,7 +108,7 @@ func init() {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&testConfig.OutputType, "output-type", "t", "JUnit",
-		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit)",
+		&testConfig.OutputType, "output-type", "t", "XUnit",
+		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit)",
 	)
 }

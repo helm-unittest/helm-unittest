@@ -28,6 +28,8 @@ func NewFormatter(outputFile, outputType string) Formatter {
 			return NewJUnitReportXML()
 		case "nunit":
 			return NewNUnitReportXML()
+		case "xunit":
+			return NewXUnitReportXML()
 		default:
 			return nil
 		}

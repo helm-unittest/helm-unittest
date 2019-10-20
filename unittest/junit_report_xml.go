@@ -3,10 +3,8 @@ package unittest
 import (
 	"bufio"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"strings"
-	"time"
 )
 
 // JUnitTestSuites is a collection of JUnit test suites.
@@ -72,7 +70,7 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		ts := JUnitTestSuite{
 			Tests:      len(testSuiteResult.TestsResult),
 			Failures:   0,
-			Time:       j.formatTime(testSuiteResult.calculateTestSuiteDuration()),
+			Time:       formatDuration(testSuiteResult.calculateTestSuiteDuration()),
 			Name:       testSuiteResult.DisplayName,
 			Properties: []JUnitProperty{},
 			TestCases:  []JUnitTestCase{},
@@ -91,7 +89,7 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			testCase := JUnitTestCase{
 				Classname: classname,
 				Name:      test.DisplayName,
-				Time:      j.formatTime(test.Duration),
+				Time:      formatDuration(test.Duration),
 				Failure:   nil,
 			}
 
@@ -128,8 +126,4 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	writer.Flush()
 
 	return nil
-}
-
-func (j *jUnitReportXML) formatTime(d time.Duration) string {
-	return fmt.Sprintf("%.3f", d.Seconds())
 }

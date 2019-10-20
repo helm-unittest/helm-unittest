@@ -151,8 +151,8 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			Name:        testSuiteResult.DisplayName,
 			Description: testSuiteResult.FilePath,
 			Success:     strconv.FormatBool(testSuiteResult.Passed),
-			Time:        j.formatDuration(testSuiteResult.calculateTestSuiteDuration()),
-			Executed:    "true",
+			Time:        formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+			Executed:    strconv.FormatBool(testSuiteResult.ExecError == nil),
 			Result:      j.formatResult(testSuiteResult.Passed),
 		}
 
@@ -161,35 +161,46 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			classname = testSuiteResult.DisplayName[idx+1:]
 		}
 
-		// individual test cases
-		for _, test := range testSuiteResult.TestsResult {
+		// In case the testsuite failed with an error
+		if testSuiteResult.ExecError != nil {
 			totalTests++
-			testCase := NUnitTestCase{
-				Failure:     nil,
-				Name:        test.DisplayName,
-				Description: fmt.Sprintf("%s.%s", classname, test.DisplayName),
-				Success:     strconv.FormatBool(test.Passed),
-				Time:        j.formatDuration(test.Duration),
-				Executed:    "true",
-				Asserts:     "0",
-				Result:      j.formatResult(test.Passed),
+			totalErrors++
+			ts.Failure = &NUnitFailure{
+				Message:    "Error",
+				StackTrace: testSuiteResult.ExecError.Error(),
 			}
-
-			// Write when a test is failed
-			if !test.Passed {
-				totalFailures++
-				testCase.Failure = &NUnitFailure{
-					Message:    "Failed",
-					StackTrace: test.stringify(),
+		} else {
+			// individual test cases
+			for _, test := range testSuiteResult.TestsResult {
+				totalTests++
+				testCase := NUnitTestCase{
+					Failure:     nil,
+					Name:        test.DisplayName,
+					Description: fmt.Sprintf("%s.%s", classname, test.DisplayName),
+					Success:     strconv.FormatBool(test.Passed),
+					Time:        formatDuration(test.Duration),
+					Executed:    strconv.FormatBool(test.ExecError == nil),
+					Asserts:     "0",
+					Result:      j.formatResult(test.Passed),
 				}
-			}
 
-			// Update total counts
-			if test.ExecError != nil {
-				totalErrors++
-			}
+				// Write when a test is failed
+				if !test.Passed {
+					// Update total counts
+					if test.ExecError != nil {
+						totalErrors++
+					} else {
+						totalFailures++
+					}
 
-			ts.TestCases = append(ts.TestCases, testCase)
+					testCase.Failure = &NUnitFailure{
+						Message:    "Failed",
+						StackTrace: test.stringify(),
+					}
+				}
+
+				ts.TestCases = append(ts.TestCases, testCase)
+			}
 		}
 
 		testSuites = append(testSuites, ts)
@@ -220,8 +231,8 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		Ignored:      0,
 		Skipped:      0,
 		Invalid:      0,
-		Date:         j.formatDate(currentTime),
-		Time:         j.formatTime(currentTime),
+		Date:         formatDate(currentTime),
+		Time:         formatTime(currentTime),
 	}
 
 	// to xml
@@ -257,21 +268,9 @@ func (j *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
 	return domainName, userName
 }
 
-func (j *nUnitReportXML) formatDate(t time.Time) string {
-	return t.Format("2006-01-02")
-}
-
-func (j *nUnitReportXML) formatTime(t time.Time) string {
-	return t.Format("15:04:05")
-}
-
-func (j *nUnitReportXML) formatDuration(d time.Duration) string {
-	return fmt.Sprintf("%.3f", d.Seconds())
-}
-
 func (j *nUnitReportXML) formatResult(b bool) string {
 	if !b {
-		return "Failure"
+		return "Failed"
 	}
 	return "Success"
 }

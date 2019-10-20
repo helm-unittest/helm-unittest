@@ -1,8 +1,10 @@
 package unittest
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func spliteChartRoutes(routePath string) []string {
@@ -24,4 +26,16 @@ func scopeValuesWithRoutes(routes []string, values map[interface{}]interface{}) 
 		)
 	}
 	return values
+}
+
+func formatDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
+func formatTime(t time.Time) string {
+	return t.Format("15:04:05")
+}
+
+func formatDuration(d time.Duration) string {
+	return fmt.Sprintf("%.3f", d.Seconds())
 }

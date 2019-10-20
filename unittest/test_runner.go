@@ -51,7 +51,7 @@ type totalSnapshotCounting struct {
 // TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
 	Printer          *Printer
-    Formatter        Formatter
+	Formatter        Formatter
 	Config           TestConfig
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
@@ -87,7 +87,10 @@ func (tr *TestRunner) Run(ChartPaths []string) bool {
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
 	}
-    tr.writeTestOutput()
+	err := tr.writeTestOutput()
+	if err != nil {
+		tr.printErroredChartHeader(err)
+	}
 	tr.printSnapshotSummary()
 	tr.printSummary(time.Now().Sub(start))
 	return allPassed
@@ -268,20 +271,22 @@ func (tr *TestRunner) countChart(passed bool, err error) {
 	}
 }
 
-func (tr *TestRunner) writeTestOutput() {
-    // Check if formatter exits to write
-    if (tr.Formatter != nil) {
-	    // Create outputfile for testsuite
-	    writer, ferr := os.Create(tr.Config.OutputFile)
-	    if ferr != nil {
-		    fmt.Printf("Error writing testfile")
-	    }
-	    defer writer.Close()
+func (tr *TestRunner) writeTestOutput() error {
+	// Check if formatter exits to write
+	if tr.Formatter != nil {
+		// Create outputfile for testsuite
+		writer, ferr := os.Create(tr.Config.OutputFile)
+		if ferr != nil {
+			return ferr
+		}
+		defer writer.Close()
 
-	    //
-	    jerr := tr.Formatter.WriteTestOutput(tr.testResults, true, writer)
-	    if jerr != nil {
-		    fmt.Printf("Error parsing testresults.")
-	    }
-    }
+		//
+		jerr := tr.Formatter.WriteTestOutput(tr.testResults, true, writer)
+		if jerr != nil {
+			return jerr
+		}
+	}
+
+	return nil
 }
