@@ -5,7 +5,7 @@
 PROJECT_NAME="helm-unittest"
 PROJECT_GH="lrills/$PROJECT_NAME"
 
-: ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-unittest"}
+: ${HELM_PLUGIN_PATH:="${HELM_PLUGIN_DIR}/plugins/helm-unittest"}
 
 # Convert the HELM_PLUGIN_PATH to unix if cygpath is
 # available. This is the case when using MSYS2 or Cygwin
