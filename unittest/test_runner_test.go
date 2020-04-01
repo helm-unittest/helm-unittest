@@ -15,7 +15,8 @@ import (
 var sectionBeginPattern = regexp.MustCompile("( PASS | FAIL |\n*###|\n*Charts:|\n*Snapshot Summary:)")
 var timePattern = regexp.MustCompile("Time:\\s+([\\d\\.]+)ms")
 
-func makeOutputSnapshotable(output string) []interface{} {
+func makeOutputSnapshotable(originalOutput string) []interface{} {
+	output := strings.ReplaceAll(originalOutput, "\\", "/")
 	timeLoc := timePattern.FindStringSubmatchIndex(output)[2:4]
 	timeAgnosticOutput := output[:timeLoc[0]] + "XX.XXX" + output[timeLoc[1]:]
 
@@ -55,7 +56,7 @@ func makeOutputSnapshotable(output string) []interface{} {
 	return sectionsToRetrun
 }
 
-func TestRunnerOkWithPassedTests(t *testing.T) {
+func TestV2RunnerOkWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
@@ -63,12 +64,12 @@ func TestRunnerOkWithPassedTests(t *testing.T) {
 			TestFiles: []string{"tests/*_test.yaml"},
 		},
 	}
-	passed := runner.Run([]string{"../__fixtures__/basic"})
+	passed := runner.RunV2([]string{"../__fixtures__/v2/basic"})
 	assert.True(t, passed)
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestRunnerOkWithFailedTests(t *testing.T) {
+func TestV2RunnerOkWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
@@ -76,12 +77,12 @@ func TestRunnerOkWithFailedTests(t *testing.T) {
 			TestFiles: []string{"tests_failed/*_test.yaml"},
 		},
 	}
-	passed := runner.Run([]string{"../__fixtures__/basic"})
+	passed := runner.RunV2([]string{"../__fixtures__/v2/basic"})
 	assert.False(t, passed)
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestRunnerWithTestsInSubchart(t *testing.T) {
+func TestV2RunnerWithTestsInSubchart(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
@@ -90,12 +91,12 @@ func TestRunnerWithTestsInSubchart(t *testing.T) {
 			TestFiles:    []string{"tests/*_test.yaml"},
 		},
 	}
-	passed := runner.Run([]string{"../__fixtures__/with-subchart"})
+	passed := runner.RunV2([]string{"../__fixtures__/v2/with-subchart"})
 	assert.True(t, passed)
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestRunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
+func TestV2RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
@@ -104,7 +105,61 @@ func TestRunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 			TestFiles:    []string{"tests/*_test.yaml"},
 		},
 	}
-	passed := runner.Run([]string{"../__fixtures__/with-subchart"})
+	passed := runner.RunV2([]string{"../__fixtures__/v2/with-subchart"})
+	assert.True(t, passed)
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer: NewPrinter(buffer, nil),
+		Config: TestConfig{
+			TestFiles: []string{"tests/*_test.yaml"},
+		},
+	}
+	passed := runner.RunV3([]string{"../__fixtures__/v3/basic"})
+	assert.True(t, passed)
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithFailedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer: NewPrinter(buffer, nil),
+		Config: TestConfig{
+			TestFiles: []string{"tests_failed/*_test.yaml"},
+		},
+	}
+	passed := runner.RunV3([]string{"../__fixtures__/v3/basic"})
+	assert.False(t, passed)
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerWithTestsInSubchart(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer: NewPrinter(buffer, nil),
+		Config: TestConfig{
+			WithSubChart: true,
+			TestFiles:    []string{"tests/*_test.yaml"},
+		},
+	}
+	passed := runner.RunV3([]string{"../__fixtures__/v3/with-subchart"})
+	assert.True(t, passed)
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer: NewPrinter(buffer, nil),
+		Config: TestConfig{
+			WithSubChart: false,
+			TestFiles:    []string{"tests/*_test.yaml"},
+		},
+	}
+	passed := runner.RunV3([]string{"../__fixtures__/v3/with-subchart"})
 	assert.True(t, passed)
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }

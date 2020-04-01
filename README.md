@@ -89,11 +89,13 @@ defined in test suite files.
   -o, --output-file string     output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
+  -3, --helm3                  parse helm charts as helm3 charts (default false)
 ```
 
 ## Example
 
-Check [`__fixtures__/basic/`](./__fixtures__/basic) for some basic use cases of a simple chart.
+Check [`__fixtures__/v2/basic/`](./__fixtures__/v2/basic) for some basic use cases of a simple chart (version < 2).
+Check [`__fixtures__/v3/basic/`](./__fixtures__/v3/basic) for some basic use cases of a simple chart (version > 3).
 
 ## Snapshot Testing
 
@@ -118,7 +120,7 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 ```
 $ helm unittest -u my-chart
 ```
-The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+The cache files is stored as `__snapshot__/v2/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
 ## Tests within subchart
 
@@ -136,7 +138,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`__fixtures__/with-subchart/`](./__fixtures__/with-subchart) as an example.
+Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/with-subchart) as an example.
 
 ## Related Projects / Commands
 

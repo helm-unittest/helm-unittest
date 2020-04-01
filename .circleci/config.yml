@@ -1,21 +1,30 @@
-version: 2
+version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
       - run:
-          name: Test
-          command: go test -v ./unittest/...
+          name: Create temp directory for coverage artifacts
+          command: |
+            mkdir -p /tmp/artifacts
+      - run:
+          name: Test include Codecoverage
+          command: |
+            go test -coverprofile=coverage -v ./unittest/...
+            go tool cover -html=coverage -o coverage.html
+            mv coverage.html /tmp/artifacts
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
+      - store_artifacts:
+          path: /tmp/artifacts
 
   distribute:
     docker:
-      - image: golang:1.13
+      - image: golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout

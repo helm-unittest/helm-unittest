@@ -10,6 +10,7 @@ import (
 
 // TestConfig stores config setup by user in command line
 type TestConfig struct {
+	UseHelmV3      bool
 	Colored        bool
 	UpdateSnapshot bool
 	WithSubChart   bool
@@ -64,7 +65,13 @@ details about how to write tests.
 		formatter := NewFormatter(testConfig.OutputFile, testConfig.OutputType)
 		printer := NewPrinter(os.Stdout, colored)
 		runner := TestRunner{Printer: printer, Formatter: formatter, Config: testConfig}
-		passed := runner.Run(chartPaths)
+		var passed bool
+
+		if !testConfig.UseHelmV3 {
+			passed = runner.RunV2(chartPaths)
+		} else {
+			passed = runner.RunV3(chartPaths)
+		}
 
 		if !passed {
 			os.Exit(1)
@@ -110,5 +117,10 @@ func init() {
 	cmd.PersistentFlags().StringVarP(
 		&testConfig.OutputType, "output-type", "t", "XUnit",
 		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit)",
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.UseHelmV3, "helm3", "3", false,
+		"parse helm charts as helm3 charts.",
 	)
 }
