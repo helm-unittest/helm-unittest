@@ -9,7 +9,7 @@ require (
 	github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21
 	github.com/fatih/color v1.9.0
 	github.com/golang/protobuf v1.3.5 // indirect
-	github.com/googleapis/gnostic v0.4.1 // indirect
+	github.com/googleapis/gnostic v0.4.0 // indirect
 	github.com/huandu/xstrings v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
