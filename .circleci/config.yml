@@ -2,7 +2,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
@@ -15,7 +15,7 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.13
+      - image: golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout

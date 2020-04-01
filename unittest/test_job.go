@@ -14,10 +14,14 @@ import (
 	"github.com/lrills/helm-unittest/unittest/validators"
 	"github.com/lrills/helm-unittest/unittest/valueutils"
 	yaml "gopkg.in/yaml.v2"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/engine"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/timeconv"
+
+	v3chart "helm.sh/helm/v3/pkg/chart"
+	v3util "helm.sh/helm/v3/pkg/chartutil"
+	v3engine "helm.sh/helm/v3/pkg/engine"
+	v2util "k8s.io/helm/pkg/chartutil"
+	v2engine "k8s.io/helm/pkg/engine"
+	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
+	v2timeconv "k8s.io/helm/pkg/timeconv"
 )
 
 type orderedSnapshotComparer struct {
@@ -52,14 +56,14 @@ type TestJob struct {
 	defaultTemplateToAssert string
 }
 
-// Run render the chart and validate it with assertions in TestJob
-func (t *TestJob) Run(
-	targetChart *chart.Chart,
+// RunV2 render the chart and validate it with assertions in TestJob.
+func (t *TestJob) RunV2(
+	targetChart *v2chart.Chart,
 	cache *snapshot.Cache,
 	result *TestJobResult,
 ) *TestJobResult {
 	startTestRun := time.Now()
-	t.polishAssertionsTemplate(targetChart)
+	t.polishV2AssertionsTemplate(targetChart)
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -68,7 +72,45 @@ func (t *TestJob) Run(
 		return result
 	}
 
-	outputOfFiles, err := t.renderChart(targetChart, userValues)
+	outputOfFiles, err := t.renderV2Chart(targetChart, userValues)
+	if err != nil {
+		result.ExecError = err
+		return result
+	}
+
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
+	if err != nil {
+		result.ExecError = err
+		return result
+	}
+
+	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
+	result.Passed, result.AssertsResult = t.runAssertions(
+		manifestsOfFiles,
+		snapshotComparer,
+	)
+
+	result.Duration = time.Now().Sub(startTestRun)
+	return result
+}
+
+// RunV3 render the chart and validate it with assertions in TestJob.
+func (t *TestJob) RunV3(
+	targetChart *v3chart.Chart,
+	cache *snapshot.Cache,
+	result *TestJobResult,
+) *TestJobResult {
+	startTestRun := time.Now()
+	t.polishV3AssertionsTemplate(targetChart)
+	result.DisplayName = t.Name
+
+	userValues, err := t.getUserValues()
+	if err != nil {
+		result.ExecError = err
+		return result
+	}
+
+	outputOfFiles, err := t.renderV3Chart(targetChart, userValues)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -127,16 +169,16 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 }
 
 // render the chart and return result map
-func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[string]string, error) {
-	config := &chart.Config{Raw: string(userValues), Values: map[string]*chart.Value{}}
-	options := *t.releaseOption()
+func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, error) {
+	config := &v2chart.Config{Raw: string(userValues)}
+	options := *t.releaseV2Option()
 
-	vals, err := chartutil.ToRenderValues(targetChart, config, options)
+	vals, err := v2util.ToRenderValues(targetChart, config, options)
 	if err != nil {
 		return nil, err
 	}
 
-	renderer := engine.New()
+	renderer := v2engine.New()
 	outputOfFiles, err := renderer.Render(targetChart, vals)
 	if err != nil {
 		return nil, err
@@ -145,12 +187,51 @@ func (t *TestJob) renderChart(targetChart *chart.Chart, userValues []byte) (map[
 	return outputOfFiles, nil
 }
 
+// render the chart and return result map
+func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, error) {
+	values, err := v3util.ReadValues(userValues)
+	if err != nil {
+		return nil, err
+	}
+	options := *t.releaseV3Option()
+
+	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, v3util.DefaultCapabilities)
+	if err != nil {
+		return nil, err
+	}
+
+	outputOfFiles, err := v3engine.Render(targetChart, vals)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputOfFiles, nil
+}
+
 // get chartutil.ReleaseOptions ready for render
-func (t *TestJob) releaseOption() *chartutil.ReleaseOptions {
-	options := chartutil.ReleaseOptions{
+func (t *TestJob) releaseV2Option() *v2util.ReleaseOptions {
+	options := v2util.ReleaseOptions{
 		Name:      "RELEASE-NAME",
 		Namespace: "NAMESPACE",
-		Time:      timeconv.Now(),
+		Time:      v2timeconv.Now(),
+		Revision:  t.Release.Revision,
+		IsInstall: !t.Release.IsUpgrade,
+		IsUpgrade: t.Release.IsUpgrade,
+	}
+	if t.Release.Name != "" {
+		options.Name = t.Release.Name
+	}
+	if t.Release.Namespace != "" {
+		options.Namespace = t.Release.Namespace
+	}
+	return &options
+}
+
+// get chartutil.ReleaseOptions ready for render
+func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
+	options := v3util.ReleaseOptions{
+		Name:      "RELEASE-NAME",
+		Namespace: "NAMESPACE",
 		Revision:  t.Release.Revision,
 		IsInstall: !t.Release.IsUpgrade,
 		IsUpgrade: t.Release.IsUpgrade,
@@ -221,7 +302,32 @@ func (t *TestJob) runAssertions(
 }
 
 // add prefix to Assertion.Template
-func (t *TestJob) polishAssertionsTemplate(targetChart *chart.Chart) {
+func (t *TestJob) polishV2AssertionsTemplate(targetChart *v2chart.Chart) {
+	if t.chartRoute == "" {
+		t.chartRoute = targetChart.Metadata.Name
+	}
+
+	for _, assertion := range t.Assertions {
+		var templateToAssert string
+
+		if assertion.Template == "" {
+			if t.defaultTemplateToAssert == "" {
+				return
+			}
+			templateToAssert = t.defaultTemplateToAssert
+		} else {
+			templateToAssert = assertion.Template
+		}
+
+		// map the file name to the path of helm rendered result
+		assertion.Template = filepath.ToSlash(
+			filepath.Join(t.chartRoute, "templates", templateToAssert),
+		)
+	}
+}
+
+// add prefix to Assertion.Template
+func (t *TestJob) polishV3AssertionsTemplate(targetChart *v3chart.Chart) {
 	if t.chartRoute == "" {
 		t.chartRoute = targetChart.Metadata.Name
 	}
