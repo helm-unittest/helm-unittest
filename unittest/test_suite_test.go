@@ -11,8 +11,8 @@ import (
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
-	v2util "k8s.io/helm/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	v2util "k8s.io/helm/pkg/chartutil"
 )
 
 var tmpdir, _ = ioutil.TempDir("", "_suite_tests")
@@ -97,7 +97,6 @@ tests:
 	a.Equal(1, len(suiteResult.TestsResult))
 	a.Equal("test suite name", suiteResult.DisplayName)
 }
-
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)

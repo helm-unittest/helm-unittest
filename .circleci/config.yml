@@ -24,10 +24,11 @@ jobs:
             go test ./unittest/... -coverprofile=coverage -v | tee ${TEST_RESULTS}/go-test-output
             go tool cover -html=coverage -o $TEST_ARTIFACTS/coverage.html
       - run:
-          name: Cleanup and Check formated
-          command: |
-            go mod tidy
-            "! gofmt -l . 2>&1 | read"
+          name: Check formated
+          command: "! gofmt -l . 2>&1 | read"
+      - run:
+          name: Cleanup dependencies
+          command: go mod tidy
       - store_test_results:
           path: $TEST_ARTIFACTS
       - store_artifacts:
