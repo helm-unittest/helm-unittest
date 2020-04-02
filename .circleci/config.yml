@@ -17,9 +17,11 @@ jobs:
       - run:
           name: Test include Codecoverage
           command: |
-            trap "go-junit-report < /tmp/test-results/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
-            go test ./unittest/... -coverprofile=coverage -v | tee /tmp/test-results/go-test-output
-            go tool cover -html=coverage -o /tmp/test-artifacts/coverage.html
+            trap "go-junit-report < /tmp/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
+            go test ./unittest/... -coverprofile=/tmp/coverage -v | tee /tmp/go-test-output
+      - run:
+          name: Convert coverage to html
+          command: go tool cover -html=/tmp/coverage -o /tmp/test-artifacts/coverage.html
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
@@ -27,9 +29,9 @@ jobs:
           name: Cleanup dependencies
           command: go mod tidy
       - store_test_results:
-          path: /tmp/test-artifacts
-      - store_artifacts:
           path: /tmp/test-results
+      - store_artifacts:
+          path: /tmp/test-artifacts
 
   distribute:
     docker:
