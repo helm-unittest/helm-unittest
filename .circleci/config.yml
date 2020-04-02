@@ -4,23 +4,34 @@ jobs:
     docker:
       - image: circleci/golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
+    environment:
+      TEST_ARTIFACTS: /tmp/test-artifacts
+      TEST_RESULTS: /tmp/test-results # path to where test results will be saved
     steps:
       - checkout
       - run:
-          name: Create temp directory for coverage artifacts
+          name: Create temp directories for artifacts
           command: |
-            mkdir -p /tmp/artifacts
+            mkdir -p $TEST_ARTIFACTS
+            mkdir -p $TEST_RESULTS
+      - run:
+          name: Install JUnit plugin for saving test /tmp/test-results
+          command: go get -u https://github.com/jstemmer/go-junit-report
       - run:
           name: Test include Codecoverage
           command: |
-            go test -coverprofile=coverage -v ./unittest/...
-            go tool cover -html=coverage -o coverage.html
-            mv coverage.html /tmp/artifacts
+            trap "go-junit-report < ${TEST_RESULTS}/go-test-output > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            go test ./unittest/... -coverprofile=coverage -v | tee ${TEST_RESULTS}/go-test-output
+            go tool cover -html=coverage -o $TEST_ARTIFACTS/coverage.html
       - run:
-          name: Check formated
-          command: "! gofmt -l . 2>&1 | read"
+          name: Cleanup and Check formated
+          command: |
+            go mod tiny
+            "! gofmt -l . 2>&1 | read"
+      - store_test_results:
+          path: $TEST_ARTIFACTS
       - store_artifacts:
-          path: /tmp/artifacts
+          path: $TEST_RESULTS
 
   distribute:
     docker:
