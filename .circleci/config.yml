@@ -18,10 +18,12 @@ jobs:
           name: Test include Codecoverage
           command: |
             trap "go-junit-report < /tmp/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
-            go test ./unittest/... -coverprofile=/tmp/coverage -v | tee /tmp/go-test-output
+            go test ./unittest/... -coverprofile=/tmp/coverage -v -covermode=atomic | tee /tmp/go-test-output
       - run:
-          name: Convert coverage to html
-          command: go tool cover -html=/tmp/coverage -o /tmp/test-artifacts/coverage.html
+          name: Convert coverage to correct artifacts
+          command: |
+            go tool cover -html=/tmp/coverage -o /tmp/test-artifacts/coverage.html
+            bash <(curl -s https://codecov.io/bash) -f /tmp/coverage 
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"

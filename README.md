@@ -1,5 +1,9 @@
 # helm unittest
 
+[![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/quintush/helm-unittest)](https://goreportcard.com/report/github.com/quintush/helm-unittest)
+[![codecov](https://codecov.io/gh/quintush/helm-unittest/branch/master/graph/badge.svg)](https://codecov.io/gh/quintush/helm-unittest)
+
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
 
 Feature:
@@ -27,7 +31,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 ## Install
 
 ```
-$ helm plugin install https://github.com/lrills/helm-unittest
+$ helm plugin install https://github.com/quintush/helm-unittest
 ```
 
 It will install the latest version of binary into helm plugin directory.
