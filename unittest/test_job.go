@@ -35,7 +35,7 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
-// TestJob defintion of a test, including values and assertions
+// TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name       string `yaml:"it"`
 	Values     []string

@@ -1,4 +1,4 @@
-version: 2.1
+version: 2
 jobs:
   test:
     docker:
@@ -7,20 +7,33 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create temp directory for coverage artifacts
+          name: Create temp directories for artifacts
           command: |
-            mkdir -p /tmp/artifacts
+            mkdir -p /tmp/test-artifacts
+            mkdir -p /tmp/test-results
+      - run:
+          name: Install JUnit plugin for uploading testresults
+          command: go get -u github.com/jstemmer/go-junit-report
       - run:
           name: Test include Codecoverage
           command: |
-            go test -coverprofile=coverage -v ./unittest/...
-            go tool cover -html=coverage -o coverage.html
-            mv coverage.html /tmp/artifacts
+            trap "go-junit-report < /tmp/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
+            go test ./unittest/... -coverprofile=/tmp/coverage -v -covermode=atomic | tee /tmp/go-test-output
+      - run:
+          name: Convert coverage to correct artifacts
+          command: |
+            go tool cover -html=/tmp/coverage -o /tmp/test-artifacts/coverage.html
+            bash <(curl -s https://codecov.io/bash) -f /tmp/coverage 
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
+      - run:
+          name: Cleanup dependencies
+          command: go mod tidy
+      - store_test_results:
+          path: /tmp/test-results
       - store_artifacts:
-          path: /tmp/artifacts
+          path: /tmp/test-artifacts
 
   distribute:
     docker:
