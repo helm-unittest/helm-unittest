@@ -3,26 +3,23 @@ jobs:
   test:
     docker:
       - image: circleci/golang:1.14
-    environment:
-      TEST_ARTIFACTS: /tmp/test-artifacts
-      TEST_RESULTS: /tmp/test-results
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
       - run:
           name: Create temp directories for artifacts
           command: |
-            mkdir -p ${TEST_ARTIFACTS}
-            mkdir -p ${TEST_RESULTS}
+            mkdir -p /tmp/test-artifacts
+            mkdir -p /tmp/test-results
       - run:
-          name: Install JUnit plugin for saving test /tmp/test-results
+          name: Install JUnit plugin for uploading testresults
           command: go get -u github.com/jstemmer/go-junit-report
       - run:
           name: Test include Codecoverage
           command: |
-            trap "go-junit-report < ${TEST_RESULTS}/go-test-output > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test ./unittest/... -coverprofile=coverage -v | tee ${TEST_RESULTS}/go-test-output
-            go tool cover -html=coverage -o ${TEST_ARTIFACTS}/coverage.html
+            trap "go-junit-report < /tmp/test-results/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
+            go test ./unittest/... -coverprofile=coverage -v | tee /tmp/test-results/go-test-output
+            go tool cover -html=coverage -o /tmp/test-artifacts/coverage.html
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
@@ -30,9 +27,9 @@ jobs:
           name: Cleanup dependencies
           command: go mod tidy
       - store_test_results:
-          path: ${TEST_ARTIFACTS}
+          path: /tmp/test-artifacts
       - store_artifacts:
-          path: ${TEST_RESULTS}
+          path: /tmp/test-results
 
   distribute:
     docker:
