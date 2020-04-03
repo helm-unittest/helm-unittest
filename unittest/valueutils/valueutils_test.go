@@ -12,7 +12,9 @@ func TestGetValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
 	data := common.K8sManifest{
 		"a": map[interface{}]interface{}{
-			"b": []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+			"d":   "no",
+			"e.f": "false",
 		},
 	}
 
@@ -20,6 +22,8 @@ func TestGetValueOfSetPath(t *testing.T) {
 		"a.b[1].c": "yes",
 		"a.b[0]":   "_",
 		"a.b":      []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+		"a.[d]":    "no",
+		"a.[e.f]":  "false",
 	}
 
 	for path, expect := range expectionsMapping {
@@ -44,4 +48,30 @@ func TestBuildValueOfSetPath(t *testing.T) {
 		a.Equal(actual, expected)
 		a.Nil(err)
 	}
+}
+
+func TestMergeValues(t *testing.T) {
+	a := assert.New(t)
+	dest := map[interface{}]interface{}{
+		"a": map[interface{}]interface{}{
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+			"e.f": "false",
+		},
+	}
+	src := map[interface{}]interface{}{
+		"a": map[interface{}]interface{}{
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}},
+			"d":   "no",
+			"e.f": "yes",
+		},
+	}
+	expected := map[interface{}]interface{}{
+		"a": map[interface{}]interface{}{
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}},
+			"d":   "no",
+			"e.f": "yes",
+		},
+	}
+	actual := MergeValues(dest, src)
+	a.Equal(expected, actual)
 }

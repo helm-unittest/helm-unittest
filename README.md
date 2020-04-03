@@ -89,11 +89,11 @@ defined in test suite files.
 ```
       --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
   -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
+  -3, --helm3                  parse helm charts as helm3 charts (default false)
   -h, --help                   help for unittest
   -o, --output-file string     output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
-  -3, --helm3                  parse helm charts as helm3 charts (default false)
 ```
 
 ## Example
@@ -142,7 +142,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/with-subchart) as an example.
+Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) as an example.
 
 ## Related Projects / Commands
 
@@ -167,7 +167,7 @@ Issues and PRs are welcome!
 Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.12 installed, and run:
 
 ```
-git clone git@github.com:lrills/helm-unittest.git
+git clone git@github.com:quintush/helm-unittest.git
 cd helm-unittest
 ```
 
