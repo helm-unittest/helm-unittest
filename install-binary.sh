@@ -5,7 +5,13 @@
 PROJECT_NAME="helm-unittest"
 PROJECT_GH="lrills/$PROJECT_NAME"
 
-: ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-unittest"}
+if helm version | grep -q v3; then
+  HELM_PATH="$(helm env | grep HELM_PLUGINS | awk -F '=' '{print $2}' | sed 's/\"//g')"
+else
+  HELM_PATH="$(helm home)"
+fi
+
+: "${HELM_PLUGIN_PATH:="$HELM_PATH/helm-unittest"}"
 
 # Convert the HELM_PLUGIN_PATH to unix if cygpath is
 # available. This is the case when using MSYS2 or Cygwin
@@ -74,7 +80,7 @@ getDownloadURL() {
   if type "curl" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
 
