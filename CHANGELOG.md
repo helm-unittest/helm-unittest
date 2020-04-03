@@ -1,3 +1,12 @@
+0.1.8 / 2020-04-03
+==================
+- added jq syntax including test verifications (#95)
+
+0.1.7 / 2020-04-02
+==================
+- added Helm V3 compatiblity (#87, #98)
+- make install-binary.sh version aware (#97)
+
 0.1.6 / 2019-10-14
 ==================
 - added xml outputs JUnit, NUnit, XUnit and update project to use modules (#51, #78)

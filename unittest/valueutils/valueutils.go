@@ -35,6 +35,38 @@ func BuildValueOfSetPath(val interface{}, path string) (map[interface{}]interfac
 	return tr.getBuildedData(), nil
 }
 
+// MergeValues deeply merge values, copied from helm
+func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface{}) map[interface{}]interface{} {
+	for k, v := range src {
+		// If the key doesn't exist already, then just set the key to that value
+		if _, exists := dest[k]; !exists {
+			dest[k] = v
+			continue
+		}
+		nextMap, ok := v.(map[interface{}]interface{})
+		// If it isn't another map, overwrite the value
+		if !ok {
+			dest[k] = v
+			continue
+		}
+		// If the key doesn't exist already, then just set the key to that value
+		if _, exists := dest[k]; !exists {
+			dest[k] = nextMap
+			continue
+		}
+		// Edge case: If the key exists in the destination, but isn't a map
+		destMap, isMap := dest[k].(map[interface{}]interface{})
+		// If the source map has a map for this key, prefer it
+		if !isMap {
+			dest[k] = v
+			continue
+		}
+		// If we got to this point, it is a map in both, so merge them
+		dest[k] = MergeValues(destMap, nextMap)
+	}
+	return dest
+}
+
 type parseTraverser interface {
 	traverseMapKey(string) error
 	traverseListIdx(int) error
@@ -115,7 +147,11 @@ const (
 	expectKey        = iota
 	expectIndex      = iota
 	expectDenotation = iota
+	expectEscaping   = iota
 )
+
+// create a buffer for escapedMapKey
+var bufferedMapKey string
 
 func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) error {
 	illegal := runeSet([]rune{',', '{', '}', '='})
@@ -142,46 +178,17 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	var nextState int
 	switch state {
 	case expectIndex:
-		if last != ']' {
-			return fmt.Errorf("")
-		}
-		idx, idxErr := strconv.Atoi(string(k))
-		if idxErr != nil {
-			return idxErr
-		}
-		if e := traverser.traverseListIdx(idx); e != nil {
-			return e
-		}
-		nextState = expectDenotation
-
+		nextState, err = handleExpectIndex(k, last, traverser)
 	case expectDenotation:
-		if len(k) != 0 {
-			return fmt.Errorf("")
-		}
-		switch last {
-		case '.':
-			nextState = expectKey
-		case '[':
-			nextState = expectIndex
-		default:
-			return fmt.Errorf("")
-		}
-
+		nextState, err = handleExpectDenotation(k, last)
 	case expectKey:
-		switch last {
-		case '.':
-			if e := traverser.traverseMapKey(string(k)); e != nil {
-				return e
-			}
-			nextState = expectKey
-		case '[':
-			if e := traverser.traverseMapKey(string(k)); e != nil {
-				return e
-			}
-			nextState = expectIndex
-		default:
-			return fmt.Errorf("")
-		}
+		nextState, err = handleExpectKey(k, last, traverser)
+	case expectEscaping:
+		nextState, err = handleExpectEscaping(k, last, traverser)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if e := traverseSetPath(in, traverser, nextState); e != nil {
@@ -190,41 +197,66 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	return nil
 }
 
-// MergeValues deeply merge values, copied from helm
-func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface{}) map[interface{}]interface{} {
-	for k, v := range src {
-		// If the key doesn't exist already, then just set the key to that value
-		if _, exists := dest[k]; !exists {
-			dest[k] = v
-			continue
-		}
-		nextMap, ok := v.(map[interface{}]interface{})
-		// If it isn't another map, overwrite the value
-		if !ok {
-			dest[k] = v
-			continue
-		}
-		// If the key doesn't exist already, then just set the key to that value
-		if _, exists := dest[k]; !exists {
-			dest[k] = nextMap
-			continue
-		}
-		// Edge case: If the key exists in the destination, but isn't a map
-		destMap, isMap := dest[k].(map[interface{}]interface{})
-		// If the source map has a map for this key, prefer it
-		if !isMap {
-			dest[k] = v
-			continue
-		}
-		// If we got to this point, it is a map in both, so merge them
-		dest[k] = MergeValues(destMap, nextMap)
+func handleExpectIndex(k []rune, last rune, traverser parseTraverser) (int, error) {
+	if last != ']' {
+		return -1, fmt.Errorf("")
 	}
-	return dest
+	idx, idxErr := strconv.Atoi(string(k))
+	if idxErr != nil {
+		return -1, idxErr
+	}
+	if e := traverser.traverseListIdx(idx); e != nil {
+		return -1, e
+	}
+	return expectDenotation, nil
 }
 
-type parser struct {
-	sc   *bytes.Buffer
-	data map[string]interface{}
+func handleExpectDenotation(k []rune, last rune) (int, error) {
+	switch last {
+	case '.':
+		return expectKey, nil
+	case '[':
+		return expectIndex, nil
+	default:
+		return -1, fmt.Errorf("")
+	}
+}
+
+func handleExpectKey(k []rune, last rune, traverser parseTraverser) (int, error) {
+	switch last {
+	case '.':
+		if e := traverser.traverseMapKey(string(k)); e != nil {
+			return -1, e
+		}
+		return expectKey, nil
+	case '[':
+		if len(k) == 0 {
+			bufferedMapKey = ""
+			return expectEscaping, nil
+		}
+		if e := traverser.traverseMapKey(string(k)); e != nil {
+			return -1, e
+		}
+		return expectIndex, nil
+	default:
+		return -1, fmt.Errorf("")
+	}
+}
+
+func handleExpectEscaping(k []rune, last rune, traverser parseTraverser) (int, error) {
+	switch last {
+	case '.':
+		bufferedMapKey += string(k) + "."
+		return expectEscaping, nil
+	case ']':
+		bufferedMapKey += string(k)
+		if e := traverser.traverseMapKey(bufferedMapKey); e != nil {
+			return -1, e
+		}
+		return expectDenotation, nil
+	default:
+		return -1, fmt.Errorf("")
+	}
 }
 
 // copy from helm
