@@ -168,12 +168,13 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV2RunJobWithReleaseSetting(t *testing.T) {
+func TestV2RunJobWithReleaseSettings(t *testing.T) {
 	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 release:
   name: my-release
+  namespace: test
 asserts:
   - equal:
       path: metadata.name
@@ -301,12 +302,13 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithReleaseSetting(t *testing.T) {
+func TestV3RunJobWithReleaseSettings(t *testing.T) {
 	c, _ := loader.Load("../__fixtures__/v3/basic")
 	manifest := `
 it: should work
 release:
   name: my-release
+  namespace: test  
 asserts:
   - equal:
       path: metadata.name

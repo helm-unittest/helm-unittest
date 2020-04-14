@@ -22,6 +22,7 @@ import (
 	v2engine "k8s.io/helm/pkg/engine"
 	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	v2timeconv "k8s.io/helm/pkg/timeconv"
+	v2version "k8s.io/helm/pkg/version"
 )
 
 type orderedSnapshotComparer struct {
@@ -172,8 +173,13 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, error) {
 	config := &v2chart.Config{Raw: string(userValues)}
 	options := *t.releaseV2Option()
+	caps := &v2util.Capabilities{
+		APIVersions:   v2util.DefaultVersionSet,
+		KubeVersion:   v2util.DefaultKubeVersion,
+		TillerVersion: v2version.GetVersionProto(),
+	}
 
-	vals, err := v2util.ToRenderValues(targetChart, config, options)
+	vals, err := v2util.ToRenderValuesCaps(targetChart, config, options, caps)
 	if err != nil {
 		return nil, err
 	}
