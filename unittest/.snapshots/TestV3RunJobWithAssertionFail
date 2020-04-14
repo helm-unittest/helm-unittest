@@ -6,9 +6,20 @@
   AssertsResult: ([]*unittest.AssertionResult) (len=2) {
     (*unittest.AssertionResult)({
       Index: (int) 0,
-      FailInfo: ([]string) (len=2) {
-        (string) (len=6) "Error:",
-        (string) (len=65) "\tassertion.template must be given if testsuite.templates is empty"
+      FailInfo: ([]string) (len=13) {
+        (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
+        (string) (len=16) "DocumentIndex:\t0",
+        (string) (len=10) "Path:\tkind",
+        (string) (len=9) "Expected:",
+        (string) (len=10) "\tWrongKind",
+        (string) (len=7) "Actual:",
+        (string) (len=11) "\tDeployment",
+        (string) (len=5) "Diff:",
+        (string) (len=13) "\t--- Expected",
+        (string) (len=11) "\t+++ Actual",
+        (string) (len=16) "\t@@ -1,2 +1,2 @@",
+        (string) (len=11) "\t-WrongKind",
+        (string) (len=12) "\t+Deployment"
       },
       Passed: (bool) false,
       AssertType: (string) (len=5) "equal",
@@ -17,9 +28,12 @@
     }),
     (*unittest.AssertionResult)({
       Index: (int) 1,
-      FailInfo: ([]string) (len=2) {
-        (string) (len=6) "Error:",
-        (string) (len=65) "\tassertion.template must be given if testsuite.templates is empty"
+      FailInfo: ([]string) (len=5) {
+        (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
+        (string) (len=16) "DocumentIndex:\t0",
+        (string) (len=19) "Path:\tmetadata.name",
+        (string) (len=36) "Expected to match:\tpattern-not-match",
+        (string) (len=26) "Actual:\tRELEASE-NAME-basic"
       },
       Passed: (bool) false,
       AssertType: (string) (len=10) "matchRegex",

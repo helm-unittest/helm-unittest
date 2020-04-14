@@ -47,6 +47,7 @@ func TestIsKindValidatorWhenFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Expected kind:	Service",
 		"Actual:	Pod",
 	}, diff)
@@ -63,6 +64,24 @@ func TestIsKindValidatorWhenNegativeAndFail(t *testing.T) {
 	)
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Expected NOT to be kind:	Pod",
+	}, diff)
+}
+
+func TestIsKindValidatorWhenInvalidIndex(t *testing.T) {
+	doc := "kind: Pod"
+	manifest := makeManifest(doc)
+
+	validator := IsKindValidator{"Pod"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest},
+		Index: 2,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	documentIndex 2 out of range",
 	}, diff)
 }

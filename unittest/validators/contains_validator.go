@@ -15,7 +15,7 @@ type ContainsValidator struct {
 	Content interface{}
 }
 
-func (v ContainsValidator) failInfo(actual interface{}, not bool) []string {
+func (v ContainsValidator) failInfo(actual interface{}, index int, not bool) []string {
 	var notAnnotation string
 	if not {
 		notAnnotation = " NOT"
@@ -29,6 +29,7 @@ Actual:
 `
 	return splitInfof(
 		containsFailFormat,
+		index,
 		v.Path,
 		common.TrustedMarshalYAML([]interface{}{v.Content}),
 		common.TrustedMarshalYAML(actual),
@@ -37,33 +38,51 @@ Actual:
 
 // Validate implement Validatable
 func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest, err := context.getManifest()
+	manifests, err := context.getManifests()
 	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
+		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
-	}
+	validateSuccess := true
+	validateErrors := make([]string, 0)
 
-	if actual, ok := actual.([]interface{}); ok {
-		found := false
-		for _, ele := range actual {
-			if reflect.DeepEqual(ele, v.Content) {
-				found = true
+	for idx, manifest := range manifests {
+		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+		if err != nil {
+			validateSuccess = validateSuccess && false
+			errorMessage := splitInfof(errorFormat, idx, err.Error())
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		if actual, ok := actual.([]interface{}); ok {
+			found := false
+			for _, ele := range actual {
+				if reflect.DeepEqual(ele, v.Content) {
+					found = true
+				}
 			}
+
+			if found == context.Negative {
+				validateSuccess = validateSuccess && false
+				errorMessage := v.failInfo(actual, idx, context.Negative)
+				validateErrors = append(validateErrors, errorMessage...)
+				continue
+			}
+
+			validateSuccess = validateSuccess && true
+			continue
 		}
-		if found != context.Negative {
-			return true, []string{}
-		}
-		return false, v.failInfo(actual, context.Negative)
+
+		actualYAML, _ := yaml.Marshal(actual)
+		validateSuccess = validateSuccess && false
+		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
+			"expect '%s' to be an array, got:\n%s",
+			v.Path,
+			string(actualYAML),
+		))
+		validateErrors = append(validateErrors, errorMessage...)
 	}
 
-	actualYAML, _ := yaml.Marshal(actual)
-	return false, splitInfof(errorFormat, fmt.Sprintf(
-		"expect '%s' to be an array, got:\n%s",
-		v.Path,
-		string(actualYAML),
-	))
+	return validateSuccess, validateErrors
 }

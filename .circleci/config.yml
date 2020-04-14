@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   test:
     docker:
@@ -52,7 +52,6 @@ jobs:
           command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
 
 workflows:
-  version: 2
   test-and-build:
     jobs:
       - test:

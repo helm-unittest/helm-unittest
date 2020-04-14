@@ -3,6 +3,7 @@
 [![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/quintush/helm-unittest)](https://goreportcard.com/report/github.com/quintush/helm-unittest)
 [![codecov](https://codecov.io/gh/quintush/helm-unittest/branch/master/graph/badge.svg)](https://codecov.io/gh/quintush/helm-unittest)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=quintush_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=quintush_helm-unittest)
 
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
 

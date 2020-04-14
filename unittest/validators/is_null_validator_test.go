@@ -45,6 +45,7 @@ func TestIsNullValidatorWhenFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Path:	a",
 		"Expected to be null, got:",
 		"	A",
@@ -63,8 +64,44 @@ func TestIsNullValidatorWhenNegativeAndFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Path:	a",
 		"Expected NOT to be null, got:",
+		"	null",
+	}, diff)
+}
+
+func TestIsNullValidatorWhenInvalidIndex(t *testing.T) {
+	doc := "a:"
+	manifest := makeManifest(doc)
+
+	validator := IsNullValidator{"a"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest},
+		Index: 2,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	documentIndex 2 out of range",
+	}, diff)
+}
+
+func TestIsNullValidatorWhenInvalidPath(t *testing.T) {
+	doc := "x:"
+	manifest := makeManifest(doc)
+
+	validator := IsNullValidator{"x.b"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	can't get [\"b\"] from a non map type:",
 		"	null",
 	}, diff)
 }

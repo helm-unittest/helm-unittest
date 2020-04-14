@@ -16,10 +16,11 @@ func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
 	}
 	hasDocumentsFailFormat := "Expected documents count" + notAnnotation + ":%s"
 	if not {
-		return splitInfof(hasDocumentsFailFormat, strconv.Itoa(v.Count))
+		return splitInfof(hasDocumentsFailFormat, -1, strconv.Itoa(v.Count))
 	}
 	return splitInfof(
 		hasDocumentsFailFormat+"\nActual:%s",
+		-1,
 		strconv.Itoa(v.Count),
 		strconv.Itoa(actual),
 	)

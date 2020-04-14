@@ -66,6 +66,7 @@ func TestIsEmptyValidatorWhenFail(t *testing.T) {
 		})
 		assert.False(t, pass)
 		assert.Equal(t, []string{
+			"DocumentIndex:	0",
 			"Path:	" + key,
 			"Expected to be empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
@@ -88,9 +89,43 @@ func TestIsEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 
 		assert.False(t, pass)
 		assert.Equal(t, []string{
+			"DocumentIndex:	0",
 			"Path:	" + key,
 			"Expected NOT to be empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
 		}, diff)
 	}
+}
+
+func TestIsEmptyValidatorWhenInvalidIndex(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsEmptyValidator{"a"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest},
+		Index: 2,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	documentIndex 2 out of range",
+	}, diff)
+}
+
+func TestIsEmptyValidatorWhenInvalidPath(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsEmptyValidator{"x.a"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	can't get [\"a\"] from a non map type:",
+		"	null",
+	}, diff)
 }

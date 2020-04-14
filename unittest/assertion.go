@@ -12,12 +12,13 @@ import (
 
 // Assertion defines target and metrics to validate rendered result
 type Assertion struct {
-	Template      string
-	DocumentIndex int
-	Not           bool
-	AssertType    string
-	validator     validators.Validatable
-	antonym       bool
+	Template         string
+	DocumentIndex    int
+	Not              bool
+	AssertType       string
+	validator        validators.Validatable
+	antonym          bool
+	defaultTemplates []string
 }
 
 // Assert validate the rendered manifests with validator
@@ -29,18 +30,40 @@ func (a *Assertion) Assert(
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
-	rendered, ok := templatesResult[a.Template]
-	if !ok {
-		result.FailInfo = []string{"Error:", a.noFileErrMessage()}
-		return result
+	// Ensure assertion is succeeding or failing based on templates to test.
+	assertionPassed := len(a.defaultTemplates) > 0
+	failInfo := make([]string, 0)
+
+	for _, template := range a.defaultTemplates {
+		rendered, ok := templatesResult[template]
+		var validatePassed bool
+		var singleFailInfo []string
+		if !ok {
+			noFile := []string{"Error:", a.noFileErrMessage()}
+			failInfo = append(failInfo, noFile...)
+			assertionPassed = false
+			break
+		}
+
+		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
+			Docs:             rendered,
+			Index:            a.DocumentIndex,
+			Negative:         a.Not != a.antonym,
+			SnapshotComparer: snapshotComparer,
+		})
+
+		if !validatePassed {
+			failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
+			singleFailInfo = append(failInfoTemplate, singleFailInfo...)
+		}
+
+		assertionPassed = assertionPassed && validatePassed
+		failInfo = append(failInfo, singleFailInfo...)
 	}
 
-	result.Passed, result.FailInfo = a.validator.Validate(&validators.ValidateContext{
-		Docs:             rendered,
-		Index:            a.DocumentIndex,
-		Negative:         a.Not != a.antonym,
-		SnapshotComparer: snapshotComparer,
-	})
+	result.Passed = assertionPassed
+	result.FailInfo = failInfo
+
 	return result
 }
 
@@ -63,7 +86,10 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if documentIndex, ok := assertDef["documentIndex"].(int); ok {
 		a.DocumentIndex = documentIndex
+	} else {
+		a.DocumentIndex = -1
 	}
+
 	if not, ok := assertDef["not"].(bool); ok {
 		a.Not = not
 	}
@@ -77,7 +103,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if a.validator == nil {
 		for key := range assertDef {
-			if key != "file" && key != "documentIndex" && key != "not" {
+			if key != "template" && key != "documentIndex" && key != "not" {
 				return fmt.Errorf("Assertion type `%s` is invalid", key)
 			}
 		}
@@ -106,6 +132,7 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 			a.AssertType = assertName
 			a.validator = validator.(validators.Validatable)
 			a.antonym = correspondDef.antonym
+			a.defaultTemplates = []string{a.Template}
 		}
 	}
 	return nil

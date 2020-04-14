@@ -1,6 +1,6 @@
 should fail all kinds of assertion:
   1: |
-    replicas: 999
+    replicas: 1
     template:
       metadata:
         labels:
@@ -22,3 +22,22 @@ should fail all kinds of assertion:
               path: /
               port: 8080
           resources: {}
+  2: |
+    replicas: 1
+    template:
+      metadata:
+        annotations:
+          some_template: |
+            ---
+            apiVersion: ...
+            this: is test for old separator workaround bug
+        labels:
+          app: basic
+          release: RELEASE-NAME
+      spec:
+        containers:
+        - image: apache:latest
+          imagePullPolicy: Always
+          name: basic
+          ports:
+          - containerPort: null

@@ -12,7 +12,7 @@ type IsEmptyValidator struct {
 	Path string
 }
 
-func (v IsEmptyValidator) failInfo(actual interface{}, not bool) []string {
+func (v IsEmptyValidator) failInfo(actual interface{}, index int, not bool) []string {
 	var notAnnotation string
 	if not {
 		notAnnotation = " NOT"
@@ -23,35 +23,49 @@ Path:%s
 Expected` + notAnnotation + ` to be empty, got:
 %s
 `
-	return splitInfof(isEmptyFailFormat, v.Path, common.TrustedMarshalYAML(actual))
+	return splitInfof(isEmptyFailFormat, index, v.Path, common.TrustedMarshalYAML(actual))
 }
 
 // Validate implement Validatable
 func (v IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifest, err := context.getManifest()
+	manifests, err := context.getManifests()
 	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
+		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-	if err != nil {
-		return false, splitInfof(errorFormat, err.Error())
+	validateSuccess := true
+	validateErrors := make([]string, 0)
+
+	for idx, manifest := range manifests {
+		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+		if err != nil {
+			validateSuccess = validateSuccess && false
+			errorMessage := splitInfof(errorFormat, idx, err.Error())
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		actualValue := reflect.ValueOf(actual)
+		var isEmpty bool
+		switch actualValue.Kind() {
+		case reflect.Invalid:
+			isEmpty = true
+		case reflect.Array, reflect.Map, reflect.Slice:
+			isEmpty = actualValue.Len() == 0
+		default:
+			zero := reflect.Zero(actualValue.Type())
+			isEmpty = reflect.DeepEqual(actual, zero.Interface())
+		}
+
+		if isEmpty == context.Negative {
+			validateSuccess = validateSuccess && false
+			errorMessage := v.failInfo(actual, idx, context.Negative)
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		validateSuccess = validateSuccess && true
 	}
 
-	actualValue := reflect.ValueOf(actual)
-	var isEmpty bool
-	switch actualValue.Kind() {
-	case reflect.Invalid:
-		isEmpty = true
-	case reflect.Array, reflect.Map, reflect.Slice:
-		isEmpty = actualValue.Len() == 0
-	default:
-		zero := reflect.Zero(actualValue.Type())
-		isEmpty = reflect.DeepEqual(actual, zero.Interface())
-	}
-
-	if isEmpty != context.Negative {
-		return true, []string{}
-	}
-	return false, v.failInfo(actual, context.Negative)
+	return validateSuccess, validateErrors
 }

@@ -7,6 +7,7 @@ tests:
       - ./values/image.yaml
     set:
       service.internalPort: 8080
+    documentIndex: 0
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image

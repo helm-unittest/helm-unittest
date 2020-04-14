@@ -40,7 +40,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: db
+  name: {{ template "basic.fullname" . }}-db
   labels:
     app: {{ template "basic.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}

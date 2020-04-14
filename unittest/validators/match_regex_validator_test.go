@@ -63,6 +63,7 @@ func TestMatchRegexValidatorWhenNotString(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Error:",
 		"	expect 'a' to be a string, got:",
 		"	123.456",
@@ -78,6 +79,7 @@ func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
 	})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected to match:	^foo",
 		"Actual:	hello world",
@@ -95,8 +97,42 @@ func TestMatchRegexValidatorWhenNegativeAndMatchFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
+		"DocumentIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected NOT to match:	^hello",
 		"Actual:	hello world",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenInvalidIndex(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	validator := MatchRegexValidator{"a.b[0].c", "^hello"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest},
+		Index: 2,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	documentIndex 2 out of range",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
+	manifest := makeManifest("a.b.d::error")
+
+	validator := MatchRegexValidator{"a.b[0].c", "^hello"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	can't get [\"b\"] from a non map type:",
+		"	null",
 	}, diff)
 }

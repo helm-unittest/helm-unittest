@@ -33,9 +33,9 @@
     })
   },
   SnapshotCounting: (struct { Total uint; Failed uint; Created uint; Vanished uint }) {
-    Total: (uint) 1,
+    Total: (uint) 2,
     Failed: (uint) 0,
-    Created: (uint) 1,
+    Created: (uint) 2,
     Vanished: (uint) 0
   }
 })

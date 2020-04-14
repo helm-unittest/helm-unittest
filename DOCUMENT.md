@@ -43,6 +43,8 @@ tests:
       resources:
         limits:
           memory: 128Mi
+    template: deployment.yaml
+    documentIndex: 0
     release:
       name: my-release
       namespace:
@@ -59,6 +61,10 @@ tests:
 - **values**: *array of string, optional*. The values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object.
+
+- **template**: *string, optional*. The template file which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless the template is defined in the assertions (see Assertion).
+
+- **documentIndex**: *int, optional*. The index of rendered documents (devided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -94,9 +100,9 @@ The assertion is defined with the assertion type as the key and its parameters a
 
 - **not**: *bool, optional*. Set to `true` to assert contrarily, default to `false`. The second assertion in the example above asserts that the service name is **NOT** *your-service*.
 
-- **template**: *string, optional*. The template file which render the manifest to be asserted, default to the first template file defined in `templates` of suite file. For example the first assertion above with no `template` specified asserts `deployment.yaml` by default. If no template file specified in neither suite and assertion, the assertion returns an error and fail the test.
+- **template**: *string, optional*. The template file which render the manifest to be asserted, default to the list of template file defined in `templates` of suite file, unless the template is in the testjob (see TestJob). For example the first assertion above with no `template` specified asserts for both `deployment.yaml` and `service.yaml` by default. If no template file specified in neither suite, testjob and assertion, the assertion returns an error and fail the test.
 
-- **documentIndex**: *int, optional*. The index of rendered documents (devided by `---`) to be asserted, default to 0. Generally you can ignored this field if the template file render only one document.
+- **documentIndex**: *int, optional*. The index of rendered documents (devided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
 
 ### Assertion Types
 

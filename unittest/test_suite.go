@@ -106,7 +106,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
 		if len(s.Templates) > 0 {
-			test.defaultTemplateToAssert = s.Templates[0]
+			test.defaultTemplatesToAssert = s.Templates
 		}
 	}
 }

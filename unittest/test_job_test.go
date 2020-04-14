@@ -68,11 +68,40 @@ asserts:
   - equal:
       path: kind
       value: Deployment
+    documentIndex: 0
     template: deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: -basic$
+    documentIndex: 0
     template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV2RunJobWithTestJobTemplateOk(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	manifest := `
+it: should work
+template: deployment.yaml
+documentIndex: 0
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic$
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -95,11 +124,13 @@ asserts:
   - equal:
       path: kind
       value: WrongKind
-    file: deployment.yaml
+    documentIndex: 0
+    template: deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: pattern-not-match
-    file: deployment.yaml
+    documentIndex: 0
+    template: deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -125,6 +156,7 @@ asserts:
   - equal:
       path: metadata.name
       value: RELEASE-NAME-john-doe
+    documentIndex: 0
     template: deployment.yaml
 `
 	var tj TestJob
@@ -150,6 +182,7 @@ asserts:
   - equal:
       path: metadata.name
       value: RELEASE-NAME-mary-jane
+    documentIndex: 0
     template: deployment.yaml
 `
 	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
@@ -179,6 +212,7 @@ asserts:
   - equal:
       path: metadata.name
       value: my-release-basic
+    documentIndex: 0
     template: deployment.yaml
 `
 	var tj TestJob
@@ -202,11 +236,40 @@ asserts:
   - equal:
       path: kind
       value: Deployment
+    documentIndex: 0
     template: deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: -basic$
+    documentIndex: 0
     template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+template: deployment.yaml
+documentIndex: 0
+asserts:
+  - equal:
+      path: kind
+      value: Deployment   
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic$
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -229,11 +292,13 @@ asserts:
   - equal:
       path: kind
       value: WrongKind
-    file: deployment.yaml
+    documentIndex: 0
+    template: deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: pattern-not-match
-    file: deployment.yaml
+    documentIndex: 0
+    template: deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -259,6 +324,7 @@ asserts:
   - equal:
       path: metadata.name
       value: RELEASE-NAME-john-doe
+    documentIndex: 0
     template: deployment.yaml
 `
 	var tj TestJob
@@ -284,6 +350,7 @@ asserts:
   - equal:
       path: metadata.name
       value: RELEASE-NAME-mary-jane
+    documentIndex: 0
     template: deployment.yaml
 `
 	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
@@ -313,6 +380,7 @@ asserts:
   - equal:
       path: metadata.name
       value: my-release-basic
+    documentIndex: 0
     template: deployment.yaml
 `
 	var tj TestJob

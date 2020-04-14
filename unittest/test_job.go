@@ -38,11 +38,13 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
-	Name       string `yaml:"it"`
-	Values     []string
-	Set        map[string]interface{}
-	Assertions []*Assertion `yaml:"asserts"`
-	Release    struct {
+	Name          string `yaml:"it"`
+	Values        []string
+	Set           map[string]interface{}
+	Template      string
+	DocumentIndex *int         `yaml:"documentIndex"`
+	Assertions    []*Assertion `yaml:"asserts"`
+	Release       struct {
 		Name      string
 		Namespace string
 		Revision  int
@@ -53,8 +55,8 @@ type TestJob struct {
 	chartRoute string
 	// where the test suite file located
 	definitionFile string
-	// template assertion should assert if not specified
-	defaultTemplateToAssert string
+	// list of templates assertion should assert if not specified
+	defaultTemplatesToAssert []string
 }
 
 // RunV2 render the chart and validate it with assertions in TestJob.
@@ -64,7 +66,7 @@ func (t *TestJob) RunV2(
 	result *TestJobResult,
 ) *TestJobResult {
 	startTestRun := time.Now()
-	t.polishV2AssertionsTemplate(targetChart)
+	t.polishAssertionsTemplate(targetChart.Metadata.Name)
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -102,7 +104,7 @@ func (t *TestJob) RunV3(
 	result *TestJobResult,
 ) *TestJobResult {
 	startTestRun := time.Now()
-	t.polishV3AssertionsTemplate(targetChart)
+	t.polishAssertionsTemplate(targetChart.Name())
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -158,8 +160,8 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
 	}
 
-	for path, valus := range t.Set {
-		setMap, err := valueutils.BuildValueOfSetPath(valus, path)
+	for path, values := range t.Set {
+		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -308,51 +310,34 @@ func (t *TestJob) runAssertions(
 }
 
 // add prefix to Assertion.Template
-func (t *TestJob) polishV2AssertionsTemplate(targetChart *v2chart.Chart) {
+func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 	if t.chartRoute == "" {
-		t.chartRoute = targetChart.Metadata.Name
+		t.chartRoute = targetChartName
 	}
 
 	for _, assertion := range t.Assertions {
-		var templateToAssert string
+		templatesToAssert := make([]string, 0)
+
+		if t.DocumentIndex != nil {
+			assertion.DocumentIndex = *t.DocumentIndex
+		}
 
 		if assertion.Template == "" {
-			if t.defaultTemplateToAssert == "" {
-				return
+			if t.Template == "" {
+				templatesToAssert = t.defaultTemplatesToAssert
+			} else {
+				templatesToAssert = append(templatesToAssert, t.Template)
 			}
-			templateToAssert = t.defaultTemplateToAssert
 		} else {
-			templateToAssert = assertion.Template
+			templatesToAssert = append(templatesToAssert, assertion.Template)
 		}
 
 		// map the file name to the path of helm rendered result
-		assertion.Template = filepath.ToSlash(
-			filepath.Join(t.chartRoute, "templates", templateToAssert),
-		)
-	}
-}
-
-// add prefix to Assertion.Template
-func (t *TestJob) polishV3AssertionsTemplate(targetChart *v3chart.Chart) {
-	if t.chartRoute == "" {
-		t.chartRoute = targetChart.Metadata.Name
-	}
-
-	for _, assertion := range t.Assertions {
-		var templateToAssert string
-
-		if assertion.Template == "" {
-			if t.defaultTemplateToAssert == "" {
-				return
-			}
-			templateToAssert = t.defaultTemplateToAssert
-		} else {
-			templateToAssert = assertion.Template
+		templatesPath := make([]string, 0)
+		for _, template := range templatesToAssert {
+			templatePath := filepath.ToSlash(filepath.Join(t.chartRoute, "templates", template))
+			templatesPath = append(templatesPath, templatePath)
 		}
-
-		// map the file name to the path of helm rendered result
-		assertion.Template = filepath.ToSlash(
-			filepath.Join(t.chartRoute, "templates", templateToAssert),
-		)
+		assertion.defaultTemplates = templatesPath
 	}
 }
