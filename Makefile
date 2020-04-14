@@ -16,8 +16,12 @@ install: bootstrap build
 .PHONY: hookInstall
 hookInstall: bootstrap build
 
+.PHONY: unittest
+unittest:
+	go test ./unittest/... -v -cover
+
 .PHONY: build
-build:
+build: unittest
 	go build -o untt -ldflags $(LDFLAGS) ./main.go
 
 .PHONY: dist

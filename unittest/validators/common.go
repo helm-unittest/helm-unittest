@@ -79,6 +79,13 @@ func diff(expected string, actual string) string {
 	return diff
 }
 
+// uniform the content with correct line-endings
+func uniformContent(content interface{}) string {
+	// All decoded content uses LF
+	actual := fmt.Sprintf("%v", content)
+	return strings.ReplaceAll(actual, "\r\n", "\n")
+}
+
 const errorFormat = `
 Error:
 %s

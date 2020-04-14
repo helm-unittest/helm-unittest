@@ -13,6 +13,8 @@ import (
 type ContainsValidator struct {
 	Path    string
 	Content interface{}
+	Count   *int
+	Any     bool
 }
 
 func (v ContainsValidator) failInfo(actual interface{}, index int, not bool) []string {
@@ -36,6 +38,33 @@ Actual:
 	)
 }
 
+func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
+	found := false
+	validateFoundCount := 0
+
+	for _, ele := range actual {
+		// When any enabled, only the key is validated
+		if v.Any {
+			if subset, ok := ele.(map[interface{}]interface{}); ok {
+				for key, value := range subset {
+					ele := map[interface{}]interface{}{key: value}
+					if reflect.DeepEqual(ele, v.Content) {
+						found = true
+						validateFoundCount++
+					}
+				}
+			}
+		}
+
+		if !v.Any && reflect.DeepEqual(ele, v.Content) {
+			found = true
+			validateFoundCount++
+		}
+	}
+
+	return found, validateFoundCount
+}
+
 // Validate implement Validatable
 func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests, err := context.getManifests()
@@ -56,16 +85,26 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 		}
 
 		if actual, ok := actual.([]interface{}); ok {
-			found := false
-			for _, ele := range actual {
-				if reflect.DeepEqual(ele, v.Content) {
-					found = true
-				}
-			}
 
-			if found == context.Negative {
+			found, validateFoundCount := v.validateContent(actual)
+
+			if v.Count == nil && found == context.Negative {
 				validateSuccess = validateSuccess && false
 				errorMessage := v.failInfo(actual, idx, context.Negative)
+				validateErrors = append(validateErrors, errorMessage...)
+				continue
+			}
+
+			if v.Count != nil && *v.Count != validateFoundCount && found == !context.Negative {
+				actualYAML, _ := yaml.Marshal(actual)
+				validateSuccess = validateSuccess && false
+				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
+					"expect count %d in '%s' to be in array, got %d:\n%s",
+					*v.Count,
+					v.Path,
+					validateFoundCount,
+					string(actualYAML),
+				))
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}

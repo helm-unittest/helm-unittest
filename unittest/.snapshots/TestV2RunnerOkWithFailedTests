@@ -279,6 +279,28 @@
 				@@ -1,2 +1,2 @@
 				-- secretName: my-tls-secret
 				+null
+ FAIL  test notes	../__fixtures__/v2/basic/tests_failed/notes_test.yaml
+	- should pass the notes file with ingress enabled
+
+		- asserts[0] `notEqualRaw` fail
+
+			Template:	basic/templates/NOTES.txt
+			Expected NOT to equal:
+				|
+				  1. Get the application URL by running these commands:
+				    http://chart-example.local
+
+	- should pass the notes file with service type LoadBalancer
+
+		- asserts[0] `matchRegexRaw` fail
+
+			Template:	basic/templates/NOTES.txt
+			Expected to match:	http:///$SERVICE_IP:80
+			Actual:	1. Get the application URL by running these commands:
+				     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+				           You can watch the status of by running 'kubectl get svc -w RELEASE-NAME-basic'
+				  export SERVICE_IP=$(kubectl get svc --namespace NAMESPACE RELEASE-NAME-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+				  echo http://$SERVICE_IP:9999
  FAIL  test service	../__fixtures__/v2/basic/tests_failed/service_test.yaml
 	- should failed
 
@@ -344,8 +366,8 @@
 
 
 Charts:      1 failed, 0 passed, 1 total
-Test Suites: 3 failed, 0 passed, 3 total
-Tests:       7 failed, 0 passed, 7 total
+Test Suites: 4 failed, 0 passed, 4 total
+Tests:       9 failed, 1 passed, 10 total
 Snapshot:    2 passed, 2 total
 Time:        XX.XXXms
 

@@ -127,7 +127,9 @@ func (s *TestSuite) prepareV2Chart(targetChart *v2chart.Chart) (*v2chart.Chart, 
 		for _, fileName := range s.Templates {
 			found := false
 			for _, template := range targetChart.Templates {
-				if filepath.Base(template.Name) == fileName {
+				// Within templates unix separators are always used.
+				relativeFilePath := strings.Join([]string{"templates", fileName}, "/")
+				if template.Name == relativeFilePath {
 					filteredTemplate = append(filteredTemplate, template)
 					found = true
 					break
@@ -169,7 +171,9 @@ func (s *TestSuite) prepareV3Chart(targetChart *v3chart.Chart) (*v3chart.Chart, 
 		for _, fileName := range s.Templates {
 			found := false
 			for _, template := range targetChart.Templates {
-				if filepath.Base(template.Name) == fileName {
+				// Within templates unix separators are always used.
+				relativeFilePath := strings.Join([]string{"templates", fileName}, "/")
+				if template.Name == relativeFilePath {
 					filteredTemplate = append(filteredTemplate, template)
 					found = true
 					break

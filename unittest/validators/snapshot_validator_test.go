@@ -7,17 +7,7 @@ import (
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	. "github.com/lrills/helm-unittest/unittest/validators"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-type mockSnapshotComparer struct {
-	mock.Mock
-}
-
-func (m *mockSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
-	args := m.Called(content)
-	return args.Get(0).(*snapshot.CompareResult)
-}
 
 func TestSnapshotValidatorWhenOk(t *testing.T) {
 	data := common.K8sManifest{"a": "b"}

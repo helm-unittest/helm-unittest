@@ -89,6 +89,34 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
+func TestV2RunJobWithNOTESTemplateOk(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	manifest := `
+it: should work
+template: NOTES.txt
+asserts:
+  - equalRaw:
+      value: | 
+        1. Get the application URL by running these commands:
+          export POD_NAME=$(kubectl get pods --namespace NAMESPACE -l "app=basic,release=RELEASE-NAME" -o jsonpath="{.items[0].metadata.name}")
+          echo "Visit http://127.0.0.1:8080 to use your application"
+          kubectl port-forward $POD_NAME 8080:80
+  - matchRegexRaw:
+      pattern: ^1. Get the application URL by running these commands
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
 func TestV2RunJobWithTestJobTemplateOk(t *testing.T) {
 	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `

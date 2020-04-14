@@ -261,9 +261,9 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
-		decoder := yaml.NewDecoder(strings.NewReader(rendered))
 
 		if filepath.Ext(file) == ".yaml" {
+			decoder := yaml.NewDecoder(strings.NewReader(rendered))
 			manifests := make([]common.K8sManifest, 0)
 
 			for {
@@ -281,6 +281,17 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 				}
 			}
 
+			manifestsOfFiles[file] = manifests
+		}
+
+		if filepath.Ext(file) == ".txt" {
+			manifests := make([]common.K8sManifest, 0)
+			manifest := make(common.K8sManifest)
+			manifest[common.RAW] = rendered
+
+			if len(manifest) > 0 {
+				manifests = append(manifests, manifest)
+			}
 			manifestsOfFiles[file] = manifests
 		}
 	}

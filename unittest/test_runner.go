@@ -155,7 +155,6 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 				FilePath:  file,
 				ExecError: err,
 			})
-			continue
 		}
 		resultSuites = append(resultSuites, suite)
 	}
@@ -221,6 +220,7 @@ func (tr *TestRunner) runV2SuitesOfChart(suites []*TestSuite, chart *v2chart.Cha
 				FilePath:  suite.definitionFile,
 				ExecError: err,
 			})
+			chartPassed = false
 			continue
 		}
 
@@ -245,6 +245,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Cha
 				FilePath:  suite.definitionFile,
 				ExecError: err,
 			})
+			chartPassed = false
 			continue
 		}
 
