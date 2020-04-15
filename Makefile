@@ -27,12 +27,18 @@ build: unittest
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./main.go
+	tar -zcvf $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	sha256sum $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz > $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz.sha
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-linux-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	sha256sum $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz > $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz.sha
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-macos-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	sha256sum $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz > $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz.sha
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o untt.exe -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-windows-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
+	sha256sum $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz > $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz.sha
 
 .PHONY: bootstrap
 bootstrap:

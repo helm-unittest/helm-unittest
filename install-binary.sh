@@ -51,7 +51,7 @@ initOS() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="linux-amd64\nmacos-amd64\nwindows-amd64"
+  local supported="linux-arm64\nlinux-amd64\nmacos-amd64\nwindows-amd64"
   if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
     echo "No prebuild binary for ${OS}-${ARCH}."
     exit 1
@@ -67,14 +67,16 @@ verifySupported() {
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
-  local version=$(git describe --tags --exact-match 2>/dev/null)
-  if [ -n "$version" ]; then
-    latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+  if [[ -z $HELM_PLUGIN_UPDATE ]]; then
+    local version=$(git describe --tags --exact-match 2>/dev/null)
+    if [ -n "$version" ]; then
+      latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+    fi
   fi
   if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
 
