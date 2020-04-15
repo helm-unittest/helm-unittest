@@ -61,10 +61,10 @@ func TestV2RunnerOkWithPassedTests(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests/*_test.yaml"},
+			TestFiles: []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV2([]string{"../__fixtures__/v2/basic"})
+	passed := runner.RunV2([]string{testV2BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -74,10 +74,10 @@ func TestV2RunnerOkWithFailedTests(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests_failed/*_test.yaml"},
+			TestFiles: []string{testTestFailedFiles},
 		},
 	}
-	passed := runner.RunV2([]string{"../__fixtures__/v2/basic"})
+	passed := runner.RunV2([]string{testV2BasicChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -87,10 +87,10 @@ func TestV2RunnerOkWithSubSubfolder(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests/*_test.yaml"},
+			TestFiles: []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV2([]string{"../__fixtures__/v2/with-subfolder"})
+	passed := runner.RunV2([]string{testV2WithSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -101,10 +101,10 @@ func TestV2RunnerWithTestsInSubchart(t *testing.T) {
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
 			WithSubChart: true,
-			TestFiles:    []string{"tests/*_test.yaml"},
+			TestFiles:    []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV2([]string{"../__fixtures__/v2/with-subchart"})
+	passed := runner.RunV2([]string{testV2WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -115,10 +115,10 @@ func TestV2RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
 			WithSubChart: false,
-			TestFiles:    []string{"tests/*_test.yaml"},
+			TestFiles:    []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV2([]string{"../__fixtures__/v2/with-subchart"})
+	passed := runner.RunV2([]string{testV2WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -128,10 +128,10 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests/*_test.yaml"},
+			TestFiles: []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV3([]string{"../__fixtures__/v3/basic"})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -141,10 +141,10 @@ func TestV3RunnerOkWithFailedTests(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests_failed/*_test.yaml"},
+			TestFiles: []string{testTestFailedFiles},
 		},
 	}
-	passed := runner.RunV3([]string{"../__fixtures__/v3/basic"})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -154,10 +154,10 @@ func TestV3RunnerOkWithSubSubfolder(t *testing.T) {
 	runner := TestRunner{
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
-			TestFiles: []string{"tests/*_test.yaml"},
+			TestFiles: []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV3([]string{"../__fixtures__/v3/with-subfolder"})
+	passed := runner.RunV3([]string{testV3WithSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -168,10 +168,10 @@ func TestV3RunnerWithTestsInSubchart(t *testing.T) {
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
 			WithSubChart: true,
-			TestFiles:    []string{"tests/*_test.yaml"},
+			TestFiles:    []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV3([]string{"../__fixtures__/v3/with-subchart"})
+	passed := runner.RunV3([]string{testV3WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -182,10 +182,10 @@ func TestV3RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 		Printer: NewPrinter(buffer, nil),
 		Config: TestConfig{
 			WithSubChart: false,
-			TestFiles:    []string{"tests/*_test.yaml"},
+			TestFiles:    []string{testTestFiles},
 		},
 	}
-	passed := runner.RunV3([]string{"../__fixtures__/v3/with-subchart"})
+	passed := runner.RunV3([]string{testV3WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }

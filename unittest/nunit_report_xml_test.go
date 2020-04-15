@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"testing"
 
@@ -12,408 +11,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpNunitTestDir, _ = ioutil.TempDir("", "_suite_tests")
+var tmpNunitTestDir, _ = ioutil.TempDir("", testSuiteTests)
 
-func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
-
-	expected := NUnitTestResults{
-		Environment: NUnitEnvironment{},
-		CultureInfo: NUnitCultureInfo{},
-		TestSuite: []NUnitTestSuite{
-			{
-				Type:        TestFixture,
-				Name:        testSuiteDisplayName,
-				Description: outputFile,
-				Success:     "true",
-				Executed:    "true",
-				Result:      "Success",
-				TestCases: []NUnitTestCase{
-					{
-						Failure:     nil,
-						Name:        testCaseDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseDisplayName),
-						Success:     "true",
-						Executed:    "true",
-						Asserts:     "0",
-						Result:      "Success",
-					},
-				},
-			},
-		},
-		Name:   "Helm-Unittest",
-		Total:  1,
-		Errors: 0,
+func createNUnitTestCase(name, description, failureContent string, executed bool) NUnitTestCase {
+	testCase := NUnitTestCase{
+		Name:        name,
+		Description: description,
+		Success:     "true",
+		Asserts:     "0",
+		Result:      "Success",
 	}
 
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      true,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseDisplayName,
-					Passed:      true,
-				},
-			},
-		},
+	if len(failureContent) > 0 {
+		testCase.Failure = &NUnitFailure{
+			Message:    "Failed",
+			StackTrace: failureContent,
+		}
+		testCase.Success = "false"
+		testCase.Result = "Failed"
 	}
 
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewNUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual NUnitTestResults
-	xml.Unmarshal(bytevalue, &actual)
-
-	assert.Equal(expected.Total, actual.Total)
-	assert.Equal(expected.Errors, actual.Errors)
-	assert.Equal(expected.Failures, actual.Failures)
-	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
-	testCaseFailureDisplayName := "TestCaseFailure"
-	assertionFailure := "AssertionFailure"
-	assertionType := "equal"
-	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
-
-	expected := NUnitTestResults{
-		Environment: NUnitEnvironment{},
-		CultureInfo: NUnitCultureInfo{},
-		TestSuite: []NUnitTestSuite{
-			{
-				Type:        TestFixture,
-				Name:        testSuiteDisplayName,
-				Description: outputFile,
-				Success:     "false",
-				Executed:    "true",
-				Result:      "Failed",
-				TestCases: []NUnitTestCase{
-					{
-						Failure:     nil,
-						Name:        testCaseSuccessDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
-						Success:     "true",
-						Executed:    "true",
-						Asserts:     "0",
-						Result:      "Success",
-					},
-					{
-						Failure: &NUnitFailure{
-							Message:    "Failed",
-							StackTrace: failureContent,
-						},
-						Name:        testCaseFailureDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
-						Success:     "false",
-						Executed:    "true",
-						Asserts:     "0",
-						Result:      "Failed",
-					},
-				},
-			},
-		},
-		Name:     "Helm-Unittest",
-		Total:    2,
-		Errors:   0,
-		Failures: 1,
+	if executed {
+		testCase.Executed = "true"
+	} else {
+		testCase.Executed = "false"
 	}
 
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseSuccessDisplayName,
-					Passed:      true,
-				},
-				{
-					DisplayName: testCaseFailureDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewNUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual NUnitTestResults
-	xml.Unmarshal(bytevalue, &actual)
-
-	assert.Equal(expected.Total, actual.Total)
-	assert.Equal(expected.Errors, actual.Errors)
-	assert.Equal(expected.Failures, actual.Failures)
-	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_And_Errors_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
-	testCaseFailureDisplayName := "TestCaseFailure"
-	testCaseErrorDisplayName := "TestCaseError"
-	assertionFailure := "AssertionFailure"
-	assertionType := "equal"
-	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
-	errorMessage := "Throw an error."
-	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
-
-	expected := NUnitTestResults{
-		Environment: NUnitEnvironment{},
-		CultureInfo: NUnitCultureInfo{},
-		TestSuite: []NUnitTestSuite{
-			{
-				Type:        TestFixture,
-				Name:        testSuiteDisplayName,
-				Description: outputFile,
-				Success:     "false",
-				Executed:    "true",
-				Result:      "Failed",
-				TestCases: []NUnitTestCase{
-					{
-						Failure:     nil,
-						Name:        testCaseSuccessDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
-						Success:     "true",
-						Executed:    "true",
-						Asserts:     "0",
-						Result:      "Success",
-					},
-					{
-						Failure: &NUnitFailure{
-							Message:    "Failed",
-							StackTrace: failureContent,
-						},
-						Name:        testCaseFailureDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
-						Success:     "false",
-						Executed:    "true",
-						Asserts:     "0",
-						Result:      "Failed",
-					},
-					{
-						Failure: &NUnitFailure{
-							Message:    "Failed",
-							StackTrace: failureErrorContent,
-						},
-						Name:        testCaseErrorDisplayName,
-						Description: fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseErrorDisplayName),
-						Success:     "false",
-						Executed:    "false",
-						Asserts:     "0",
-						Result:      "Failed",
-					},
-				},
-			},
-		},
-		Name:     "Helm-Unittest",
-		Total:    3,
-		Errors:   1,
-		Failures: 1,
-	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseSuccessDisplayName,
-					Passed:      true,
-				},
-				{
-					DisplayName: testCaseFailureDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-				{
-					DisplayName: testCaseErrorDisplayName,
-					Passed:      false,
-					ExecError:   fmt.Errorf("%s", errorMessage),
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewNUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual NUnitTestResults
-	xml.Unmarshal(bytevalue, &actual)
-
-	assert.Equal(expected.Total, actual.Total)
-	assert.Equal(expected.Errors, actual.Errors)
-	assert.Equal(expected.Failures, actual.Failures)
-	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsNUnitWithErrors(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Errors_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	errorMessage := "Throw an error."
-
-	expected := NUnitTestResults{
-		Environment: NUnitEnvironment{},
-		CultureInfo: NUnitCultureInfo{},
-		TestSuite: []NUnitTestSuite{
-			{
-				Type:        TestFixture,
-				Name:        testSuiteDisplayName,
-				Description: outputFile,
-				Success:     "false",
-				Executed:    "false",
-				Result:      "Failed",
-				Failure: &NUnitFailure{
-					Message:    "Error",
-					StackTrace: errorMessage,
-				},
-			},
-		},
-		Name:     "Helm-Unittest",
-		Total:    1,
-		Errors:   1,
-		Failures: 0,
-	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			ExecError:   fmt.Errorf("%s", errorMessage),
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewNUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual NUnitTestResults
-	xml.Unmarshal(bytevalue, &actual)
-
-	assert.Equal(expected.Total, actual.Total)
-	assert.Equal(expected.Errors, actual.Errors)
-	assert.Equal(expected.Failures, actual.Failures)
-	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
-
-	testResult.Close()
-	os.Remove(outputFile)
+	return testCase
 }
 
 func validateNUnitTestSuite(assert *assert.Assertions, expected, actual []NUnitTestSuite) {
@@ -467,4 +91,263 @@ func validatNUnitTestCase(assert *assert.Assertions, expected, actual []NUnitTes
 		// Verify if both are nil, otherwise it's still a failure.
 		assert.True(expected == nil && actual == nil)
 	}
+}
+
+func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseDisplayName := "TestCaseSucces"
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "true",
+				Executed:    "true",
+				Result:      "Success",
+				TestCases: []NUnitTestCase{
+					createNUnitTestCase(
+						testCaseDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseDisplayName),
+						"",
+						true,
+					),
+				},
+			},
+		},
+		Name:   TestFramework,
+		Total:  1,
+		Errors: 0,
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseDisplayName, "", true, nil),
+			},
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	xml.Unmarshal(bytevalue, &actual)
+
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
+}
+
+func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "false",
+				Executed:    "true",
+				Result:      "Failed",
+				TestCases: []NUnitTestCase{
+					createNUnitTestCase(
+						testCaseSuccessDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
+						"",
+						true,
+					),
+					createNUnitTestCase(
+						testCaseFailureDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
+						failureContent,
+						true,
+					),
+				},
+			},
+		},
+		Name:     TestFramework,
+		Total:    2,
+		Errors:   0,
+		Failures: 1,
+	}
+
+	assertionResults := []*AssertionResult{
+		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+			},
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	xml.Unmarshal(bytevalue, &actual)
+
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
+}
+
+func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_And_Errors_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	testCaseErrorDisplayName := "TestCaseError"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	errorMessage := "Throw an error."
+	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "false",
+				Executed:    "true",
+				Result:      "Failed",
+				TestCases: []NUnitTestCase{
+					createNUnitTestCase(
+						testCaseSuccessDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
+						"",
+						true,
+					),
+					createNUnitTestCase(
+						testCaseFailureDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
+						failureContent,
+						true,
+					),
+					createNUnitTestCase(
+						testCaseErrorDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseErrorDisplayName),
+						failureErrorContent,
+						false,
+					),
+				},
+			},
+		},
+		Name:     TestFramework,
+		Total:    3,
+		Errors:   1,
+		Failures: 1,
+	}
+
+	assertionResults := []*AssertionResult{
+		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, assertionResults),
+			},
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	xml.Unmarshal(bytevalue, &actual)
+
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
+}
+
+func TestWriteTestOutputAsNUnitWithErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Errors_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	errorMessage := "Throw an error."
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "false",
+				Executed:    "false",
+				Result:      "Failed",
+				Failure: &NUnitFailure{
+					Message:    "Error",
+					StackTrace: errorMessage,
+				},
+			},
+		},
+		Name:     TestFramework,
+		Total:    1,
+		Errors:   1,
+		Failures: 0,
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			ExecError:   fmt.Errorf("%s", errorMessage),
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	xml.Unmarshal(bytevalue, &actual)
+
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 }

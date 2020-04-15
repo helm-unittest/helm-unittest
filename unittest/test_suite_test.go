@@ -15,7 +15,7 @@ import (
 	v2util "k8s.io/helm/pkg/chartutil"
 )
 
-var tmpdir, _ = ioutil.TempDir("", "_suite_tests")
+var tmpdir, _ = ioutil.TempDir("", testSuiteTests)
 
 func makeTestSuiteResultSnapshotable(result *TestSuiteResult) *TestSuiteResult {
 
@@ -70,7 +70,7 @@ func TestV2ParseTestSuiteFileInSubfolderOk(t *testing.T) {
 }
 
 func TestV2RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	suiteDoc := `
 suite: validate metadata
 templates:
@@ -102,14 +102,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_multple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
 }
 
 func TestV2RunSuiteWhenPass(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -125,14 +125,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
 func TestV2RunSuiteWhenFail(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -147,14 +147,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
 
 func TestV2RunSuiteWithSubfolderWhenPass(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/with-subfolder")
+	c, _ := v2util.Load(testV2WithSubFolderChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -171,7 +171,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_subfolder_test.yaml"), false)
 	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
@@ -188,7 +188,7 @@ func TestV3ParseTestSuiteFileOk(t *testing.T) {
 }
 
 func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: validate metadata
 templates:
@@ -220,14 +220,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
 }
 
 func TestV3RunSuiteWhenPass(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -243,14 +243,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
 func TestV3RunSuiteWhenFail(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -265,14 +265,14 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
 
 func TestV3RunSuiteWithSubfolderWhenPass(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/with-subfolder")
+	c, _ := loader.Load(testV3WithSubFolderChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -289,7 +289,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "my_test.yaml"), false)
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
 	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)

@@ -222,7 +222,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 			CurrentUICulture: currentUICulture,
 		},
 		TestSuite:    testSuites,
-		Name:         "Helm-Unittest",
+		Name:         TestFramework,
 		Total:        totalTests,
 		Errors:       totalErrors,
 		Failures:     totalFailures,

@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"testing"
 
@@ -12,173 +11,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpJUnitTestDir, _ = ioutil.TempDir("", "_suite_tests")
+var tmpJUnitTestDir, _ = ioutil.TempDir("", testSuiteTests)
 
-func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
-
-	expected := JUnitTestSuites{
-		Suites: []JUnitTestSuite{
-			{
-				Tests:    1,
-				Failures: 0,
-				Name:     testSuiteDisplayName,
-				Properties: []JUnitProperty{
-					{
-						Name:  "helm-unittest.version",
-						Value: "1.6",
-					},
-				},
-				TestCases: []JUnitTestCase{
-					{
-						Classname: testSuiteDisplayName,
-						Name:      testCaseDisplayName,
-					},
-				},
-			},
-		},
+func createJUnitTestCase(classname, name, failureContent string) JUnitTestCase {
+	testCase := JUnitTestCase{
+		Classname: classname,
+		Name:      name,
 	}
 
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      true,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseDisplayName,
-					Passed:      true,
-				},
-			},
-		},
+	if len(failureContent) > 0 {
+		testCase.Failure = &JUnitFailure{
+			Message:  "Failed",
+			Type:     "",
+			Contents: failureContent,
+		}
 	}
 
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewJUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual JUnitTestSuites
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
-
-	testResult.Close()
-	os.Remove(outputFile)
+	return testCase
 }
 
-func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
-	testCaseFailureDisplayName := "TestCaseFailure"
-	assertionFailure := "AssertionFailure"
-	assertionType := "equal"
-	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
-
-	expected := JUnitTestSuites{
-		Suites: []JUnitTestSuite{
-			{
-				Tests:    2,
-				Failures: 1,
-				Name:     testSuiteDisplayName,
-				Properties: []JUnitProperty{
-					{
-						Name:  "helm-unittest.version",
-						Value: "1.6",
-					},
-				},
-				TestCases: []JUnitTestCase{
-					{
-						Classname: testSuiteDisplayName,
-						Name:      testCaseSuccessDisplayName,
-					},
-					{
-						Classname: testSuiteDisplayName,
-						Name:      testCaseFailureDisplayName,
-						Failure: &JUnitFailure{
-							Message:  "Failed",
-							Type:     "",
-							Contents: failureContent,
-						},
-					},
-				},
-			},
-		},
+func createJUnitProperty(name, value string) JUnitProperty {
+	return JUnitProperty{
+		Name:  name,
+		Value: value,
 	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      true,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseSuccessDisplayName,
-					Passed:      true,
-				},
-				{
-					DisplayName: testCaseFailureDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewJUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual JUnitTestSuites
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
-
-	testResult.Close()
-	os.Remove(outputFile)
 }
 
 func assertJUnitTestSuite(assert *assert.Assertions, expected, actual []JUnitTestSuite) {
@@ -239,4 +95,99 @@ func assertJUnitProperty(assert *assert.Assertions, expected, actual []JUnitProp
 		// Verify if both are nil, otherwise it's still a failure.
 		assert.True(expected == nil && actual == nil)
 	}
+}
+
+func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseDisplayName := "TestCaseSucces"
+
+	expected := JUnitTestSuites{
+		Suites: []JUnitTestSuite{
+			{
+				Tests:    1,
+				Failures: 0,
+				Name:     testSuiteDisplayName,
+				Properties: []JUnitProperty{
+					createJUnitProperty("helm-unittest.version", "1.6"),
+				},
+				TestCases: []JUnitTestCase{
+					createJUnitTestCase(testSuiteDisplayName, testCaseDisplayName, ""),
+				},
+			},
+		},
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseDisplayName, "", true, nil),
+			},
+		},
+	}
+
+	sut := NewJUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual JUnitTestSuites
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
+}
+
+func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+
+	expected := JUnitTestSuites{
+		Suites: []JUnitTestSuite{
+			{
+				Tests:    2,
+				Failures: 1,
+				Name:     testSuiteDisplayName,
+				Properties: []JUnitProperty{
+					createJUnitProperty("helm-unittest.version", "1.6"),
+				},
+				TestCases: []JUnitTestCase{
+					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, ""),
+					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent),
+				},
+			},
+		},
+	}
+
+	assertionResults := []*AssertionResult{
+		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+			},
+		},
+	}
+
+	sut := NewJUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual JUnitTestSuites
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 }
