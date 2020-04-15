@@ -77,11 +77,11 @@ type fetchTraverser struct {
 }
 
 func (tr *fetchTraverser) traverseMapKey(key string) error {
-	if d, ok := tr.data.(map[interface{}]interface{}); ok {
-		tr.data = d[key]
+	if dmap, ok := tr.data.(map[interface{}]interface{}); ok {
+		tr.data = dmap[key]
 		return nil
-	} else if d, ok := tr.data.(common.K8sManifest); ok {
-		tr.data = d[key]
+	} else if dman, ok := tr.data.(common.K8sManifest); ok {
+		tr.data = dman[key]
 		return nil
 	}
 	return fmt.Errorf(

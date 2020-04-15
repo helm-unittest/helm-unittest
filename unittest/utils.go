@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+// TestFramework the default name of the test framework.
+const TestFramework = "helm-unittest"
+
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
 	routes := make([]string, len(splited)/2+1)

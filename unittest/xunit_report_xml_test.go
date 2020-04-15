@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"testing"
 
@@ -12,438 +11,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpXunitTestDir, _ = ioutil.TempDir("", "_suite_tests")
+var tmpXunitTestDir, _ = ioutil.TempDir("", testSuiteTests)
 
-func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
-	totalTests := 1
-	totalPassed := 1
-	totalFailed := 0
-	totalErrors := 0
-	totalSkipped := 0
+func createXUnitTestCase(name, description, failureContent string, isError bool) XUnitTestCase {
+	testCase := XUnitTestCase{
+		Name:   name,
+		Type:   description,
+		Method: XUnitValidationMethod,
+		Result: "Pass",
+	}
 
-	expected := XUnitAssemblies{
-		Assembly: []XUnitAssembly{
-			{
-				Name:         outputFile,
-				ConfigFile:   outputFile,
-				TotalTests:   totalTests,
-				PassedTests:  totalPassed,
-				FailedTests:  totalFailed,
-				SkippedTests: totalSkipped,
-				ErrorsTests:  totalErrors,
-				TestRuns: []XUnitTestRun{
-					{
-						Name:         testSuiteDisplayName,
-						TotalTests:   totalTests,
-						PassedTests:  totalPassed,
-						FailedTests:  totalFailed,
-						SkippedTests: totalSkipped,
-						TestCases: []XUnitTestCase{
-							{
-								Name:    testCaseDisplayName,
-								Type:    testSuiteDisplayName,
-								Method:  "Helm-Validation",
-								Result:  "Pass",
-								Failure: nil,
-							},
-						},
-					},
-				},
+	if len(failureContent) > 0 {
+		testCase.Failure = &XUnitFailure{
+			ExceptionType: XUnitValidationMethod,
+			Message: &XUnitFailureMessage{
+				Data: "Failed",
 			},
-		},
-	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      true,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseDisplayName,
-					Passed:      true,
-				},
+			StackTrace: &XUnitFailureStackTrace{
+				Data: failureContent,
 			},
-		},
+		}
+		testCase.Result = "Fail"
 	}
 
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewXUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
-	testCaseFailureDisplayName := "TestCaseFailure"
-	assertionFailure := "AssertionFailure"
-	assertionType := "equal"
-	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
-	totalTests := 2
-	totalPassed := 1
-	totalFailed := 1
-	totalErrors := 0
-	totalSkipped := 0
-
-	expected := XUnitAssemblies{
-		Assembly: []XUnitAssembly{
-			{
-				Name:         outputFile,
-				ConfigFile:   outputFile,
-				TotalTests:   totalTests,
-				PassedTests:  totalPassed,
-				SkippedTests: totalSkipped,
-				FailedTests:  totalFailed,
-				ErrorsTests:  totalErrors,
-				TestRuns: []XUnitTestRun{
-					{
-						Name:         testSuiteDisplayName,
-						TotalTests:   totalTests,
-						PassedTests:  totalPassed,
-						FailedTests:  totalFailed,
-						SkippedTests: totalSkipped,
-						TestCases: []XUnitTestCase{
-							{
-								Name:    testCaseSuccessDisplayName,
-								Type:    testSuiteDisplayName,
-								Method:  "Helm-Validation",
-								Result:  "Pass",
-								Failure: nil,
-							},
-							{
-								Name:   testCaseFailureDisplayName,
-								Type:   testSuiteDisplayName,
-								Method: "Helm-Validation",
-								Result: "Fail",
-								Failure: &XUnitFailure{
-									ExceptionType: "Helm-Validation",
-									Message: &XUnitFailureMessage{
-										Data: "Failed",
-									},
-									StackTrace: &XUnitFailureStackTrace{
-										Data: failureContent,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	if isError {
+		testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
 	}
 
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseSuccessDisplayName,
-					Passed:      true,
-				},
-				{
-					DisplayName: testCaseFailureDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewXUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_And_Error_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
-	testCaseFailureDisplayName := "TestCaseFailure"
-	testCaseErrorDisplayName := "TestCaseError"
-	assertionFailure := "AssertionFailure"
-	assertionType := "equal"
-	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
-	errorMessage := "An Error Occurred."
-	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
-	totalTests := 3
-	totalPassed := 1
-	totalFailed := 1
-	totalErrors := 1
-	totalSkipped := 0
-
-	expected := XUnitAssemblies{
-		Assembly: []XUnitAssembly{
-			{
-				Name:         outputFile,
-				ConfigFile:   outputFile,
-				TotalTests:   totalTests,
-				PassedTests:  totalPassed,
-				SkippedTests: totalSkipped,
-				FailedTests:  totalFailed,
-				ErrorsTests:  totalErrors,
-				TestRuns: []XUnitTestRun{
-					{
-						Name:         testSuiteDisplayName,
-						TotalTests:   totalTests,
-						PassedTests:  totalPassed,
-						FailedTests:  totalFailed,
-						SkippedTests: totalSkipped,
-						TestCases: []XUnitTestCase{
-							{
-								Name:    testCaseSuccessDisplayName,
-								Type:    testSuiteDisplayName,
-								Method:  "Helm-Validation",
-								Result:  "Pass",
-								Failure: nil,
-							},
-							{
-								Name:   testCaseFailureDisplayName,
-								Type:   testSuiteDisplayName,
-								Method: "Helm-Validation",
-								Result: "Fail",
-								Failure: &XUnitFailure{
-									ExceptionType: "Helm-Validation",
-									Message: &XUnitFailureMessage{
-										Data: "Failed",
-									},
-									StackTrace: &XUnitFailureStackTrace{
-										Data: failureContent,
-									},
-								},
-							},
-							{
-								Name:   testCaseErrorDisplayName,
-								Type:   testSuiteDisplayName,
-								Method: "Helm-Validation",
-								Result: "Fail",
-								Failure: &XUnitFailure{
-									ExceptionType: "Helm-Validation",
-									Message: &XUnitFailureMessage{
-										Data: "Failed",
-									},
-									StackTrace: &XUnitFailureStackTrace{
-										Data: failureErrorContent,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			TestsResult: []*TestJobResult{
-				{
-					DisplayName: testCaseSuccessDisplayName,
-					Passed:      true,
-				},
-				{
-					DisplayName: testCaseFailureDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-				},
-				{
-					DisplayName: testCaseErrorDisplayName,
-					Passed:      false,
-					AssertsResult: []*AssertionResult{
-						{
-							Index: 0,
-							FailInfo: []string{
-								assertionFailure,
-							},
-							Passed:     false,
-							AssertType: assertionType,
-							Not:        false,
-						},
-					},
-					ExecError: fmt.Errorf("%s", errorMessage),
-				},
-			},
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewXUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
-
-	testResult.Close()
-	os.Remove(outputFile)
-}
-
-func TestWriteTestOutputAsXUnitWithErrors(t *testing.T) {
-	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Error_Output.xml")
-	testSuiteDisplayName := "TestingSuite"
-	errorMessage := "An Error Occurred."
-	totalTests := 1
-	totalPassed := 0
-	totalFailed := 0
-	totalErrors := 1
-	totalSkipped := 0
-
-	expected := XUnitAssemblies{
-		Assembly: []XUnitAssembly{
-			{
-				Name:         outputFile,
-				ConfigFile:   outputFile,
-				TotalTests:   totalTests,
-				PassedTests:  totalPassed,
-				SkippedTests: totalSkipped,
-				FailedTests:  totalFailed,
-				ErrorsTests:  totalErrors,
-				Errors: []XUnitError{
-					{
-						Type: "Error",
-						Name: "Error",
-						Failure: &XUnitFailure{
-							ExceptionType: "Helm-Validation-Error",
-							Message: &XUnitFailureMessage{
-								Data: "Failed",
-							},
-							StackTrace: &XUnitFailureStackTrace{
-								Data: errorMessage,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	given := []*TestSuiteResult{
-		{
-			DisplayName: testSuiteDisplayName,
-			FilePath:    outputFile,
-			Passed:      false,
-			ExecError:   fmt.Errorf("%s", errorMessage),
-		},
-	}
-
-	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
-
-	// Test the formatter
-	sut := NewXUnitReportXML()
-	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
-
-	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
-
-	assert.FileExists(outputFile)
-
-	// Unmarshall and validate the output with expected.
-	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
-
-	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
-
-	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
-
-	testResult.Close()
-	os.Remove(outputFile)
+	return testCase
 }
 
 func assertXUnitTestAssemblies(assert *assert.Assertions, expected, actual []XUnitAssembly) {
@@ -517,4 +112,260 @@ func assertXUnitTestCase(assert *assert.Assertions, expected, actual []XUnitTest
 		// Verify if both are nil, otherwise it's still a failure.
 		assert.True(expected == nil && actual == nil)
 	}
+}
+
+func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseDisplayName := "TestCaseSucces"
+	totalTests := 1
+	totalPassed := 1
+	totalFailed := 0
+	totalErrors := 0
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				FailedTests:  totalFailed,
+				SkippedTests: totalSkipped,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							createXUnitTestCase(testCaseDisplayName, testSuiteDisplayName, "", false),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseDisplayName, "", true, nil),
+			},
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+}
+
+func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	totalTests := 2
+	totalPassed := 1
+	totalFailed := 1
+	totalErrors := 0
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				SkippedTests: totalSkipped,
+				FailedTests:  totalFailed,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", false),
+							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, false),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	assertionResults := []*AssertionResult{
+		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+			},
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+}
+
+func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_And_Error_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseFailureDisplayName := "TestCaseFailure"
+	testCaseErrorDisplayName := "TestCaseError"
+	assertionFailure := "AssertionFailure"
+	assertionType := "equal"
+	assertIndex := 0
+	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	errorMessage := "An Error Occurred."
+	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
+	totalTests := 3
+	totalPassed := 1
+	totalFailed := 1
+	totalErrors := 1
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				SkippedTests: totalSkipped,
+				FailedTests:  totalFailed,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", false),
+							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, false),
+							createXUnitTestCase(testCaseErrorDisplayName, testSuiteDisplayName, failureErrorContent, true),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	assertionResults := []*AssertionResult{
+		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			TestsResult: []*TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, assertionResults),
+			},
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+}
+
+func TestWriteTestOutputAsXUnitWithErrors(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Error_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	errorMessage := "An Error Occurred."
+	totalTests := 1
+	totalPassed := 0
+	totalFailed := 0
+	totalErrors := 1
+	totalSkipped := 0
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				SkippedTests: totalSkipped,
+				FailedTests:  totalFailed,
+				ErrorsTests:  totalErrors,
+				Errors: []XUnitError{
+					{
+						Type: "Error",
+						Name: "Error",
+						Failure: &XUnitFailure{
+							ExceptionType: fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
+							Message: &XUnitFailureMessage{
+								Data: "Failed",
+							},
+							StackTrace: &XUnitFailureStackTrace{
+								Data: errorMessage,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	given := []*TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      false,
+			ExecError:   fmt.Errorf("%s", errorMessage),
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	xml.Unmarshal(bytevalue, &actual)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
 }

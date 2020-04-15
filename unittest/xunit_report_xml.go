@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// XUnitValidationMethod the default name for Helm XUnit validation.
+const XUnitValidationMethod string = "Helm-Validation"
+
 // XUnitAssemblies the top level of the document.
 type XUnitAssemblies struct {
 	XMLName  xml.Name        `xml:"assemblies"`
@@ -126,7 +129,7 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		ts := XUnitAssembly{
 			Name:          testSuiteResult.FilePath,
 			ConfigFile:    testSuiteResult.FilePath,
-			TestFramework: "helm-unittest",
+			TestFramework: TestFramework,
 			Environment:   fmt.Sprintf("%s.%s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
 			RunDate:       formatDate(currentTime),
 			RunTime:       formatTime(currentTime),
@@ -151,7 +154,7 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 					Type: "Error",
 					Name: "Error",
 					Failure: &XUnitFailure{
-						ExceptionType: "Helm-Validation-Error",
+						ExceptionType: fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
 						Message: &XUnitFailureMessage{
 							Data: "Error",
 						},
@@ -182,7 +185,7 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 				testCase := XUnitTestCase{
 					Name:    test.DisplayName,
 					Type:    classname,
-					Method:  "Helm-Validation",
+					Method:  XUnitValidationMethod,
 					Time:    formatDuration(test.Duration),
 					Result:  x.formatResult(test.Passed),
 					Failure: nil,
@@ -190,22 +193,23 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 
 				// Write when a test is failed
 				if !test.Passed {
-					// Update error count
-					if test.ExecError != nil {
-						ts.ErrorsTests++
-					} else {
-						ts.FailedTests++
-						ts.TestRuns[0].FailedTests++
-					}
-
 					testCase.Failure = &XUnitFailure{
-						ExceptionType: "Helm-Validation",
+						ExceptionType: XUnitValidationMethod,
 						Message: &XUnitFailureMessage{
 							Data: "Failed",
 						},
 						StackTrace: &XUnitFailureStackTrace{
 							Data: test.stringify(),
 						},
+					}
+
+					// Update error count and ExceptionType
+					if test.ExecError != nil {
+						ts.ErrorsTests++
+						testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
+					} else {
+						ts.FailedTests++
+						ts.TestRuns[0].FailedTests++
 					}
 				} else {
 					ts.PassedTests++

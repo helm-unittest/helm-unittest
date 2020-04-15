@@ -16,7 +16,7 @@ A test suite is a collection of tests with the same purpose and scope defined in
 suite: test deploy and service
 templates:
   - deployment.yaml
-  - service.yaml
+  - web/service.yaml
 tests:
   - it: should test something
     ...
@@ -24,7 +24,7 @@ tests:
 
 - **suite**: *string, optional*. The suite name to show on test result output.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite, only the ones specified here is rendered during testing. If omitted, all template files are rendered. File suffixed with `.tpl` is added automatically, you don't need to add them again.
+- **templates**: *array of string, recommended*. The template files scope to test in this suite, only the ones specified here is rendered during testing. If omitted, all template files are rendered. Template files that are put in a templates sub-folder can be addressed with a linux path separator. File suffixed with `.tpl` is added automatically even if it is in a templates sub-folder, you don't need to add them again.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
@@ -62,7 +62,7 @@ tests:
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object.
 
-- **template**: *string, optional*. The template file which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless the template is defined in the assertions (see Assertion).
+- **template**: *string, optional*. The template file which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless the template is defined in the assertions (check [Assertion](#assertion)).
 
 - **documentIndex**: *int, optional*. The index of rendered documents (devided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
@@ -81,7 +81,7 @@ Define assertions in the test job to validate the manifests rendered with values
 ```yaml
 templates:
   - deployment.yaml
-  - service.yaml
+  - web/service.yaml
 tests:
   - it: should pass
     asserts:
@@ -92,7 +92,7 @@ tests:
           path: metadata.name
           value: your-service
         not: true
-        template: service.yaml
+        template: web/service.yaml
         documentIndex: 0
 ```
 
@@ -111,11 +111,15 @@ Available assertion types are listed below:
 | Assertion Type | Parameters | Description | Example |
 |----------------|------------|-------------|---------|
 | `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value. | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
+| `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |
 | `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**. | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
+| `notEqualRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file not to be. | Assert equal NOT to the **value**. | <pre>notEqual:<br/>  value: my-deploy</pre> |
 | `matchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern to match (without quoting `/`). | Assert the value of specified **path** match **pattern**. | <pre>matchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chart$</pre> |
+| `matchRegexRaw` | **pattern**: *string*. The regex pattern to match (without quoting `/`) in a NOTES.txt file. | Assert the value match **pattern**. | <pre>matchRegexRaw:<br/>  pattern: -my-notes$</pre> |
 | `notMatchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern NOT to match (without quoting `/`). | Assert the value of specified **path** NOT match **pattern**. | <pre>notMatchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chat$</pre> |
-| `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocle:TCP</pre> |
-| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocle: TCP</pre> |
+| `notMatchRegexRaw` | **pattern**: *string*. The regex pattern NOT to match (without quoting `/`) in a NOTES.txt file. | Assert the value NOT match **pattern**. | <pre>notMatchRegexRaw:<br/>  pattern: -my-notes$</pre> |
+| `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocle:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
+| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocle: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
 | `isNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is `null`. |<pre>isNull:<br/>  path: spec.strategy</pre> |
 | `isNotNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT `null`. |<pre>isNotNull:<br/>  path: spec.replicas</pre> |
 | `isEmpty` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is empty (`null`, `""`, `0`, `[]`, `{}`). |<pre>isEmpty:<br/>  path: spec.tls</pre> |
@@ -124,7 +128,7 @@ Available assertion types are listed below:
 | `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
 | `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
-
+| `matchSnapshotRaw` | | Assert the value in the NOTES.txt is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshotRaw: {}<br/></pre> |
 ### Antonym and `not`
 
 Notice that there are some antonym assertions, the following two assertions actually have same effect:

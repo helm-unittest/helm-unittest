@@ -61,7 +61,7 @@ asserts:
 }
 
 func TestV2RunJobOk(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -90,7 +90,7 @@ asserts:
 }
 
 func TestV2RunJobWithNOTESTemplateOk(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 template: NOTES.txt
@@ -118,7 +118,7 @@ asserts:
 }
 
 func TestV2RunJobWithTestJobTemplateOk(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 template: deployment.yaml
@@ -145,7 +145,7 @@ asserts:
 }
 
 func TestV2RunJobWithAssertionFail(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -175,7 +175,7 @@ asserts:
 }
 
 func TestV2RunJobWithValueSet(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 set:
@@ -201,7 +201,7 @@ asserts:
 }
 
 func TestV2RunJobWithValuesFile(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 values:
@@ -230,7 +230,7 @@ asserts:
 }
 
 func TestV2RunJobWithReleaseSettings(t *testing.T) {
-	c, _ := v2util.Load("../__fixtures__/v2/basic")
+	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
 release:
@@ -257,7 +257,7 @@ asserts:
 }
 
 func TestV3RunJobOk(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -286,7 +286,7 @@ asserts:
 }
 
 func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 template: deployment.yaml
@@ -313,7 +313,7 @@ asserts:
 }
 
 func TestV3RunJobWithAssertionFail(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -343,7 +343,7 @@ asserts:
 }
 
 func TestV3RunJobWithValueSet(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 set:
@@ -369,7 +369,7 @@ asserts:
 }
 
 func TestV3RunJobWithValuesFile(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 values:
@@ -398,7 +398,7 @@ asserts:
 }
 
 func TestV3RunJobWithReleaseSettings(t *testing.T) {
-	c, _ := loader.Load("../__fixtures__/v3/basic")
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 release:
