@@ -16,16 +16,15 @@ func TestNewFormatterWithEmptyOutputFile(t *testing.T) {
 }
 
 func TestNewFormatterWithOutputFileAndEmptyOutputType(t *testing.T) {
-	outputFile := "../__fixtures__/test-output/test_output.xml"
 	given := ""
-	sut := NewFormatter(outputFile, given)
+	sut := NewFormatter(testOutputFile, given)
 	assert.Nil(t, sut)
 }
 
 func TestNewFormatterWithOutputFileAndOutputTypeJUnit(t *testing.T) {
 	assert := assert.New(t)
 	outputType := "Junit"
-	given := "../__fixtures__/test-output/test_output.xml"
+	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
 	defer os.Remove(givenDirectory)
 	sut := NewFormatter(given, outputType)
@@ -36,7 +35,7 @@ func TestNewFormatterWithOutputFileAndOutputTypeJUnit(t *testing.T) {
 func TestNewFormatterWithOutputFileAndOutputTypeNUnit(t *testing.T) {
 	assert := assert.New(t)
 	outputType := "NUnit"
-	given := "../__fixtures__/test-output/test_output.xml"
+	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
 	defer os.Remove(givenDirectory)
 	sut := NewFormatter(given, outputType)
@@ -47,7 +46,7 @@ func TestNewFormatterWithOutputFileAndOutputTypeNUnit(t *testing.T) {
 func TestNewFormatterWithOutputFileAndOutputTypeXUnit(t *testing.T) {
 	assert := assert.New(t)
 	outputType := "XUnit"
-	given := "../__fixtures__/test-output/test_output.xml"
+	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
 	defer os.Remove(givenDirectory)
 	sut := NewFormatter(given, outputType)
