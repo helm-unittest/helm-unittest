@@ -4,7 +4,7 @@
 HELM_HOME ?= $(shell helm home)
 HELM_PLUGIN_DIR ?= $(HELM_HOME)/plugins/helm-unittest
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
-DIST := $(CURDIR)/_dist
+DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
 DOCKER ?= "lrills/helm-unittest"
 
@@ -27,12 +27,15 @@ build: unittest
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./main.go
+	tar -zcvf $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-linux-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-macos-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o untt.exe -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-windows-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
+	shasum -a 256 -U $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
 
 .PHONY: bootstrap
 bootstrap:

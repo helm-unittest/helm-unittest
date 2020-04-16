@@ -4,6 +4,7 @@
 
 PROJECT_NAME="helm-unittest"
 PROJECT_GH="quintush/$PROJECT_NAME"
+PROJECT_CHECKSUM_FILE="$PROJECT_NAME-checksum.sha"
 
 : ${HELM_PLUGIN_PATH:="$HELM_PLUGIN_DIR"}
 
@@ -51,9 +52,9 @@ initOS() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="linux-amd64\nmacos-amd64\nwindows-amd64"
-  if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
-    echo "No prebuild binary for ${OS}-${ARCH}."
+  local supported="linux-arm64\nlinux-amd64\nmacos-amd64\nwindows-amd64"
+  if ! echo "$supported" | grep -q "$OS-$ARCH"; then
+    echo "No prebuild binary for $OS-$ARCH."
     exit 1
   fi
 
@@ -67,32 +68,40 @@ verifySupported() {
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
-  local version=$(git describe --tags --exact-match 2>/dev/null)
-  if [ -n "$version" ]; then
-    latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+  if [[ -z $HELM_PLUGIN_UPDATE ]]; then
+    local version=$(git describe --tags --exact-match 2>/dev/null)
+    if [ -n "$version" ]; then
+      latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+    fi
   fi
   if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
 
 # downloadFile downloads the latest binary package and also the checksum
 # for that binary.
 downloadFile() {
-  PLUGIN_TMP_FILE="/tmp/${PROJECT_NAME}.tgz"
+  PLUGIN_TMP_FOLDER="/tmp/_dist/"
+  mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading $DOWNLOAD_URL"
   if type "curl" >/dev/null 2>&1; then
-    curl -L "$DOWNLOAD_URL" -o "$PLUGIN_TMP_FILE"
+    curl -s -L "$DOWNLOAD_URL" -O "$PLUGIN_TMP_FOLDER"
+    curl -s -L "$PROJECT_CHECKSUM_FILE" -O "$PLUGIN_TMP_FOLDER"
   elif type "wget" >/dev/null 2>&1; then
-    wget -q -O "$PLUGIN_TMP_FILE" "$DOWNLOAD_URL"
+    wget -q -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
+    wget -q -P "$PLUGIN_TMP_FOLDER" "$PROJECT_CHECKSUM_FILE"
   fi
 }
 
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
+  cd "/tmp"
+  DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
+  cat $PLUGIN_TMP_FOLDER/helm-unittest-checksum.sha | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
   HELM_TMP="/tmp/$PROJECT_NAME"
   mkdir -p "$HELM_TMP"
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
@@ -100,6 +109,7 @@ installFile() {
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file with the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  rm -r $PLUGIN_TMP_FOLDER
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }
 
