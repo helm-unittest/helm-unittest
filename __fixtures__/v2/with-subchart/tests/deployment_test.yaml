@@ -16,7 +16,7 @@ tests:
           value: nginx:stable
       - matchRegex:
           path: metadata.name
-          pattern: ^.*-parent-chart$
+          pattern: ^.*-with-subchart$
       - notMatchRegex:
           path: metadata.name
           pattern: ^.*-foobar$

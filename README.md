@@ -127,12 +127,33 @@ $ helm unittest -u my-chart
 ```
 The cache files is stored as `__snapshot__/v2/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
+## Dependend subchart Testing (Requirements.yaml)
+
+If you have dependend subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpfull to validate if good default values are accidently overwritten within your default helm chart.
+
+```yaml
+# $YOUR_CHART/tests/xxx_test.yaml
+templates:
+  - charts/postgresql/templates/xxx.yaml
+tests:
+  - it:
+    set:
+      # this time required to prefix with "postgresql."
+      postgresql.somevalue: should_be_scoped
+    asserts:
+      - ...
+```
+Note 1: if dependend subcharts uses an alias, use the alias name in the templates.
+Note 2: using the folder structure in templates can also be used to unittest templates which are placed in subfolders or unittest subcharts from the rootchart.
+
+Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) or [`__fixtures__/v3/with-subchart/`](./__fixtures__/v3/with-subchart) as an example.
+
 ## Tests within subchart
 
 If you have customized subchart (not installed via `helm dependency`) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
 
 ```yaml
-# parent-chart/charts/child-chart/tests/xxx_test.yaml
+# with-subchart/charts/child-chart/tests/xxx_test.yaml
 templates:
   - xxx.yaml
 tests:
@@ -143,7 +164,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) as an example.
+Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) or [`__fixtures__/v3/with-subchart/`](./__fixtures__/v3/with-subchart) as an example.
 
 ## Related Projects / Commands
 

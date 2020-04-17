@@ -1,12 +1,9 @@
 package unittest
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"gopkg.in/yaml.v2"
@@ -59,14 +56,8 @@ func (s *TestSuite) RunV2(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	preparedChart, err := s.prepareV2Chart(targetChart)
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
 	result.Passed, result.TestsResult = s.runV2TestJobs(
-		preparedChart,
+		targetChart,
 		snapshotCache,
 	)
 
@@ -85,14 +76,8 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	preparedChart, err := s.prepareV3Chart(targetChart)
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
 	result.Passed, result.TestsResult = s.runV3TestJobs(
-		preparedChart,
+		targetChart,
 		snapshotCache,
 	)
 
@@ -109,94 +94,6 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			test.defaultTemplatesToAssert = s.Templates
 		}
 	}
-}
-
-func (s *TestSuite) prepareV2Chart(targetChart *v2chart.Chart) (*v2chart.Chart, error) {
-	copiedChart := new(v2chart.Chart)
-	*copiedChart = *targetChart
-
-	suiteIsFromRootChart := len(strings.Split(s.chartRoute, string(filepath.Separator))) <= 1
-
-	if len(s.Templates) == 0 && suiteIsFromRootChart {
-		return copiedChart, nil
-	}
-
-	filteredTemplate := make([]*v2chart.Template, 0, len(s.Templates))
-	// check templates and add them in chart dependencies, if from subchart leave it empty
-	if suiteIsFromRootChart {
-		for _, fileName := range s.Templates {
-			found := false
-			for _, template := range targetChart.Templates {
-				// Within templates unix separators are always used.
-				relativeFilePath := strings.Join([]string{"templates", fileName}, "/")
-				if template.Name == relativeFilePath {
-					filteredTemplate = append(filteredTemplate, template)
-					found = true
-					break
-				}
-			}
-			if !found {
-				return &v2chart.Chart{}, fmt.Errorf(
-					"template file `templates/%s` not found in chart",
-					fileName,
-				)
-			}
-		}
-	}
-
-	// add templates with extension .tpl
-	for _, template := range targetChart.Templates {
-		if path.Ext(template.Name) == ".tpl" {
-			filteredTemplate = append(filteredTemplate, template)
-		}
-	}
-	copiedChart.Templates = filteredTemplate
-
-	return copiedChart, nil
-}
-
-func (s *TestSuite) prepareV3Chart(targetChart *v3chart.Chart) (*v3chart.Chart, error) {
-	copiedChart := new(v3chart.Chart)
-	*copiedChart = *targetChart
-
-	suiteIsFromRootChart := len(strings.Split(s.chartRoute, string(filepath.Separator))) <= 1
-
-	if len(s.Templates) == 0 && suiteIsFromRootChart {
-		return copiedChart, nil
-	}
-
-	filteredTemplate := make([]*v3chart.File, 0, len(s.Templates))
-	// check templates and add them in chart dependencies, if from subchart leave it empty
-	if suiteIsFromRootChart {
-		for _, fileName := range s.Templates {
-			found := false
-			for _, template := range targetChart.Templates {
-				// Within templates unix separators are always used.
-				relativeFilePath := strings.Join([]string{"templates", fileName}, "/")
-				if template.Name == relativeFilePath {
-					filteredTemplate = append(filteredTemplate, template)
-					found = true
-					break
-				}
-			}
-			if !found {
-				return &v3chart.Chart{}, fmt.Errorf(
-					"template file `templates/%s` not found in chart",
-					fileName,
-				)
-			}
-		}
-	}
-
-	// add templates with extension .tpl
-	for _, template := range targetChart.Templates {
-		if path.Ext(template.Name) == ".tpl" {
-			filteredTemplate = append(filteredTemplate, template)
-		}
-	}
-	copiedChart.Templates = filteredTemplate
-
-	return copiedChart, nil
 }
 
 func (s *TestSuite) runV2TestJobs(

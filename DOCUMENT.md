@@ -15,8 +15,8 @@ A test suite is a collection of tests with the same purpose and scope defined in
 ```yaml
 suite: test deploy and service
 templates:
-  - deployment.yaml
-  - web/service.yaml
+  - templates/deployment.yaml
+  - templates/web/service.yaml
 tests:
   - it: should test something
     ...
@@ -24,7 +24,7 @@ tests:
 
 - **suite**: *string, optional*. The suite name to show on test result output.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite, only the ones specified here is rendered during testing. If omitted, all template files are rendered. Template files that are put in a templates sub-folder can be addressed with a linux path separator. File suffixed with `.tpl` is added automatically even if it is in a templates sub-folder, you don't need to add them again.
+- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Partial templates (which are prefixed with and `_`) are added automatically even if it is in a templates sub-folder, you don't need to add them again.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 

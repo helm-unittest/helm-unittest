@@ -19,7 +19,7 @@ tests:
       - equalRaw:
           value: | 
             1. Get the application URL by running these commands:
-              export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-parent-chart)
+              export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-with-subchart)
               export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath="{.items[0].status.addresses[0].address}")
               echo http://$NODE_IP:$NODE_PORT
       - matchSnapshotRaw: {}

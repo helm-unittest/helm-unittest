@@ -158,7 +158,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	stop := runeSet([]rune{'.', '[', ']', ',', '{', '}', '='})
 	k, last, err := runesUntil(in, stop)
 	if _, ok := illegal[last]; ok {
-		return fmt.Errorf("")
+		return fmt.Errorf("Invalid token found %s", string(last))
 	}
 
 	if err != nil {
@@ -199,7 +199,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 
 func handleExpectIndex(k []rune, last rune, traverser parseTraverser) (int, error) {
 	if last != ']' {
-		return -1, fmt.Errorf("")
+		return -1, fmt.Errorf("Missing index value")
 	}
 	idx, idxErr := strconv.Atoi(string(k))
 	if idxErr != nil {
@@ -218,7 +218,7 @@ func handleExpectDenotation(k []rune, last rune) (int, error) {
 	case '[':
 		return expectIndex, nil
 	default:
-		return -1, fmt.Errorf("")
+		return -1, fmt.Errorf("Invalid denotation token %s", string(last))
 	}
 }
 
@@ -239,7 +239,7 @@ func handleExpectKey(k []rune, last rune, traverser parseTraverser) (int, error)
 		}
 		return expectIndex, nil
 	default:
-		return -1, fmt.Errorf("")
+		return -1, fmt.Errorf("Invalid key %s", string(last))
 	}
 }
 
@@ -255,7 +255,7 @@ func handleExpectEscaping(k []rune, last rune, traverser parseTraverser) (int, e
 		}
 		return expectDenotation, nil
 	default:
-		return -1, fmt.Errorf("")
+		return -1, fmt.Errorf("Invalid escaping token %s", string(last))
 	}
 }
 

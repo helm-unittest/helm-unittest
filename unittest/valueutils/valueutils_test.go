@@ -15,6 +15,7 @@ func TestGetValueOfSetPath(t *testing.T) {
 			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
 			"d":   "no",
 			"e.f": "false",
+			"g":   map[interface{}]interface{}{"h": "\"quotes\""},
 		},
 	}
 
@@ -24,12 +25,37 @@ func TestGetValueOfSetPath(t *testing.T) {
 		"a.b":      []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
 		"a.[d]":    "no",
 		"a.[e.f]":  "false",
+		"a.g.h":    "\"quotes\"",
 	}
 
 	for path, expect := range expectionsMapping {
 		actual, err := GetValueOfSetPath(data, path)
 		a.Equal(actual, expect)
 		a.Nil(err)
+	}
+}
+
+func TestGetValueOfSetPathError(t *testing.T) {
+	a := assert.New(t)
+	data := common.K8sManifest{
+		"a": map[interface{}]interface{}{
+			"b":   []interface{}{"_"},
+			"c.d": "no",
+		},
+	}
+
+	var expectionsMapping = map[string]string{
+		"a.b[0].c": "can't get [\"c\"] from a non map type:\n_\n",
+		"a[0]":     "can't get [0] from a non array type:\nb:\n- _\nc.d: \"no\"\n",
+		",":        "Invalid token found ,",
+		"a.b[0[]]": "Missing index value",
+		"a.[c[0]]": "Invalid escaping token [",
+	}
+
+	for path, expect := range expectionsMapping {
+		actual, err := GetValueOfSetPath(data, path)
+		a.Nil(actual)
+		a.EqualError(err, expect)
 	}
 }
 
@@ -50,6 +76,17 @@ func TestBuildValueOfSetPath(t *testing.T) {
 	}
 }
 
+func TestBuildValueSetPathError(t *testing.T) {
+	a := assert.New(t)
+	data := map[interface{}]interface{}{"foo": "bar"}
+
+	actual, err := BuildValueOfSetPath(data, "")
+
+	a.Nil(actual)
+	a.NotNil(err)
+	a.EqualError(err, "set path is empty")
+}
+
 func TestMergeValues(t *testing.T) {
 	a := assert.New(t)
 	dest := map[interface{}]interface{}{
@@ -60,14 +97,14 @@ func TestMergeValues(t *testing.T) {
 	}
 	src := map[interface{}]interface{}{
 		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}},
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},
 	}
 	expected := map[interface{}]interface{}{
 		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}},
+			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},

@@ -23,7 +23,7 @@ tests:
           content:
             path: /
             backend:
-              serviceName: my-release-parent-chart
+              serviceName: my-release-with-subchart
               servicePort: 12345
       - isNull:
           path: spec.tls
