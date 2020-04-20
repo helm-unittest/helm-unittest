@@ -104,7 +104,12 @@ installFile() {
   cd "/tmp"
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
   if [ -n "$PROJECT_CHECKSUM" ]; then
-    echo $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+    echo Validating Checksum.
+    if type "curl" >/dev/null 2>&1; then
+      curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+    elif type "wget" >/dev/null 2>&1; then
+      wget -q -O - $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+    fi
   else
     echo No Checksum validated.
   fi
