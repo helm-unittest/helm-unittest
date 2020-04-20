@@ -129,6 +129,8 @@ Available assertion types are listed below:
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
 | `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
 | `matchSnapshotRaw` | | Assert the value in the NOTES.txt is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshotRaw: {}<br/></pre> |
+| `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template error. | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> |
+
 ### Antonym and `not`
 
 Notice that there are some antonym assertions, the following two assertions actually have same effect:

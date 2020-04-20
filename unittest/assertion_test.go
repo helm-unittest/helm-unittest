@@ -56,11 +56,12 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - isAPIVersion:
 - hasDocuments:
 - isSubset:
+- failedTemplate:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 18)
+	assertionsAsMap := make([]map[string]interface{}, 19)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 18)
+	assertions := make([]Assertion, 19)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -109,8 +110,10 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - isSubset:
   not: true
+- failedTemplate:
+  not: true
 `
-	assertions := make([]Assertion, 18)
+	assertions := make([]Assertion, 19)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -145,8 +148,11 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - isSubset:
   not: true
 - isNotSubset:
+- failedTemplate:
+  not: true
+- notFailedTemplate:
 `
-	assertions := make([]Assertion, 15)
+	assertions := make([]Assertion, 17)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)

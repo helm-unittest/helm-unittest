@@ -144,6 +144,32 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
+func TestV2RunJobWithTestMissingRequiredValueOk(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	manifest := `
+it: should work
+set:
+  ingress.enabled: true
+  service.externalPort: ""
+template: ingress.yaml
+asserts:
+  - failedTemplate:
+      errorType: required
+      errorMessage: The externalPort is required
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestV2RunJobWithAssertionFail(t *testing.T) {
 	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
@@ -310,6 +336,32 @@ asserts:
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithTestMissingRequiredValueOk(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+set:
+  ingress.enabled: true
+  service.externalPort: ""
+template: ingress.yaml
+asserts:
+  - failedTemplate:
+      errorType: required
+      errorMessage: The externalPort is required
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
 }
 
 func TestV3RunJobWithAssertionFail(t *testing.T) {

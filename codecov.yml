@@ -3,8 +3,15 @@ codecov:
 
 coverage:
   precision: 2
-  round: nearest
+  round: down
   range: "70...100"
+  status:
+    project:
+      default:
+        # basic
+        target: auto
+        threshold: 10%
+        base: auto 
 
 parsers:
   gcov:
