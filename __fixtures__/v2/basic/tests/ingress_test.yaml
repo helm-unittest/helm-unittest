@@ -7,6 +7,14 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: should fail render ingress if enabled and externalPort not filled
+    set:
+      ingress.enabled: true
+      service.externalPort: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: The externalPort is required
+
   - it: should render Ingress right if enabled
     set:
       ingress.enabled: true

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -23,6 +24,42 @@ import (
 	v2renderutil "k8s.io/helm/pkg/renderutil"
 	v2timeconv "k8s.io/helm/pkg/timeconv"
 )
+
+func parseV2RenderError(errorMessage string) (string, string) {
+	// Split the error into several groups.
+	// those groups are required to parse the correct value.
+	const regexPattern string = "^.+\"(.+)\":(.+:)* (.+)$"
+	filePath := ""
+	content := "<no value>"
+
+	r := regexp.MustCompile(regexPattern)
+	result := r.FindStringSubmatch(errorMessage)
+
+	if len(result) == 4 {
+		filePath = result[1]
+		content = fmt.Sprintf("%s: %s", common.RAW, result[3])
+	}
+
+	return filePath, content
+}
+
+func parseV3RenderError(errorMessage string) (string, string) {
+	// Split the error into several groups.
+	// those groups are required to parse the correct value.
+	const regexPattern string = "^.+\\((.+):\\d+:\\d+\\):(.+:)* (.+)$"
+	filePath := ""
+	content := "<no value>"
+
+	r := regexp.MustCompile(regexPattern)
+	result := r.FindStringSubmatch(errorMessage)
+
+	if len(result) == 4 {
+		filePath = result[1]
+		content = fmt.Sprintf("%s: %s", common.RAW, result[3])
+	}
+
+	return filePath, content
+}
 
 type orderedSnapshotComparer struct {
 	cache   *snapshot.Cache
@@ -184,7 +221,13 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 	// TODO: When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
-		return nil, err
+		// Parse the error and create an outputFile
+		filePath, content := parseV2RenderError(err.Error())
+		// If error not parsed well, rethrow as normal.
+		if filePath == "" {
+			return nil, err
+		}
+		outputOfFiles[filePath] = content
 	}
 
 	return outputOfFiles, nil
@@ -209,8 +252,16 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	outputOfFiles, err := v3engine.Render(targetChart, vals)
+	// TODO: When rendering failed, due to fail or required,
+	// make sure to translate the error to outputOfFiles.
 	if err != nil {
-		return nil, err
+		// Parse the error and create an outputFile
+		filePath, content := parseV3RenderError(err.Error())
+		// If error not parsed well, rethrow as normal.
+		if filePath == "" {
+			return nil, err
+		}
+		outputOfFiles[filePath] = content
 	}
 
 	return outputOfFiles, nil
