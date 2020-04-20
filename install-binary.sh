@@ -88,11 +88,21 @@ downloadFile() {
   mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading $DOWNLOAD_URL"
   if type "curl" >/dev/null 2>&1; then
-    curl -s -L "$DOWNLOAD_URL" -O "$PLUGIN_TMP_FOLDER"
-    curl -s -L "$PROJECT_CHECKSUM_FILE" -O "$PLUGIN_TMP_FOLDER"
+    if [[ -z $HELM_DEBUG ]]; then
+      curl -v -L "$DOWNLOAD_URL" -O "$PLUGIN_TMP_FOLDER"
+      curl -v -L "$PROJECT_CHECKSUM_FILE" -O "$PLUGIN_TMP_FOLDER"
+    else
+      curl -s -L "$DOWNLOAD_URL" -O "$PLUGIN_TMP_FOLDER"
+      curl -s -L "$PROJECT_CHECKSUM_FILE" -O "$PLUGIN_TMP_FOLDER"
+    fi
   elif type "wget" >/dev/null 2>&1; then
-    wget -q -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
-    wget -q -P "$PLUGIN_TMP_FOLDER" "$PROJECT_CHECKSUM_FILE"
+    if [[ -z $HELM_DEBUG ]]; then
+      wget -d -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
+      wget -d -P "$PLUGIN_TMP_FOLDER" "$PROJECT_CHECKSUM_FILE"
+    else
+      wget -q -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
+      wget -q -P "$PLUGIN_TMP_FOLDER" "$PROJECT_CHECKSUM_FILE"
+    fi
   fi
 }
 
