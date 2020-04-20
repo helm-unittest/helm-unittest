@@ -62,6 +62,7 @@ verifySupported() {
     echo "Either curl or wget is required"
     exit 1
   fi
+  echo "Support $OS-$ARCH"
 }
 
 # getDownloadURL checks the latest available version.
@@ -74,10 +75,13 @@ getDownloadURL() {
       latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
     fi
   fi
+  echo "Retrieving $latest_url"
   if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS\(-$ARCH\)\?" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    PROJECT_CHECKSUM=$(curl -s $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS-$ARCH | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS\(-$ARCH\)\?" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    PROJECT_CHECKSUM=$(wget -q -O - $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
 
@@ -86,13 +90,11 @@ getDownloadURL() {
 downloadFile() {
   PLUGIN_TMP_FOLDER="/tmp/_dist/"
   mkdir -p "$PLUGIN_TMP_FOLDER"
-  echo "Downloading $DOWNLOAD_URL"
+  echo "Downloading $DOWNLOAD_URL to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
-    curl -s -L "$DOWNLOAD_URL" -O "$PLUGIN_TMP_FOLDER"
-    curl -s -L "$PROJECT_CHECKSUM_FILE" -O "$PLUGIN_TMP_FOLDER"
+      (cd $PLUGIN_TMP_FOLDER && curl -LO "$DOWNLOAD_URL")
   elif type "wget" >/dev/null 2>&1; then
-    wget -q -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
-    wget -q -P "$PLUGIN_TMP_FOLDER" "$PROJECT_CHECKSUM_FILE"
+      wget -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
   fi
 }
 
@@ -101,10 +103,14 @@ downloadFile() {
 installFile() {
   cd "/tmp"
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
-  cat $PLUGIN_TMP_FOLDER/helm-unittest-checksum.sha | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+  if [ -n "$PROJECT_CHECKSUM" ]; then
+    echo $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+  else
+    echo No Checksum validated.
+  fi
   HELM_TMP="/tmp/$PROJECT_NAME"
   mkdir -p "$HELM_TMP"
-  tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
+  tar xf "$DOWNLOAD_FILE" -C "$HELM_TMP"
   HELM_TMP_BIN="$HELM_TMP/untt"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file with the exe suffix on Windows
