@@ -36,6 +36,17 @@ Actual:
 	)
 }
 
+func validateSubset(actual map[interface{}]interface{}, content interface{}) bool {
+	found := false
+	for key, value := range actual {
+		ele := map[interface{}]interface{}{key: value}
+		if reflect.DeepEqual(ele, content) {
+			found = true
+		}
+	}
+	return found
+}
+
 // Validate implement Validatable
 func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests, err := context.getManifests()
@@ -49,35 +60,28 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
 		if actual, ok := actual.(map[interface{}]interface{}); ok {
-			found := false
-
-			for key, value := range actual {
-				ele := map[interface{}]interface{}{key: value}
-				if reflect.DeepEqual(ele, v.Content) {
-					found = true
-				}
-			}
+			found := validateSubset(actual, v.Content)
 
 			if found == context.Negative {
-				validateSuccess = validateSuccess && false
+				validateSuccess = false
 				errorMessage := v.failInfo(actual, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
 
-			validateSuccess = validateSuccess && true
+			validateSuccess = determineSuccess(validateSuccess, true)
 			continue
 		}
 
 		actualYAML, _ := yaml.Marshal(actual)
-		validateSuccess = validateSuccess && false
+		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be an object, got:\n%s",
 			v.Path,

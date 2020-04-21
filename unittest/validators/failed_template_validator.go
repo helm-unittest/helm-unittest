@@ -50,13 +50,13 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		actual := manifest[common.RAW]
 
 		if reflect.DeepEqual(a.ErrorMessage, actual) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := a.failInfo(actual, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

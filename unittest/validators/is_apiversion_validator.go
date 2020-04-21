@@ -31,13 +31,13 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 
 	for idx, manifest := range manifests {
 		if kind, ok := manifest["apiVersion"].(string); (ok && kind == v.Of) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(manifest["apiVersion"], idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

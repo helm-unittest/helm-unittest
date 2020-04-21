@@ -40,7 +40,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
@@ -48,7 +48,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 
 		p, err := regexp.Compile(v.Pattern)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, -1, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			break
@@ -56,17 +56,17 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 
 		if s, ok := actual.(string); ok {
 			if p.MatchString(s) == context.Negative {
-				validateSuccess = validateSuccess && false
+				validateSuccess = false
 				errorMessage := v.failInfo(s, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
 
-			validateSuccess = validateSuccess && true
+			validateSuccess = determineSuccess(validateSuccess, true)
 			continue
 		}
 
-		validateSuccess = validateSuccess && false
+		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be a string, got:\n%s",
 			v.Path,

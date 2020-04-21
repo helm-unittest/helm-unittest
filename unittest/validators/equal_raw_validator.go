@@ -54,13 +54,13 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 		actual := uniformContent(manifest[common.RAW])
 
 		if reflect.DeepEqual(a.Value, actual) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := a.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

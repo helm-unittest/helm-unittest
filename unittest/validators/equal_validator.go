@@ -57,20 +57,20 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
 		if reflect.DeepEqual(a.Value, actual) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := a.failInfo(actual, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

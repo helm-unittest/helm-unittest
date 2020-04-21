@@ -78,18 +78,17 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
 		if actual, ok := actual.([]interface{}); ok {
-
 			found, validateFoundCount := v.validateContent(actual)
 
 			if v.Count == nil && found == context.Negative {
-				validateSuccess = validateSuccess && false
+				validateSuccess = false
 				errorMessage := v.failInfo(actual, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
@@ -97,7 +96,7 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 
 			if v.Count != nil && *v.Count != validateFoundCount && found == !context.Negative {
 				actualYAML, _ := yaml.Marshal(actual)
-				validateSuccess = validateSuccess && false
+				validateSuccess = false
 				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 					"expect count %d in '%s' to be in array, got %d:\n%s",
 					*v.Count,
@@ -109,12 +108,12 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 				continue
 			}
 
-			validateSuccess = validateSuccess && true
+			validateSuccess = determineSuccess(validateSuccess, true)
 			continue
 		}
 
 		actualYAML, _ := yaml.Marshal(actual)
-		validateSuccess = validateSuccess && false
+		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be an array, got:\n%s",
 			v.Path,

@@ -44,7 +44,7 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
@@ -53,13 +53,13 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 		result := context.CompareToSnapshot(actual)
 
 		if result.Passed == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(result, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess == true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

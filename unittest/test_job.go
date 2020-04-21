@@ -61,6 +61,39 @@ func parseV3RenderError(errorMessage string) (string, string) {
 	return filePath, content
 }
 
+func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
+	decoder := yaml.NewDecoder(strings.NewReader(rendered))
+	manifests := make([]common.K8sManifest, 0)
+
+	for {
+		manifest := make(common.K8sManifest)
+		if err := decoder.Decode(manifest); err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return nil, err
+			}
+		}
+
+		if len(manifest) > 0 {
+			manifests = append(manifests, manifest)
+		}
+	}
+
+	return manifests, nil
+}
+
+func parseTextFile(rendered string) []common.K8sManifest {
+	manifests := make([]common.K8sManifest, 0)
+	manifest := make(common.K8sManifest)
+	manifest[common.RAW] = rendered
+
+	if len(manifest) > 0 {
+		manifests = append(manifests, manifest)
+	}
+	return manifests
+}
+
 type orderedSnapshotComparer struct {
 	cache   *snapshot.Cache
 	test    string
@@ -218,7 +251,7 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 	}
 
 	outputOfFiles, err := v2renderutil.Render(targetChart, config, renderOpts)
-	// TODO: When rendering failed, due to fail or required,
+	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
 		// Parse the error and create an outputFile
@@ -252,7 +285,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	outputOfFiles, err := v3engine.Render(targetChart, vals)
-	// TODO: When rendering failed, due to fail or required,
+	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
 		// Parse the error and create an outputFile
@@ -313,38 +346,17 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 
 	for file, rendered := range outputOfFiles {
 
-		if filepath.Ext(file) == ".yaml" {
-			decoder := yaml.NewDecoder(strings.NewReader(rendered))
-			manifests := make([]common.K8sManifest, 0)
-
-			for {
-				manifest := make(common.K8sManifest)
-				if err := decoder.Decode(manifest); err != nil {
-					if err == io.EOF {
-						break
-					} else {
-						return nil, err
-					}
-				}
-
-				if len(manifest) > 0 {
-					manifests = append(manifests, manifest)
-				}
+		switch filepath.Ext(file) {
+		case ".yaml":
+			manifest, err := parseYamlFile(rendered)
+			if err != nil {
+				return nil, err
 			}
-
-			manifestsOfFiles[file] = manifests
+			manifestsOfFiles[file] = manifest
+		case ".txt":
+			manifestsOfFiles[file] = parseTextFile(rendered)
 		}
 
-		if filepath.Ext(file) == ".txt" {
-			manifests := make([]common.K8sManifest, 0)
-			manifest := make(common.K8sManifest)
-			manifest[common.RAW] = rendered
-
-			if len(manifest) > 0 {
-				manifests = append(manifests, manifest)
-			}
-			manifestsOfFiles[file] = manifests
-		}
 	}
 
 	return manifestsOfFiles, nil
