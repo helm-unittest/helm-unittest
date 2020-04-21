@@ -24,6 +24,7 @@ jobs:
           command: |
             go tool cover -html=/tmp/coverage -o /tmp/test-artifacts/coverage.html
             bash <(curl -s https://codecov.io/bash) -f /tmp/coverage 
+      - sonarcloud/scan
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
@@ -51,6 +52,9 @@ jobs:
           name: Upload binaries
           command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
 
+orbs:
+  sonarcloud: sonarsource/sonarcloud@1.0.1
+
 workflows:
   test-and-build:
     jobs:
@@ -58,6 +62,7 @@ workflows:
           filters:
             tags:
               only: /.*/
+          context: SonarCloud
       - distribute:
           requires:
             - test
