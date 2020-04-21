@@ -1,3 +1,22 @@
+0.2.0 / 2020-04-20
+==================
+- having more assertions:
+  - isSubset (resolve #6)
+  - equalRaw (resolve #11)
+  - matchRegexRaw (resolve #11)
+  - matchSnapshotRaw (resolve #11)
+  - contains, expanded with count value (resolve #52)
+  - contains, expanded with any boolean (resolve #74)
+  - failedTemplate (resolve #39, resolve #82)
+- added support to validate multiple templates (resolve #38, resolve #54)
+- added support to use checksum validation for release and install (resolve #60)
+- added support to test dependent charts (resolve #65)
+- fixed templates in subdirectories fail to load (fixed #44)
+- bumped git modules (fixes #79, fixes #80)
+- fixed support capabilities (refactered rendingen of the charts) (fixed #88)
+- update to latest Helm2 library to support deepclone (fixes #96)
+- improved download version, to download different arch and fully backwards compatible with older version (fixes #97)
+
 0.1.8 / 2020-04-03
 ==================
 - added jq syntax including test verifications (#95)
