@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const cache_before string = "cached before"
+
 var lastTimeContent = `cached before:
   1: |
     a:
@@ -50,26 +52,39 @@ func createCache(existed bool) *Cache {
 	return &Cache{Filepath: cacheFile}
 }
 
+func createCacheResult(index uint, passed bool, cachedSnapshot, newSnapshot string) *CompareResult {
+	return &CompareResult{
+		Test:           cache_before,
+		Index:          index,
+		Passed:         passed,
+		CachedSnapshot: cachedSnapshot,
+		NewSnapshot:    newSnapshot,
+	}
+}
+
+func verifyCache(assert *assert.Assertions, cache *Cache, exists, changed bool, inserted, updated, vanished uint) {
+	assert.Equal(exists, cache.Existed)
+	assert.Equal(changed, cache.Changed())
+	assert.Equal(inserted, cache.InsertedCount())
+	assert.Equal(updated, cache.UpdatedCount())
+	assert.Equal(vanished, cache.VanishedCount())
+}
+
 func TestCacheWhenFirstTime(t *testing.T) {
 	cache := createCache(false)
 	err := cache.RestoreFromFile()
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.False(cache.Existed)
-	a.False(cache.Changed())
+	verifyCache(a, cache, false, false, 0, 0, 0)
 
 	cache.Compare("new test", 1, content1)
-	a.True(cache.Changed())
-	a.False(cache.Existed)
-	a.Equal(uint(1), cache.InsertedCount())
-	a.Equal(uint(0), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	verifyCache(a, cache, false, true, 1, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 1, 0, 0)
 
 	expectedCacheContent := `new test:
   1: |
@@ -86,37 +101,20 @@ func TestCacheWhenNotChanged(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	result := cache.Compare("cached before", 1, content1)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          1,
-		Passed:         true,
-		CachedSnapshot: snapshot1,
-		NewSnapshot:    snapshot1,
-	}, result)
-	a.True(cache.Changed())
+	result := cache.Compare(cache_before, 1, content1)
+	a.Equal(createCacheResult(1, true, snapshot1, snapshot1), result)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, content2)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         true,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshot2,
-	}, result2)
-	a.False(cache.Changed())
-
-	a.Equal(uint(0), cache.InsertedCount())
-	a.Equal(uint(0), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result2 := cache.Compare(cache_before, 2, content2)
+	a.Equal(createCacheResult(2, true, snapshot2, snapshot2), result2)
+	verifyCache(a, cache, true, false, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, false, 0, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -128,30 +126,19 @@ func TestCacheWhenChanged(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, contentNew)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         false,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshotNew,
-	}, result2)
-	a.True(cache.Changed())
-
-	a.Equal(uint(0), cache.InsertedCount())
-	a.Equal(uint(1), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result2 := cache.Compare(cache_before, 2, contentNew)
+	a.Equal(createCacheResult(2, false, snapshot2, snapshotNew), result2)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -164,37 +151,20 @@ func TestCacheWhenNotChangedIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	result := cache.Compare("cached before", 1, content1)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          1,
-		Passed:         true,
-		CachedSnapshot: snapshot1,
-		NewSnapshot:    snapshot1,
-	}, result)
-	a.True(cache.Changed())
+	result := cache.Compare(cache_before, 1, content1)
+	a.Equal(createCacheResult(1, true, snapshot1, snapshot1), result)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, content2)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         true,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshot2,
-	}, result2)
-	a.False(cache.Changed())
-
-	a.Equal(uint(0), cache.InsertedCount())
-	a.Equal(uint(0), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result2 := cache.Compare(cache_before, 2, content2)
+	a.Equal(createCacheResult(2, true, snapshot2, snapshot2), result2)
+	verifyCache(a, cache, true, false, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, false, 0, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -207,30 +177,19 @@ func TestCacheWhenChangedIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, contentNew)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         true,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshotNew,
-	}, result2)
-	a.True(cache.Changed())
-
-	a.Equal(uint(0), cache.InsertedCount())
-	a.Equal(uint(1), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result2 := cache.Compare(cache_before, 2, contentNew)
+	a.Equal(createCacheResult(2, true, snapshot2, snapshotNew), result2)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -249,20 +208,15 @@ func TestCacheWhenHasVanished(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
-
-	a.Equal(uint(0), cache.InsertedCount())
-	a.Equal(uint(0), cache.UpdatedCount())
-	a.Equal(uint(1), cache.VanishedCount())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -278,33 +232,22 @@ func TestCacheWhenHasInserted(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	cache.Compare("cached before", 2, content2)
-	a.False(cache.Changed())
+	cache.Compare(cache_before, 2, content2)
+	verifyCache(a, cache, true, false, 0, 0, 0)
 
-	result3 := cache.Compare("cached before", 3, contentNew)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          3,
-		Passed:         true,
-		CachedSnapshot: "",
-		NewSnapshot:    snapshotNew,
-	}, result3)
-	a.True(cache.Changed())
-
-	a.Equal(uint(1), cache.InsertedCount())
-	a.Equal(uint(0), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result3 := cache.Compare(cache_before, 3, contentNew)
+	a.Equal(createCacheResult(3, true, "", snapshotNew), result3)
+	verifyCache(a, cache, true, true, 1, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 1, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -326,40 +269,23 @@ func TestCacheWhenNewOneAtMiddle(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, contentNew)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         false,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshotNew,
-	}, result2)
-	a.True(cache.Changed())
+	result2 := cache.Compare(cache_before, 2, contentNew)
+	a.Equal(createCacheResult(2, false, snapshot2, snapshotNew), result2)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
 	result3 := cache.Compare("cached before", 3, content2)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          3,
-		Passed:         true,
-		CachedSnapshot: "",
-		NewSnapshot:    snapshot2,
-	}, result3)
-	a.True(cache.Changed())
-
-	a.Equal(uint(1), cache.InsertedCount())
-	a.Equal(uint(1), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	a.Equal(createCacheResult(3, true, "", snapshot2), result3)
+	verifyCache(a, cache, true, true, 1, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 1, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -382,40 +308,23 @@ func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.True(cache.Existed)
-	a.True(cache.Changed())
+	verifyCache(a, cache, true, true, 0, 0, 2)
 
-	cache.Compare("cached before", 1, content1)
-	a.True(cache.Changed())
+	cache.Compare(cache_before, 1, content1)
+	verifyCache(a, cache, true, true, 0, 0, 1)
 
-	result2 := cache.Compare("cached before", 2, contentNew)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          2,
-		Passed:         true,
-		CachedSnapshot: snapshot2,
-		NewSnapshot:    snapshotNew,
-	}, result2)
-	a.True(cache.Changed())
+	result2 := cache.Compare(cache_before, 2, contentNew)
+	a.Equal(createCacheResult(2, true, snapshot2, snapshotNew), result2)
+	verifyCache(a, cache, true, true, 0, 1, 0)
 
-	result3 := cache.Compare("cached before", 3, content2)
-	a.Equal(&CompareResult{
-		Test:           "cached before",
-		Index:          3,
-		Passed:         true,
-		CachedSnapshot: "",
-		NewSnapshot:    snapshot2,
-	}, result3)
-	a.True(cache.Changed())
-
-	a.Equal(uint(1), cache.InsertedCount())
-	a.Equal(uint(1), cache.UpdatedCount())
-	a.Equal(uint(0), cache.VanishedCount())
+	result3 := cache.Compare(cache_before, 3, content2)
+	a.Equal(createCacheResult(3, true, "", snapshot2), result3)
+	verifyCache(a, cache, true, true, 1, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	a.True(cache.Existed)
+	verifyCache(a, cache, true, true, 1, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
