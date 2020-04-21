@@ -38,20 +38,20 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 
 		p, err := regexp.Compile(v.Pattern)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, -1, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			break
 		}
 
 		if p.MatchString(actual) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

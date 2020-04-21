@@ -44,13 +44,13 @@ func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []s
 		result := context.CompareToSnapshot(actual)
 
 		if result.Passed == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(result, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess == true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

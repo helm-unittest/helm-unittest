@@ -31,13 +31,13 @@ func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
 
 	for idx, manifest := range manifests {
 		if kind, ok := manifest["kind"].(string); (ok && kind == v.Of) == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(manifest["kind"], idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

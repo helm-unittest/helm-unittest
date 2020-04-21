@@ -90,3 +90,8 @@ const errorFormat = `
 Error:
 %s
 `
+
+// Determine if the original value still is a success.
+func determineSuccess(originalValue, newValue bool) bool {
+	return originalValue && newValue
+}

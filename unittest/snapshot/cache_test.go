@@ -62,11 +62,13 @@ func createCacheResult(index uint, passed bool, cachedSnapshot, newSnapshot stri
 	}
 }
 
-func verifyCache(assert *assert.Assertions, cache *Cache, exists, changed bool, inserted, updated, vanished uint) {
+func verifyCache(assert *assert.Assertions, cache *Cache, exists, changed bool, current, inserted, updated, failed, vanished uint) {
 	assert.Equal(exists, cache.Existed)
 	assert.Equal(changed, cache.Changed())
+	assert.Equal(current, cache.CurrentCount())
 	assert.Equal(inserted, cache.InsertedCount())
 	assert.Equal(updated, cache.UpdatedCount())
+	assert.Equal(failed, cache.FailedCount())
 	assert.Equal(vanished, cache.VanishedCount())
 }
 
@@ -76,15 +78,15 @@ func TestCacheWhenFirstTime(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, false, false, 0, 0, 0)
+	verifyCache(a, cache, false, false, 0, 0, 0, 0, 0)
 
 	cache.Compare("new test", 1, content1)
-	verifyCache(a, cache, false, true, 1, 0, 0)
+	verifyCache(a, cache, false, true, 1, 1, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 1, 0, 0)
+	verifyCache(a, cache, true, true, 1, 1, 0, 0, 0)
 
 	expectedCacheContent := `new test:
   1: |
@@ -101,20 +103,20 @@ func TestCacheWhenNotChanged(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	result := cache.Compare(cache_before, 1, content1)
 	a.Equal(createCacheResult(1, true, snapshot1, snapshot1), result)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, content2)
 	a.Equal(createCacheResult(2, true, snapshot2, snapshot2), result2)
-	verifyCache(a, cache, true, false, 0, 0, 0)
+	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, false, 0, 0, 0)
+	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -126,19 +128,19 @@ func TestCacheWhenChanged(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, contentNew)
 	a.Equal(createCacheResult(2, false, snapshot2, snapshotNew), result2)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -151,20 +153,20 @@ func TestCacheWhenNotChangedIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	result := cache.Compare(cache_before, 1, content1)
 	a.Equal(createCacheResult(1, true, snapshot1, snapshot1), result)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, content2)
 	a.Equal(createCacheResult(2, true, snapshot2, snapshot2), result2)
-	verifyCache(a, cache, true, false, 0, 0, 0)
+	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.False(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, false, 0, 0, 0)
+	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
@@ -177,19 +179,19 @@ func TestCacheWhenChangedIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, contentNew)
 	a.Equal(createCacheResult(2, true, snapshot2, snapshotNew), result2)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -208,15 +210,15 @@ func TestCacheWhenHasVanished(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -232,22 +234,22 @@ func TestCacheWhenHasInserted(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	cache.Compare(cache_before, 2, content2)
-	verifyCache(a, cache, true, false, 0, 0, 0)
+	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
 	result3 := cache.Compare(cache_before, 3, contentNew)
 	a.Equal(createCacheResult(3, true, "", snapshotNew), result3)
-	verifyCache(a, cache, true, true, 1, 0, 0)
+	verifyCache(a, cache, true, true, 3, 1, 0, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 1, 0, 0)
+	verifyCache(a, cache, true, true, 3, 1, 0, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -269,23 +271,23 @@ func TestCacheWhenNewOneAtMiddle(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, contentNew)
 	a.Equal(createCacheResult(2, false, snapshot2, snapshotNew), result2)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 1, 0)
 
 	result3 := cache.Compare("cached before", 3, content2)
 	a.Equal(createCacheResult(3, true, "", snapshot2), result3)
-	verifyCache(a, cache, true, true, 1, 1, 0)
+	verifyCache(a, cache, true, true, 3, 1, 1, 1, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 1, 1, 0)
+	verifyCache(a, cache, true, true, 3, 1, 1, 1, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
@@ -308,23 +310,23 @@ func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	verifyCache(a, cache, true, true, 0, 0, 2)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
 	cache.Compare(cache_before, 1, content1)
-	verifyCache(a, cache, true, true, 0, 0, 1)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
 	result2 := cache.Compare(cache_before, 2, contentNew)
 	a.Equal(createCacheResult(2, true, snapshot2, snapshotNew), result2)
-	verifyCache(a, cache, true, true, 0, 1, 0)
+	verifyCache(a, cache, true, true, 2, 0, 1, 0, 0)
 
 	result3 := cache.Compare(cache_before, 3, content2)
 	a.Equal(createCacheResult(3, true, "", snapshot2), result3)
-	verifyCache(a, cache, true, true, 1, 1, 0)
+	verifyCache(a, cache, true, true, 3, 1, 1, 0, 0)
 
 	stored, storeErr := cache.StoreToFileIfNeeded()
 	a.True(stored)
 	a.Nil(storeErr)
-	verifyCache(a, cache, true, true, 1, 1, 0)
+	verifyCache(a, cache, true, true, 3, 1, 1, 0, 0)
 
 	bytes, _ := ioutil.ReadFile(cache.Filepath)
 	a.Equal(`cached before:

@@ -37,20 +37,20 @@ func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 	for idx, manifest := range manifests {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
 		if actual == nil == context.Negative {
-			validateSuccess = validateSuccess && false
+			validateSuccess = false
 			errorMessage := v.failInfo(actual, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}
 
-		validateSuccess = validateSuccess && true
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors
