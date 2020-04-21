@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/quintush/helm-unittest)](https://goreportcard.com/report/github.com/quintush/helm-unittest)
-[![codecov](https://codecov.io/gh/quintush/helm-unittest/branch/master/graph/badge.svg)](https://codecov.io/gh/quintush/helm-unittest)
+[![Sonar Coverage](https://img.shields.io/sonar/coverage/quintush_helm-unittest?server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/dashboard?id=quintush_helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=quintush_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=quintush_helm-unittest)
 
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
@@ -186,7 +186,7 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!  
-Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.12 installed, and run:
+Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.14 installed, and run:
 
 ```
 git clone git@github.com:quintush/helm-unittest.git
