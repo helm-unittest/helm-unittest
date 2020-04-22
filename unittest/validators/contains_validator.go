@@ -46,12 +46,9 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 		// When any enabled, only the key is validated
 		if v.Any {
 			if subset, ok := ele.(map[interface{}]interface{}); ok {
-				for key, value := range subset {
-					ele := map[interface{}]interface{}{key: value}
-					if reflect.DeepEqual(ele, v.Content) {
-						found = true
-						validateFoundCount++
-					}
+				if validateSubset(subset, v.Content) {
+					found = true
+					validateFoundCount++
 				}
 			}
 		}

@@ -1,12 +1,10 @@
 package unittest
 
 import (
-	"bufio"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -124,100 +122,58 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 
 	// convert TestSuiteResults to NUnit test suites
 	for _, testSuiteResult := range testSuiteResults {
-		totalTime := formatDuration(testSuiteResult.calculateTestSuiteDuration())
+		ts := x.createXUnitAssembly(currentTime, testSuiteResult)
 
-		ts := XUnitAssembly{
-			Name:          testSuiteResult.FilePath,
-			ConfigFile:    testSuiteResult.FilePath,
-			TestFramework: TestFramework,
-			Environment:   fmt.Sprintf("%s.%s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
-			RunDate:       formatDate(currentTime),
-			RunTime:       formatTime(currentTime),
-			Time:          totalTime,
-			TotalTests:    0,
-			PassedTests:   0,
-			FailedTests:   0,
-			SkippedTests:  0,
-			ErrorsTests:   0,
-		}
-
-		classname := testSuiteResult.DisplayName
-		if idx := strings.LastIndex(classname, "/"); idx > -1 && idx < len(testSuiteResult.DisplayName) {
-			classname = testSuiteResult.DisplayName[idx+1:]
-		}
-
+		// When ExecError found, direct create error and
+		// add to the list and iterater trough next testSuiteResult.
 		if testSuiteResult.ExecError != nil {
 			ts.TotalTests++
 			ts.ErrorsTests++
 			ts.Errors = []XUnitError{
-				{
-					Type: "Error",
-					Name: "Error",
-					Failure: &XUnitFailure{
-						ExceptionType: fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
-						Message: &XUnitFailureMessage{
-							Data: "Error",
-						},
-						StackTrace: &XUnitFailureStackTrace{
-							Data: testSuiteResult.ExecError.Error(),
-						},
-					},
-				},
-			}
-		} else {
-			ts.TestRuns = []XUnitTestRun{
-				{
-					Name:         testSuiteResult.DisplayName,
-					Time:         totalTime,
-					TotalTests:   0,
-					PassedTests:  0,
-					FailedTests:  0,
-					SkippedTests: 0,
-					TestCases:    []XUnitTestCase{},
-				},
+				x.createXUnitError(
+					"Error",
+					"Error",
+					x.createXUnitFailure(
+						fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
+						"Error",
+						testSuiteResult.ExecError.Error(),
+					),
+				),
 			}
 
-			// individual test cases
-			for _, test := range testSuiteResult.TestsResult {
-				ts.TotalTests++
-				ts.TestRuns[0].TotalTests++
+			testAssemblies = append(testAssemblies, ts)
+			continue
+		}
 
-				testCase := XUnitTestCase{
-					Name:    test.DisplayName,
-					Type:    classname,
-					Method:  XUnitValidationMethod,
-					Time:    formatDuration(test.Duration),
-					Result:  x.formatResult(test.Passed),
-					Failure: nil,
-				}
+		ts.TestRuns = []XUnitTestRun{
+			x.createXUnitTestRun(testSuiteResult),
+		}
 
-				// Write when a test is failed
-				if !test.Passed {
-					testCase.Failure = &XUnitFailure{
-						ExceptionType: XUnitValidationMethod,
-						Message: &XUnitFailureMessage{
-							Data: "Failed",
-						},
-						StackTrace: &XUnitFailureStackTrace{
-							Data: test.stringify(),
-						},
-					}
+		// individual test cases
+		for _, test := range testSuiteResult.TestsResult {
+			ts.TotalTests++
+			ts.TestRuns[0].TotalTests++
 
-					// Update error count and ExceptionType
-					if test.ExecError != nil {
-						ts.ErrorsTests++
-						testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
-					} else {
-						ts.FailedTests++
-						ts.TestRuns[0].FailedTests++
-					}
+			testCase := x.createXUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+
+			// Write when a test is failed
+			if !test.Passed {
+				testCase.Failure = x.createXUnitFailure(XUnitValidationMethod, "Failed", test.stringify())
+
+				// Update error count and ExceptionType
+				if test.ExecError != nil {
+					ts.ErrorsTests++
+					testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
 				} else {
-					ts.PassedTests++
-					ts.TestRuns[0].PassedTests++
+					ts.FailedTests++
+					ts.TestRuns[0].FailedTests++
 				}
-
-				ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
+			} else {
+				ts.PassedTests++
+				ts.TestRuns[0].PassedTests++
 			}
+
+			ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
 		}
 
 		testAssemblies = append(testAssemblies, ts)
@@ -228,20 +184,9 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	}
 
 	// to xml
-	bytes, err := xml.MarshalIndent(xunitResult, "", "\t")
-	if err != nil {
+	if err := writeContentToFile(noXMLHeader, xunitResult, w); err != nil {
 		return err
 	}
-
-	writer := bufio.NewWriter(w)
-
-	if !noXMLHeader {
-		writer.WriteString(xml.Header)
-	}
-
-	writer.Write(bytes)
-	writer.WriteByte('\n')
-	writer.Flush()
 
 	return nil
 }
@@ -251,4 +196,64 @@ func (x *xUnitReportXML) formatResult(b bool) string {
 		return "Fail"
 	}
 	return "Pass"
+}
+
+func (x *xUnitReportXML) createXUnitAssembly(currentTime time.Time, testSuiteResult *TestSuiteResult) XUnitAssembly {
+	return XUnitAssembly{
+		Name:          testSuiteResult.FilePath,
+		ConfigFile:    testSuiteResult.FilePath,
+		TestFramework: testFramework,
+		Environment:   fmt.Sprintf("%s.%s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
+		RunDate:       formatDate(currentTime),
+		RunTime:       formatTime(currentTime),
+		Time:          formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+		TotalTests:    0,
+		PassedTests:   0,
+		FailedTests:   0,
+		SkippedTests:  0,
+		ErrorsTests:   0,
+	}
+}
+
+func (x *xUnitReportXML) createXUnitTestRun(testSuiteResult *TestSuiteResult) XUnitTestRun {
+	return XUnitTestRun{
+		Name:         testSuiteResult.DisplayName,
+		Time:         formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+		TotalTests:   0,
+		PassedTests:  0,
+		FailedTests:  0,
+		SkippedTests: 0,
+		TestCases:    []XUnitTestCase{},
+	}
+}
+
+func (x *xUnitReportXML) createXUnitTestCase(className string, testJobResult *TestJobResult) XUnitTestCase {
+	return XUnitTestCase{
+		Name:    testJobResult.DisplayName,
+		Type:    className,
+		Method:  XUnitValidationMethod,
+		Time:    formatDuration(testJobResult.Duration),
+		Result:  x.formatResult(testJobResult.Passed),
+		Failure: nil,
+	}
+}
+
+func (x *xUnitReportXML) createXUnitFailure(exceptionType, failureMessage, stackTrace string) *XUnitFailure {
+	return &XUnitFailure{
+		ExceptionType: exceptionType,
+		Message: &XUnitFailureMessage{
+			Data: failureMessage,
+		},
+		StackTrace: &XUnitFailureStackTrace{
+			Data: stackTrace,
+		},
+	}
+}
+
+func (x *xUnitReportXML) createXUnitError(errorType, errorName string, xunitFailure *XUnitFailure) XUnitError {
+	return XUnitError{
+		Type:    errorType,
+		Name:    errorName,
+		Failure: xunitFailure,
+	}
 }

@@ -2,7 +2,6 @@ package validators
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/lrills/helm-unittest/unittest/common"
 	"github.com/lrills/helm-unittest/unittest/valueutils"
@@ -34,17 +33,6 @@ Actual:
 		common.TrustedMarshalYAML(v.Content),
 		common.TrustedMarshalYAML(actual),
 	)
-}
-
-func validateSubset(actual map[interface{}]interface{}, content interface{}) bool {
-	found := false
-	for key, value := range actual {
-		ele := map[interface{}]interface{}{key: value}
-		if reflect.DeepEqual(ele, content) {
-			found = true
-		}
-	}
-	return found
 }
 
 // Validate implement Validatable
