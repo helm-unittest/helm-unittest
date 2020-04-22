@@ -1,12 +1,37 @@
 package unittest
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+// testFramework the default name of the test framework.
+const testFramework = "helm-unittest"
+
+func determineClassnameFromDisplayName(displayName string) string {
+	classname := displayName
+	if idx := strings.LastIndex(classname, "/"); idx > -1 && idx < len(displayName) {
+		classname = displayName[idx+1:]
+	}
+	return classname
+}
+
+func formatDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
+func formatTime(t time.Time) string {
+	return t.Format("15:04:05")
+}
+
+func formatDuration(d time.Duration) string {
+	return fmt.Sprintf("%.3f", d.Seconds())
+}
 
 // Formatter Interface.
 type Formatter interface {

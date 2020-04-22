@@ -2,6 +2,7 @@ package validators
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/lrills/helm-unittest/unittest/common"
@@ -90,6 +91,18 @@ const errorFormat = `
 Error:
 %s
 `
+
+// Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)
+func validateSubset(actual map[interface{}]interface{}, content interface{}) bool {
+	found := false
+	for key, value := range actual {
+		ele := map[interface{}]interface{}{key: value}
+		if reflect.DeepEqual(ele, content) {
+			found = true
+		}
+	}
+	return found
+}
 
 // Determine if the original value still is a success.
 func determineSuccess(originalValue, newValue bool) bool {
