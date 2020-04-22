@@ -1,7 +1,6 @@
 package unittest
 
 import (
-	"bufio"
 	"encoding/xml"
 	"io"
 )
@@ -88,20 +87,9 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	}
 
 	// to xml
-	bytes, err := xml.MarshalIndent(suites, "", "\t")
-	if err != nil {
+	if err := writeContentToFile(noXMLHeader, suites, w); err != nil {
 		return err
 	}
-
-	writer := bufio.NewWriter(w)
-
-	if !noXMLHeader {
-		writer.WriteString(xml.Header)
-	}
-
-	writer.Write(bytes)
-	writer.WriteByte('\n')
-	writer.Flush()
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package unittest
 
 import (
-	"bufio"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -144,30 +143,32 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		ts := n.createNUnitTestSuite(testSuiteResult)
 
 		// In case the testsuite failed with an error
+		// direct append to the list and iterate to the next suite.
 		if testSuiteResult.ExecError != nil {
 			totalTests++
 			totalErrors++
 			ts.Failure = n.createNUnitFailure("Error", testSuiteResult.ExecError.Error())
-		} else {
-			// individual test cases
-			for _, test := range testSuiteResult.TestsResult {
-				totalTests++
-				testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+			testSuites = append(testSuites, ts)
+			continue
+		}
+		// individual test cases
+		for _, test := range testSuiteResult.TestsResult {
+			totalTests++
+			testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
-				// Write when a test is failed
-				if !test.Passed {
-					// Update total counts
-					if test.ExecError != nil {
-						totalErrors++
-					} else {
-						totalFailures++
-					}
-
-					testCase.Failure = n.createNUnitFailure("Failed", test.stringify())
+			// Write when a test is failed
+			if !test.Passed {
+				// Update total counts
+				if test.ExecError != nil {
+					totalErrors++
+				} else {
+					totalFailures++
 				}
 
-				ts.TestCases = append(ts.TestCases, testCase)
+				testCase.Failure = n.createNUnitFailure("Failed", test.stringify())
 			}
+
+			ts.TestCases = append(ts.TestCases, testCase)
 		}
 
 		testSuites = append(testSuites, ts)
@@ -176,20 +177,9 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	nunitResult := n.createNUnitTestResults(currentTime, totalTests, totalErrors, totalFailures, totalSuccess, testSuites)
 
 	// to xml
-	bytes, err := xml.MarshalIndent(nunitResult, "", "\t")
-	if err != nil {
+	if err := writeContentToFile(noXMLHeader, nunitResult, w); err != nil {
 		return err
 	}
-
-	writer := bufio.NewWriter(w)
-
-	if !noXMLHeader {
-		writer.WriteString(xml.Header)
-	}
-
-	writer.Write(bytes)
-	writer.WriteByte('\n')
-	writer.Flush()
 
 	return nil
 }
