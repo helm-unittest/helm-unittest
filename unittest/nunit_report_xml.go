@@ -129,13 +129,8 @@ func NewNUnitReportXML() Formatter {
 
 // NUnitReportXML writes a NUnit xml representation of the given report to w
 // in the format described at https://github.com/nunit/docs/wiki/XML-Formats
-func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, noXMLHeader bool, w io.Writer) error {
+func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, noXMLHeader bool, w io.Writer) error {
 	currentTime := time.Now()
-	domainName, userName := j.formatUserAndDomain()
-	cwd, _ := os.Getwd()
-	hostName, _ := os.Hostname()
-	currentCulture, _ := jibber_jabber.DetectLanguage()
-	currentUICulture, _ := jibber_jabber.DetectIETF()
 	totalTests := 0
 	totalErrors := 0
 	totalFailures := 0
@@ -146,43 +141,18 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	for _, testSuiteResult := range testSuiteResults {
 		totalSuccess = totalSuccess && testSuiteResult.Passed
 
-		ts := NUnitTestSuite{
-			Type:        TestFixture,
-			Name:        testSuiteResult.DisplayName,
-			Description: testSuiteResult.FilePath,
-			Success:     strconv.FormatBool(testSuiteResult.Passed),
-			Time:        formatDuration(testSuiteResult.calculateTestSuiteDuration()),
-			Executed:    strconv.FormatBool(testSuiteResult.ExecError == nil),
-			Result:      j.formatResult(testSuiteResult.Passed),
-		}
-
-		classname := testSuiteResult.DisplayName
-		if idx := strings.LastIndex(classname, "/"); idx > -1 && idx < len(testSuiteResult.DisplayName) {
-			classname = testSuiteResult.DisplayName[idx+1:]
-		}
+		ts := n.createNUnitTestSuite(testSuiteResult)
 
 		// In case the testsuite failed with an error
 		if testSuiteResult.ExecError != nil {
 			totalTests++
 			totalErrors++
-			ts.Failure = &NUnitFailure{
-				Message:    "Error",
-				StackTrace: testSuiteResult.ExecError.Error(),
-			}
+			ts.Failure = n.createNUnitFailure("Error", testSuiteResult.ExecError.Error())
 		} else {
 			// individual test cases
 			for _, test := range testSuiteResult.TestsResult {
 				totalTests++
-				testCase := NUnitTestCase{
-					Failure:     nil,
-					Name:        test.DisplayName,
-					Description: fmt.Sprintf("%s.%s", classname, test.DisplayName),
-					Success:     strconv.FormatBool(test.Passed),
-					Time:        formatDuration(test.Duration),
-					Executed:    strconv.FormatBool(test.ExecError == nil),
-					Asserts:     "0",
-					Result:      j.formatResult(test.Passed),
-				}
+				testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
 				// Write when a test is failed
 				if !test.Passed {
@@ -193,10 +163,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 						totalFailures++
 					}
 
-					testCase.Failure = &NUnitFailure{
-						Message:    "Failed",
-						StackTrace: test.stringify(),
-					}
+					testCase.Failure = n.createNUnitFailure("Failed", test.stringify())
 				}
 
 				ts.TestCases = append(ts.TestCases, testCase)
@@ -206,34 +173,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 		testSuites = append(testSuites, ts)
 	}
 
-	nunitResult := NUnitTestResults{
-		Environment: NUnitEnvironment{
-			NUnitVersion: NUnitVersion,
-			CLRVersion:   CLRVersion,
-			OSVersion:    OSVersion,
-			Platform:     fmt.Sprintf("%s.%s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
-			Cwd:          cwd,
-			MachineName:  hostName,
-			User:         userName,
-			UserDomain:   domainName,
-		},
-		CultureInfo: NUnitCultureInfo{
-			CurrentCulture:   currentCulture,
-			CurrentUICulture: currentUICulture,
-		},
-		TestSuite:    testSuites,
-		Name:         TestFramework,
-		Total:        totalTests,
-		Errors:       totalErrors,
-		Failures:     totalFailures,
-		NotRun:       0,
-		Inconclusive: 0,
-		Ignored:      0,
-		Skipped:      0,
-		Invalid:      0,
-		Date:         formatDate(currentTime),
-		Time:         formatTime(currentTime),
-	}
+	nunitResult := n.createNUnitTestResults(currentTime, totalTests, totalErrors, totalFailures, totalSuccess, testSuites)
 
 	// to xml
 	bytes, err := xml.MarshalIndent(nunitResult, "", "\t")
@@ -254,7 +194,7 @@ func (j *nUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	return nil
 }
 
-func (j *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
+func (n *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
 	userSettings, _ := user.Current()
 	userDomainName := strings.Split(userSettings.Username, "\\")
 
@@ -268,9 +208,82 @@ func (j *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
 	return domainName, userName
 }
 
-func (j *nUnitReportXML) formatResult(b bool) string {
+func (n *nUnitReportXML) formatResult(b bool) string {
 	if !b {
 		return "Failed"
 	}
 	return "Success"
+}
+
+func (n *nUnitReportXML) createNUnitTestResults(
+	currentTime time.Time,
+	totalTests, totalErrors, totalFailures int,
+	totalSuccess bool,
+	testSuites []NUnitTestSuite) NUnitTestResults {
+	domainName, userName := n.formatUserAndDomain()
+	cwd, _ := os.Getwd()
+	hostName, _ := os.Hostname()
+	currentCulture, _ := jibber_jabber.DetectLanguage()
+	currentUICulture, _ := jibber_jabber.DetectIETF()
+
+	return NUnitTestResults{
+		Environment: NUnitEnvironment{
+			NUnitVersion: NUnitVersion,
+			CLRVersion:   CLRVersion,
+			OSVersion:    OSVersion,
+			Platform:     fmt.Sprintf("%s.%s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
+			Cwd:          cwd,
+			MachineName:  hostName,
+			User:         userName,
+			UserDomain:   domainName,
+		},
+		CultureInfo: NUnitCultureInfo{
+			CurrentCulture:   currentCulture,
+			CurrentUICulture: currentUICulture,
+		},
+		TestSuite:    testSuites,
+		Name:         testFramework,
+		Total:        totalTests,
+		Errors:       totalErrors,
+		Failures:     totalFailures,
+		NotRun:       0,
+		Inconclusive: 0,
+		Ignored:      0,
+		Skipped:      0,
+		Invalid:      0,
+		Date:         formatDate(currentTime),
+		Time:         formatTime(currentTime),
+	}
+}
+
+func (n *nUnitReportXML) createNUnitTestSuite(testSuiteResult *TestSuiteResult) NUnitTestSuite {
+	return NUnitTestSuite{
+		Type:        TestFixture,
+		Name:        testSuiteResult.DisplayName,
+		Description: testSuiteResult.FilePath,
+		Success:     strconv.FormatBool(testSuiteResult.Passed),
+		Time:        formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+		Executed:    strconv.FormatBool(testSuiteResult.ExecError == nil),
+		Result:      n.formatResult(testSuiteResult.Passed),
+	}
+}
+
+func (n *nUnitReportXML) createNUnitTestCase(className string, testJobResult *TestJobResult) NUnitTestCase {
+	return NUnitTestCase{
+		Failure:     nil,
+		Name:        testJobResult.DisplayName,
+		Description: fmt.Sprintf("%s.%s", className, testJobResult.DisplayName),
+		Success:     strconv.FormatBool(testJobResult.Passed),
+		Time:        formatDuration(testJobResult.Duration),
+		Executed:    strconv.FormatBool(testJobResult.ExecError == nil),
+		Asserts:     "0",
+		Result:      n.formatResult(testJobResult.Passed),
+	}
+}
+
+func (n *nUnitReportXML) createNUnitFailure(errorMessage, stackTrace string) *NUnitFailure {
+	return &NUnitFailure{
+		Message:    errorMessage,
+		StackTrace: stackTrace,
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/xml"
 	"io"
-	"strings"
 )
 
 // JUnitTestSuites is a collection of JUnit test suites.
@@ -67,40 +66,19 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 
 	// convert TestSuiteResults to JUnit test suites
 	for _, testSuiteResult := range testSuiteResults {
-		ts := JUnitTestSuite{
-			Tests:      len(testSuiteResult.TestsResult),
-			Failures:   0,
-			Time:       formatDuration(testSuiteResult.calculateTestSuiteDuration()),
-			Name:       testSuiteResult.DisplayName,
-			Properties: []JUnitProperty{},
-			TestCases:  []JUnitTestCase{},
-		}
-
-		classname := testSuiteResult.DisplayName
-		if idx := strings.LastIndex(classname, "/"); idx > -1 && idx < len(testSuiteResult.DisplayName) {
-			classname = testSuiteResult.DisplayName[idx+1:]
-		}
+		ts := j.createJUnitTestSuite(testSuiteResult)
 
 		// properties
 		ts.Properties = append(ts.Properties, JUnitProperty{"helm-unittest.version", "1.6"})
 
 		// individual test cases
 		for _, test := range testSuiteResult.TestsResult {
-			testCase := JUnitTestCase{
-				Classname: classname,
-				Name:      test.DisplayName,
-				Time:      formatDuration(test.Duration),
-				Failure:   nil,
-			}
+			testCase := j.createJUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
 			// Write when a test is failed
 			if !test.Passed {
 				ts.Failures++
-				testCase.Failure = &JUnitFailure{
-					Message:  "Failed",
-					Type:     "",
-					Contents: test.stringify(),
-				}
+				testCase.Failure = j.createJUnitFailure("Failed", "", test.stringify())
 			}
 
 			ts.TestCases = append(ts.TestCases, testCase)
@@ -126,4 +104,32 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	writer.Flush()
 
 	return nil
+}
+
+func (j *jUnitReportXML) createJUnitTestSuite(testSuiteResult *TestSuiteResult) JUnitTestSuite {
+	return JUnitTestSuite{
+		Tests:      len(testSuiteResult.TestsResult),
+		Failures:   0,
+		Time:       formatDuration(testSuiteResult.calculateTestSuiteDuration()),
+		Name:       testSuiteResult.DisplayName,
+		Properties: []JUnitProperty{},
+		TestCases:  []JUnitTestCase{},
+	}
+}
+
+func (j *jUnitReportXML) createJUnitTestCase(className string, testJobResult *TestJobResult) JUnitTestCase {
+	return JUnitTestCase{
+		Classname: className,
+		Name:      testJobResult.DisplayName,
+		Time:      formatDuration(testJobResult.Duration),
+		Failure:   nil,
+	}
+}
+
+func (j *jUnitReportXML) createJUnitFailure(message, failureType, content string) *JUnitFailure {
+	return &JUnitFailure{
+		Message:  message,
+		Type:     failureType,
+		Contents: content,
+	}
 }
