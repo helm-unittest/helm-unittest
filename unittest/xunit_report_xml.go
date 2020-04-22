@@ -1,7 +1,6 @@
 package unittest
 
 import (
-	"bufio"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -125,6 +124,8 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	for _, testSuiteResult := range testSuiteResults {
 		ts := x.createXUnitAssembly(currentTime, testSuiteResult)
 
+		// When ExecError found, direct create error and
+		// add to the list and iterater trough next testSuiteResult.
 		if testSuiteResult.ExecError != nil {
 			ts.TotalTests++
 			ts.ErrorsTests++
@@ -139,37 +140,40 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 					),
 				),
 			}
-		} else {
-			ts.TestRuns = []XUnitTestRun{
-				x.createXUnitTestRun(testSuiteResult),
-			}
 
-			// individual test cases
-			for _, test := range testSuiteResult.TestsResult {
-				ts.TotalTests++
-				ts.TestRuns[0].TotalTests++
+			testAssemblies = append(testAssemblies, ts)
+			continue
+		}
 
-				testCase := x.createXUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+		ts.TestRuns = []XUnitTestRun{
+			x.createXUnitTestRun(testSuiteResult),
+		}
 
-				// Write when a test is failed
-				if !test.Passed {
-					testCase.Failure = x.createXUnitFailure(XUnitValidationMethod, "Failed", test.stringify())
+		// individual test cases
+		for _, test := range testSuiteResult.TestsResult {
+			ts.TotalTests++
+			ts.TestRuns[0].TotalTests++
 
-					// Update error count and ExceptionType
-					if test.ExecError != nil {
-						ts.ErrorsTests++
-						testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
-					} else {
-						ts.FailedTests++
-						ts.TestRuns[0].FailedTests++
-					}
+			testCase := x.createXUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+
+			// Write when a test is failed
+			if !test.Passed {
+				testCase.Failure = x.createXUnitFailure(XUnitValidationMethod, "Failed", test.stringify())
+
+				// Update error count and ExceptionType
+				if test.ExecError != nil {
+					ts.ErrorsTests++
+					testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
 				} else {
-					ts.PassedTests++
-					ts.TestRuns[0].PassedTests++
+					ts.FailedTests++
+					ts.TestRuns[0].FailedTests++
 				}
-
-				ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
+			} else {
+				ts.PassedTests++
+				ts.TestRuns[0].PassedTests++
 			}
+
+			ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
 		}
 
 		testAssemblies = append(testAssemblies, ts)
@@ -180,20 +184,9 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*TestSuiteResult, no
 	}
 
 	// to xml
-	bytes, err := xml.MarshalIndent(xunitResult, "", "\t")
-	if err != nil {
+	if err := writeContentToFile(noXMLHeader, xunitResult, w); err != nil {
 		return err
 	}
-
-	writer := bufio.NewWriter(w)
-
-	if !noXMLHeader {
-		writer.WriteString(xml.Header)
-	}
-
-	writer.Write(bytes)
-	writer.WriteByte('\n')
-	writer.Flush()
 
 	return nil
 }

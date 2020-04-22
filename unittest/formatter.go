@@ -1,6 +1,8 @@
 package unittest
 
 import (
+	"bufio"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
@@ -31,6 +33,27 @@ func formatTime(t time.Time) string {
 
 func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.3f", d.Seconds())
+}
+
+func writeContentToFile(noXMLHeader bool, content interface{}, w io.Writer) error {
+
+	// to xml
+	bytes, err := xml.MarshalIndent(content, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	writer := bufio.NewWriter(w)
+
+	if !noXMLHeader {
+		writer.WriteString(xml.Header)
+	}
+
+	writer.Write(bytes)
+	writer.WriteByte('\n')
+	writer.Flush()
+
+	return nil
 }
 
 // Formatter Interface.
