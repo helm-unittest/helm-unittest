@@ -35,7 +35,7 @@ dist:
 	tar -zcvf $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o untt.exe -ldflags $(LDFLAGS) ./main.go
 	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
-	shasum -a 256 -p $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
+	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
 
 .PHONY: bootstrap
 bootstrap:
