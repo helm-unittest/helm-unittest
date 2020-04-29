@@ -99,7 +99,7 @@ getDownloadURL() {
 # for that binary.
 downloadFile() {
   PLUGIN_TMP_FOLDER="/tmp/_dist/"
-  rm -r $PLUGIN_TMP_FOLDER >/dev/null 2>&1
+  [ -d $PLUGIN_TMP_FOLDER ] && rm -r $PLUGIN_TMP_FOLDER >/dev/null
   mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading $DOWNLOAD_URL to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
