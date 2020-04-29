@@ -77,10 +77,20 @@ getDownloadURL() {
   fi
   echo "Retrieving $latest_url"
   if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS\(-$ARCH\)\?" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    # Backward compatibility when arch type is not yet used.
+    if [ -z $DOWNLOAD_URL]; then
+      echo "No download_url found only searching for $OS"
+      DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    fi
     PROJECT_CHECKSUM=$(curl -s $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS\(-$ARCH\)\?" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    # Backward compatibility when arch type is not yet used.
+    if [ -z $DOWNLOAD_URL]; then
+      echo "No download_url found only searching for $OS"
+      DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    fi
     PROJECT_CHECKSUM=$(wget -q -O - $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
@@ -89,6 +99,7 @@ getDownloadURL() {
 # for that binary.
 downloadFile() {
   PLUGIN_TMP_FOLDER="/tmp/_dist/"
+  rm -r $PLUGIN_TMP_FOLDER >/dev/null 2>&1
   mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading $DOWNLOAD_URL to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
