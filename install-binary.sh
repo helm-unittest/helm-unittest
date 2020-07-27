@@ -120,7 +120,7 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | sha256sum -c --status
+        curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | sha256sum -c -s
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
