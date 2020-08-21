@@ -2,6 +2,7 @@
 ### Chart [ basic ] ../__fixtures__/v3/basic
 
 
+ PASS  Custom Resource Definition Test	../__fixtures__/v3/basic/tests/crd_test.yaml
  PASS  test deployment	../__fixtures__/v3/basic/tests/deployment_test.yaml
  PASS  test ingress	../__fixtures__/v3/basic/tests/ingress_test.yaml
  PASS  test notes	../__fixtures__/v3/basic/tests/notes_test.yaml
@@ -9,8 +10,8 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 4 passed, 4 total
-Tests:       12 passed, 12 total
+Test Suites: 5 passed, 5 total
+Tests:       13 passed, 13 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 

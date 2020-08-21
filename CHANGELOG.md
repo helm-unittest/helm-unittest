@@ -1,3 +1,15 @@
+0.2.2 / 2020-08-21
+==================
+- Add overriding capabilities within the testsuite (resolves #36).
+
+0.2.1 / 2020-07-27
+==================
+- Add sha256sum validation when shasum is not available (resolves #35).
+- Ignore validation when both sha tools are not available.
+- Update dependencies to latest compatible versions
+- Update installation script with sha256sum (resolves #38).
+- Update 0.2.1 release (resolves #40)
+
 0.2.0 / 2020-04-20
 ==================
 - having more assertions:

@@ -119,6 +119,11 @@ type TestJob struct {
 		Revision  int
 		IsUpgrade bool
 	}
+	Capabilities struct {
+		MajorVersion string   `yaml:"majorVersion"`
+		MinorVersion string   `yaml:"minorVersion"`
+		APIVersions  []string `yaml:"apiVersions"`
+	}
 	// route indicate which chart in the dependency hierarchy
 	// like "parant-chart", "parent-charts/charts/child-chart"
 	chartRoute string
@@ -243,11 +248,16 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 // render the chart and return result map
 func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, error) {
 	config := &v2chart.Config{Raw: string(userValues)}
-	defaultKubeVersion := fmt.Sprintf("%s.%s", v2util.DefaultKubeVersion.Major, v2util.DefaultKubeVersion.Minor)
+	kubeVersion := fmt.Sprintf("%s.%s", v2util.DefaultKubeVersion.Major, v2util.DefaultKubeVersion.Minor)
+
+	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
+		kubeVersion = fmt.Sprintf("%s.%s", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion)
+	}
+
 	renderOpts := v2renderutil.Options{
 		ReleaseOptions: *t.releaseV2Option(),
-		KubeVersion:    defaultKubeVersion,
-		APIVersions:    []string{},
+		KubeVersion:    kubeVersion,
+		APIVersions:    t.Capabilities.APIVersions,
 	}
 
 	outputOfFiles, err := v2renderutil.Render(targetChart, config, renderOpts)
@@ -279,7 +289,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, err
 	}
 
-	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, v3util.DefaultCapabilities)
+	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, t.capabilitiesV3())
 	if err != nil {
 		return nil, err
 	}
@@ -335,6 +345,25 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 		options.Namespace = t.Release.Namespace
 	}
 	return &options
+}
+
+// get chartutil.Capabilities ready for render
+func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
+	capabilities := v3util.DefaultCapabilities
+
+	// Override the version, when set.
+	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
+		capabilities.KubeVersion = v3util.KubeVersion{
+			Version: fmt.Sprintf("v%s.%s.0", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion),
+			Major:   t.Capabilities.MajorVersion,
+			Minor:   t.Capabilities.MinorVersion,
+		}
+	}
+
+	// Add ApiVersions when set
+	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
+
+	return capabilities
 }
 
 // parse rendered manifest if it's yaml

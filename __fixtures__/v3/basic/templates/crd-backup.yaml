@@ -1,0 +1,13 @@
+{{- if and (and (eq .Capabilities.KubeVersion.Major "1") (eq .Capabilities.KubeVersion.Minor "12")) (.Capabilities.APIVersions.Has "br.dev.local/v1") }}
+apiVersion: "br.dev.local/v1"
+kind: BrPolicy
+metadata:
+  name: {{ template "basic.fullname" . }}-backuppolicy
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "basic.fullname" . }}
+      type: myserver
+  volumes:
+  - datadir
+{{- end }}
