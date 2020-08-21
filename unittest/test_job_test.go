@@ -282,6 +282,55 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV2RunJobWithNoCapabilitySettingsEmptyDoc(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	manifest := `
+it: should work
+asserts:
+  - hasDocuments:
+      count: 0
+    template: crd-backup.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV2RunJobWithCapabilitySettings(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+  apiVersions:
+    - br.dev.local/v1  
+asserts:
+  - hasDocuments:
+      count: 1
+    template: crd-backup.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestV3RunJobOk(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
@@ -462,6 +511,55 @@ asserts:
       value: my-release-basic
     documentIndex: 0
     template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithNoCapabilitySettingsEmptyDoc(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+asserts:
+  - hasDocuments:
+      count: 0
+    template: crd-backup.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithCapabilitySettings(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+  apiVersions:
+    - br.dev.local/v1
+asserts:
+  - hasDocuments:
+      count: 1
+    template: crd-backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)

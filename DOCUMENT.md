@@ -50,6 +50,11 @@ tests:
       namespace:
       revision: 9
       isUpgrade: true
+    capabilities:
+      majorVersion: 1
+      minorVersion: 12
+      apiVersion:
+        - custom.api/v1
     asserts:
       - equal:
           path: metadata.name
@@ -71,6 +76,11 @@ tests:
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
   - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+
+- **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
+  - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
+  - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
+  - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
