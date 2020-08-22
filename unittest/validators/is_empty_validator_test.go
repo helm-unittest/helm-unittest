@@ -39,6 +39,21 @@ func TestIsEmptyValidatorWhenOk(t *testing.T) {
 	}
 }
 
+func TestMultiManifestIsEmptyValidatorWhenOk(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	for key := range manifest {
+		validator := IsEmptyValidator{key}
+		pass, diff := validator.Validate(&ValidateContext{
+			Docs:  []common.K8sManifest{manifest, manifest},
+			Index: -1,
+		})
+
+		assert.True(t, pass)
+		assert.Equal(t, []string{}, diff)
+	}
+}
+
 func TestIsEmptyValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docWithNonEmptyElement)
 

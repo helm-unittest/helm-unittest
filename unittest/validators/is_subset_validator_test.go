@@ -31,6 +31,23 @@ func TestIsSubsetValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMultiManifestIsSubsetValidatorWhenOk(t *testing.T) {
+	manifest1 := makeManifest(docToTestIsSubset)
+	manifest2 := makeManifest(docToTestIsSubset)
+
+	validator := IsSubsetValidator{
+		"a.b",
+		map[interface{}]interface{}{"d": "foo bar"}}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest1, manifest2},
+		Index: -1,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestIsSubset)
 

@@ -26,7 +26,7 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	validateSuccess := true
+	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
@@ -37,7 +37,11 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 			continue
 		}
 
-		validateSuccess = determineSuccess(validateSuccess, true)
+		if idx == 0 {
+			validateSuccess = true
+		} else {
+			validateSuccess = determineSuccess(validateSuccess, true)
+		}
 	}
 
 	return validateSuccess, validateErrors

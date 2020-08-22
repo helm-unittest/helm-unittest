@@ -25,6 +25,20 @@ func TestFailedTemplateValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMultiManfiestFailedTemplateValidatorWhenOk(t *testing.T) {
+	manifest1 := makeManifest(failedTemplate)
+	manifest2 := makeManifest(failedTemplate)
+	validator := FailedTemplateValidator{"A field should be required"}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest1, manifest2},
+		Index: -1,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
 

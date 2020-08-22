@@ -2,6 +2,12 @@
 ### Chart [ basic ] ../__fixtures__/v2/basic
 
 
+ FAIL  test deployment	../__fixtures__/v2/basic/tests_failed/empty_deployment_test.yaml
+	- should fail
+
+		- asserts[0] `isKind` fail
+
+			Template:	basic/templates/empty_deployment.yaml
  FAIL  test deployment that would be fail	../__fixtures__/v2/basic/tests_failed/deployment_test.yaml
 	- should fail all kinds of assertion
 
@@ -366,8 +372,8 @@
 
 
 Charts:      1 failed, 0 passed, 1 total
-Test Suites: 4 failed, 0 passed, 4 total
-Tests:       9 failed, 1 passed, 10 total
+Test Suites: 5 failed, 0 passed, 5 total
+Tests:       10 failed, 1 passed, 11 total
 Snapshot:    2 passed, 2 total
 Time:        XX.XXXms
 
