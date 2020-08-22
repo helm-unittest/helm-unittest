@@ -20,6 +20,20 @@ func TestIsNullValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMultiManifestIsNullValidatorWhenOk(t *testing.T) {
+	doc := "a:"
+	manifest1 := makeManifest(doc)
+	manifest2 := makeManifest(doc)
+
+	v := IsNullValidator{"a"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest1, manifest2},
+		Index: -1,
+	})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestIsNullValidatorWhenNegativeAndOk(t *testing.T) {
 	doc := "a: 0"
 	manifest := makeManifest(doc)

@@ -25,6 +25,20 @@ func TestEqualRawValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMultiManifestEqualRawValidatorWhenOk(t *testing.T) {
+	manifest1 := makeManifest(docToTestEqualRaw)
+	manifest2 := makeManifest(docToTestEqualRaw)
+	validator := EqualRawValidator{"This is a NOTES.txt document."}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest1, manifest2},
+		Index: -1,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestEqualRawValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualRaw)
 

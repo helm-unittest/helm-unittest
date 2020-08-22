@@ -35,10 +35,10 @@ func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []s
 		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	validateSuccess := true
+	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for _, manifest := range manifests {
+	for idx, manifest := range manifests {
 		actual := uniformContent(manifest[common.RAW])
 
 		result := context.CompareToSnapshot(actual)
@@ -50,7 +50,11 @@ func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []s
 			continue
 		}
 
-		validateSuccess = determineSuccess(validateSuccess, true)
+		if idx == 0 {
+			validateSuccess = true
+		} else {
+			validateSuccess = determineSuccess(validateSuccess, true)
+		}
 	}
 
 	return validateSuccess, validateErrors

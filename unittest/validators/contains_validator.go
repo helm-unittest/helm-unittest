@@ -69,7 +69,7 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	validateSuccess := true
+	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
@@ -105,7 +105,12 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 				continue
 			}
 
-			validateSuccess = determineSuccess(validateSuccess, true)
+			if idx == 0 {
+				validateSuccess = true
+			} else {
+				validateSuccess = determineSuccess(validateSuccess, true)
+			}
+
 			continue
 		}
 

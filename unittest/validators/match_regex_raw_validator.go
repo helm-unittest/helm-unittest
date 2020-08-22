@@ -30,10 +30,10 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	validateSuccess := true
+	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for _, manifest := range manifests {
+	for idx, manifest := range manifests {
 		actual := uniformContent(manifest[common.RAW])
 
 		p, err := regexp.Compile(v.Pattern)
@@ -51,7 +51,11 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 			continue
 		}
 
-		validateSuccess = determineSuccess(validateSuccess, true)
+		if idx == 0 {
+			validateSuccess = true
+		} else {
+			validateSuccess = determineSuccess(validateSuccess, true)
+		}
 	}
 
 	return validateSuccess, validateErrors

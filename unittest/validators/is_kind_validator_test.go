@@ -22,6 +22,21 @@ func TestIsKindValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMultiManifestIsKindValidatorWhenOk(t *testing.T) {
+	doc := "kind: Pod"
+	manifest1 := makeManifest(doc)
+	manifest2 := makeManifest(doc)
+
+	v := IsKindValidator{"Pod"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:  []common.K8sManifest{manifest1, manifest2},
+		Index: -1,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestIsKindValidatorWhenNegativeAndOk(t *testing.T) {
 	doc := "kind: Service"
 	manifest := makeManifest(doc)
