@@ -26,20 +26,6 @@ func TestMatchRegexRawValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestMultiManifestMatchRegexRawValidatorWhenOk(t *testing.T) {
-	manifest1 := makeManifest(docToTestMatchRegexRaw)
-	manifest2 := makeManifest(docToTestMatchRegexRaw)
-
-	validator := MatchRegexRawValidator{"^This"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
-	})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
 func TestMatchRegexRawValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegexRaw)
 

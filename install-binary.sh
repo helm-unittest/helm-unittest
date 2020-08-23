@@ -6,17 +6,17 @@ PROJECT_NAME="helm-unittest"
 PROJECT_GH="quintush/$PROJECT_NAME"
 PROJECT_CHECKSUM_FILE="$PROJECT_NAME-checksum.sha"
 
-: ${HELM_PLUGIN_PATH:="$HELM_PLUGIN_DIR"}
+: "${HELM_PLUGIN_PATH:="$HELM_PLUGIN_DIR"}"
 
 # Convert the HELM_PLUGIN_PATH to unix if cygpath is
 # available. This is the case when using MSYS2 or Cygwin
 # on Windows where helm returns a Windows path but we
 # need a Unix path
 if type cygpath &> /dev/null; then
-  HELM_PLUGIN_PATH=$(cygpath -u $HELM_PLUGIN_PATH)
+  HELM_PLUGIN_PATH=$(cygpath -u "$HELM_PLUGIN_PATH")
 fi
 
-if [[ $SKIP_BIN_INSTALL == "1" ]]; then
+if [[ "$SKIP_BIN_INSTALL" == "1" ]]; then
   echo "Skipping binary install"
   exit
 fi
@@ -24,7 +24,7 @@ fi
 # initArch discovers the architecture for this system.
 initArch() {
   ARCH=$(uname -m)
-  case $ARCH in
+  case "$ARCH" in
     armv5*) ARCH="armv5";;
     armv6*) ARCH="armv6";;
     armv7*) ARCH="armv7";;
@@ -38,7 +38,7 @@ initArch() {
 
 # initOS discovers the operating system for this system.
 initOS() {
-  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+  OS=$(uname | tr '[:upper:]' '[:lower:]')
 
   case "$OS" in
     # Msys support
@@ -77,21 +77,21 @@ getDownloadURL() {
   fi
   echo "Retrieving $latest_url"
   if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     # Backward compatibility when arch type is not yet used.
     if [[ -z $DOWNLOAD_URL ]]; then
       echo "No download_url found only searching for $OS"
-      DOWNLOAD_URL=$(curl -s $latest_url | grep "$OS" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+      DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     fi
-    PROJECT_CHECKSUM=$(curl -s $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    PROJECT_CHECKSUM=$(curl -sL "$latest_url" | grep "checksum" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}'2>/dev/null)
     # Backward compatibility when arch type is not yet used.
     if [[ -z $DOWNLOAD_URL ]]; then
       echo "No download_url found only searching for $OS"
-      DOWNLOAD_URL=$(wget -q -O - $latest_url | grep "$OS" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+      DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     fi
-    PROJECT_CHECKSUM=$(wget -q -O - $latest_url | grep "checksum" | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    PROJECT_CHECKSUM=$(wget -q -O - "$latest_url" | grep "checksum" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
   fi
 }
 
@@ -99,11 +99,11 @@ getDownloadURL() {
 # for that binary.
 downloadFile() {
   PLUGIN_TMP_FOLDER="/tmp/_dist/"
-  [ -d $PLUGIN_TMP_FOLDER ] && rm -r $PLUGIN_TMP_FOLDER >/dev/null
+  [ -d "$PLUGIN_TMP_FOLDER" ] && rm -r "$PLUGIN_TMP_FOLDER" >/dev/null
   mkdir -p "$PLUGIN_TMP_FOLDER"
-  echo "Downloading $DOWNLOAD_URL to location $PLUGIN_TMP_FOLDER"
+  echo "Downloading "$DOWNLOAD_URL" to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
-      (cd $PLUGIN_TMP_FOLDER && curl -LO "$DOWNLOAD_URL")
+      (cd "$PLUGIN_TMP_FOLDER" && curl -LO "$DOWNLOAD_URL")
   elif type "wget" >/dev/null 2>&1; then
       wget -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
   fi
@@ -118,17 +118,17 @@ installFile() {
     echo Validating Checksum.
     if type "curl" >/dev/null 2>&1; then
       if type "shasum" >/dev/null 2>&1; then
-        curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+        curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        curl -s -L $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | sha256sum -c -s
+        curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
     elif type "wget" >/dev/null 2>&1; then
       if type "shasum" >/dev/null 2>&1; then
-        wget -q -O - $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | shasum -a 256 -c -s
+        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        wget -q -O - $PROJECT_CHECKSUM | grep $DOWNLOAD_FILE | sha256sum -c -s
+        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
@@ -143,7 +143,7 @@ installFile() {
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file with the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
-  rm -r $PLUGIN_TMP_FOLDER
+  rm -r "$PLUGIN_TMP_FOLDER"
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }
 

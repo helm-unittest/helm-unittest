@@ -27,20 +27,6 @@ func TestEqualValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestMultiManfiestEqualValidatorWhenOk(t *testing.T) {
-	manifest1 := makeManifest(docToTestEqual)
-	manifest2 := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.b[0].c", 123}
-
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
-	})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
 func TestEqualValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 

@@ -53,9 +53,9 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 
 		if idx == 0 {
 			validateSuccess = true
-		} else {
-			validateSuccess = determineSuccess(validateSuccess, true)
 		}
+
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

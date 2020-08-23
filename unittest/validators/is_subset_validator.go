@@ -66,9 +66,9 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 
 			if idx == 0 {
 				validateSuccess = true
-			} else {
-				validateSuccess = determineSuccess(validateSuccess, true)
 			}
+
+			validateSuccess = determineSuccess(validateSuccess, true)
 			continue
 		}
 

@@ -27,20 +27,6 @@ func TestMatchRegexValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestMultiManifestMatchRegexValidatorWhenOk(t *testing.T) {
-	manifest1 := makeManifest(docToTestMatchRegex)
-	manifest2 := makeManifest(docToTestMatchRegex)
-
-	validator := MatchRegexValidator{"a.b[0].c", "^hello"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
-	})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
 func TestMatchRegexValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegex)
 

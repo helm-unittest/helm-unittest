@@ -58,9 +58,9 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 
 		if idx == 0 {
 			validateSuccess = true
-		} else {
-			validateSuccess = determineSuccess(validateSuccess, true)
 		}
+
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

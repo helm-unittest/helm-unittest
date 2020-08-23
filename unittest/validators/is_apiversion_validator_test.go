@@ -20,20 +20,6 @@ func TestIsAPiVersionValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestMultiManifestIsAPiVersionValidatorWhenOk(t *testing.T) {
-	doc := "apiVersion: v1"
-	manifest1 := makeManifest(doc)
-	manifest2 := makeManifest(doc)
-
-	validator := IsAPIVersionValidator{"v1"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
-	})
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
 func TestIsAPiVersionValidatorWhenNegativeAndOk(t *testing.T) {
 	doc := "apiVersion: v1"
 	manifest := makeManifest(doc)
