@@ -29,27 +29,6 @@ func TestSnapshotValidatorWhenOk(t *testing.T) {
 	mockComparer.AssertExpectations(t)
 }
 
-func TestMultiManifestSnapshotValidatorWhenOk(t *testing.T) {
-	data := common.K8sManifest{"a": "b"}
-	validator := MatchSnapshotValidator{Path: "a"}
-
-	mockComparer := new(mockSnapshotComparer)
-	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
-		Passed: true,
-	})
-
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:             []common.K8sManifest{data, data},
-		Index:            -1,
-		SnapshotComparer: mockComparer,
-	})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-
-	mockComparer.AssertExpectations(t)
-}
-
 func TestSnapshotValidatorWhenNegativeAndOk(t *testing.T) {
 	data := common.K8sManifest{"a": "b"}
 	validator := MatchSnapshotValidator{Path: "a"}

@@ -39,9 +39,9 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 
 		if idx == 0 {
 			validateSuccess = true
-		} else {
-			validateSuccess = determineSuccess(validateSuccess, true)
 		}
+
+		validateSuccess = determineSuccess(validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

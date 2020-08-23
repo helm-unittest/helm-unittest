@@ -18,12 +18,6 @@ a:
     - e: bar
 `
 
-var docToTestContains2 = `
-a:
-  b:
-    - d: foo bar
-`
-
 func TestContainsValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
@@ -35,25 +29,6 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
-	})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
-func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
-	manifest1 := makeManifest(docToTestContains)
-	manifest2 := makeManifest(docToTestContains2)
-
-	validator := ContainsValidator{
-		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
-		nil,
-		false,
-	}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
 	})
 
 	assert.True(t, pass)
