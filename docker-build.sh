@@ -41,18 +41,18 @@ pluginRepo="quintush/helm-unittest"
 
 if [[ ${CI} == 'true' ]]; then
   helmLatest=`curl -sL -H "Authorization: token ${GITHUB_TOKEN}"  https://api.github.com/repos/${helmRepo}/tags?per_page=50 |jq -r ".[].name"|sort -Vr|sed 's/^v//'`
-  pluginLatest=`curl -sL -H "Authorization: token ${GITHUB_TOKEN}"  https://api.github.com/repos/${pluginRepo}/tags?per_page=1 |jq -r ".[].name"|sort -Vr|sed 's/^v//'`
+  pluginLatest=`curl -sL -H "Authorization: token ${GITHUB_TOKEN}"  https://api.github.com/repos/${pluginRepo}/tags?per_page=2 |jq -r ".[].name"|sort -Vr|sed 's/^v//'`
 else
   helmLatest=`curl -sL https://api.github.com/repos/${helmRepo}/tags?per_page=50 |jq -r ".[].name"|sort -Vr|sed 's/^v//'|grep -v -`
-  pluginLatest=`curl -sL https://api.github.com/repos/${pluginRepo}/tags?per_page=1 |jq -r ".[].name"|sort -Vr|sed 's/^v//'|grep -v -`
+  pluginLatest=`curl -sL https://api.github.com/repos/${pluginRepo}/tags?per_page=2 |jq -r ".[].name"|sort -Vr|sed 's/^v//'|grep -v -`
 fi
 
 for helmVersion in ${helmLatest}
 do
-  echo $helmVersion
+  echo "Found helm version: $helmVersion"
   for pluginVersion in ${pluginLatest}
   do
-    echo $pluginVersion
+    echo "Found helm-unittest plugin version: $pluginVersion"
     tag="$helmVersion-$pluginVersion"
     echo $tag 
     status=$(curl -sL https://hub.docker.com/v2/repositories/${image}/tags/${tag})
