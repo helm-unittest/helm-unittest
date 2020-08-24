@@ -22,7 +22,7 @@ build() {
     #version.BuildInfo{Version:"v3.0.0-beta.2", GitCommit:"26c7338408f8db593f93cd7c963ad56f67f662d4", GitTreeState:"clean", GoVersion:"go1.12.9"}
   fi
   version=$(echo ${version}| awk -F \" '{print $2}')
-  if [ "${version}" == "v${tag}" ]; then
+  if [ "${version}" == "v${helmVersion}" ]; then
     echo "matched"
   else
     echo "unmatched"
