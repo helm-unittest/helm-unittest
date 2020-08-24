@@ -73,7 +73,7 @@ pluginLatestVersion=$(echo $pluginLatestRelease\" |grep -oP '(?<=tag\/v)[0-9][^"
 latest = "$helmLatestVersion-$pluginLatestVersion"
 echo $latest
 
-if [[ "$CIRCLE_BRANCH" == "master" && "$CIRCLE_TAG" != "" ]]; then
+if [[ "$CIRCLE_BRANCH" == "master" ]]; then
   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   docker pull ${image}:${latest}
   docker tag ${image}:${latest} ${image}:latest
