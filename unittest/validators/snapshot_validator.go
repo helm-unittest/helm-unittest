@@ -59,11 +59,7 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 			continue
 		}
 
-		if idx == 0 {
-			validateSuccess = true
-		}
-
-		validateSuccess = determineSuccess(validateSuccess, true)
+		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

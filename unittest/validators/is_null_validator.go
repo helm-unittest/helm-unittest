@@ -50,11 +50,7 @@ func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		if idx == 0 {
-			validateSuccess = true
-		}
-
-		validateSuccess = determineSuccess(validateSuccess, true)
+		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors
