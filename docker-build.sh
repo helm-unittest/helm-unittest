@@ -14,11 +14,11 @@ build() {
   docker build --no-cache --build-arg HELM_VERSION=${helmVersion} --build-arg PLUGIN_VERSION=${pluginVersion} -t ${image}:${tag} .
 
   # run test
-  version=$(docker run -ti --rm ${image}:${tag} version --client)
+  version=$(docker run -ti --entrypoint "helm" --rm ${image}:${tag} version --client)
   #Client: &version.Version{SemVer:"v2.9.0-rc2", GitCommit:"08db2d0181f4ce394513c32ba1aee7ffc6bc3326", GitTreeState:"clean"}
   if [[ "${version}" == *"Error: unknown flag: --client"* ]]; then
     echo "Detected Helm3+"
-    version=$(docker run -ti --rm ${image}:${tag} version)
+    version=$(docker run -ti --entrypoint "helm" --rm ${image}:${tag} version)
     #version.BuildInfo{Version:"v3.0.0-beta.2", GitCommit:"26c7338408f8db593f93cd7c963ad56f67f662d4", GitTreeState:"clean", GoVersion:"go1.12.9"}
   fi
   version=$(echo ${version}| awk -F \" '{print $2}')
