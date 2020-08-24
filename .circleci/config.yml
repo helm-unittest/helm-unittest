@@ -47,6 +47,18 @@ jobs:
           name: Upload binaries
           command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
 
+  distribute_docker:
+    docker:
+      - image: golang:1.14
+    working_directory: /go/src/github.com/lrills/helm-unittest
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and push docker images
+          command: docker-build.sh
+
 orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.1
 
@@ -61,6 +73,14 @@ workflows:
       - distribute:
           requires:
             - test
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)?/
+            branches:
+              ignore: /.*/
+      - distribute_docker:
+          requires:
+            - distribute
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)?/
