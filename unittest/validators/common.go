@@ -108,7 +108,7 @@ func validateSubset(actual map[interface{}]interface{}, content interface{}) boo
 func determineSuccess(idx int, originalValue, newValue bool) bool {
 	if idx == 0 {
 		return true
-	} else {
-		return originalValue && newValue
 	}
+
+	return originalValue && newValue
 }
