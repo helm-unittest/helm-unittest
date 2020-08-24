@@ -70,7 +70,7 @@ helmLatestRelease=$(curl -s https://github.com/${helmRepo}/releases)
 helmLatestVersion=$(echo $helmLatestRelease\" |grep -oP '(?<=tag\/v)[0-9][^"]*'|grep -v \-|sort -Vr|head -1)
 pluginLatestRelease=$(curl -s https://github.com/${pluginRepo}/releases)
 pluginLatestVersion=$(echo $pluginLatestRelease\" |grep -oP '(?<=tag\/v)[0-9][^"]*'|grep -v \-|sort -Vr|head -1)
-latest = "$helmLatestVersion-$pluginLatestVersion"
+latest="$helmLatestVersion-$pluginLatestVersion"
 echo $latest
 
 if [[ "$CIRCLE_BRANCH" == "master" ]]; then
