@@ -30,7 +30,7 @@ build() {
   fi
 
   if [[ "$CIRCLE_BRANCH" == "master" ]]; then
-    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
     docker push ${image}:${tag}
   fi
 }
@@ -74,7 +74,7 @@ latest="$helmLatestVersion-$pluginLatestVersion"
 echo $latest
 
 if [[ "$CIRCLE_BRANCH" == "master" ]]; then
-  docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
   docker pull ${image}:${latest}
   docker tag ${image}:${latest} ${image}:latest
   docker push ${image}:latest
