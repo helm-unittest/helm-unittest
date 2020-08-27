@@ -36,6 +36,31 @@ $ helm plugin install https://github.com/quintush/helm-unittest
 
 It will install the latest version of binary into helm plugin directory.
 
+## Docker Usage
+
+``` 
+# run help of latest helm with latest helm unittest plugin
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest
+
+# run help of specific helm version with specific helm unittest plugin version
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2
+
+# run unittests of a helm 2 chart
+# make sure to mount local folder to /apps in container
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:2.16.10-0.2.2 .
+
+# run unittests of a helm 3 chart
+# make sure to mount local folder to /apps in container
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 .
+
+# run unittests of a helm 3 chart with Junit output for CI validation
+# make sure to mount local folder to /apps in container
+# the test-output.xml will be available in the local folder.
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 -o test-output.xml .
+```
+
+The docker container contains the fully installed helm client, including the helm-unittest plugin.
+
 ## Get Started
 
 Add `tests` in `.helmignore` of your chart, and create the following test file at `$YOUR_CHART/tests/deployment_test.yaml`:
