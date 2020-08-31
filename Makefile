@@ -40,6 +40,10 @@ dist:
 .PHONY: bootstrap
 bootstrap:
 
+.PHONY: dockerdist
+dockerdist:
+	./docker-build.sh
+
 .PHONY: dockerimage
 dockerimage:
 	docker build -t $(DOCKER):$(VERSION) .

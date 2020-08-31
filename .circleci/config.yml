@@ -56,7 +56,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build and push docker images
-          command: docker-build.sh
+          command: make dockerdist
 
 orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.1
