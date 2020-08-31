@@ -48,16 +48,6 @@ func validateTestResultAndSnapshots(
 	a.Equal(snapshotVanishedCount, suiteResult.SnapshotCounting.Vanished)
 }
 
-func TestParseTestSuiteWithReleaseAndCapabilitiesOverrideFileOk(t *testing.T) {
-	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../__fixtures__/v3/basic/tests/crd_test.yaml", "basic")
-
-	a.Nil(err)
-	a.Equal("Custom Resource Definition Test", suite.Name)
-	a.Equal([]string{"crd-backup.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
-}
-
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suite, err := ParseTestSuiteFile("../__fixtures__/v2/basic/tests/deployment_test.yaml", "basic")
@@ -139,6 +129,43 @@ tests:
 	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
+}
+
+func TestV2RunSuiteWithOverridesWhenPass(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	suiteDoc := `
+suite: test suite name
+templates:
+  - crd_backup.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+  revision: 1
+  isUpgrade: true
+capabilities:
+  majorVersion: 1
+  minorVersion: 10
+  apiVersions:
+    - br.dev.local/v2
+tests:
+  - it: should pass
+    capabilities:
+      majorVersion: 1
+      minorVersion: 12
+      apiVersions:
+        - br.dev.local/v1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot: {}
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_suite_override_test.yaml"), false)
+	suiteResult := testSuite.RunV2(c, cache, &TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
 
 func TestV2RunSuiteWhenFail(t *testing.T) {
@@ -311,6 +338,43 @@ tests:
 	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
+}
+
+func TestV3RunSuiteWithOverridesWhenPass(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	suiteDoc := `
+suite: test suite name
+templates:
+  - crd_backup.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+  revision: 1
+  isUpgrade: true
+capabilities:
+  majorVersion: 1
+  minorVersion: 10
+  apiVersions:
+    - br.dev.local/v2
+tests:
+  - it: should pass
+    capabilities:
+      majorVersion: 1
+      minorVersion: 12
+      apiVersions:
+        - br.dev.local/v1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot: {}
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
+	suiteResult := testSuite.RunV3(c, cache, &TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
 
 func TestV3RunSuiteWhenFail(t *testing.T) {

@@ -1,6 +1,6 @@
 suite: Custom Resource Definition Test
 templates:
-  - crd-backup.yaml
+  - crd_backup.yaml
 release:
   name: my-release
   namespace: my-namespace

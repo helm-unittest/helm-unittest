@@ -289,7 +289,7 @@ it: should work
 asserts:
   - hasDocuments:
       count: 0
-    template: crd-backup.yaml
+    template: crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -316,7 +316,7 @@ capabilities:
 asserts:
   - hasDocuments:
       count: 1
-    template: crd-backup.yaml
+    template: crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -532,7 +532,7 @@ it: should work
 asserts:
   - hasDocuments:
       count: 0
-    template: crd-backup.yaml
+    template: crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -559,7 +559,7 @@ capabilities:
 asserts:
   - hasDocuments:
       count: 1
-    template: crd-backup.yaml
+    template: crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
