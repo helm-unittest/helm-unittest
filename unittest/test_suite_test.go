@@ -48,6 +48,16 @@ func validateTestResultAndSnapshots(
 	a.Equal(snapshotVanishedCount, suiteResult.SnapshotCounting.Vanished)
 }
 
+func TestParseTestSuiteWithReleaseAndCapabilitiesOverrideFileOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../__fixtures__/v3/basic/tests/crd_test.yaml", "basic")
+
+	a.Nil(err)
+	a.Equal("Custom Resource Definition Test", suite.Name)
+	a.Equal([]string{"crd-backup.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suite, err := ParseTestSuiteFile("../__fixtures__/v2/basic/tests/deployment_test.yaml", "basic")

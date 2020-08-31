@@ -102,44 +102,52 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
 
-		if s.Release.Name != "" {
-			if test.Release.Name == "" {
-				test.Release.Name = s.Release.Name
-			}
-		}
-
-		if s.Release.Namespace != "" {
-			if test.Release.Namespace == "" {
-				test.Release.Namespace = s.Release.Namespace
-			}
-		}
-
-		if s.Release.Revision > 0 {
-			if test.Release.Revision == 0 {
-				test.Release.Revision = s.Release.Revision
-			}
-		}
-
-		if s.Release.IsUpgrade {
-			if !test.Release.IsUpgrade {
-				test.Release.IsUpgrade = s.Release.IsUpgrade
-			}
-		}
-
-		if s.Capabilities.MajorVersion != "" && s.Capabilities.MinorVersion != "" {
-			if test.Capabilities.MajorVersion == "" && test.Capabilities.MinorVersion == "" {
-				test.Capabilities.MajorVersion = s.Capabilities.MajorVersion
-				test.Capabilities.MinorVersion = s.Capabilities.MinorVersion
-			}
-		}
-
-		if len(s.Capabilities.APIVersions) > 0 {
-			test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
-		}
+		s.polishReleaseSettings(test)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
 		}
+	}
+}
+
+// override release settings in testjobs when defined in testsuite
+func (s *TestSuite) polishReleaseSettings(test *TestJob) {
+	if s.Release.Name != "" {
+		if test.Release.Name == "" {
+			test.Release.Name = s.Release.Name
+		}
+	}
+
+	if s.Release.Namespace != "" {
+		if test.Release.Namespace == "" {
+			test.Release.Namespace = s.Release.Namespace
+		}
+	}
+
+	if s.Release.Revision > 0 {
+		if test.Release.Revision == 0 {
+			test.Release.Revision = s.Release.Revision
+		}
+	}
+
+	if s.Release.IsUpgrade {
+		if !test.Release.IsUpgrade {
+			test.Release.IsUpgrade = s.Release.IsUpgrade
+		}
+	}
+}
+
+// override capabilities settings in testjobs when defined in testsuite
+func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
+	if s.Capabilities.MajorVersion != "" && s.Capabilities.MinorVersion != "" {
+		if test.Capabilities.MajorVersion == "" && test.Capabilities.MinorVersion == "" {
+			test.Capabilities.MajorVersion = s.Capabilities.MajorVersion
+			test.Capabilities.MinorVersion = s.Capabilities.MinorVersion
+		}
+	}
+
+	if len(s.Capabilities.APIVersions) > 0 {
+		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
 	}
 }
 
