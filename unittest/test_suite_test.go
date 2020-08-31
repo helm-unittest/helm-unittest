@@ -144,16 +144,11 @@ release:
   upgrade: true
 capabilities:
   majorVersion: 1
-  minorVersion: 10
+  minorVersion: 12
   apiVersions:
-    - br.dev.local/v2
+    - br.dev.local/v1
 tests:
   - it: should pass
-    capabilities:
-      majorVersion: 1
-      minorVersion: 12
-      apiVersions:
-        - br.dev.local/v1
     asserts:
       - hasDocuments:
           count: 1
