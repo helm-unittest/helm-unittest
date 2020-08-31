@@ -41,7 +41,7 @@ type TestSuite struct {
 		Name      string
 		Namespace string
 		Revision  int
-		IsUpgrade bool
+		IsUpgrade bool `yaml:"upgrade"`
 	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
@@ -103,6 +103,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		test.definitionFile = s.definitionFile
 
 		s.polishReleaseSettings(test)
+		s.polishCapabilitiesSettings(test)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates

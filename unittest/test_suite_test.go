@@ -141,7 +141,7 @@ release:
   name: my-release
   namespace: my-namespace
   revision: 1
-  isUpgrade: true
+  upgrade: true
 capabilities:
   majorVersion: 1
   minorVersion: 10
@@ -350,7 +350,7 @@ release:
   name: my-release
   namespace: my-namespace
   revision: 1
-  isUpgrade: true
+  upgrade: true
 capabilities:
   majorVersion: 1
   minorVersion: 10
