@@ -1,6 +1,6 @@
 suite: Custom Resource Definition Test
 templates:
-  - crd-backup.yaml
+  - crd_backup.yaml
 tests:
   - it: should pass all kinds of assertion
     release:

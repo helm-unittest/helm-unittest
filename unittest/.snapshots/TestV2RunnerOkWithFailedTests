@@ -2,6 +2,57 @@
 ### Chart [ basic ] ../__fixtures__/v2/basic
 
 
+ FAIL  test autoscaling	../__fixtures__/v2/basic/tests_failed/nofile_test.yaml
+	- should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled
+
+		- asserts[0] `isKind` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[1] `hasDocuments` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[2] `equal` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[3] `equal` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+	- should use release hpa config when Global autoscaling is disabled but release scaling is enabled.
+
+		- asserts[0] `isKind` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[1] `hasDocuments` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[2] `equal` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[3] `equal` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+	- should'n't use any autoscaling config when release autoscaling is disabled
+
+		- asserts[0] `hasDocuments` fail
+
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
  FAIL  test deployment	../__fixtures__/v2/basic/tests_failed/empty_deployment_test.yaml
 	- should fail
 
@@ -372,8 +423,8 @@
 
 
 Charts:      1 failed, 0 passed, 1 total
-Test Suites: 5 failed, 0 passed, 5 total
-Tests:       10 failed, 1 passed, 11 total
+Test Suites: 6 failed, 0 passed, 6 total
+Tests:       13 failed, 1 passed, 14 total
 Snapshot:    2 passed, 2 total
 Time:        XX.XXXms
 

@@ -117,7 +117,7 @@ type TestJob struct {
 		Name      string
 		Namespace string
 		Revision  int
-		IsUpgrade bool
+		IsUpgrade bool `yaml:"upgrade"`
 	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
