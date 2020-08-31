@@ -53,7 +53,7 @@ jobs:
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
-      - setup_remote_docker:
+      - setup_remote_docker
       - run:
           name: Build and push docker images
           command: docker-build.sh
