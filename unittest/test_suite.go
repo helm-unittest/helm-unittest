@@ -37,7 +37,18 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string) (*TestSuite, error) {
 type TestSuite struct {
 	Name      string `yaml:"suite"`
 	Templates []string
-	Tests     []*TestJob
+	Release   struct {
+		Name      string
+		Namespace string
+		Revision  int
+		IsUpgrade bool
+	}
+	Capabilities struct {
+		MajorVersion string   `yaml:"majorVersion"`
+		MinorVersion string   `yaml:"minorVersion"`
+		APIVersions  []string `yaml:"apiVersions"`
+	}
+	Tests []*TestJob
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
@@ -90,6 +101,42 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 	for _, test := range s.Tests {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
+
+		if s.Release.Name != "" {
+			if test.Release.Name == "" {
+				test.Release.Name = s.Release.Name
+			}
+		}
+
+		if s.Release.Namespace != "" {
+			if test.Release.Namespace == "" {
+				test.Release.Namespace = s.Release.Namespace
+			}
+		}
+
+		if s.Release.Revision > 0 {
+			if test.Release.Revision == 0 {
+				test.Release.Revision = s.Release.Revision
+			}
+		}
+
+		if s.Release.IsUpgrade {
+			if !test.Release.IsUpgrade {
+				test.Release.IsUpgrade = s.Release.IsUpgrade
+			}
+		}
+
+		if s.Capabilities.MajorVersion != "" && s.Capabilities.MinorVersion != "" {
+			if test.Capabilities.MajorVersion == "" && test.Capabilities.MinorVersion == "" {
+				test.Capabilities.MajorVersion = s.Capabilities.MajorVersion
+				test.Capabilities.MinorVersion = s.Capabilities.MinorVersion
+			}
+		}
+
+		if len(s.Capabilities.APIVersions) > 0 {
+			test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
+		}
+
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
 		}

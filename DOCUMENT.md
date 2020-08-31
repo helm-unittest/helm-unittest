@@ -17,6 +17,16 @@ suite: test deploy and service
 templates:
   - templates/deployment.yaml
   - templates/web/service.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+  revision: 1
+  isUpgrade: true
+capabilities:
+  majorVersion: 1
+  minorVersion: 10
+  apiVersions:
+    - br.dev.local/v2
 tests:
   - it: should test something
     ...
@@ -25,6 +35,17 @@ tests:
 - **suite**: *string, optional*. The suite name to show on test result output.
 
 - **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Partial templates (which are prefixed with and `_`) are added automatically even if it is in a templates sub-folder, you don't need to add them again.
+
+- **release**: *object, optional*. Define the `{{ .Release }}` object.
+  - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
+  - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
+  - **revision**: *string, optional*. The revision of current build, default to `0`.
+  - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+
+- **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
+  - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
+  - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
+  - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
