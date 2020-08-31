@@ -31,15 +31,15 @@ func (a *Assertion) Assert(
 	result.Not = a.Not
 
 	// Ensure assertion is succeeding or failing based on templates to test.
-	assertionPassed := len(a.defaultTemplates) > 0
+	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	for _, template := range a.defaultTemplates {
+	for idx, template := range a.defaultTemplates {
 		rendered, ok := templatesResult[template]
 		var validatePassed bool
 		var singleFailInfo []string
 		if !ok {
-			noFile := []string{"Error:", a.noFileErrMessage()}
+			noFile := []string{"Error:", a.noFileErrMessage(template)}
 			failInfo = append(failInfo, noFile...)
 			assertionPassed = false
 			break
@@ -57,6 +57,10 @@ func (a *Assertion) Assert(
 			singleFailInfo = append(failInfoTemplate, singleFailInfo...)
 		}
 
+		if idx == 0 {
+			assertionPassed = true
+		}
+
 		assertionPassed = assertionPassed && validatePassed
 		failInfo = append(failInfo, singleFailInfo...)
 	}
@@ -67,13 +71,14 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) noFileErrMessage() string {
-	if a.Template != "" {
+func (a *Assertion) noFileErrMessage(template string) string {
+	if template != "" {
 		return fmt.Sprintf(
 			"\ttemplate \"%s\" not exists or not selected in test suite",
-			a.Template,
+			template,
 		)
 	}
+
 	return "\tassertion.template must be given if testsuite.templates is empty"
 }
 
@@ -93,6 +98,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if not, ok := assertDef["not"].(bool); ok {
 		a.Not = not
 	}
+
 	if template, ok := assertDef["template"].(string); ok {
 		a.Template = template
 	}
