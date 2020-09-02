@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -13,10 +14,11 @@ import (
 )
 
 var sectionBeginPattern = regexp.MustCompile("( PASS | FAIL |\n*###|\n*Charts:|\n*Snapshot Summary:)")
-var timePattern = regexp.MustCompile("Time:\\s+([\\d\\.]+)ms")
+var timePattern = regexp.MustCompile("Time:\\s+([\\d\\.]+)(s|ms)")
 
 func makeOutputSnapshotable(originalOutput string) []interface{} {
 	output := strings.ReplaceAll(originalOutput, "\\", "/")
+	fmt.Println(output)
 	timeLoc := timePattern.FindStringSubmatchIndex(output)[2:4]
 	timeAgnosticOutput := output[:timeLoc[0]] + "XX.XXX" + output[timeLoc[1]:]
 
