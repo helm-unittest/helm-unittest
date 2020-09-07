@@ -6,3 +6,11 @@ dependencies:
     repository: https://kubernetes-charts.storage.googleapis.com
     version: 0.8.3
     alias: another-postgresql
+  - name: mysql
+    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 1.2.0
+    condition: mysql.enabled
+  - name: redis
+    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 10.5.7
+    condition: redis.enabled

@@ -44,3 +44,21 @@ tests:
           count: 1
       - matchSnapshot:
           path: spec
+  - it: should disable sub-charts
+    values:
+      - ./values/image.yaml
+    set:
+      mysql.enabled: false
+      redis.enabled: false
+    asserts:
+      - matchSnapshot:
+          path: spec
+  - it: should enable sub-charts
+    values:
+      - ./values/image.yaml
+    set:
+      mysql.enabled: true
+      redis.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec

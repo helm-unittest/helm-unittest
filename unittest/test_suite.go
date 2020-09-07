@@ -160,12 +160,17 @@ func (s *TestSuite) runV2TestJobs(
 	jobResults := make([]*TestJobResult, len(s.Tests))
 
 	for idx, testJob := range s.Tests {
+		dependenciesBackup := make([]*v2chart.Chart, len(chart.Dependencies))
+		copy(dependenciesBackup, chart.Dependencies)
+
 		jobResult := testJob.RunV2(chart, cache, &TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
 		if !jobResult.Passed {
 			suitePass = false
 		}
+
+		chart.Dependencies = dependenciesBackup
 	}
 	return suitePass, jobResults
 }
