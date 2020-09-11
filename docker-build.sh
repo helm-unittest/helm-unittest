@@ -29,7 +29,7 @@ build() {
     exit
   fi
 
-  if [[ "$CIRCLE_BRANCH" == "master" ]]; then
+  if [[ ! -z "$DOCKER_PASSWORD" ]]; then
     echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
     docker push ${image}:${tag}
   fi
