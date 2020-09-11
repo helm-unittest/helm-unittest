@@ -158,11 +158,10 @@ func (s *TestSuite) runV2TestJobs(
 ) (bool, []*TestJobResult) {
 	suitePass := true
 	jobResults := make([]*TestJobResult, len(s.Tests))
+	dependenciesBackup := make([]*v2chart.Chart, len(chart.Dependencies))
+	copy(dependenciesBackup, chart.Dependencies)
 
 	for idx, testJob := range s.Tests {
-		dependenciesBackup := make([]*v2chart.Chart, len(chart.Dependencies))
-		copy(dependenciesBackup, chart.Dependencies)
-
 		jobResult := testJob.RunV2(chart, cache, &TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
@@ -181,6 +180,9 @@ func (s *TestSuite) runV3TestJobs(
 ) (bool, []*TestJobResult) {
 	suitePass := true
 	jobResults := make([]*TestJobResult, len(s.Tests))
+	metadataDependenciesBackup := cloneDependencies(chart.Metadata.Dependencies)
+	dependenciesBackup := chart.Dependencies()
+	valuesBackup := chart.Values
 
 	for idx, testJob := range s.Tests {
 		jobResult := testJob.RunV3(chart, cache, &TestJobResult{Index: idx})
@@ -189,6 +191,31 @@ func (s *TestSuite) runV3TestJobs(
 		if !jobResult.Passed {
 			suitePass = false
 		}
+
+		chart.SetDependencies(dependenciesBackup...)
+		chart.Values = valuesBackup
+		chart.Metadata.Dependencies = metadataDependenciesBackup
 	}
 	return suitePass, jobResults
+}
+
+func cloneDependencies(metadataDependencies []*v3chart.Dependency) []*v3chart.Dependency {
+	clonedDependencies := make([]*v3chart.Dependency, 0)
+
+	for _, metadataDependency := range metadataDependencies {
+		clonedDependency := &v3chart.Dependency{
+			Name:         metadataDependency.Name,
+			Version:      metadataDependency.Version,
+			Repository:   metadataDependency.Repository,
+			Condition:    metadataDependency.Condition,
+			Tags:         metadataDependency.Tags,
+			Enabled:      metadataDependency.Enabled,
+			ImportValues: metadataDependency.ImportValues,
+			Alias:        metadataDependency.Alias,
+		}
+
+		clonedDependencies = append(clonedDependencies, clonedDependency)
+	}
+
+	return clonedDependencies
 }

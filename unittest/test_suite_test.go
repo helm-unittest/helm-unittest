@@ -442,7 +442,7 @@ tests:
 }
 
 func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV2WithSubChart)
+	c, _ := loader.Load(testV3WithSubChart)
 	suiteDoc := `
 suite: test suite with subchart
 templates:

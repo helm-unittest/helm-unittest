@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
-	github.com/bradleyjkemp/cupaloy/v2 v2.5.0
+	github.com/bradleyjkemp/cupaloy/v2 v2.6.0
 	github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21
 	github.com/fatih/color v1.9.0
 	github.com/googleapis/gnostic v0.4.0 // indirect
@@ -20,7 +20,6 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
@@ -29,7 +28,7 @@ require (
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
-	helm.sh/helm/v3 v3.2.4
-	k8s.io/helm v2.16.9+incompatible
+	helm.sh/helm/v3 v3.3.1
+	k8s.io/helm v2.16.10+incompatible
 	k8s.io/utils v0.0.0-20200724153422-f32512634ab7 // indirect
 )

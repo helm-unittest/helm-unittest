@@ -35,3 +35,9 @@ resources: {}
   # requests:
   #  cpu: 100m
   #  memory: 128Mi
+
+postgresql:
+  enabled: true
+
+another-postgresql:
+  enabled: true
