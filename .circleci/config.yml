@@ -49,7 +49,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: golang:1.14
+      - image: circleci/golang:1.14
     working_directory: /go/src/github.com/lrills/helm-unittest
     steps:
       - checkout
