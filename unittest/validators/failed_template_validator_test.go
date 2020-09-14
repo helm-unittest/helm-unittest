@@ -49,7 +49,7 @@ func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Expected:",
+		"Expected to equal:",
 		"	A field should not be required",
 		"Actual:",
 		"	A field should be required",

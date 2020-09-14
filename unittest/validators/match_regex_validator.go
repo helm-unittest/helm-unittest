@@ -15,16 +15,13 @@ type MatchRegexValidator struct {
 }
 
 func (v MatchRegexValidator) failInfo(actual string, index int, not bool) []string {
-	var notAnnotation = ""
-	if not {
-		notAnnotation = " NOT"
-	}
-	regexFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to match:%s
-Actual:%s
-`
-	return splitInfof(regexFailFormat, index, v.Path, v.Pattern, actual)
+	return splitInfof(
+		setFailFormat(not, true, true, false, " to match"),
+		index,
+		v.Path,
+		v.Pattern,
+		actual,
+	)
 }
 
 // Validate implement Validatable

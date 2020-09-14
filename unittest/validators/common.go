@@ -42,6 +42,34 @@ type Validatable interface {
 	Validate(context *ValidateContext) (bool, []string)
 }
 
+// setFailFormat,
+// setting the formatting for the failure message.
+func setFailFormat(not, path, actual, diff bool, customize string) string {
+	var notAnnotation string
+	var result string
+	if not {
+		notAnnotation = " NOT"
+	}
+	result = `
+Expected` + notAnnotation + customize + `:
+%s
+`
+	if path {
+		result = `Path:%s` + result
+	}
+	if actual {
+		result += `Actual:
+%s
+`
+	}
+	if diff {
+		result += `Diff:
+%s	
+`
+	}
+	return result
+}
+
 // splitInfof split multi line string into array of string
 func splitInfof(format string, index int, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")

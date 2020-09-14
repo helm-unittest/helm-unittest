@@ -61,8 +61,10 @@ func TestMatchRegexRawValidatorWhenMatchFail(t *testing.T) {
 	})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Expected to match:	^foo",
-		"Actual:	This is a NOTES.txt document.",
+		"Expected to match:",
+		"	^foo",
+		"Actual:",
+		"	This is a NOTES.txt document.",
 	}, diff)
 }
 
@@ -77,8 +79,10 @@ func TestMatchRegexRawValidatorWhenNegativeAndMatchFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Expected NOT to match:	^This",
-		"Actual:	This is a NOTES.txt document.",
+		"Expected NOT to match:",
+		"	^This",
+		"Actual:",
+		"	This is a NOTES.txt document.",
 	}, diff)
 }
 

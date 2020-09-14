@@ -8,15 +8,20 @@ type IsAPIVersionValidator struct {
 }
 
 func (v IsAPIVersionValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
+	customMessage := " to be apiVersion"
 	if not {
-		notAnnotation = " NOT to be"
+		return splitInfof(
+			setFailFormat(not, false, false, false, customMessage),
+			index,
+			v.Of,
+		)
 	}
-	isAPIVersionFailFormat := "Expected" + notAnnotation + " apiVersion:%s"
-	if not {
-		return splitInfof(isAPIVersionFailFormat, index, v.Of)
-	}
-	return splitInfof(isAPIVersionFailFormat+"\nActual:%s", index, v.Of, common.TrustedMarshalYAML(actual))
+	return splitInfof(
+		setFailFormat(not, false, true, false, customMessage),
+		index,
+		v.Of,
+		common.TrustedMarshalYAML(actual),
+	)
 }
 
 // Validate implement Validatable

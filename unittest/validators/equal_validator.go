@@ -14,28 +14,20 @@ type EqualValidator struct {
 }
 
 func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT to equal"
-	}
-	failFormat := `
-Path:%s
-Expected` + notAnnotation + `:
-%s`
-
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
+	customMessage := " to equal"
 	if not {
-		return splitInfof(failFormat, index, a.Path, expectedYAML)
+		return splitInfof(
+			setFailFormat(not, true, false, false, customMessage),
+			index,
+			a.Path,
+			expectedYAML,
+		)
 	}
 
 	actualYAML := common.TrustedMarshalYAML(actual)
 	return splitInfof(
-		failFormat+`
-Actual:
-%s
-Diff:
-%s
-`,
+		setFailFormat(not, true, true, true, customMessage),
 		index,
 		a.Path,
 		expectedYAML,

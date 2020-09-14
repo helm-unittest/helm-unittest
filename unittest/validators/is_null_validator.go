@@ -11,17 +11,12 @@ type IsNullValidator struct {
 }
 
 func (v IsNullValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT"
-	}
-
-	isNullFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to be null, got:
-%s
-`
-	return splitInfof(isNullFailFormat, index, v.Path, common.TrustedMarshalYAML(actual))
+	return splitInfof(
+		setFailFormat(not, true, false, false, " to be null, got"),
+		index,
+		v.Path,
+		common.TrustedMarshalYAML(actual),
+	)
 }
 
 // Validate implement Validatable

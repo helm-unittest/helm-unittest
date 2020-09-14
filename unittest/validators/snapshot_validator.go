@@ -13,22 +13,19 @@ type MatchSnapshotValidator struct {
 }
 
 func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, index int, not bool) []string {
-	var notAnnotation = ""
-	if not {
-		notAnnotation = " NOT"
-	}
-	snapshotFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(int(compared.Index)) + `:
-%s
-`
+	customMessage := " to match snapshot " + strconv.Itoa(int(compared.Index))
 	var infoToShow string
 	if not {
 		infoToShow = compared.CachedSnapshot
 	} else {
 		infoToShow = diff(compared.CachedSnapshot, compared.NewSnapshot)
 	}
-	return splitInfof(snapshotFailFormat, index, v.Path, infoToShow)
+	return splitInfof(
+		setFailFormat(not, true, false, false, customMessage),
+		index,
+		v.Path,
+		infoToShow,
+	)
 }
 
 // Validate implement Validatable

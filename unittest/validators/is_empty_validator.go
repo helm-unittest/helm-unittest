@@ -13,17 +13,12 @@ type IsEmptyValidator struct {
 }
 
 func (v IsEmptyValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT"
-	}
-
-	isEmptyFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to be empty, got:
-%s
-`
-	return splitInfof(isEmptyFailFormat, index, v.Path, common.TrustedMarshalYAML(actual))
+	return splitInfof(
+		setFailFormat(not, true, false, false, " to be empty, got"),
+		index,
+		v.Path,
+		common.TrustedMarshalYAML(actual),
+	)
 }
 
 // Validate implement Validatable

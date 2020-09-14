@@ -8,15 +8,20 @@ type IsKindValidator struct {
 }
 
 func (v IsKindValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
+	customMessage := " to be kind"
 	if not {
-		notAnnotation = " NOT to be"
+		return splitInfof(
+			setFailFormat(not, false, false, false, customMessage),
+			index,
+			v.Of,
+		)
 	}
-	isKindFailFormat := "Expected" + notAnnotation + " kind:%s"
-	if not {
-		return splitInfof(isKindFailFormat, index, v.Of)
-	}
-	return splitInfof(isKindFailFormat+"\nActual:%s", index, v.Of, common.TrustedMarshalYAML(actual))
+	return splitInfof(
+		setFailFormat(not, false, true, false, customMessage),
+		index,
+		v.Of,
+		common.TrustedMarshalYAML(actual),
+	)
 }
 
 // Validate implement Validatable

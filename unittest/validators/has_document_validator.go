@@ -10,16 +10,16 @@ type HasDocumentsValidator struct {
 }
 
 func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
-	var notAnnotation string
+	customMessage := " documents count to be"
 	if not {
-		notAnnotation = " NOT to be"
-	}
-	hasDocumentsFailFormat := "Expected documents count" + notAnnotation + ":%s"
-	if not {
-		return splitInfof(hasDocumentsFailFormat, -1, strconv.Itoa(v.Count))
+		return splitInfof(
+			setFailFormat(not, false, false, false, customMessage),
+			-1,
+			strconv.Itoa(v.Count),
+		)
 	}
 	return splitInfof(
-		hasDocumentsFailFormat+"\nActual:%s",
+		setFailFormat(not, false, true, false, customMessage),
 		-1,
 		strconv.Itoa(v.Count),
 		strconv.Itoa(actual),

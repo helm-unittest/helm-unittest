@@ -81,8 +81,10 @@ func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Path:	a.b[0].c",
-		"Expected to match:	^foo",
-		"Actual:	hello world",
+		"Expected to match:",
+		"	^foo",
+		"Actual:",
+		"	hello world",
 	}, diff)
 }
 
@@ -99,8 +101,10 @@ func TestMatchRegexValidatorWhenNegativeAndMatchFail(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Path:	a.b[0].c",
-		"Expected NOT to match:	^hello",
-		"Actual:	hello world",
+		"Expected NOT to match:",
+		"	^hello",
+		"Actual:",
+		"	hello world",
 	}, diff)
 }
 

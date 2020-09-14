@@ -43,8 +43,10 @@ func TestHasDocumentsValidatorWhenFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Expected documents count:	1",
-		"Actual:	2",
+		"Expected documents count to be:",
+		"	1",
+		"Actual:",
+		"	2",
 	}, diff)
 }
 
@@ -59,6 +61,7 @@ func TestHasDocumentsValidatorWhenNegativeAndFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Expected documents count NOT to be:	2",
+		"Expected NOT documents count to be:",
+		"	2",
 	}, diff)
 }

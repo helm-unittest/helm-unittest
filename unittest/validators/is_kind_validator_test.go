@@ -48,8 +48,10 @@ func TestIsKindValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Expected kind:	Service",
-		"Actual:	Pod",
+		"Expected to be kind:",
+		"	Service",
+		"Actual:",
+		"	Pod",
 	}, diff)
 }
 
@@ -65,7 +67,8 @@ func TestIsKindValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Expected NOT to be kind:	Pod",
+		"Expected NOT to be kind:",
+		"	Pod",
 	}, diff)
 }
 

@@ -46,8 +46,10 @@ func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Expected apiVersion:	v2",
-		"Actual:	v1",
+		"Expected to be apiVersion:",
+		"	v2",
+		"Actual:",
+		"	v1",
 	}, diff)
 }
 
@@ -64,7 +66,8 @@ func TestIsAPIVersionValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Expected NOT to be apiVersion:	v1",
+		"Expected NOT to be apiVersion:",
+		"	v1",
 	}, diff)
 }
 

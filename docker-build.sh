@@ -29,7 +29,7 @@ build() {
     exit
   fi
 
-  if [[ ! -z "$DOCKER_PASSWORD" ]]; then
+  if [[ ! -z "$DOCKER_PASSWORD" ]] && [[ ! -z "$DOCKER_USERNAME" ]]; then
     echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
     docker push ${image}:${tag}
   fi
@@ -73,7 +73,7 @@ pluginLatestVersion=$(echo $pluginLatestRelease\" |grep -oP '(?<=tag\/v)[0-9][^"
 latest="$helmLatestVersion-$pluginLatestVersion"
 echo $latest
 
-if [[ "$CIRCLE_BRANCH" == "master" ]]; then
+if [[ ! -z "$DOCKER_PASSWORD" ]] && [[ ! -z "$DOCKER_USERNAME" ]]; then
   echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
   docker pull ${image}:${latest}
   docker tag ${image}:${latest} ${image}:latest

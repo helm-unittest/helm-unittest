@@ -55,7 +55,7 @@ func TestEqualValidatorWhenFail(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Path:	a.b[0]",
-		"Expected:",
+		"Expected to equal:",
 		"	d: 321",
 		"Actual:",
 		"	c: 123",
@@ -90,7 +90,7 @@ a:
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
 		"Path:	a.b[0]",
-		"Expected:",
+		"Expected to equal:",
 		"	c: 321",
 		"Actual:",
 		"	c: 123",
@@ -119,7 +119,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Path:	a.b[0]",
-		"Expected:",
+		"Expected to equal:",
 		"	c: 321",
 		"Actual:",
 		"	c: 123",
@@ -131,7 +131,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"	+c: 123",
 		"DocumentIndex:	1",
 		"Path:	a.b[0]",
-		"Expected:",
+		"Expected to equal:",
 		"	c: 321",
 		"Actual:",
 		"	c: 123",

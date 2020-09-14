@@ -12,27 +12,19 @@ type EqualRawValidator struct {
 }
 
 func (a EqualRawValidator) failInfo(actual interface{}, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT to equal"
-	}
-	failFormat := `
-Expected` + notAnnotation + `:
-%s`
-
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
+	customMessage := " to equal"
 	if not {
-		return splitInfof(failFormat, -1, expectedYAML)
+		return splitInfof(
+			setFailFormat(not, false, false, false, customMessage),
+			-1,
+			expectedYAML,
+		)
 	}
 
 	actualYAML := common.TrustedMarshalYAML(actual)
 	return splitInfof(
-		failFormat+`
-Actual:
-%s
-Diff:
-%s
-`,
+		setFailFormat(not, false, true, true, customMessage),
 		-1,
 		expectedYAML,
 		actualYAML,

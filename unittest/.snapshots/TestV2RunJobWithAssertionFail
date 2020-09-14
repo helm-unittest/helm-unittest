@@ -10,7 +10,7 @@
         (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
         (string) (len=16) "DocumentIndex:\t0",
         (string) (len=10) "Path:\tkind",
-        (string) (len=9) "Expected:",
+        (string) (len=18) "Expected to equal:",
         (string) (len=10) "\tWrongKind",
         (string) (len=7) "Actual:",
         (string) (len=11) "\tDeployment",
@@ -28,12 +28,14 @@
     }),
     (*unittest.AssertionResult)({
       Index: (int) 1,
-      FailInfo: ([]string) (len=5) {
+      FailInfo: ([]string) (len=7) {
         (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
         (string) (len=16) "DocumentIndex:\t0",
         (string) (len=19) "Path:\tmetadata.name",
-        (string) (len=36) "Expected to match:\tpattern-not-match",
-        (string) (len=26) "Actual:\tRELEASE-NAME-basic"
+        (string) (len=18) "Expected to match:",
+        (string) (len=18) "\tpattern-not-match",
+        (string) (len=7) "Actual:",
+        (string) (len=19) "\tRELEASE-NAME-basic"
       },
       Passed: (bool) false,
       AssertType: (string) (len=10) "matchRegex",

@@ -48,7 +48,7 @@ func TestEqualRawValidatorWhenFail(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Expected:",
+		"Expected to equal:",
 		"	Invalid text.",
 		"Actual:",
 		"	This is a NOTES.txt document.",

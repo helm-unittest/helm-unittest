@@ -18,17 +18,8 @@ type ContainsValidator struct {
 }
 
 func (v ContainsValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT"
-	}
-	containsFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to contain:
-%s
-Actual:
-%s
-`
+	containsFailFormat := setFailFormat(not, true, true, false, " to contain")
+
 	return splitInfof(
 		containsFailFormat,
 		index,

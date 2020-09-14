@@ -67,7 +67,7 @@
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	spec.template.spec.containers[0].image
-			Expected:
+			Expected to equal:
 				nginx:stable
 			Actual:
 				apache:latest
@@ -79,7 +79,7 @@
 				+apache:latest
 			DocumentIndex:	1
 			Path:	spec.template.spec.containers[0].image
-			Expected:
+			Expected to equal:
 				nginx:stable
 			Actual:
 				apache:latest
@@ -107,20 +107,26 @@
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	metadata.name
-			Expected to match:	^.*-foobar$
-			Actual:	RELEASE-NAME-basic
+			Expected to match:
+				^.*-foobar$
+			Actual:
+				RELEASE-NAME-basic
 			DocumentIndex:	1
 			Path:	metadata.name
-			Expected to match:	^.*-foobar$
-			Actual:	RELEASE-NAME-basic-db
+			Expected to match:
+				^.*-foobar$
+			Actual:
+				RELEASE-NAME-basic-db
 
 		- asserts[3] `notMatchRegex` fail
 
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	metadata.name
-			Expected NOT to match:	^.*-basic$
-			Actual:	RELEASE-NAME-basic
+			Expected NOT to match:
+				^.*-basic$
+			Actual:
+				RELEASE-NAME-basic
 
 		- asserts[4] `contains` fail
 
@@ -251,35 +257,47 @@
 
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Expected kind:	Pod
-			Actual:	Deployment
+			Expected to be kind:
+				Pod
+			Actual:
+				Deployment
 			DocumentIndex:	1
-			Expected kind:	Pod
-			Actual:	Deployment
+			Expected to be kind:
+				Pod
+			Actual:
+				Deployment
 
 		- asserts[11] `isAPIVersion` fail
 
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Expected apiVersion:	v2
-			Actual:	extensions/v1beta1
+			Expected to be apiVersion:
+				v2
+			Actual:
+				extensions/v1beta1
 			DocumentIndex:	1
-			Expected apiVersion:	v2
-			Actual:	extensions/v1beta1
+			Expected to be apiVersion:
+				v2
+			Actual:
+				extensions/v1beta1
 
 		- asserts[12] `hasDocuments` fail
 
 			Template:	basic/templates/deployment.yaml
-			Expected documents count:	1
-			Actual:	2
+			Expected documents count to be:
+				1
+			Actual:
+				2
  FAIL  test ingress that should fail	../__fixtures__/v2/basic/tests_failed/ingress_test.yaml
 	- should fail render nothing if not enabled
 
 		- asserts[0] `hasDocuments` fail
 
 			Template:	basic/templates/ingress.yaml
-			Expected documents count:	1
-			Actual:	0
+			Expected documents count to be:
+				1
+			Actual:
+				0
 
 	- should fail render ingress right if enabled
 
@@ -326,7 +344,7 @@
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
 			Path:	spec.tls
-			Expected:
+			Expected to equal:
 				- secretName: my-tls-secret
 			Actual:
 				null
@@ -352,8 +370,10 @@
 		- asserts[0] `matchRegexRaw` fail
 
 			Template:	basic/templates/NOTES.txt
-			Expected to match:	http:///$SERVICE_IP:80
-			Actual:	1. Get the application URL by running these commands:
+			Expected to match:
+				http:///$SERVICE_IP:80
+			Actual:
+				1. Get the application URL by running these commands:
 				     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
 				           You can watch the status of by running 'kubectl get svc -w RELEASE-NAME-basic'
 				  export SERVICE_IP=$(kubectl get svc --namespace NAMESPACE RELEASE-NAME-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}')

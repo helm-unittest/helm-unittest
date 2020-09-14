@@ -15,19 +15,8 @@ type IsSubsetValidator struct {
 }
 
 func (v IsSubsetValidator) failInfo(actual interface{}, index int, not bool) []string {
-	var notAnnotation string
-	if not {
-		notAnnotation = " NOT"
-	}
-	containsFailFormat := `
-Path:%s
-Expected` + notAnnotation + ` to contain:
-%s
-Actual:
-%s
-`
 	return splitInfof(
-		containsFailFormat,
+		setFailFormat(not, true, true, false, " to contain"),
 		index,
 		v.Path,
 		common.TrustedMarshalYAML(v.Content),

@@ -11,21 +11,18 @@ import (
 type MatchSnapshotRawValidator struct{}
 
 func (v MatchSnapshotRawValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
-	var notAnnotation = ""
-	if not {
-		notAnnotation = " NOT"
-	}
-	snapshotFailFormat := `
-Expected` + notAnnotation + ` to match snapshot ` + strconv.Itoa(int(compared.Index)) + `:
-%s
-`
+	customMessage := " to match snapshot " + strconv.Itoa(int(compared.Index))
 	var infoToShow string
 	if not {
 		infoToShow = compared.CachedSnapshot
 	} else {
 		infoToShow = diff(compared.CachedSnapshot, compared.NewSnapshot)
 	}
-	return splitInfof(snapshotFailFormat, -1, infoToShow)
+	return splitInfof(
+		setFailFormat(not, false, false, false, customMessage),
+		-1,
+		infoToShow,
+	)
 }
 
 // Validate implement Validatable
