@@ -1,0 +1,47 @@
+(*results.TestJobResult)({
+  DisplayName: (string) (len=11) "should work",
+  Index: (int) 0,
+  Passed: (bool) false,
+  ExecError: (error) <nil>,
+  AssertsResult: ([]*results.AssertionResult) (len=2) {
+    (*results.AssertionResult)({
+      Index: (int) 0,
+      FailInfo: ([]string) (len=13) {
+        (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
+        (string) (len=16) "DocumentIndex:\t0",
+        (string) (len=10) "Path:\tkind",
+        (string) (len=18) "Expected to equal:",
+        (string) (len=10) "\tWrongKind",
+        (string) (len=7) "Actual:",
+        (string) (len=11) "\tDeployment",
+        (string) (len=5) "Diff:",
+        (string) (len=13) "\t--- Expected",
+        (string) (len=11) "\t+++ Actual",
+        (string) (len=16) "\t@@ -1,2 +1,2 @@",
+        (string) (len=11) "\t-WrongKind",
+        (string) (len=12) "\t+Deployment"
+      },
+      Passed: (bool) false,
+      AssertType: (string) (len=5) "equal",
+      Not: (bool) false,
+      CustomInfo: (string) ""
+    }),
+    (*results.AssertionResult)({
+      Index: (int) 1,
+      FailInfo: ([]string) (len=7) {
+        (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
+        (string) (len=16) "DocumentIndex:\t0",
+        (string) (len=19) "Path:\tmetadata.name",
+        (string) (len=18) "Expected to match:",
+        (string) (len=18) "\tpattern-not-match",
+        (string) (len=7) "Actual:",
+        (string) (len=19) "\tRELEASE-NAME-basic"
+      },
+      Passed: (bool) false,
+      AssertType: (string) (len=10) "matchRegex",
+      Not: (bool) false,
+      CustomInfo: (string) ""
+    })
+  },
+  Duration: (time.Duration) 0s
+})

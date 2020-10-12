@@ -18,11 +18,11 @@ hookInstall: bootstrap build
 
 .PHONY: unittest
 unittest:
-	go test ./unittest/... -v -cover
+	go test ./... -v -cover
 
 .PHONY: build
 build: unittest
-	go build -o untt -ldflags $(LDFLAGS) ./main.go
+	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
 dist:
