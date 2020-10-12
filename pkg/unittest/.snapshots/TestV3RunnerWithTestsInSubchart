@@ -1,0 +1,22 @@
+
+### Chart [ with-subchart ] ../../test/data/v3/with-subchart
+
+
+ PASS  test deployment	../../test/data/v3/with-subchart/charts/child-chart/tests/deployment_test.yaml
+ PASS  test deployment	../../test/data/v3/with-subchart/tests/deployment_test.yaml
+ PASS  test ingress	../../test/data/v3/with-subchart/charts/child-chart/tests/ingress_test.yaml
+ PASS  test ingress	../../test/data/v3/with-subchart/tests/ingress_test.yaml
+ PASS  test notes	../../test/data/v3/with-subchart/charts/child-chart/tests/notes_test.yaml
+ PASS  test notes	../../test/data/v3/with-subchart/tests/notes_test.yaml
+ PASS  test postgresql deployment	../../test/data/v3/with-subchart/tests/postgresql_deployment_test.yaml
+ PASS  test service	../../test/data/v3/with-subchart/charts/child-chart/tests/service_test.yaml
+ PASS  test service	../../test/data/v3/with-subchart/tests/service_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 9 passed, 9 total
+Tests:       21 passed, 21 total
+Snapshot:    9 passed, 9 total
+Time:        XX.XXXms
+
+
