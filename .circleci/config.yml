@@ -18,7 +18,7 @@ jobs:
           name: Test include Codecoverage
           command: |
             trap "go-junit-report < /tmp/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
-            go test ./unittest/... -coverprofile=/tmp/coverage -v -covermode=atomic | tee /tmp/go-test-output
+            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic | tee /tmp/go-test-output
       - sonarcloud/scan
       - run:
           name: Check formated
