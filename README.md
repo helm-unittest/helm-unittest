@@ -123,8 +123,8 @@ defined in test suite files.
 
 ## Example
 
-Check [`__fixtures__/v2/basic/`](./__fixtures__/v2/basic) for some basic use cases of a simple chart (version < 2).
-Check [`__fixtures__/v3/basic/`](./__fixtures__/v3/basic) for some basic use cases of a simple chart (version > 3).
+Check [`test/data/v2/basic/`](./test/data/v2/basic) for some basic use cases of a simple chart (version < 2).
+Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart (version > 3).
 
 ## Snapshot Testing
 
@@ -149,7 +149,7 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 ```
 $ helm unittest -u my-chart
 ```
-The cache files is stored as `__snapshot__/v2/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
 ## Dependend subchart Testing (Requirements.yaml)
 
@@ -170,7 +170,7 @@ tests:
 Note 1: if dependend subcharts uses an alias, use the alias name in the templates.
 Note 2: using the folder structure in templates can also be used to unittest templates which are placed in subfolders or unittest subcharts from the rootchart.
 
-Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) or [`__fixtures__/v3/with-subchart/`](./__fixtures__/v3/with-subchart) as an example.
+Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Tests within subchart
 
@@ -188,7 +188,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) or [`__fixtures__/v3/with-subchart/`](./__fixtures__/v3/with-subchart) as an example.
+Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Related Projects / Commands
 
@@ -225,7 +225,7 @@ And please make CI passed when request a PR which would check following things:
 In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
 
 ```
-UPDATE_SNAPSHOTS=true go test ./unittest/...
+UPDATE_SNAPSHOTS=true go test ./...
 ```
 
 This update the snapshot cache file and please add them before you commit.
