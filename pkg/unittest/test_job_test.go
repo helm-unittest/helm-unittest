@@ -155,7 +155,6 @@ set:
 template: ingress.yaml
 asserts:
   - failedTemplate:
-      errorType: required
       errorMessage: The externalPort is required
 `
 	var tj TestJob
@@ -398,7 +397,6 @@ set:
 template: ingress.yaml
 asserts:
   - failedTemplate:
-      errorType: required
       errorMessage: The externalPort is required
 `
 	var tj TestJob

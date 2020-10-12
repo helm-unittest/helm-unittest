@@ -1,3 +1,19 @@
+0.2.5 / 
+==================
+- Restructure solution to align more on go structure.
+
+0.2.4 / 2020-09-11
+==================
+- Fix resetting chart dependencies with conditions when running multiple tests in a testsuite (resolves #60 )
+- Fix automatic publishing docker image after distribution (resolves #33 )
+
+0.2.3 / 2020-08-31
+==================
+- Auto upload latest plugin version with a combination of helm clients (resolves #33 )
+- Add support for setting Release on test suite level
+- Add support for setting Capabilities, also on test suite level (resolves #36 ).
+- Fix missing file assertion (resolves #39 , resolves #53 ).
+
 0.2.2 / 2020-08-21
 ==================
 - Add overriding capabilities within the testsuite (resolves #36).
