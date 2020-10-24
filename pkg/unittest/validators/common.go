@@ -10,6 +10,11 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
+const errorFormat = `
+Error:
+%s
+`
+
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
 	CompareToSnapshot(content interface{}) *snapshot.CompareResult
@@ -115,11 +120,6 @@ func uniformContent(content interface{}) string {
 	return strings.ReplaceAll(actual, "\r\n", "\n")
 }
 
-const errorFormat = `
-Error:
-%s
-`
-
 // Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)
 func validateSubset(actual map[interface{}]interface{}, content interface{}) bool {
 	found := false
@@ -139,4 +139,11 @@ func determineSuccess(idx int, originalValue, newValue bool) bool {
 	}
 
 	return originalValue && newValue
+}
+
+func validateRequiredField(actual, field string) error {
+	if actual == "" {
+		return fmt.Errorf("expected field '%s' to be filled", field)
+	}
+	return nil
 }

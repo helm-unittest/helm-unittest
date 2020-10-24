@@ -26,7 +26,7 @@ func (a FailedTemplateValidator) failInfo(actual interface{}, index int, not boo
 		setFailFormat(not, false, true, false, customMessage),
 		index,
 		a.ErrorMessage,
-		fmt.Sprintf("%v", actual),
+		fmt.Sprintf("%s", actual),
 	)
 }
 

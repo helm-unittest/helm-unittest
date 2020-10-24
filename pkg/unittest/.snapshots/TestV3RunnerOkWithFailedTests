@@ -2,6 +2,13 @@
 ### Chart [ basic ] ../../test/data/v3/basic
 
 
+ FAIL  Configmap mulit line Test	../../test/data/v3/basic/tests_failed/configmap_test.yaml
+	- should NOT configure ssl params if NOT set to be exposed
+
+		- asserts[0] `notMatchRegex` fail
+			Template:	basic/templates/configmap.yaml
+			Error:
+				expected field 'pattern' to be filled
  FAIL  test autoscaling	../../test/data/v3/basic/tests_failed/nofile_test.yaml
 	- should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled
 
@@ -431,8 +438,8 @@
 
 
 Charts:      1 failed, 0 passed, 1 total
-Test Suites: 6 failed, 0 passed, 6 total
-Tests:       14 failed, 0 passed, 14 total
+Test Suites: 7 failed, 0 passed, 7 total
+Tests:       15 failed, 0 passed, 15 total
 Snapshot:    2 passed, 2 total
 Time:        XX.XXXms
 
