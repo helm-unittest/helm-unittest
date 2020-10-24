@@ -12,12 +12,27 @@ var docToTestMatchRegex = `
 a:
   b:
     - c: hello world
+e: |
+  aaa
+  bbb
 `
 
 func TestMatchRegexValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegex)
 
 	validator := MatchRegexValidator{"a.b[0].c", "^hello"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestMatchRegexValidatorWhenMultiLineOk(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	validator := MatchRegexValidator{"e", "bbb"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -120,6 +135,21 @@ func TestMatchRegexValidatorWhenInvalidIndex(t *testing.T) {
 	assert.Equal(t, []string{
 		"Error:",
 		"	documentIndex 2 out of range",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenNoPattern(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	validator := MatchRegexValidator{"a.b[0].c", ""}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	expected field 'pattern' to be filled",
 	}, diff)
 }
 

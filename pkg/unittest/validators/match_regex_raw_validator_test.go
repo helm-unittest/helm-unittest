@@ -85,6 +85,21 @@ func TestMatchRegexRawValidatorWhenNegativeAndMatchFail(t *testing.T) {
 	}, diff)
 }
 
+func TestMatchRegexRawValidatorWhenNoPattern(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	validator := MatchRegexRawValidator{""}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	expected field 'pattern' to be filled",
+	}, diff)
+}
+
 func TestMatchRegexRawValidatorWhenInvalidIndex(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegexRaw)
 

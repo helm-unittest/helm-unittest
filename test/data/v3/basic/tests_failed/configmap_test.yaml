@@ -1,0 +1,9 @@
+suite: Configmap mulit line Test
+templates:
+  - configmap.yaml
+tests:
+  - it: should NOT configure ssl params if NOT set to be exposed
+    asserts:
+      - notMatchRegex:
+          path: data.my\.conf
+          value: cacertfile

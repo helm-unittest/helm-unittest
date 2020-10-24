@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "basic.fullname" . }}
+data:
+  my.conf: |
+    {{- if .Values.expose }}
+    cacertfile            = /etc/cert/cacert.pem
+    certfile              = /etc/cert/tls.crt
+    keyfile               = /etc/cert/tls.key
+    verify                = verify_none
+    {{- end }}
+    abc                   = qqq
+    qqq                   = abc

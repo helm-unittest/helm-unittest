@@ -22,6 +22,11 @@ func (v MatchRegexRawValidator) failInfo(actual string, not bool) []string {
 
 // Validate implement Validatable
 func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []string) {
+	verr := validateRequiredField(v.Pattern, "pattern")
+	if verr != nil {
+		return false, splitInfof(errorFormat, -1, verr.Error())
+	}
+
 	manifests, err := context.getManifests()
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, err.Error())
