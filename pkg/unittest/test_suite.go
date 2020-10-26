@@ -44,6 +44,9 @@ type TestSuite struct {
 		Revision  int
 		IsUpgrade bool `yaml:"upgrade"`
 	}
+	Chart struct {
+		Version string
+	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
 		MinorVersion string   `yaml:"minorVersion"`
@@ -105,6 +108,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
+		s.polishChartSettings(test)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
@@ -150,6 +154,13 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 
 	if len(s.Capabilities.APIVersions) > 0 {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
+	}
+}
+
+// override chart settings in testjobs when defined in testsuite
+func (s *TestSuite) polishChartSettings(test *TestJob) {
+	if s.Chart.Version != "" {
+		test.Chart.Version = s.Chart.Version
 	}
 }
 

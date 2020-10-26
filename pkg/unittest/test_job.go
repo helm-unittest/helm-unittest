@@ -156,6 +156,9 @@ type TestJob struct {
 		Revision  int
 		IsUpgrade bool `yaml:"upgrade"`
 	}
+	Chart struct {
+		Version string
+	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
 		MinorVersion string   `yaml:"minorVersion"`
@@ -297,6 +300,11 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 		APIVersions:    t.Capabilities.APIVersions,
 	}
 
+	// Override the chart version when version is setup in test.
+	if t.Chart.Version != "" {
+		targetChart.Metadata.Version = t.Chart.Version
+	}
+
 	outputOfFiles, err := v2renderutil.Render(targetChart, config, renderOpts)
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
@@ -320,6 +328,11 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, err
 	}
 	options := *t.releaseV3Option()
+
+	// Override the chart version when version is setup in test.
+	if t.Chart.Version != "" {
+		targetChart.Metadata.Version = t.Chart.Version
+	}
 
 	err = v3util.ProcessDependencies(targetChart, values)
 	if err != nil {

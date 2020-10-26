@@ -331,6 +331,31 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV2RunJobWithChartSettings(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	manifest := `
+it: should work
+chart:
+  version: 9.9.9+test
+asserts:
+  - equal:
+      path: metadata.labels.chart
+      value: basic-9.9.9_test
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestV3RunJobOk(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
@@ -559,6 +584,31 @@ asserts:
   - hasDocuments:
       count: 1
     template: crd_backup.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithChartSettings(t *testing.T) {
+	c, _ := loader.Load(testV2BasicChart)
+	manifest := `
+it: should work
+chart:
+  version: 9.9.9+test
+asserts:
+  - equal:
+      path: metadata.labels.chart
+      value: basic-9.9.9_test
+    template: deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
