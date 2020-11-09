@@ -39,6 +39,7 @@ initArch() {
 # initOS discovers the operating system for this system.
 initOS() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
+  DIST=$(cat /etc/os-release 2>&1)
 
   case "$OS" in
     # Msys support
@@ -85,7 +86,7 @@ getDownloadURL() {
     fi
     PROJECT_CHECKSUM=$(curl -sL "$latest_url" | grep "checksum" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}'2>/dev/null)
+    DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     # Backward compatibility when arch type is not yet used.
     if [[ -z $DOWNLOAD_URL ]]; then
       echo "No download_url found only searching for $OS"
@@ -120,7 +121,11 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+        if [ echo "$DIST" | grep "ID=alpine" ];
+          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+        else
+          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
+        fi
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
@@ -128,7 +133,11 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+        if [ echo "$DIST" | grep "ID=alpine" ];
+          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+        else
+          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
+        fi
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
