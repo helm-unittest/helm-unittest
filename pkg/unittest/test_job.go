@@ -100,11 +100,11 @@ func parseV3RenderError(errorMessage string) (string, string) {
 
 func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
 	decoder := yaml.NewDecoder(strings.NewReader(rendered))
-	manifests := make([]common.K8sManifest, 0)
+	parsedYamls := make([]common.K8sManifest, 0)
 
 	for {
-		manifest := make(common.K8sManifest)
-		if err := decoder.Decode(manifest); err != nil {
+		parsedYaml := common.K8sManifest{}
+		if err := decoder.Decode(parsedYaml); err != nil {
 			if err == io.EOF {
 				break
 			} else {
@@ -112,12 +112,12 @@ func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
 			}
 		}
 
-		if len(manifest) > 0 {
-			manifests = append(manifests, manifest)
+		if len(parsedYaml) > 0 {
+			parsedYamls = append(parsedYamls, parsedYaml)
 		}
 	}
 
-	return manifests, nil
+	return parsedYamls, nil
 }
 
 func parseTextFile(rendered string) []common.K8sManifest {
@@ -285,7 +285,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	return yaml.Marshal(base)
 }
 
-// render the chart and return result map
+// render the V2chart and return result map
 func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, error) {
 	config := &v2chart.Config{Raw: string(userValues)}
 	kubeVersion := fmt.Sprintf("%s.%s", v2util.DefaultKubeVersion.Major, v2util.DefaultKubeVersion.Minor)
@@ -305,7 +305,10 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 		targetChart.Metadata.Version = t.Chart.Version
 	}
 
-	outputOfFiles, err := v2renderutil.Render(targetChart, config, renderOpts)
+	// Filter the files that needs to be validated
+	filteredChart := t.filterV2Chart(targetChart)
+
+	outputOfFiles, err := v2renderutil.Render(filteredChart, config, renderOpts)
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
@@ -319,6 +322,68 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 	}
 
 	return outputOfFiles, nil
+}
+
+// Filter the V2Chart and its dependencies with partials and selected test files.
+func (t *TestJob) filterV2Chart(targetChart *v2chart.Chart) *v2chart.Chart {
+	copiedChart := new(v2chart.Chart)
+	*copiedChart = *targetChart
+
+	suiteIsFromRootChart := len(strings.Split(t.chartRoute, string(filepath.Separator))) <= 1
+
+	if len(t.defaultTemplatesToAssert) == 0 && suiteIsFromRootChart {
+		return copiedChart
+	}
+
+	copiedChart.Templates = t.filterV2Templates(suiteIsFromRootChart, "", targetChart)
+
+	// Filter trough dependencies.
+	filteredDependencies := make([]*v2chart.Chart, 0)
+	for _, dependency := range targetChart.Dependencies {
+		filteredDependencyTemplates := t.filterV2Templates(suiteIsFromRootChart, dependency.Metadata.Name, dependency)
+		if len(filteredDependencyTemplates) > 0 {
+			copiedDependencyChart := new(v2chart.Chart)
+			*copiedDependencyChart = *dependency
+			copiedDependencyChart.Templates = filteredDependencyTemplates
+			filteredDependencies = append(filteredDependencies, copiedDependencyChart)
+		}
+	}
+	copiedChart.Dependencies = filteredDependencies
+
+	return copiedChart
+}
+
+// Filter the V2Templates with only the partials and selected test files.
+func (t *TestJob) filterV2Templates(suiteIsFromRootChart bool, dependecyChart string, targetChart *v2chart.Chart) []*v2chart.Template {
+	filteredTemplate := make([]*v2chart.Template, 0)
+	// check templates in chart
+	if suiteIsFromRootChart {
+
+		for _, fileName := range t.defaultTemplatesToAssert {
+			for _, template := range targetChart.Templates {
+				selectedTemplatName := filepath.ToSlash(getTemplateFileName(fileName))
+				foundTemplateName := template.Name
+
+				if dependecyChart != "" {
+					foundTemplateName = filepath.ToSlash(filepath.Join("charts", dependecyChart, template.Name))
+				}
+
+				if foundTemplateName == selectedTemplatName {
+					filteredTemplate = append(filteredTemplate, template)
+					break
+				}
+			}
+		}
+	}
+
+	// add partial templates
+	for _, template := range targetChart.Templates {
+		if strings.HasPrefix(filepath.Base(template.Name), "_") {
+			filteredTemplate = append(filteredTemplate, template)
+		}
+	}
+
+	return filteredTemplate
 }
 
 // render the chart and return result map
@@ -344,7 +409,10 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, err
 	}
 
-	outputOfFiles, err := v3engine.Render(targetChart, vals)
+	// Filter the files that needs to be validated
+	filteredChart := t.filterV3Chart(targetChart)
+
+	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
@@ -358,6 +426,67 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	return outputOfFiles, nil
+}
+
+// Filter the V3Chart and its dependencies with partials and selected test files.
+func (t *TestJob) filterV3Chart(targetChart *v3chart.Chart) *v3chart.Chart {
+	copiedChart := new(v3chart.Chart)
+	*copiedChart = *targetChart
+
+	suiteIsFromRootChart := len(strings.Split(t.chartRoute, string(filepath.Separator))) <= 1
+
+	if len(t.defaultTemplatesToAssert) == 0 && suiteIsFromRootChart {
+		return copiedChart
+	}
+
+	copiedChart.Templates = t.filterV3Templates(suiteIsFromRootChart, "", targetChart)
+
+	// Filter trough dependencies.
+	filteredDependencies := make([]*v3chart.Chart, 0)
+	for _, dependency := range targetChart.Dependencies() {
+		filteredDependencyTemplates := t.filterV3Templates(suiteIsFromRootChart, dependency.Metadata.Name, dependency)
+		if len(filteredDependencyTemplates) > 0 {
+			copiedDependencyChart := new(v3chart.Chart)
+			*copiedDependencyChart = *dependency
+			copiedDependencyChart.Templates = filteredDependencyTemplates
+			filteredDependencies = append(filteredDependencies, copiedDependencyChart)
+		}
+	}
+	copiedChart.SetDependencies(filteredDependencies...)
+
+	return copiedChart
+}
+
+// Filter the V3Templates with only the partials and selected test files.
+func (t *TestJob) filterV3Templates(suiteIsFromRootChart bool, dependecyChart string, targetChart *v3chart.Chart) []*v3chart.File {
+	filteredTemplate := make([]*v3chart.File, 0)
+	// check templates in chart
+	if suiteIsFromRootChart {
+		for _, fileName := range t.defaultTemplatesToAssert {
+			for _, template := range targetChart.Templates {
+				selectedTemplatName := filepath.ToSlash(getTemplateFileName(fileName))
+				foundTemplateName := template.Name
+
+				if dependecyChart != "" {
+					foundTemplateName = filepath.ToSlash(filepath.Join("charts", dependecyChart, template.Name))
+				}
+
+				if foundTemplateName == selectedTemplatName {
+					filteredTemplate = append(filteredTemplate, template)
+					break
+				}
+			}
+		}
+	}
+
+	// add partial templates
+	for _, template := range targetChart.Templates {
+		if strings.HasPrefix(filepath.Base(template.Name), "_") {
+			filteredTemplate = append(filteredTemplate, template)
+		}
+	}
+
+	return filteredTemplate
 }
 
 // get chartutil.ReleaseOptions ready for render
