@@ -39,7 +39,6 @@ initArch() {
 # initOS discovers the operating system for this system.
 initOS() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
-  DIST=$(cat /etc/os-release 2>&1)
 
   case "$OS" in
     # Msys support
@@ -113,6 +112,7 @@ downloadFile() {
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
+  DIST=$(cat /etc/os-release 2>&1)
   cd "/tmp"
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
   if [ -n "$PROJECT_CHECKSUM" ]; then
@@ -121,7 +121,7 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        if [ echo "$DIST" | grep "ID=alpine" ];
+        if [[ "$DIST" == *"ID=alpine"* ]]; then
           curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
         else
           curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
@@ -133,7 +133,7 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        if [ echo "$DIST" | grep "ID=alpine" ];
+        if [[ "$DIST" == *"ID=alpine"* ]]; then
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
         else
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
