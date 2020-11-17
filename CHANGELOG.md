@@ -1,6 +1,13 @@
-0.2.5 / 
+0.2.5 / 2020-11-17 
 ==================
-- Restructure solution to align more on go structure.
+- Restructure solution to align more on go structure. (resolves #65)
+- Fix improved validation for matchRegEx assertions (resolves #66)
+- Feature add chart version override (resolves #67)
+- Fix render only templates, selected in the test (resolves #68)
+- Fix improved error filter when failed or required function is used in helm3 partial template (resolves #70)
+- Fix wget installation (resolves #77)
+- Fix sha256sum on CentOs (resolves #78)
+- Update packages to lates version
 
 0.2.4 / 2020-09-11
 ==================

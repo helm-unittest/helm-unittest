@@ -27,6 +27,8 @@ capabilities:
   minorVersion: 10
   apiVersions:
     - br.dev.local/v2
+chart:
+  version: 1.0.0
 tests:
   - it: should test something
     ...
@@ -46,6 +48,9 @@ tests:
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
   - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
   - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
+
+- **chart**: *object, optional*. Define the `{{ .Chart }}` object.
+  - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
@@ -76,6 +81,8 @@ tests:
       minorVersion: 12
       apiVersion:
         - custom.api/v1
+    chart:
+      version: 1.0.0
     asserts:
       - equal:
           path: metadata.name
@@ -102,6 +109,9 @@ tests:
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
   - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
   - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
+
+- **chart**: *object, optional*. Define the `{{ .Chart }}` object.
+  - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
