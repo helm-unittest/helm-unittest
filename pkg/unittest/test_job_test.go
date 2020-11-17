@@ -599,7 +599,7 @@ asserts:
 }
 
 func TestV3RunJobWithChartSettings(t *testing.T) {
-	c, _ := loader.Load(testV2BasicChart)
+	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
 chart:

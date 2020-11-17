@@ -199,6 +199,29 @@ tests:
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
 
+func TestV2RunSuiteNameOverrideFail(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	suiteDoc := `
+suite: test suite name too long
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail as nameOverride is too long
+    set:
+      nameOverride: too-long-of-a-name-override-that-should-fail-the-template-immediately
+    asserts:
+      - failedTemplate:
+          errorMessage: nameOverride cannot be longer than 20 characters
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_nameoverride_failed_suite_test.yaml"), false)
+	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
+}
+
 func TestV2RunSuiteWithSubfolderWhenPass(t *testing.T) {
 	c, _ := v2util.Load(testV2WithSubFolderChart)
 	suiteDoc := `
@@ -484,4 +507,27 @@ tests:
 	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
+}
+
+func TestV3RunSuiteNameOverrideFail(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	suiteDoc := `
+suite: test suite name too long
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail as nameOverride is too long
+    set:
+      nameOverride: too-long-of-a-name-override-that-should-fail-the-template-immediately
+    asserts:
+      - failedTemplate:
+          errorMessage: nameOverride cannot be longer than 20 characters
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
+	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
