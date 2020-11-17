@@ -29,6 +29,7 @@ import (
 
 const templatePrefix string = "templates"
 const subchartPrefix string = "charts"
+const noValueContent string = "<no value>"
 
 // getTemplateFileName,
 // Validate if prefix templates is not there,
@@ -94,7 +95,7 @@ func parseV3TemplateRenderError(errorMessage string) string {
 
 func parseRenderError(regexPattern, errorMessage string) (string, string) {
 	filePath := ""
-	content := "<no value>"
+	content := noValueContent
 
 	r := regexp.MustCompile(regexPattern)
 	result := r.FindStringSubmatch(errorMessage)
@@ -371,19 +372,19 @@ func (t *TestJob) filterV2Chart(targetChart *v2chart.Chart) *v2chart.Chart {
 
 // filterV2Templates, Filter the V2Templates with only the partials and selected test files.
 func (t *TestJob) filterV2Templates(chartRoute, dependecyChart string, targetChart *v2chart.Chart) []*v2chart.Template {
-	filteredTemplate := make([]*v2chart.Template, 0)
+	filteredV2Template := make([]*v2chart.Template, 0)
 
 	for _, fileName := range t.defaultTemplatesToAssert {
 		for _, template := range targetChart.Templates {
-			selectedTemplatName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
-			foundTemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
+			selectedV2TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
+			foundV2TemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
 
 			if dependecyChart != "" {
-				foundTemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
+				foundV2TemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
 			}
 
-			if foundTemplateName == selectedTemplatName {
-				filteredTemplate = append(filteredTemplate, template)
+			if foundV2TemplateName == selectedV2TemplateName {
+				filteredV2Template = append(filteredV2Template, template)
 				break
 			}
 		}
@@ -392,11 +393,11 @@ func (t *TestJob) filterV2Templates(chartRoute, dependecyChart string, targetCha
 	// add partial templates
 	for _, template := range targetChart.Templates {
 		if strings.HasPrefix(filepath.Base(template.Name), "_") {
-			filteredTemplate = append(filteredTemplate, template)
+			filteredV2Template = append(filteredV2Template, template)
 		}
 	}
 
-	return filteredTemplate
+	return filteredV2Template
 }
 
 // render the chart and return result map
@@ -432,12 +433,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		// Parse the error and create an outputFile
 		filePath, content := parseV3RenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
-		if filePath == "" && content != "<no value>" {
+		if filePath == "" && content != noValueContent {
 			return nil, err
 		}
 
 		// If error validate if template error occurred
-		if content == "<no value>" {
+		if content == noValueContent {
 			for _, fileName := range t.defaultTemplatesToAssert {
 				selectedTemplatName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
 				content = parseV3TemplateRenderError(err.Error())
@@ -489,19 +490,19 @@ func (t *TestJob) filterV3Chart(targetChart *v3chart.Chart) *v3chart.Chart {
 
 // filterV3Templates, Filter the V3Templates with only the partials and selected test files.
 func (t *TestJob) filterV3Templates(chartRoute, dependecyChart string, targetChart *v3chart.Chart) []*v3chart.File {
-	filteredTemplate := make([]*v3chart.File, 0)
+	filteredV3Template := make([]*v3chart.File, 0)
 	// check templates in chart
 	for _, fileName := range t.defaultTemplatesToAssert {
 		for _, template := range targetChart.Templates {
-			selectedTemplatName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
-			foundTemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
+			selectedV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
+			foundV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
 
 			if dependecyChart != "" {
-				foundTemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
+				foundV3TemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
 			}
 
-			if foundTemplateName == selectedTemplatName {
-				filteredTemplate = append(filteredTemplate, template)
+			if foundV3TemplateName == selectedV3TemplateName {
+				filteredV3Template = append(filteredV3Template, template)
 				break
 			}
 		}
@@ -510,11 +511,11 @@ func (t *TestJob) filterV3Templates(chartRoute, dependecyChart string, targetCha
 	// add partial templates
 	for _, template := range targetChart.Templates {
 		if strings.HasPrefix(filepath.Base(template.Name), "_") {
-			filteredTemplate = append(filteredTemplate, template)
+			filteredV3Template = append(filteredV3Template, template)
 		}
 	}
 
-	return filteredTemplate
+	return filteredV3Template
 }
 
 // get chartutil.ReleaseOptions ready for render
