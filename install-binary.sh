@@ -112,7 +112,10 @@ downloadFile() {
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
-  DIST=$(cat /etc/os-release 2>&1)
+  DIST=""
+  if [ "$OS" == "linux" ]; then
+    DIST=$(cat /etc/os-release 2>&1)
+  fi
   cd "/tmp"
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
   if [ -n "$PROJECT_CHECKSUM" ]; then
