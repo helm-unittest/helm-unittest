@@ -95,7 +95,7 @@ tests:
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object.
 
-- **template**: *string, optional*. The template file which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless the template is defined in the assertions (check [Assertion](#assertion)).
+- **template**: *string, optional*. **templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
 
 - **documentIndex**: *int, optional*. The index of rendered documents (devided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 

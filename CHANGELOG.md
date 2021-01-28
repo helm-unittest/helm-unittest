@@ -1,3 +1,7 @@
+0.2.6 /
+==================
+- Add support for list of templates on tests
+
 0.2.5 / 2020-11-17 
 ==================
 - Restructure solution to align more on go structure. (resolves #65)

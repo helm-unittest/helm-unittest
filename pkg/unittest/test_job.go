@@ -158,6 +158,7 @@ type TestJob struct {
 	Values        []string
 	Set           map[string]interface{}
 	Template      string
+	Templates     []string
 	DocumentIndex *int         `yaml:"documentIndex"`
 	Assertions    []*Assertion `yaml:"asserts"`
 	Release       struct {
@@ -634,7 +635,9 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 		}
 
 		if assertion.Template == "" {
-			if t.Template == "" {
+			if len(t.Templates) > 0 {
+				templatesToAssert = t.Templates
+			} else if t.Template == "" {
 				templatesToAssert = t.defaultTemplatesToAssert
 			} else {
 				templatesToAssert = append(templatesToAssert, t.Template)
