@@ -79,7 +79,7 @@ tests:
     capabilities:
       majorVersion: 1
       minorVersion: 12
-      apiVersion:
+      apiVersions:
         - custom.api/v1
     chart:
       version: 1.0.0
