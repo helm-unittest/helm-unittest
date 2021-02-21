@@ -203,6 +203,12 @@ And there are some other helm commands you might want to use:
 
 - [`helm test`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_test.md): test a release with testing pod defined in chart. Note this does create resources on your cluster to verify if your release is correct. Check the [doc](https://github.com/kubernetes/helm/blob/master/docs/chart_tests.md).
 
+Alternatively, you can also use generic tests frameworks:
+
+- [Python](https://github.com/lrills/helm-unittest/issues/110)
+
+- Go - [terratest](https://blog.gruntwork.io/automated-testing-for-kubernetes-and-helm-charts-using-terratest-a4ddc4e67344)
+
 ## License
 
 MIT
