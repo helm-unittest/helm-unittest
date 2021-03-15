@@ -145,6 +145,38 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
+func TestV2RunJobWithTestJobTemplatesOk(t *testing.T) {
+	c, _ := v2util.Load(testV2BasicChart)
+	manifest := `
+it: should work
+templates:
+  - deployment.yaml
+  - configmap.yaml
+asserts:
+  - equal:
+      path: kind
+      value: Deployment   
+    template: deployment.yaml
+  - equal:
+      path: kind
+      value: ConfigMap   
+    template: configmap.yaml
+  - isNotNull:
+      path: metadata.name
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(3, len(testResult.AssertsResult))
+}
+
 func TestV2RunJobWithTestMissingRequiredValueOk(t *testing.T) {
 	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
@@ -410,6 +442,38 @@ asserts:
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithTestJobTemplatesOk(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+templates:
+  - deployment.yaml
+  - configmap.yaml
+asserts:
+  - equal:
+      path: kind
+      value: Deployment   
+    template: deployment.yaml
+  - equal:
+      path: kind
+      value: ConfigMap   
+    template: configmap.yaml
+  - isNotNull:
+      path: metadata.name
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(3, len(testResult.AssertsResult))
 }
 
 func TestV3RunJobWithTestMissingRequiredValueOk(t *testing.T) {
