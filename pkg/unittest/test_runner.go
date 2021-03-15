@@ -60,7 +60,7 @@ type TestRunner struct {
 	Formatter        formatter.Formatter
 	UpdateSnapshot   bool
 	WithSubChart     bool
-	FailFast         bool
+	Failfast         bool
 	TestFiles        []string
 	OutputFile       string
 	suiteCounting    testUnitCountingWithSnapshotFailed
@@ -80,7 +80,7 @@ func (tr *TestRunner) RunV2(ChartPaths []string) bool {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
-			if tr.FailFast {
+			if tr.Failfast {
 				break
 			}
 			continue
@@ -91,7 +91,7 @@ func (tr *TestRunner) RunV2(ChartPaths []string) bool {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
-			if tr.FailFast {
+			if tr.Failfast {
 				break
 			}
 			continue
@@ -122,7 +122,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
-			if tr.FailFast {
+			if tr.Failfast {
 				break
 			}
 			continue
@@ -133,7 +133,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
 			allPassed = false
-			if tr.FailFast {
+			if tr.Failfast {
 				break
 			}
 			continue
@@ -243,14 +243,14 @@ func (tr *TestRunner) runV2SuitesOfChart(suites []*TestSuite, chart *v2chart.Cha
 			continue
 		}
 
-		result := suite.RunV2(chart, snapshotCache, tr.FailFast, &results.TestSuiteResult{})
+		result := suite.RunV2(chart, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)
 
 		snapshotCache.StoreToFileIfNeeded()
 
-		if !chartPassed && tr.FailFast {
+		if !chartPassed && tr.Failfast {
 			break
 		}
 	}
@@ -272,14 +272,14 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Cha
 			continue
 		}
 
-		result := suite.RunV3(chart, snapshotCache, tr.FailFast, &results.TestSuiteResult{})
+		result := suite.RunV3(chart, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)
 
 		snapshotCache.StoreToFileIfNeeded()
 
-		if !chartPassed && tr.FailFast {
+		if !chartPassed && tr.Failfast {
 			break
 		}
 	}

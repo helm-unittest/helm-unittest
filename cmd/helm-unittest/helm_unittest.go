@@ -14,7 +14,7 @@ import (
 // testOptions stores options setup by user in command line
 type testOptions struct {
 	useHelmV3      bool
-	useFailFast    bool
+	useFailfast    bool
 	colored        bool
 	updateSnapshot bool
 	withSubChart   bool
@@ -73,7 +73,7 @@ details about how to write tests.
 			Formatter:      formatter,
 			UpdateSnapshot: testConfig.updateSnapshot,
 			WithSubChart:   testConfig.withSubChart,
-			FailFast:       testConfig.useFailFast,
+			Failfast:       testConfig.useFailfast,
 			TestFiles:      testConfig.testFiles,
 			OutputFile:     testConfig.outputFile,
 		}
@@ -137,7 +137,7 @@ func init() {
 	)
 
 	cmd.PersistentFlags().BoolVarP(
-		&testConfig.useFailFast, "failfast", "q", false,
+		&testConfig.useFailfast, "failfast", "q", false,
 		"direct quit testing, when a test is failed.",
 	)
 }
