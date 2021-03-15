@@ -1,12 +1,11 @@
 suite: test deployment
 templates:
   - deployment.yaml
-chart:
-  version: 9.9.9+test
 tests:
   - it: should pass all kinds of assertion
     documentIndex: 0
+    documentIndex: 0
     asserts:
-      - equals:
+      - equal:
           path: spec.template.spec.containers[0].image
           value: apache:latest

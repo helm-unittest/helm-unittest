@@ -107,6 +107,11 @@ func init() {
 		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
 	)
 
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.useStrict, "strict", false,
+		"strict parse the testsuites",
+	)
+
 	defaultFilePattern := filepath.Join("tests", "*_test.yaml")
 	cmd.PersistentFlags().StringArrayVarP(
 		&testConfig.testFiles, "file", "f", []string{defaultFilePattern},
@@ -135,16 +140,11 @@ func init() {
 
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useHelmV3, "helm3", "3", false,
-		"parse helm charts as helm3 charts.",
-	)
-
-	cmd.PersistentFlags().BoolVarP(
-		&testConfig.useStrict, "strict", "s", false,
-		"strict parse the testsuites.",
+		"parse helm charts as helm3 charts",
 	)
 
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useFailfast, "failfast", "q", false,
-		"direct quit testing, when a test is failed.",
+		"direct quit testing, when a test is failed",
 	)
 }

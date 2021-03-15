@@ -64,6 +64,16 @@ func validateTestResultAndSnapshots(
 	a.Equal(snapshotVanishedCount, suiteResult.SnapshotCounting.Vanished)
 }
 
+func TestV2ParseTestSuiteUnstrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/invalidbasic/tests/deployment_test.yaml", "basic", false)
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true)
@@ -300,6 +310,16 @@ tests:
 	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
+}
+
+func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false)
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 }
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
