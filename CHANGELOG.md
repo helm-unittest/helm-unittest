@@ -1,6 +1,7 @@
 0.2.6 /
 ==================
 - Add support for list of templates on tests
+- Add support for failfast
 
 0.2.5 / 2020-11-17 
 ==================

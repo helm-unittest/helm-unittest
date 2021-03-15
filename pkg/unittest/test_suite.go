@@ -64,6 +64,7 @@ type TestSuite struct {
 func (s *TestSuite) RunV2(
 	targetChart *v2chart.Chart,
 	snapshotCache *snapshot.Cache,
+	failfast bool,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
 	s.polishTestJobsPathInfo()
@@ -74,6 +75,7 @@ func (s *TestSuite) RunV2(
 	result.Passed, result.TestsResult = s.runV2TestJobs(
 		targetChart,
 		snapshotCache,
+		failfast,
 	)
 
 	result.CountSnapshot(snapshotCache)
@@ -84,6 +86,7 @@ func (s *TestSuite) RunV2(
 func (s *TestSuite) RunV3(
 	targetChart *v3chart.Chart,
 	snapshotCache *snapshot.Cache,
+	failfast bool,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
 	s.polishTestJobsPathInfo()
@@ -94,6 +97,7 @@ func (s *TestSuite) RunV3(
 	result.Passed, result.TestsResult = s.runV3TestJobs(
 		targetChart,
 		snapshotCache,
+		failfast,
 	)
 
 	result.CountSnapshot(snapshotCache)
@@ -167,6 +171,7 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 func (s *TestSuite) runV2TestJobs(
 	chart *v2chart.Chart,
 	cache *snapshot.Cache,
+	failfast bool,
 ) (bool, []*results.TestJobResult) {
 	suitePass := true
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -174,7 +179,7 @@ func (s *TestSuite) runV2TestJobs(
 	copy(dependenciesBackup, chart.Dependencies)
 
 	for idx, testJob := range s.Tests {
-		jobResult := testJob.RunV2(chart, cache, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV2(chart, cache, failfast, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
 		if !jobResult.Passed {
@@ -182,6 +187,10 @@ func (s *TestSuite) runV2TestJobs(
 		}
 
 		chart.Dependencies = dependenciesBackup
+
+		if !suitePass && failfast {
+			break
+		}
 	}
 	return suitePass, jobResults
 }
@@ -189,6 +198,7 @@ func (s *TestSuite) runV2TestJobs(
 func (s *TestSuite) runV3TestJobs(
 	chart *v3chart.Chart,
 	cache *snapshot.Cache,
+	failfast bool,
 ) (bool, []*results.TestJobResult) {
 	suitePass := true
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -197,7 +207,7 @@ func (s *TestSuite) runV3TestJobs(
 	valuesBackup := chart.Values
 
 	for idx, testJob := range s.Tests {
-		jobResult := testJob.RunV3(chart, cache, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
 		if !jobResult.Passed {
@@ -207,6 +217,10 @@ func (s *TestSuite) runV3TestJobs(
 		chart.SetDependencies(dependenciesBackup...)
 		chart.Values = valuesBackup
 		chart.Metadata.Dependencies = metadataDependenciesBackup
+
+		if !suitePass && failfast {
+			break
+		}
 	}
 	return suitePass, jobResults
 }
