@@ -1,6 +1,8 @@
 0.2.6 /
 ==================
 - Add support for list of templates on tests
+- Add support for failfast
+- Add support for strict validation of testsuites
 
 0.2.5 / 2020-11-17 
 ==================

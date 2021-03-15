@@ -188,6 +188,7 @@ type TestJob struct {
 func (t *TestJob) RunV2(
 	targetChart *v2chart.Chart,
 	cache *snapshot.Cache,
+	failfast bool,
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
@@ -216,6 +217,7 @@ func (t *TestJob) RunV2(
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
 		snapshotComparer,
+		failfast,
 	)
 
 	result.Duration = time.Now().Sub(startTestRun)
@@ -226,6 +228,7 @@ func (t *TestJob) RunV2(
 func (t *TestJob) RunV3(
 	targetChart *v3chart.Chart,
 	cache *snapshot.Cache,
+	failfast bool,
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
@@ -254,6 +257,7 @@ func (t *TestJob) RunV3(
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
 		snapshotComparer,
+		failfast,
 	)
 
 	result.Duration = time.Now().Sub(startTestRun)
@@ -604,9 +608,10 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
+	failfast bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := true
-	assertsResult := make([]*results.AssertionResult, len(t.Assertions))
+	assertsResult := make([]*results.AssertionResult, 0)
 
 	for idx, assertion := range t.Assertions {
 		result := assertion.Assert(
@@ -615,8 +620,12 @@ func (t *TestJob) runAssertions(
 			&results.AssertionResult{Index: idx},
 		)
 
-		assertsResult[idx] = result
+		assertsResult = append(assertsResult, result)
 		testPass = testPass && result.Passed
+
+		if !testPass && failfast {
+			break
+		}
 	}
 	return testPass, assertsResult
 }

@@ -4,6 +4,6 @@ templates:
 tests:
   - it: should NOT configure ssl params if NOT set to be exposed
     asserts:
-      - notMatchRegex:
+      - matchRegex:
           path: data.my\.conf
-          value: cacertfile
+          pattern: cacertfile

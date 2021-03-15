@@ -113,8 +113,10 @@ defined in test suite files.
 
 ```
       --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
+      --strict                 strict parse the testsuites (default false)
   -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
   -3, --helm3                  parse helm charts as helm3 charts (default false)
+  -q, --failfast               direct quit testing, when a test is failed (default false)
   -h, --help                   help for unittest
   -o, --output-file string     output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update

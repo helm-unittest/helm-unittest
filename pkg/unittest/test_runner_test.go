@@ -57,6 +57,29 @@ func makeOutputSnapshotable(originalOutput string) []interface{} {
 	return sectionsToRetrun
 }
 
+func TestV2RunnerInvalidChartDirFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV2([]string{testSuiteTests})
+	assert.False(t, passed, buffer.String())
+}
+
+func TestV2RunnerInvalidTestSuiteFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Strict:    true,
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV2([]string{testV2InvalidBasicChart})
+	assert.False(t, passed, buffer.String())
+}
+
 func TestV2RunnerOkWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -112,6 +135,29 @@ func TestV2RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 	passed := runner.RunV2([]string{testV2WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerInvalidChartDirFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testTestFiles})
+	assert.False(t, passed, buffer.String())
+}
+
+func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Strict:    false,
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3InvalidBasicChart})
+	assert.False(t, passed, buffer.String())
 }
 
 func TestV3RunnerOkWithPassedTests(t *testing.T) {

@@ -22,9 +22,11 @@ const testSuiteTests string = "_suite_tests"
 const testTestFiles string = "tests/*_test.yaml"
 const testTestFailedFiles string = "tests_failed/*_test.yaml"
 
+const testV2InvalidBasicChart string = "../../test/data/v2/invalidbasic"
 const testV2BasicChart string = "../../test/data/v2/basic"
 const testV2WithSubChart string = "../../test/data/v2/with-subchart"
 const testV2WithSubFolderChart string = "../../test/data/v2/with-subfolder"
+const testV3InvalidBasicChart string = "../../test/data/v3/invalidbasic"
 const testV3BasicChart string = "../../test/data/v3/basic"
 const testV3WithSubChart string = "../../test/data/v3/with-subchart"
 const testV3WithSubFolderChart string = "../../test/data/v3/with-subfolder"
@@ -62,9 +64,19 @@ func validateTestResultAndSnapshots(
 	a.Equal(snapshotVanishedCount, suiteResult.SnapshotCounting.Vanished)
 }
 
+func TestV2ParseTestSuiteUnstrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/invalidbasic/tests/deployment_test.yaml", "basic", false)
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic")
+	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true)
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
@@ -74,7 +86,7 @@ func TestV2ParseTestSuiteFileOk(t *testing.T) {
 
 func TestV2ParseTestSuiteFileInSubfolderOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder")
+	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder", true)
 
 	a.Nil(err)
 	a.Equal("test service", suite.Name)
@@ -117,7 +129,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_multple_template_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
 }
@@ -140,7 +152,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -172,7 +184,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_suite_override_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
@@ -194,7 +206,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
@@ -217,7 +229,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_nameoverride_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
@@ -241,7 +253,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_subfolder_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -264,7 +276,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_subchart_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
@@ -295,14 +307,24 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_subchartwithalias_test.yaml"), false)
-	suiteResult := testSuite.RunV2(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
+func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false)
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic")
+	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true)
 
 	a.Nil(err)
 	a.Equal(suite.Name, "test deployment")
@@ -344,7 +366,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
 }
@@ -367,7 +389,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -404,7 +426,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
@@ -426,7 +448,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
@@ -450,7 +472,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -473,7 +495,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
@@ -504,7 +526,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
@@ -527,7 +549,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
