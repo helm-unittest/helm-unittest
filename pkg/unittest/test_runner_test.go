@@ -64,6 +64,18 @@ func TestV2RunnerInvalidChartDirFailfast(t *testing.T) {
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
+	passed := runner.RunV2([]string{testSuiteTests})
+	assert.False(t, passed, buffer.String())
+}
+
+func TestV2RunnerInvalidTestSuiteFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Strict:    true,
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
 	passed := runner.RunV2([]string{testV2InvalidBasicChart})
 	assert.False(t, passed, buffer.String())
 }
@@ -132,7 +144,19 @@ func TestV3RunnerInvalidChartDirFailfast(t *testing.T) {
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV2InvalidBasicChart})
+	passed := runner.RunV3([]string{testTestFiles})
+	assert.False(t, passed, buffer.String())
+}
+
+func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		Strict:    false,
+		Failfast:  true,
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3InvalidBasicChart})
 	assert.False(t, passed, buffer.String())
 }
 

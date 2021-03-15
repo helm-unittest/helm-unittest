@@ -66,7 +66,7 @@ func validateTestResultAndSnapshots(
 
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic")
+	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true)
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
@@ -76,7 +76,7 @@ func TestV2ParseTestSuiteFileOk(t *testing.T) {
 
 func TestV2ParseTestSuiteFileInSubfolderOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder")
+	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder", true)
 
 	a.Nil(err)
 	a.Equal("test service", suite.Name)
@@ -304,7 +304,7 @@ tests:
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic")
+	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true)
 
 	a.Nil(err)
 	a.Equal(suite.Name, "test deployment")

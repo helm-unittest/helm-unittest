@@ -60,6 +60,7 @@ type TestRunner struct {
 	Formatter        formatter.Formatter
 	UpdateSnapshot   bool
 	WithSubChart     bool
+	Strict           bool
 	Failfast         bool
 	TestFiles        []string
 	OutputFile       string
@@ -168,12 +169,13 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 
 	resultSuites := make([]*TestSuite, 0, len(filesSet))
 	for file := range filesSet {
-		suite, err := ParseTestSuiteFile(file, chartRoute)
+		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict)
 		if err != nil {
 			tr.handleSuiteResult(&results.TestSuiteResult{
 				FilePath:  file,
 				ExecError: err,
 			})
+			return nil, err
 		}
 		resultSuites = append(resultSuites, suite)
 	}

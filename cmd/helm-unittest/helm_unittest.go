@@ -15,6 +15,7 @@ import (
 type testOptions struct {
 	useHelmV3      bool
 	useFailfast    bool
+	useStrict      bool
 	colored        bool
 	updateSnapshot bool
 	withSubChart   bool
@@ -73,6 +74,7 @@ details about how to write tests.
 			Formatter:      formatter,
 			UpdateSnapshot: testConfig.updateSnapshot,
 			WithSubChart:   testConfig.withSubChart,
+			Strict:         testConfig.useStrict,
 			Failfast:       testConfig.useFailfast,
 			TestFiles:      testConfig.testFiles,
 			OutputFile:     testConfig.outputFile,
@@ -134,6 +136,11 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useHelmV3, "helm3", "3", false,
 		"parse helm charts as helm3 charts.",
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.useStrict, "strict", "s", false,
+		"strict parse the testsuites.",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

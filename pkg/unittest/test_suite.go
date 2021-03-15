@@ -13,7 +13,7 @@ import (
 )
 
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(suiteFilePath, chartRoute string) (*TestSuite, error) {
+func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool) (*TestSuite, error) {
 	suite := TestSuite{chartRoute: chartRoute}
 	content, err := ioutil.ReadFile(suiteFilePath)
 	if err != nil {
@@ -27,8 +27,14 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string) (*TestSuite, error) {
 		return &suite, err
 	}
 
-	if err := yaml.Unmarshal(content, &suite); err != nil {
-		return &suite, err
+	if strict {
+		if err := yaml.UnmarshalStrict(content, &suite); err != nil {
+			return &suite, err
+		}
+	} else {
+		if err := yaml.Unmarshal(content, &suite); err != nil {
+			return &suite, err
+		}
 	}
 
 	return &suite, nil
