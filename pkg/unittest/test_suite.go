@@ -43,6 +43,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool) (*TestSui
 // TestSuite defines scope and templates to render and tests to run
 type TestSuite struct {
 	Name      string `yaml:"suite"`
+	Values    []string
 	Templates []string
 	Release   struct {
 		Name      string
@@ -119,6 +120,10 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
 		s.polishChartSettings(test)
+
+		if len(s.Values) > 0 {
+			test.Values = append(test.Values, s.Values...)
+		}
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates

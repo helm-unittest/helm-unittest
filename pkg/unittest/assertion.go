@@ -114,7 +114,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 				return fmt.Errorf("Assertion type `%s` is invalid", key)
 			}
 		}
-		return fmt.Errorf("No assertion type defined")
+		return fmt.Errorf("no assertion type defined")
 	}
 
 	return nil
