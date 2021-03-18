@@ -1,12 +1,12 @@
 suite: test deployment
+values:
+  - ./values/image.yaml
 templates:
   - deployment.yaml
 chart:
   version: 9.9.9+test
 tests:
   - it: should pass all kinds of assertion
-    values:
-      - ./values/image.yaml
     set:
       service.internalPort: 8080
     documentIndex: 0

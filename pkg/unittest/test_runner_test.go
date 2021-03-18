@@ -14,7 +14,7 @@ import (
 )
 
 var sectionBeginPattern = regexp.MustCompile("( PASS | FAIL |\n*###|\n*Charts:|\n*Snapshot Summary:)")
-var timePattern = regexp.MustCompile("Time:\\s+([\\d\\.]+)(s|ms)")
+var timePattern = regexp.MustCompile(`Time:\s+([\d\.]+)(s|ms)`)
 
 func makeOutputSnapshotable(originalOutput string) []interface{} {
 	output := strings.ReplaceAll(originalOutput, "\\", "/")

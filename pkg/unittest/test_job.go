@@ -220,7 +220,7 @@ func (t *TestJob) RunV2(
 		failfast,
 	)
 
-	result.Duration = time.Now().Sub(startTestRun)
+	result.Duration = time.Since(startTestRun)
 	return result
 }
 
@@ -260,7 +260,7 @@ func (t *TestJob) RunV3(
 		failfast,
 	)
 
-	result.Duration = time.Now().Sub(startTestRun)
+	result.Duration = time.Since(startTestRun)
 	return result
 }
 

@@ -109,7 +109,7 @@ func (tr *TestRunner) RunV2(ChartPaths []string) bool {
 		tr.printErroredChartHeader(err)
 	}
 	tr.printSnapshotSummary()
-	tr.printSummary(time.Now().Sub(start))
+	tr.printSummary(time.Since(start))
 	return allPassed
 }
 
@@ -151,7 +151,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 		tr.printErroredChartHeader(err)
 	}
 	tr.printSnapshotSummary()
-	tr.printSummary(time.Now().Sub(start))
+	tr.printSummary(time.Since(start))
 	return allPassed
 }
 
