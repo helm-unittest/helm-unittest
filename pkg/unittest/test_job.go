@@ -201,7 +201,7 @@ func (t *TestJob) RunV2(
 		return result
 	}
 
-	outputOfFiles, err := t.renderV2Chart(targetChart, userValues)
+	outputOfFiles, renderSucceed, err := t.renderV2Chart(targetChart, userValues)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -217,6 +217,7 @@ func (t *TestJob) RunV2(
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
 		snapshotComparer,
+		renderSucceed,
 		failfast,
 	)
 
@@ -241,7 +242,7 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, err := t.renderV3Chart(targetChart, userValues)
+	outputOfFiles, renderSucceed, err := t.renderV3Chart(targetChart, userValues)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -257,6 +258,7 @@ func (t *TestJob) RunV3(
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
 		snapshotComparer,
+		renderSucceed,
 		failfast,
 	)
 
@@ -301,7 +303,8 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 }
 
 // render the V2chart and return result map
-func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, error) {
+func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, bool, error) {
+	renderSucceed := true
 	config := &v2chart.Config{Raw: string(userValues), Values: map[string]*v2chart.Value{}}
 	kubeVersion := fmt.Sprintf("%s.%s", v2util.DefaultKubeVersion.Major, v2util.DefaultKubeVersion.Minor)
 
@@ -327,16 +330,17 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
+		renderSucceed = false
 		// Parse the error and create an outputFile
 		filePath, content := parseV2RenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
 		if filePath == "" {
-			return nil, err
+			return nil, renderSucceed, err
 		}
 		outputOfFiles[filePath] = content
 	}
 
-	return outputOfFiles, nil
+	return outputOfFiles, renderSucceed, nil
 }
 
 // Filter the V2Chart and its dependencies with partials and selected test files.
@@ -406,10 +410,11 @@ func (t *TestJob) filterV2Templates(chartRoute, dependecyChart string, targetCha
 }
 
 // render the chart and return result map
-func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, error) {
+func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, bool, error) {
+	renderSucceed := true
 	values, err := v3util.ReadValues(userValues)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	options := *t.releaseV3Option()
 
@@ -420,12 +425,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	err = v3util.ProcessDependencies(targetChart, values)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, t.capabilitiesV3())
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// Filter the files that needs to be validated
@@ -435,11 +440,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
+		renderSucceed = false
 		// Parse the error and create an outputFile
 		filePath, content := parseV3RenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
 		if filePath == "" && content != noValueContent {
-			return nil, err
+			return nil, renderSucceed, err
 		}
 
 		// If error validate if template error occurred
@@ -454,7 +460,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 	}
 
-	return outputOfFiles, nil
+	return outputOfFiles, renderSucceed, nil
 }
 
 // Filter the V3Chart and its dependencies with partials and selected test files.
@@ -608,7 +614,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
-	failfast bool,
+	renderSucceed, failfast bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := true
 	assertsResult := make([]*results.AssertionResult, 0)
@@ -617,6 +623,7 @@ func (t *TestJob) runAssertions(
 		result := assertion.Assert(
 			manifestsOfFiles,
 			snapshotComparer,
+			renderSucceed,
 			&results.AssertionResult{Index: idx},
 		)
 
