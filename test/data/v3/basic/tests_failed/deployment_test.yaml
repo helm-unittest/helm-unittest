@@ -1,10 +1,12 @@
 suite: test deployment that would be fail
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should fail all kinds of assertion
     values:
       - ./values/image.yaml
+    template: deployment.yaml
     set:
       service.internalPort: 8080
     asserts:

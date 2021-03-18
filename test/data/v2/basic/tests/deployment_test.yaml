@@ -2,6 +2,7 @@ suite: test deployment
 values:
   - ./values/image.yaml
 templates:
+  - configmap.yaml
   - deployment.yaml
 chart:
   version: 9.9.9+test
@@ -9,6 +10,7 @@ tests:
   - it: should pass all kinds of assertion
     set:
       service.internalPort: 8080
+    template: deployment.yaml
     documentIndex: 0
     asserts:
       - equal:

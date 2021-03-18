@@ -80,7 +80,7 @@ func TestV2ParseTestSuiteFileOk(t *testing.T) {
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal([]string{"configmap.yaml", "deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 }
 
@@ -100,6 +100,7 @@ func TestV2RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: validate metadata
 templates:
+  - configmap.yaml
   - deployment.yaml
   - ingress.yaml
   - service.yaml
@@ -131,7 +132,7 @@ tests:
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v2_multple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV2(c, cache, true, &results.TestSuiteResult{})
 
-	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
+	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 5, 5, 0, 0)
 }
 
 func TestV2RunSuiteWhenPass(t *testing.T) {
@@ -139,9 +140,11 @@ func TestV2RunSuiteWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should pass
+    template: deployment.yaml
     asserts:
       - equal:
           path: kind
@@ -194,9 +197,11 @@ func TestV2RunSuiteWhenFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should fail
+    template: deployment.yaml
     asserts:
       - equal:
           path: kind
@@ -216,11 +221,13 @@ func TestV2RunSuiteNameOverrideFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name too long
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should fail as nameOverride is too long
     set:
       nameOverride: too-long-of-a-name-override-that-should-fail-the-template-immediately
+    template: deployment.yaml
     asserts:
       - failedTemplate:
           errorMessage: nameOverride cannot be longer than 20 characters
@@ -328,7 +335,7 @@ func TestV3ParseTestSuiteFileOk(t *testing.T) {
 
 	a.Nil(err)
 	a.Equal(suite.Name, "test deployment")
-	a.Equal(suite.Templates, []string{"deployment.yaml"})
+	a.Equal(suite.Templates, []string{"configmap.yaml", "deployment.yaml"})
 	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
 }
 
@@ -337,6 +344,7 @@ func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: validate metadata
 templates:
+  - configmap.yaml
   - deployment.yaml
   - ingress.yaml
   - service.yaml
@@ -368,7 +376,7 @@ tests:
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
 
-	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 4, 4, 0, 0)
+	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 5, 5, 0, 0)
 }
 
 func TestV3RunSuiteWhenPass(t *testing.T) {
@@ -376,9 +384,11 @@ func TestV3RunSuiteWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should pass
+    template: deployment.yaml
     asserts:
       - equal:
           path: kind
@@ -436,9 +446,11 @@ func TestV3RunSuiteWhenFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
+  - configmap.yaml
   - deployment.yaml
 tests:
   - it: should fail
+    template: deployment.yaml
     asserts:
       - equal:
           path: kind

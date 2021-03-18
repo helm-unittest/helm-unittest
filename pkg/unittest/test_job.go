@@ -445,9 +445,9 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		// If error validate if template error occurred
 		if content == noValueContent {
 			for _, fileName := range t.defaultTemplatesToAssert {
-				selectedTemplatName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
+				selectedTemplateName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
 				content = parseV3TemplateRenderError(err.Error())
-				outputOfFiles[selectedTemplatName] = content
+				outputOfFiles[selectedTemplateName] = content
 			}
 		} else {
 			outputOfFiles[filePath] = content
@@ -645,7 +645,7 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 
 		if assertion.Template == "" {
 			if len(t.Templates) > 0 {
-				templatesToAssert = t.Templates
+				templatesToAssert = append(templatesToAssert, t.Templates...)
 			} else if t.Template == "" {
 				templatesToAssert = t.defaultTemplatesToAssert
 			} else {
