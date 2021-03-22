@@ -53,6 +53,18 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 	return found, validateFoundCount
 }
 
+func (v ContainsValidator) validateFound(found, negative bool, validateFoundCount int) bool {
+	return found == negative && (v.Count == nil ||
+		(v.Count != nil && *v.Count == validateFoundCount && negative) ||
+		(v.Count != nil && *v.Count != validateFoundCount && !negative))
+}
+
+func (v ContainsValidator) validateFoundCount(found, negative bool, validateFoundCount int) bool {
+	return (v.Count != nil && found != negative) &&
+		((*v.Count != validateFoundCount && !negative) ||
+			(*v.Count == validateFoundCount && negative))
+}
+
 // Validate implement Validatable
 func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests, err := context.getManifests()
@@ -76,34 +88,27 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 			found, validateFoundCount := v.validateContent(actual)
 
 			// no found, regardless count, inverse awareness
-			if found == context.Negative {
-				if v.Count == nil ||
-					(v.Count != nil && *v.Count == validateFoundCount && context.Negative) ||
-					(v.Count != nil && *v.Count != validateFoundCount && !context.Negative) {
-					validateSuccess = false
-					errorMessage := v.failInfo(actual, idx, context.Negative)
-					validateErrors = append(validateErrors, errorMessage...)
-					continue
-				}
+			if v.validateFound(found, context.Negative, validateFoundCount) {
+				validateSuccess = false
+				errorMessage := v.failInfo(actual, idx, context.Negative)
+				validateErrors = append(validateErrors, errorMessage...)
+				continue
 			}
 
 			// invalid count, found
 			// valid count (so found), invalid found
-			if v.Count != nil && found != context.Negative {
-				if (*v.Count != validateFoundCount && !context.Negative) ||
-					(*v.Count == validateFoundCount && context.Negative) {
-					actualYAML, _ := yaml.Marshal(actual)
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-						"expect count %d in '%s' to be in array, got %d:\n%s",
-						*v.Count,
-						v.Path,
-						validateFoundCount,
-						string(actualYAML),
-					))
-					validateErrors = append(validateErrors, errorMessage...)
-					continue
-				}
+			if v.validateFoundCount(found, context.Negative, validateFoundCount) {
+				actualYAML, _ := yaml.Marshal(actual)
+				validateSuccess = false
+				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
+					"expect count %d in '%s' to be in array, got %d:\n%s",
+					*v.Count,
+					v.Path,
+					validateFoundCount,
+					string(actualYAML),
+				))
+				validateErrors = append(validateErrors, errorMessage...)
+				continue
 			}
 
 			validateSuccess = determineSuccess(idx, validateSuccess, true)
