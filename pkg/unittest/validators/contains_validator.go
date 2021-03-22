@@ -75,25 +75,35 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 		if actual, ok := actual.([]interface{}); ok {
 			found, validateFoundCount := v.validateContent(actual)
 
-			if v.Count == nil && found == context.Negative {
-				validateSuccess = false
-				errorMessage := v.failInfo(actual, idx, context.Negative)
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
+			// no found, regardless count, inverse awareness
+			if found == context.Negative {
+				if v.Count == nil ||
+					(v.Count != nil && *v.Count == validateFoundCount && context.Negative) ||
+					(v.Count != nil && *v.Count != validateFoundCount && !context.Negative) {
+					validateSuccess = false
+					errorMessage := v.failInfo(actual, idx, context.Negative)
+					validateErrors = append(validateErrors, errorMessage...)
+					continue
+				}
 			}
 
-			if v.Count != nil && *v.Count != validateFoundCount && found == !context.Negative {
-				actualYAML, _ := yaml.Marshal(actual)
-				validateSuccess = false
-				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-					"expect count %d in '%s' to be in array, got %d:\n%s",
-					*v.Count,
-					v.Path,
-					validateFoundCount,
-					string(actualYAML),
-				))
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
+			// invalid count, found
+			// valid count (so found), invalid found
+			if v.Count != nil && found != context.Negative {
+				if (*v.Count != validateFoundCount && !context.Negative) ||
+					(*v.Count == validateFoundCount && context.Negative) {
+					actualYAML, _ := yaml.Marshal(actual)
+					validateSuccess = false
+					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
+						"expect count %d in '%s' to be in array, got %d:\n%s",
+						*v.Count,
+						v.Path,
+						validateFoundCount,
+						string(actualYAML),
+					))
+					validateErrors = append(validateErrors, errorMessage...)
+					continue
+				}
 			}
 
 			validateSuccess = determineSuccess(idx, validateSuccess, true)

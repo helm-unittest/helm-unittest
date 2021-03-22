@@ -14,6 +14,30 @@
 			Actual:
 				abc                   = qqq
 				qqq                   = abc
+
+		- asserts[1] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count -1 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
+
+		- asserts[2] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count 8 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
+
+		- asserts[3] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count 1234578901234567890 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
  FAIL  test autoscaling	../../test/data/v2/basic/tests_failed/nofile_test.yaml
 	- should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled
 

@@ -403,3 +403,52 @@ func TestContainsValidatorWhenNotMultipleTimesInArray(t *testing.T) {
 		"	- e: bar",
 	}, diff)
 }
+
+func TestContainsValidatorWhenNotFoundMultipleTimesInArray(t *testing.T) {
+	manifest := makeManifest(docToTestContains)
+
+	counter := new(int)
+	*counter = 1
+	validator := ContainsValidator{
+		"a.b",
+		map[interface{}]interface{}{"f": "bar"},
+		counter,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Path:	a.b",
+		"Expected to contain:",
+		"	- f: bar",
+		"Actual:",
+		"	- c: hello world",
+		"	- d: foo bar",
+		"	- e: bar",
+		"	- e: bar",
+	}, diff)
+}
+
+func TestContainsValidatorInverseWhenNotFoundMultipleTimesInArray(t *testing.T) {
+	manifest := makeManifest(docToTestContains)
+
+	counter := new(int)
+	*counter = 1
+	validator := ContainsValidator{
+		"a.b",
+		map[interface{}]interface{}{"f": "bar"},
+		counter,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
