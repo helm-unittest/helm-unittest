@@ -9,5 +9,5 @@ spec:
       app: {{ template "basic.fullname" . }}
       type: myserver
   volumes:
-  - datadir
+    - datadir
 {{- end }}

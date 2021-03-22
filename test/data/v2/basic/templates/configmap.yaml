@@ -12,3 +12,6 @@ data:
     {{- end }}
     abc                   = qqq
     qqq                   = abc
+  my.array:
+    - value1
+    - value2
