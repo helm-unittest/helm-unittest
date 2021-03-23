@@ -168,7 +168,8 @@ type TestJob struct {
 		IsUpgrade bool `yaml:"upgrade"`
 	}
 	Chart struct {
-		Version string
+		Version    string
+		AppVersion string `yaml:"appVersion"`
 	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
@@ -323,6 +324,11 @@ func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (
 		targetChart.Metadata.Version = t.Chart.Version
 	}
 
+	// Override the chart appVErsion when version is setup in test.
+	if t.Chart.AppVersion != "" {
+		targetChart.Metadata.AppVersion = t.Chart.AppVersion
+	}
+
 	// Filter the files that needs to be validated
 	filteredChart := t.filterV2Chart(targetChart)
 
@@ -421,6 +427,11 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Override the chart version when version is setup in test.
 	if t.Chart.Version != "" {
 		targetChart.Metadata.Version = t.Chart.Version
+	}
+
+	// Override the chart appVErsion when version is setup in test.
+	if t.Chart.AppVersion != "" {
+		targetChart.Metadata.AppVersion = t.Chart.AppVersion
 	}
 
 	err = v3util.ProcessDependencies(targetChart, values)

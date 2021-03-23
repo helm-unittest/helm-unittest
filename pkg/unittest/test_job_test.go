@@ -397,12 +397,19 @@ func TestV2RunJobWithChartSettings(t *testing.T) {
 	c, _ := v2util.Load(testV2BasicChart)
 	manifest := `
 it: should work
+set:
+  image.tag: ""
 chart:
   version: 9.9.9+test
+  appVersion: 9999
 asserts:
   - equal:
       path: metadata.labels.chart
       value: basic-9.9.9_test
+    template: deployment.yaml
+  - equal:
+      path: spec.template.spec.containers[0].image
+      value: nginx:9999
     template: deployment.yaml
 `
 	var tj TestJob
@@ -415,7 +422,7 @@ asserts:
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
-	a.Equal(1, len(testResult.AssertsResult))
+	a.Equal(2, len(testResult.AssertsResult))
 }
 
 func TestV3RunJobOk(t *testing.T) {
@@ -726,12 +733,19 @@ func TestV3RunJobWithChartSettings(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
+set:
+  image.tag: ""
 chart:
   version: 9.9.9+test
+  appVersion: 9999
 asserts:
   - equal:
       path: metadata.labels.chart
       value: basic-9.9.9_test
+    template: deployment.yaml
+  - equal:
+      path: spec.template.spec.containers[0].image
+      value: nginx:9999
     template: deployment.yaml
 `
 	var tj TestJob
@@ -744,5 +758,5 @@ asserts:
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
-	a.Equal(1, len(testResult.AssertsResult))
+	a.Equal(2, len(testResult.AssertsResult))
 }
