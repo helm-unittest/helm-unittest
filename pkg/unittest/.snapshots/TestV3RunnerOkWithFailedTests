@@ -301,6 +301,38 @@
 				1
 			Actual:
 				2
+
+		- asserts[14] `contains` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers
+			Expected to contain:
+				- foo
+			Actual:
+				- image: apache:latest
+				  imagePullPolicy: Always
+				  livenessProbe:
+				    httpGet:
+				      path: /
+				      port: 8080
+				  name: basic
+				  ports:
+				  - containerPort: 8080
+				  readinessProbe:
+				    httpGet:
+				      path: /
+				      port: 8080
+				  resources: {}
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers
+			Expected to contain:
+				- foo
+			Actual:
+				- image: apache:latest
+				  imagePullPolicy: Always
+				  name: basic
+				  ports:
+				  - containerPort: null
  FAIL  test deployment that would be fail	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should fail all kinds of assertion
 
