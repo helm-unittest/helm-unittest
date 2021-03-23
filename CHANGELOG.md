@@ -1,8 +1,13 @@
 0.2.6 /
 ==================
-- Add support for list of templates on tests
-- Add support for failfast
-- Add support for strict validation of testsuites
+- Add support for list of templates on tests (credits to: @stevelipinski)
+- Add support for failfast (resolves #84)
+- Add support for values files in testsuite (resolves #91)
+- Add support for values files in path (resolves #92)
+- Add support for strict validation of testsuites (resolves #80, #94)
+- Fix contains assert validation, when count is used (resolves #98)
+- Fix small documentation corrections (credits to: @mik-laj, @Michael03, @SaffatHasan)
+- Update packages to lates version
 
 0.2.5 / 2020-11-17 
 ==================

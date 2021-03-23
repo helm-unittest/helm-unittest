@@ -5,6 +5,9 @@ tests:
   - it: should pass
     release:
       name: my-release
+    set:
+      service:
+        type: ClusterIP
     asserts:
       - contains:
           path: spec.ports
@@ -21,7 +24,7 @@ tests:
           value:
             app: basic
             release: my-release
-
+      
   - it: should render right if values given
     set:
       service:

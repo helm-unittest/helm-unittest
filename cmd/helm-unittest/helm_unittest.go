@@ -20,6 +20,7 @@ type testOptions struct {
 	updateSnapshot bool
 	withSubChart   bool
 	testFiles      []string
+	valuesFiles    []string
 	outputFile     string
 	outputType     string
 }
@@ -57,7 +58,7 @@ Or specify the suite files glob path pattern:
 
 $ helm unittest -f 'my-tests/*.yaml' my-chart
 
-Check https://github.com/lrills/helm-unittest for more
+Check https://github.com/quintush/helm-unittest for more
 details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
@@ -77,6 +78,7 @@ details about how to write tests.
 			Strict:         testConfig.useStrict,
 			Failfast:       testConfig.useFailfast,
 			TestFiles:      testConfig.testFiles,
+			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
 		}
 		var passed bool
@@ -116,6 +118,11 @@ func init() {
 	cmd.PersistentFlags().StringArrayVarP(
 		&testConfig.testFiles, "file", "f", []string{defaultFilePattern},
 		"glob paths of test files location, default to "+defaultFilePattern,
+	)
+
+	cmd.PersistentFlags().StringArrayVarP(
+		&testConfig.valuesFiles, "values", "v", []string{},
+		"glob paths of values files location, default no value files",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

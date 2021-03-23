@@ -29,6 +29,7 @@ capabilities:
     - br.dev.local/v2
 chart:
   version: 1.0.0
+  appVersion: 1.0.0
 tests:
   - it: should test something
     ...
@@ -51,6 +52,7 @@ tests:
 
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
+  - **appVersion**: *string, optional*. The app-version of the chart, default to the app-version set in the Chart.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
@@ -83,6 +85,7 @@ tests:
         - custom.api/v1
     chart:
       version: 1.0.0
+      appVersion: 1.0.0
     asserts:
       - equal:
           path: metadata.name
@@ -112,6 +115,7 @@ tests:
 
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
+  - **appVersion**: *string, optional*. The app-version of the chart, default to the app-version set in the Chart.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 

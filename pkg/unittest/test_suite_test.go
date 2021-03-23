@@ -19,6 +19,7 @@ import (
 // Most used test files
 const testSuiteTests string = "_suite_tests"
 
+const testValuesFiles = "../../test/data/resources_values.yaml"
 const testTestFiles string = "tests/*_test.yaml"
 const testTestFailedFiles string = "tests_failed/*_test.yaml"
 
@@ -66,7 +67,7 @@ func validateTestResultAndSnapshots(
 
 func TestV2ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/invalidbasic/tests/deployment_test.yaml", "basic", false)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
@@ -76,7 +77,7 @@ func TestV2ParseTestSuiteUnstrictFileOk(t *testing.T) {
 
 func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
@@ -84,9 +85,20 @@ func TestV2ParseTestSuiteFileOk(t *testing.T) {
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 }
 
+func TestV2ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"configmap.yaml", "deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Equal(2, len(suite.Values)) // Expect images and additional_values.yaml
+}
+
 func TestV2ParseTestSuiteFileInSubfolderOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder", true)
+	suite, err := ParseTestSuiteFile("../../test/data/v2/with-subfolder/tests/service_test.yaml", "with-subfolder", true, []string{})
 
 	a.Nil(err)
 	a.Equal("test service", suite.Name)
@@ -321,7 +333,7 @@ tests:
 
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
@@ -331,12 +343,23 @@ func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.Nil(err)
 	a.Equal(suite.Name, "test deployment")
 	a.Equal(suite.Templates, []string{"configmap.yaml", "deployment.yaml"})
 	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
+}
+
+func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
+
+	a.Nil(err)
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"configmap.yaml", "deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Equal(2, len(suite.Values)) // Expect images and additional_values.yaml
 }
 
 func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
