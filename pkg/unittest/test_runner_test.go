@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -93,10 +94,11 @@ func TestV2RunnerOkWithPassedTests(t *testing.T) {
 
 func TestV2RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
+	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testTestFiles},
-		ValuesFiles: []string{testValuesFiles},
+		ValuesFiles: []string{fullPath},
 	}
 	passed := runner.RunV2([]string{testV2BasicChart})
 	assert.True(t, passed, buffer.String())
@@ -185,10 +187,11 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 
 func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
+	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testTestFiles},
-		ValuesFiles: []string{testValuesFiles},
+		ValuesFiles: []string{fullPath},
 	}
 	passed := runner.RunV3([]string{testV2BasicChart})
 	assert.True(t, passed, buffer.String())
