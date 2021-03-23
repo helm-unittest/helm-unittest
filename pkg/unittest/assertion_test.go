@@ -24,7 +24,7 @@ func validateSucceededTestAssertions(
 	a.Nil(err)
 
 	for idx, assertion := range assertions {
-		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), &results.AssertionResult{Index: idx})
+		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, &results.AssertionResult{Index: idx})
 		a.Equal(&results.AssertionResult{
 			Index:      idx,
 			FailInfo:   []string{},
@@ -285,7 +285,7 @@ equal:
 	a := assert.New(t)
 	a.Nil(err)
 
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, &results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\ttemplate \"not-existed.yaml\" not exists or not selected in test suite"},
@@ -306,7 +306,7 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	yaml.Unmarshal([]byte(assertionYAML), &assertion)
 
 	a := assert.New(t)
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, &results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\tassertion.template must be given if testsuite.templates is empty"},

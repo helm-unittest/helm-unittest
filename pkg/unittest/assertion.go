@@ -13,19 +13,21 @@ import (
 
 // Assertion defines target and metrics to validate rendered result
 type Assertion struct {
-	Template         string
-	DocumentIndex    int
-	Not              bool
-	AssertType       string
-	validator        validators.Validatable
-	antonym          bool
-	defaultTemplates []string
+	Template             string
+	DocumentIndex        int
+	Not                  bool
+	AssertType           string
+	validator            validators.Validatable
+	requireRenderSuccess bool
+	antonym              bool
+	defaultTemplates     []string
 }
 
 // Assert validate the rendered manifests with validator
 func (a *Assertion) Assert(
 	templatesResult map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
+	renderSucceed bool,
 	result *results.AssertionResult,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
@@ -43,6 +45,12 @@ func (a *Assertion) Assert(
 			noFile := []string{"Error:", a.noFileErrMessage(template)}
 			failInfo = append(failInfo, noFile...)
 			assertionPassed = false
+			break
+		}
+
+		if a.requireRenderSuccess != renderSucceed {
+			invalidRender := []string{fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])}
+			failInfo = append(failInfo, invalidRender...)
 			break
 		}
 
@@ -138,6 +146,7 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 
 			a.AssertType = assertName
 			a.validator = validator.(validators.Validatable)
+			a.requireRenderSuccess = correspondDef.expectRenderSuccess
 			a.antonym = correspondDef.antonym
 			a.defaultTemplates = []string{a.Template}
 		}
@@ -146,32 +155,33 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 }
 
 type assertTypeDef struct {
-	validatorType reflect.Type
-	antonym       bool
+	validatorType       reflect.Type
+	antonym             bool
+	expectRenderSuccess bool
 }
 
 var assertTypeMapping = map[string]assertTypeDef{
-	"matchSnapshot":     {reflect.TypeOf(validators.MatchSnapshotValidator{}), false},
-	"matchSnapshotRaw":  {reflect.TypeOf(validators.MatchSnapshotRawValidator{}), false},
-	"equal":             {reflect.TypeOf(validators.EqualValidator{}), false},
-	"notEqual":          {reflect.TypeOf(validators.EqualValidator{}), true},
-	"equalRaw":          {reflect.TypeOf(validators.EqualRawValidator{}), false},
-	"notEqualRaw":       {reflect.TypeOf(validators.EqualRawValidator{}), true},
-	"matchRegex":        {reflect.TypeOf(validators.MatchRegexValidator{}), false},
-	"notMatchRegex":     {reflect.TypeOf(validators.MatchRegexValidator{}), true},
-	"matchRegexRaw":     {reflect.TypeOf(validators.MatchRegexRawValidator{}), false},
-	"notMatchRegexRaw":  {reflect.TypeOf(validators.MatchRegexRawValidator{}), true},
-	"contains":          {reflect.TypeOf(validators.ContainsValidator{}), false},
-	"notContains":       {reflect.TypeOf(validators.ContainsValidator{}), true},
-	"isNull":            {reflect.TypeOf(validators.IsNullValidator{}), false},
-	"isNotNull":         {reflect.TypeOf(validators.IsNullValidator{}), true},
-	"isEmpty":           {reflect.TypeOf(validators.IsEmptyValidator{}), false},
-	"isNotEmpty":        {reflect.TypeOf(validators.IsEmptyValidator{}), true},
-	"isKind":            {reflect.TypeOf(validators.IsKindValidator{}), false},
-	"isAPIVersion":      {reflect.TypeOf(validators.IsAPIVersionValidator{}), false},
-	"hasDocuments":      {reflect.TypeOf(validators.HasDocumentsValidator{}), false},
-	"isSubset":          {reflect.TypeOf(validators.IsSubsetValidator{}), false},
-	"isNotSubset":       {reflect.TypeOf(validators.IsSubsetValidator{}), true},
-	"failedTemplate":    {reflect.TypeOf(validators.FailedTemplateValidator{}), false},
-	"notFailedTemplate": {reflect.TypeOf(validators.FailedTemplateValidator{}), true},
+	"matchSnapshot":     {reflect.TypeOf(validators.MatchSnapshotValidator{}), false, true},
+	"matchSnapshotRaw":  {reflect.TypeOf(validators.MatchSnapshotRawValidator{}), false, true},
+	"equal":             {reflect.TypeOf(validators.EqualValidator{}), false, true},
+	"notEqual":          {reflect.TypeOf(validators.EqualValidator{}), true, true},
+	"equalRaw":          {reflect.TypeOf(validators.EqualRawValidator{}), false, true},
+	"notEqualRaw":       {reflect.TypeOf(validators.EqualRawValidator{}), true, true},
+	"matchRegex":        {reflect.TypeOf(validators.MatchRegexValidator{}), false, true},
+	"notMatchRegex":     {reflect.TypeOf(validators.MatchRegexValidator{}), true, true},
+	"matchRegexRaw":     {reflect.TypeOf(validators.MatchRegexRawValidator{}), false, true},
+	"notMatchRegexRaw":  {reflect.TypeOf(validators.MatchRegexRawValidator{}), true, true},
+	"contains":          {reflect.TypeOf(validators.ContainsValidator{}), false, true},
+	"notContains":       {reflect.TypeOf(validators.ContainsValidator{}), true, true},
+	"isNull":            {reflect.TypeOf(validators.IsNullValidator{}), false, true},
+	"isNotNull":         {reflect.TypeOf(validators.IsNullValidator{}), true, true},
+	"isEmpty":           {reflect.TypeOf(validators.IsEmptyValidator{}), false, true},
+	"isNotEmpty":        {reflect.TypeOf(validators.IsEmptyValidator{}), true, true},
+	"isKind":            {reflect.TypeOf(validators.IsKindValidator{}), false, true},
+	"isAPIVersion":      {reflect.TypeOf(validators.IsAPIVersionValidator{}), false, true},
+	"hasDocuments":      {reflect.TypeOf(validators.HasDocumentsValidator{}), false, true},
+	"isSubset":          {reflect.TypeOf(validators.IsSubsetValidator{}), false, true},
+	"isNotSubset":       {reflect.TypeOf(validators.IsSubsetValidator{}), true, true},
+	"failedTemplate":    {reflect.TypeOf(validators.FailedTemplateValidator{}), false, false},
+	"notFailedTemplate": {reflect.TypeOf(validators.FailedTemplateValidator{}), true, true},
 }
