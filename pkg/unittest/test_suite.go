@@ -52,7 +52,8 @@ type TestSuite struct {
 		IsUpgrade bool `yaml:"upgrade"`
 	}
 	Chart struct {
-		Version string
+		Version    string
+		AppVersion string
 	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`
@@ -176,6 +177,9 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 func (s *TestSuite) polishChartSettings(test *TestJob) {
 	if s.Chart.Version != "" {
 		test.Chart.Version = s.Chart.Version
+	}
+	if s.Chart.AppVersion != "" {
+		test.Chart.AppVersion = s.Chart.AppVersion
 	}
 }
 
