@@ -17,6 +17,30 @@ import (
 	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
 )
 
+func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
+	filesSet := make([]string, 0)
+	for _, pattern := range filePatterns {
+		if !filepath.IsAbs(pattern) {
+			files, err := filepath.Glob(filepath.Join(chartPath, pattern))
+			if err != nil {
+				return nil, err
+			}
+			if setAbsolute {
+				for _, file := range files {
+					file, _ = filepath.Abs(file)
+					filesSet = append(filesSet, file)
+				}
+			} else {
+				filesSet = append(filesSet, files...)
+			}
+		} else {
+			filesSet = append(filesSet, pattern)
+		}
+	}
+
+	return filesSet, nil
+}
+
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
 	passed  uint
@@ -63,6 +87,7 @@ type TestRunner struct {
 	Strict           bool
 	Failfast         bool
 	TestFiles        []string
+	ValuesFiles      []string
 	OutputFile       string
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
@@ -156,20 +181,19 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 }
 
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
-	filesSet := map[string]bool{}
-	for _, pattern := range tr.TestFiles {
-		files, err := filepath.Glob(filepath.Join(chartPath, pattern))
-		if err != nil {
-			return nil, err
-		}
-		for _, file := range files {
-			filesSet[file] = true
-		}
+	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
+	if terr != nil {
+		return nil, terr
 	}
 
-	resultSuites := make([]*TestSuite, 0, len(filesSet))
-	for file := range filesSet {
-		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict)
+	valuesFilesSet, verr := getFiles("", tr.ValuesFiles, true)
+	if verr != nil {
+		return nil, verr
+	}
+
+	resultSuites := make([]*TestSuite, 0, len(testFilesSet))
+	for _, file := range testFilesSet {
+		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
 		if err != nil {
 			tr.handleSuiteResult(&results.TestSuiteResult{
 				FilePath:  file,

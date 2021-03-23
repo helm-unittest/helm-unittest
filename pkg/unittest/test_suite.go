@@ -13,7 +13,7 @@ import (
 )
 
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool) (*TestSuite, error) {
+func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) (*TestSuite, error) {
 	suite := TestSuite{chartRoute: chartRoute}
 	content, err := ioutil.ReadFile(suiteFilePath)
 	if err != nil {
@@ -36,6 +36,9 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool) (*TestSui
 			return &suite, err
 		}
 	}
+
+	// Append the valuesfiles from command to the testsuites.
+	suite.Values = append(suite.Values, valueFilesSet...)
 
 	return &suite, nil
 }

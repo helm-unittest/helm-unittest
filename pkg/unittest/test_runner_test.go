@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -91,6 +92,31 @@ func TestV2RunnerOkWithPassedTests(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV2RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{testValuesFiles},
+	}
+	passed := runner.RunV2([]string{testV2BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV2RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	fullPath, _ := filepath.Abs(testValuesFiles)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{fullPath},
+	}
+	passed := runner.RunV2([]string{testV2BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
 func TestV2RunnerOkWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -167,6 +193,31 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 		TestFiles: []string{testTestFiles},
 	}
 	passed := runner.RunV3([]string{testV3BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{testValuesFiles},
+	}
+	passed := runner.RunV3([]string{testV2BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	fullPath, _ := filepath.Abs(testValuesFiles)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{fullPath},
+	}
+	passed := runner.RunV3([]string{testV2BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
