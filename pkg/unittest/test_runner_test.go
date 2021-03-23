@@ -94,6 +94,18 @@ func TestV2RunnerOkWithPassedTests(t *testing.T) {
 
 func TestV2RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{testValuesFiles},
+	}
+	passed := runner.RunV2([]string{testV2BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV2RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
 	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
@@ -186,6 +198,18 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 }
 
 func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testTestFiles},
+		ValuesFiles: []string{testValuesFiles},
+	}
+	passed := runner.RunV3([]string{testV2BasicChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{

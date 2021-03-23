@@ -122,7 +122,7 @@ func init() {
 
 	cmd.PersistentFlags().StringArrayVarP(
 		&testConfig.valuesFiles, "values", "v", []string{},
-		"glob paths of values files location, default no value files",
+		"absolute or glob paths of values files location, default no values files",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

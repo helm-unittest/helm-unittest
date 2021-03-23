@@ -19,7 +19,7 @@ import (
 // Most used test files
 const testSuiteTests string = "_suite_tests"
 
-const testValuesFiles = "../../test/data/resources_values.yaml"
+const testValuesFiles = "../../test/data/services_values.yaml"
 const testTestFiles string = "tests/*_test.yaml"
 const testTestFailedFiles string = "tests_failed/*_test.yaml"
 

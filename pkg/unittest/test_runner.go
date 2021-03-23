@@ -20,19 +20,21 @@ import (
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
 	filesSet := make([]string, 0)
 	for _, pattern := range filePatterns {
-		files, err := filepath.Glob(filepath.Join(chartPath, pattern))
-		if err != nil {
-			return nil, err
-		}
-		if setAbsolute {
-			for _, file := range files {
-				if !filepath.IsAbs(file) {
+		if !filepath.IsAbs(pattern) {
+			files, err := filepath.Glob(filepath.Join(chartPath, pattern))
+			if err != nil {
+				return nil, err
+			}
+			if setAbsolute {
+				for _, file := range files {
 					file, _ = filepath.Abs(file)
+					filesSet = append(filesSet, file)
 				}
-				filesSet = append(filesSet, file)
+			} else {
+				filesSet = append(filesSet, files...)
 			}
 		} else {
-			filesSet = append(filesSet, files...)
+			filesSet = append(filesSet, pattern)
 		}
 	}
 
