@@ -1,4 +1,4 @@
-0.2.6 /
+0.2.6 / 2021-03-31
 ==================
 - Add support for list of templates on tests (credits to: @stevelipinski)
 - Add support for failfast (resolves #84)
@@ -8,6 +8,7 @@
 - Fix contains assert validation, when count is used (resolves #98)
 - Fix small documentation corrections (credits to: @mik-laj, @Michael03, @SaffatHasan)
 - Update packages to lates version
+- Added Frequently Asked Questions
 
 0.2.5 / 2020-11-17 
 ==================

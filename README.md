@@ -18,12 +18,16 @@ Feature:
 If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the test API in YAML.
 
 - [Install](#install)
+- [Docker Usage](#docker-usage)
 - [Get Started](#get-started)
 - [Test Suite File](#test-suite-file)
 - [Usage](#usage)
   - [Flags](#flags)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
+- [Dependend subchart Testing](#dependend-subchart-testing)
+- [Tests within subchart](#tests-within-subchart)
+- [Frequently Asked Questions](#frequently-asked-questions)
 - [Related Projects / Commands](#related-projects--commands)
 - [Contributing](#contributing)
 
@@ -154,7 +158,7 @@ $ helm unittest -u my-chart
 ```
 The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
-## Dependend subchart Testing (Requirements.yaml)
+## Dependend subchart Testing
 
 If you have dependend subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpfull to validate if good default values are accidently overwritten within your default helm chart.
 
@@ -192,6 +196,12 @@ tests:
       - ...
 ```
 Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
+
+## Frequently Asked Questions
+
+As more people use the unittest plugin, more questions will come. Therefore a [Frequently Asked Question page](./FAQ.md) is created to answer the most common questions.
+
+If you are missing an anwer to a question feel free to raise a ticket.
 
 ## Related Projects / Commands
 
