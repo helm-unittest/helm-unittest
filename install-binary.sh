@@ -155,6 +155,7 @@ installFile() {
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file with the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  rm -r "$HELM_TMP"
   rm -r "$PLUGIN_TMP_FOLDER"
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }
