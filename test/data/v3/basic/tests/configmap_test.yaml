@@ -7,3 +7,6 @@ tests:
       - notMatchRegex:
           path: data.my\.conf
           pattern: cacertfile
+      - contains:
+          path: data.my\.array
+          content: value1
