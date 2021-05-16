@@ -11,7 +11,7 @@ DOCKER ?= "quintush/helm-unittest"
 
 .PHONY: install
 install: bootstrap build
-	mkdir $(HELM_PLUGIN_DIR)
+	mkdir -p $(HELM_PLUGIN_DIR)
 	cp -t $(HELM_PLUGIN_DIR) untt
 	cp -t $(HELM_PLUGIN_DIR) plugin.yaml
 

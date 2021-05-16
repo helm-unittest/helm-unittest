@@ -2,11 +2,6 @@ suite: test ingress
 templates:
   - ingress.yaml
 tests:
-  - it: should render nothing if not enabled
-    asserts:
-      - hasDocuments:
-          count: 0
-
   - it: should fail render ingress if enabled and externalPort not filled
     set:
       ingress.enabled: true
@@ -94,3 +89,9 @@ tests:
           path: spec.tls
           value:
             - secretName: my-tls-secret
+
+  - it: should render nothing if not enabled
+    asserts:
+      - hasDocuments:
+          count: 0
+

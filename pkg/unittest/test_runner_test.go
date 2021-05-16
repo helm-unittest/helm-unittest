@@ -204,7 +204,7 @@ func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{testValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV2BasicChart})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -217,7 +217,7 @@ func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{fullPath},
 	}
-	passed := runner.RunV3([]string{testV2BasicChart})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }

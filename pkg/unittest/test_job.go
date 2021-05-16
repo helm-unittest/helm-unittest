@@ -448,6 +448,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	filteredChart := t.filterV3Chart(targetChart)
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
+
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
@@ -459,7 +460,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 			return nil, renderSucceed, err
 		}
 
-		// If error validate if template error occurred
+		// If error, validate if template error occurred
 		if content == noValueContent {
 			for _, fileName := range t.defaultTemplatesToAssert {
 				selectedTemplateName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
