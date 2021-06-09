@@ -183,6 +183,8 @@ type TestJob struct {
 	definitionFile string
 	// list of templates assertion should assert if not specified
 	defaultTemplatesToAssert []string
+	// requireSuccess
+	requireRenderSuccess bool
 }
 
 // RunV2 render the chart and validate it with assertions in TestJob.
@@ -424,6 +426,14 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 	options := *t.releaseV3Option()
 
+	//Check Release Name length
+	if t.Release.Name != "" {
+		err = v3util.ValidateReleaseName(t.Release.Name)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
 	// Override the chart version when version is setup in test.
 	if t.Chart.Version != "" {
 		targetChart.Metadata.Version = t.Chart.Version
@@ -452,6 +462,11 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// When rendering failed, due to fail or required,
 	// make sure to translate the error to outputOfFiles.
 	if err != nil {
+		// When no failed assertion is set, the error can be send directly as a failure.
+		if t.requireRenderSuccess {
+			return nil, false, err
+		}
+
 		renderSucceed = false
 		// Parse the error and create an outputFile
 		filePath, content := parseV3RenderError(err.Error())
@@ -655,7 +670,10 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 		t.chartRoute = targetChartName
 	}
 
+	t.requireRenderSuccess = true
+
 	for _, assertion := range t.Assertions {
+		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
 		templatesToAssert := make([]string, 0)
 
 		if t.DocumentIndex != nil {

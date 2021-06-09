@@ -335,48 +335,7 @@
 				  - containerPort: null
  FAIL  test deployment that would be fail	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should fail all kinds of assertion
-
-		- asserts[0] `equal` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[1] `notEqual` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[2] `matchRegex` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[3] `notMatchRegex` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[4] `contains` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[5] `notContains` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[6] `isNull` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[7] `isNotNull` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[8] `isEmpty` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[9] `isNotEmpty` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[10] `isKind` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[11] `isAPIVersion` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[12] `hasDocuments` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
-
-		- asserts[13] `matchSnapshot` fail
-			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+		Error: template: basic/templates/deployment.yaml:12:24: executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>: error calling include: template: no template "basic/templates/configmap.yaml" associated with template "gotpl"
  FAIL  test ingress that should fail	../../test/data/v3/basic/tests_failed/ingress_test.yaml
 	- should fail render nothing if not enabled
 
@@ -550,7 +509,7 @@
 
 Charts:      1 failed, 0 passed, 1 total
 Test Suites: 8 failed, 0 passed, 8 total
-Tests:       16 failed, 0 passed, 16 total
+Tests:       16 failed, 1 errored, 0 passed, 16 total
 Snapshot:    2 passed, 2 total
 Time:        XX.XXXms
 

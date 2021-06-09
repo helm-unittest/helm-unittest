@@ -702,6 +702,29 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV3RunJobWithToLongReleaseName(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: to long releasename
+release:
+  name: my-very-very-very-very-very-very-very-very-very-very-very-very-release
+asserts:
+  - hasDocuments:
+      count: 1
+    template: crd_backup.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.NotNil(testResult.ExecError)
+	a.False(testResult.Passed)
+}
+
 func TestV3RunJobWithCapabilitySettings(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `

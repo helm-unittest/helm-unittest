@@ -31,6 +31,7 @@ const testV3InvalidBasicChart string = "../../test/data/v3/invalidbasic"
 const testV3BasicChart string = "../../test/data/v3/basic"
 const testV3WithSubChart string = "../../test/data/v3/with-subchart"
 const testV3WithSubFolderChart string = "../../test/data/v3/with-subfolder"
+const testV3WithSubSubFolderChart string = "../../test/data/v3/with-subsubcharts"
 
 var tmpdir, _ = ioutil.TempDir("", testSuiteTests)
 
