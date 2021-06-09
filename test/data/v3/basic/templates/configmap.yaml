@@ -20,3 +20,5 @@ data:
   my.array:
     - value1
     - value2
+  special.array:
+    - phony-service.phony:graphql
