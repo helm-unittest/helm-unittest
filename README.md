@@ -1,3 +1,7 @@
+**⚠ THIS REPOSITORY IS NOT MAINTAINED ANYMORE. ⚠**
+
+You can consider other working forks like [quintush/helm-unittest](https://github.com/quintush/helm-unittest). If anyone would like to continue maintaining this repo, please mail zeldalink0515@gmail.com. I'd be glad to transfer ownership and see it live again.
+
 # helm unittest
 
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
