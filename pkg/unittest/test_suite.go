@@ -234,7 +234,7 @@ func (s *TestSuite) runV3TestJobs(
 
 		chart.SetDependencies(dependenciesBackup...)
 		chart.Values = valuesBackup
-		chart.Metadata.Dependencies = metadataDependenciesBackup
+		chart.Metadata.Dependencies = cloneDependencies(metadataDependenciesBackup)
 
 		if !suitePass && failfast {
 			break
