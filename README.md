@@ -60,7 +60,7 @@ docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 .
 # run unittests of a helm 3 chart with Junit output for CI validation
 # make sure to mount local folder to /apps in container
 # the test-output.xml will be available in the local folder.
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 -o test-output.xml .
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 -o test-output.xml -t junit .
 ```
 
 The docker container contains the fully installed helm client, including the helm-unittest plugin.
@@ -123,7 +123,8 @@ defined in test suite files.
   -3, --helm3                  parse helm charts as helm3 charts (default false)
   -q, --failfast               direct quit testing, when a test is failed (default false)
   -h, --help                   help for unittest
-  -o, --output-file string     output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -t, --output-type string     the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -o, --output-file string     the file where testresults are written in format specified, defaults no output is written to file
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
 ```
