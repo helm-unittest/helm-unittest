@@ -1,3 +1,12 @@
+0.2.7 / 2021-07-26
+==================
+- Added samples for contains mapping (resolves #107)
+- Improved errorhandling, show complete error on failure, when failed_template validator is not used (resolves #109)
+- Fixed import-values (credits to: @rquinio1A, resolves #115)
+- Added samples for subsubcharts and global values (resolves #114)
+- Fix small documentation improvements and corrections (credits to: @jglick, @krichter722, @craig-mcmahon)
+- Update packages to lates version
+
 0.2.6 / 2021-03-31
 ==================
 - Add support for list of templates on tests (credits to: @stevelipinski)

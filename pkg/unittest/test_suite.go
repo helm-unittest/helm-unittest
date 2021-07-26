@@ -67,7 +67,7 @@ type TestSuite struct {
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
-	// like "parant-chart", "parent-charts/charts/child-chart"
+	// like "parent-chart", "parent-charts/charts/child-chart"
 	chartRoute string
 }
 
@@ -222,7 +222,7 @@ func (s *TestSuite) runV3TestJobs(
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 	metadataDependenciesBackup := cloneDependencies(chart.Metadata.Dependencies)
 	dependenciesBackup := chart.Dependencies()
-	valuesBackup := chart.Values
+	valuesBackup := cloneValues(chart.Values)
 
 	for idx, testJob := range s.Tests {
 		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
@@ -233,7 +233,9 @@ func (s *TestSuite) runV3TestJobs(
 		}
 
 		chart.SetDependencies(dependenciesBackup...)
-		chart.Values = valuesBackup
+		chart.Values = nil
+		chart.Values = cloneValues(valuesBackup)
+		chart.Metadata.Dependencies = nil
 		chart.Metadata.Dependencies = cloneDependencies(metadataDependenciesBackup)
 
 		if !suitePass && failfast {
@@ -254,7 +256,7 @@ func cloneDependencies(metadataDependencies []*v3chart.Dependency) []*v3chart.De
 			Condition:    metadataDependency.Condition,
 			Tags:         metadataDependency.Tags,
 			Enabled:      metadataDependency.Enabled,
-			ImportValues: metadataDependency.ImportValues,
+			ImportValues: cloneImportValues(metadataDependency.ImportValues),
 			Alias:        metadataDependency.Alias,
 		}
 
@@ -262,4 +264,22 @@ func cloneDependencies(metadataDependencies []*v3chart.Dependency) []*v3chart.De
 	}
 
 	return clonedDependencies
+}
+
+func cloneValues(values map[string]interface{}) map[string]interface{} {
+	clonedValues := make(map[string]interface{})
+
+	for key, value := range values {
+		clonedValues[key] = value
+	}
+
+	return clonedValues
+}
+
+func cloneImportValues(importValues []interface{}) []interface{} {
+	clonedImportValues := make([]interface{}, 0)
+
+	clonedImportValues = append(clonedImportValues, importValues...)
+
+	return clonedImportValues
 }

@@ -1,13 +1,13 @@
 
-### Chart [ basic ] ../../test/data/v2/basic
+### Chart [ basic ] ../../test/data/v3/basic
 
 
- PASS  Configmap mulit line Test	../../test/data/v2/basic/tests/configmap_test.yaml
- PASS  Custom Resource Definition Test	../../test/data/v2/basic/tests/crd_test.yaml
- PASS  test deployment	../../test/data/v2/basic/tests/deployment_test.yaml
- PASS  test ingress	../../test/data/v2/basic/tests/ingress_test.yaml
- PASS  test notes	../../test/data/v2/basic/tests/notes_test.yaml
- PASS  test service	../../test/data/v2/basic/tests/service_test.yaml
+ PASS  Configmap mulit line Test	../../test/data/v3/basic/tests/configmap_test.yaml
+ PASS  Custom Resource Definition Test	../../test/data/v3/basic/tests/crd_test.yaml
+ PASS  test deployment	../../test/data/v3/basic/tests/deployment_test.yaml
+ PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
+ PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
+ PASS  test service	../../test/data/v3/basic/tests/service_test.yaml
 
 
 Charts:      1 passed, 1 total

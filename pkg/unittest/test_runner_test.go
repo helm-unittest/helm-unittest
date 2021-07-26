@@ -197,6 +197,17 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV3RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithSubSubFolderChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
 func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -204,7 +215,7 @@ func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{testValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV2BasicChart})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
@@ -217,7 +228,7 @@ func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{fullPath},
 	}
-	passed := runner.RunV3([]string{testV2BasicChart})
+	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }

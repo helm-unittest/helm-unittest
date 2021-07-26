@@ -1,0 +1,11 @@
+apiVersion: v2
+name: with-subsubcharts
+version: 0.1.0
+type: application
+
+dependencies:
+  - name: example-subchart
+    version: 0.2.0
+    import-values:
+      - child: local.annotations
+        parent: annotations

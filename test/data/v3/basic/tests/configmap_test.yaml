@@ -7,3 +7,11 @@ tests:
       - notMatchRegex:
           path: data.my\.conf
           pattern: cacertfile
+      - contains:
+          path: data.my\.array
+          content: value1
+          count: 1
+      - contains:
+          path: data.special\.array
+          content: phony-service.phony:graphql
+          count: 1

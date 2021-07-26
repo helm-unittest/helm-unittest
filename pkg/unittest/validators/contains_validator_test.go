@@ -60,6 +60,29 @@ func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestContainsValidatorWithValueOnlyWhenOk(t *testing.T) {
+	docToTestContainsValueOnly := `
+a:
+  b:
+    - VALUE1
+    - VALUE2
+`
+	manifest := makeManifest(docToTestContainsValueOnly)
+
+	validator := ContainsValidator{
+		"a.b",
+		"VALUE1",
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestContainsValidatorWithAnyWhenOk(t *testing.T) {
 	docToTestContainsAny := `
 a:

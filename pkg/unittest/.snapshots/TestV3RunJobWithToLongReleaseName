@@ -1,0 +1,8 @@
+(*results.TestJobResult)({
+  DisplayName: (string) (len=19) "to long releasename",
+  Index: (int) 0,
+  Passed: (bool) false,
+  ExecError: (*errors.fundamental)(invalid release name, must match regex ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ and the length must not be longer than 53),
+  AssertsResult: ([]*results.AssertionResult) <nil>,
+  Duration: (time.Duration) 0s
+})
