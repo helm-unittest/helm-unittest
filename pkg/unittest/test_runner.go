@@ -166,7 +166,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 		}
 
 		tr.printChartHeader(chart.Name(), chartPath)
-		chartPassed := tr.runV3SuitesOfChart(testSuites, chart)
+		chartPassed := tr.runV3SuitesOfChart(testSuites, chartPath)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -285,7 +285,7 @@ func (tr *TestRunner) runV2SuitesOfChart(suites []*TestSuite, chart *v2chart.Cha
 }
 
 // runV3SuitesOfChart runs suite files of the chart and print output
-func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Chart) bool {
+func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) bool {
 	chartPassed := true
 	for _, suite := range suites {
 		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.definitionFile, tr.UpdateSnapshot)
@@ -298,7 +298,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Cha
 			continue
 		}
 
-		result := suite.RunV3(chart, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
+		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)

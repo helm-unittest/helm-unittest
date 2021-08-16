@@ -12,7 +12,6 @@ import (
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	v2util "k8s.io/helm/pkg/chartutil"
 )
 
@@ -364,7 +363,6 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 }
 
 func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: validate metadata
 templates:
@@ -398,13 +396,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 5, 5, 0, 0)
 }
 
 func TestV3RunSuiteWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -423,13 +420,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
 func TestV3RunSuiteWithOverridesWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -460,13 +456,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
 
 func TestV3RunSuiteWhenFail(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -484,13 +479,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
 
 func TestV3RunSuiteWithSubfolderWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubFolderChart)
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -508,13 +502,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubFolderChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
 func TestV3RunSuiteWithSubChartsWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubChart)
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -531,13 +524,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
 
 func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubChart)
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -562,13 +554,12 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
 func TestV3RunSuiteNameOverrideFail(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
 	suiteDoc := `
 suite: test suite name too long
 templates:
@@ -585,7 +576,7 @@ tests:
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(c, cache, true, &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
