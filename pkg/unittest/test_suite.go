@@ -2,13 +2,14 @@ package unittest
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/lrills/helm-unittest/pkg/unittest/results"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"gopkg.in/yaml.v2"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
 )
 
@@ -95,7 +96,7 @@ func (s *TestSuite) RunV2(
 
 // RunV3 runs all the test jobs defined in TestSuite.
 func (s *TestSuite) RunV3(
-	targetChart *v3chart.Chart,
+	chartPath string,
 	snapshotCache *snapshot.Cache,
 	failfast bool,
 	result *results.TestSuiteResult,
@@ -106,7 +107,7 @@ func (s *TestSuite) RunV3(
 	result.FilePath = s.definitionFile
 
 	result.Passed, result.TestsResult = s.runV3TestJobs(
-		targetChart,
+		chartPath,
 		snapshotCache,
 		failfast,
 	)
@@ -214,17 +215,19 @@ func (s *TestSuite) runV2TestJobs(
 }
 
 func (s *TestSuite) runV3TestJobs(
-	chart *v3chart.Chart,
+	chartPath string,
 	cache *snapshot.Cache,
 	failfast bool,
 ) (bool, []*results.TestJobResult) {
 	suitePass := true
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
-	metadataDependenciesBackup := cloneDependencies(chart.Metadata.Dependencies)
-	dependenciesBackup := chart.Dependencies()
-	valuesBackup := cloneValues(chart.Values)
 
 	for idx, testJob := range s.Tests {
+		// (Re)load the chart used by this suite (with logging temporarily disabled)
+		log.SetOutput(ioutil.Discard)
+		chart, _ := v3loader.Load(chartPath)
+		log.SetOutput(os.Stdout)
+
 		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
@@ -232,54 +235,9 @@ func (s *TestSuite) runV3TestJobs(
 			suitePass = false
 		}
 
-		chart.SetDependencies(dependenciesBackup...)
-		chart.Values = nil
-		chart.Values = cloneValues(valuesBackup)
-		chart.Metadata.Dependencies = nil
-		chart.Metadata.Dependencies = cloneDependencies(metadataDependenciesBackup)
-
 		if !suitePass && failfast {
 			break
 		}
 	}
 	return suitePass, jobResults
-}
-
-func cloneDependencies(metadataDependencies []*v3chart.Dependency) []*v3chart.Dependency {
-	clonedDependencies := make([]*v3chart.Dependency, 0)
-
-	for _, metadataDependency := range metadataDependencies {
-		clonedDependency := &v3chart.Dependency{
-			Name:         metadataDependency.Name,
-			Version:      metadataDependency.Version,
-			Repository:   metadataDependency.Repository,
-			Condition:    metadataDependency.Condition,
-			Tags:         metadataDependency.Tags,
-			Enabled:      metadataDependency.Enabled,
-			ImportValues: cloneImportValues(metadataDependency.ImportValues),
-			Alias:        metadataDependency.Alias,
-		}
-
-		clonedDependencies = append(clonedDependencies, clonedDependency)
-	}
-
-	return clonedDependencies
-}
-
-func cloneValues(values map[string]interface{}) map[string]interface{} {
-	clonedValues := make(map[string]interface{})
-
-	for key, value := range values {
-		clonedValues[key] = value
-	}
-
-	return clonedValues
-}
-
-func cloneImportValues(importValues []interface{}) []interface{} {
-	clonedImportValues := make([]interface{}, 0)
-
-	clonedImportValues = append(clonedImportValues, importValues...)
-
-	return clonedImportValues
 }
