@@ -3,6 +3,7 @@ package validators
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/lrills/helm-unittest/internal/common"
@@ -113,11 +114,13 @@ func diff(expected string, actual string) string {
 	return diff
 }
 
-// uniform the content with correct line-endings
+// uniform the content without invalid characters and correct line-endings
 func uniformContent(content interface{}) string {
-	// All decoded content uses LF
+	// For multilines, remove spaces before newlines
+	// And ensure all decoded content uses LF
+	regex := regexp.MustCompile(`(?m)[ ]+\r?\n`)
 	actual := fmt.Sprintf("%v", content)
-	return strings.ReplaceAll(actual, "\r\n", "\n")
+	return regex.ReplaceAllString(actual, "\n")
 }
 
 // Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)
