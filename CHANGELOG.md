@@ -1,3 +1,12 @@
+0.2.8 / 2021-11-01
+==================
+- Add support for Macosx arm64 (credits to: @svobol13)
+- Add support for new assertion, containsDocument (credits to: @cyrus-mc)
+- Add releasename validation (credits to: @jainbhavya65)
+- Fixed reloading the project to prevent unwanted side-effects  (credits to: @armingerten, resolves #111)
+- Fixed pre-processing rendered data before comparison (credits to: @wenhulove333)
+- Update packages to lates version
+
 0.2.7 / 2021-07-26
 ==================
 - Added samples for contains mapping (resolves #107)
