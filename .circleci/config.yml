@@ -2,8 +2,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.14
-    working_directory: /go/src/github.com/lrills/helm-unittest
+      - image: cimg/go:1.16
     steps:
       - checkout
       - run:
@@ -33,8 +32,7 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.14
-    working_directory: /go/src/github.com/lrills/helm-unittest
+      - image: golang:1.16
     steps:
       - checkout
       - run:
@@ -49,8 +47,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: circleci/golang:1.14
-    working_directory: /go/src/github.com/lrills/helm-unittest
+      - image: cimg/go:1.16
     steps:
       - checkout
       - setup_remote_docker

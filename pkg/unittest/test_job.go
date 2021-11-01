@@ -83,16 +83,6 @@ func parseV3RenderError(errorMessage string) (string, string) {
 	return filePath, content
 }
 
-func parseV3TemplateRenderError(errorMessage string) string {
-	// Split the error into several groups.
-	// those groups are required to parse the correct value.
-	const regexPattern string = "^.+\"(.+)\" (.+:)* (.+)$"
-
-	_, content := parseRenderError(regexPattern, errorMessage)
-
-	return content
-}
-
 func parseRenderError(regexPattern, errorMessage string) (string, string) {
 	filePath := ""
 	content := noValueContent
@@ -476,10 +466,9 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 
 		// If error, validate if template error occurred
-		if content == noValueContent {
+		if strings.HasPrefix(filepath.Base(filePath), "_") {
 			for _, fileName := range t.defaultTemplatesToAssert {
 				selectedTemplateName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
-				content = parseV3TemplateRenderError(err.Error())
 				outputOfFiles[selectedTemplateName] = content
 			}
 		} else {
