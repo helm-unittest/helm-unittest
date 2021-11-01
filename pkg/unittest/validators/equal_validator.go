@@ -55,6 +55,11 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
+		_, ok := actual.(string)
+		if ok {
+			actual = uniformContent(actual)
+		}
+
 		if reflect.DeepEqual(a.Value, actual) == context.Negative {
 			validateSuccess = false
 			errorMessage := a.failInfo(actual, idx, context.Negative)

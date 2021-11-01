@@ -12,11 +12,26 @@ var docToTestEqual = `
 a:
   b:
     - c: 123
+  e: |
+    Line1 
+    Line2
 `
 
 func TestEqualValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 	validator := EqualValidator{"a.b[0].c", 123}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
+	manifest := makeManifest(docToTestEqual)
+	validator := EqualValidator{"a.e", "Line1\nLine2\n"}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
