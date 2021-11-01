@@ -180,9 +180,11 @@ Available assertion types are listed below:
 | `isKind` | **of**: *String*. Expected `kind` of manifest. | Assert the `kind` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: kind<br/>  value: ...<br/> | <pre>isKind:<br/>  of: Deployment</pre> |
 | `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
+| `containsDocument` | **kind**: *string*. Expected `kind` of manifest.<br/> **apiVersion**: *string*. Expected `apiVersion` of manifest.<br/>**name**: *string, optional*. The value of the `metadata.name`.<br/>**namespace**: *string, optional*. The value of the `metadata.namespace`. | Asserts the documents rendered by the `kind` and `apiVersion` specified. | <pre>containsDocument:<br/>  kind: Deployment<br/>  apiVersion: apps/v1<br/>  name:foo<br/>  namespace: bar</pre> |
 | `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
 | `matchSnapshotRaw` | | Assert the value in the NOTES.txt is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshotRaw: {}<br/></pre> |
 | `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template error. | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> |
+
 
 ### Antonym and `not`
 
