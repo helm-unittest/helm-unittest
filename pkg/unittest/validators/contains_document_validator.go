@@ -32,7 +32,6 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	fmt.Printf("%+v\n", v)
 	for _, manifest := range manifests {
 		if kind, ok := manifest["kind"].(string); (ok && kind == v.Kind) == context.Negative {
 			// if no match, move onto next document
