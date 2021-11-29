@@ -783,3 +783,25 @@ asserts:
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
+
+func TestV3RunJobWithFailingTempalte(t *testing.T) {
+	c, _ := loader.Load(testV3WithFailingTemplateChart)
+	manifest := `
+it: should work
+template: configMap.yaml
+asserts:
+  - failedTemplate:
+      errorMessage: no template "non-existing-named-template" associated with template "gotpl"
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}

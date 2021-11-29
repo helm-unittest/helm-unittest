@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-configmap
+data:
+  my-file.yaml: |
+    {{- include "non-existing-named-template" . | nindent 4 }}

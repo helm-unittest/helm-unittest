@@ -66,7 +66,7 @@ func scopeValuesWithRoutes(routes []string, values map[interface{}]interface{}) 
 func parseV2RenderError(errorMessage string) (string, string) {
 	// Split the error into several groups.
 	// those groups are required to parse the correct value.
-	const regexPattern string = "^.+\"(.+)\":(.+:)* (.+)$"
+	const regexPattern string = "^.+\"(.+)\":(?:.+:)* (.+)$"
 
 	filePath, content := parseRenderError(regexPattern, errorMessage)
 
@@ -76,7 +76,8 @@ func parseV2RenderError(errorMessage string) (string, string) {
 func parseV3RenderError(errorMessage string) (string, string) {
 	// Split the error into several groups.
 	// those groups are required to parse the correct value.
-	const regexPattern string = "^.+\\((.+):\\d+:\\d+\\):(.+:)* (.+)$"
+	// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
+	const regexPattern string = "^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$"
 
 	filePath, content := parseRenderError(regexPattern, errorMessage)
 
@@ -90,9 +91,9 @@ func parseRenderError(regexPattern, errorMessage string) (string, string) {
 	r := regexp.MustCompile(regexPattern)
 	result := r.FindStringSubmatch(errorMessage)
 
-	if len(result) == 4 {
+	if len(result) == 3 {
 		filePath = result[1]
-		content = fmt.Sprintf("%s: %s", common.RAW, result[3])
+		content = fmt.Sprintf("%s: %s", common.RAW, result[2])
 	}
 
 	return filePath, content

@@ -15,12 +15,11 @@ import (
 )
 
 var sectionBeginPattern = regexp.MustCompile("( PASS | FAIL |\n*###|\n*Charts:|\n*Snapshot Summary:)")
-var timePattern = regexp.MustCompile(`Time:\s+([\d\.]+)(s|ms)`)
+var timePattern = regexp.MustCompile(`(Time:\s+)(?:[\d\.]+)(s|ms|\xB5s)`) // B5 = micron for microseconds
 
 func makeOutputSnapshotable(originalOutput string) []interface{} {
 	output := strings.ReplaceAll(originalOutput, "\\", "/")
-	timeLoc := timePattern.FindStringSubmatchIndex(output)[2:4]
-	timeAgnosticOutput := output[:timeLoc[0]] + "XX.XXX" + output[timeLoc[1]:]
+	timeAgnosticOutput := timePattern.ReplaceAllString(output, "${1}XX.XXXms")
 
 	sectionBeggingLocs := sectionBeginPattern.FindAllStringIndex(timeAgnosticOutput, -1)
 	sections := make([]string, len(sectionBeggingLocs))
@@ -204,6 +203,17 @@ func TestV3RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
 		TestFiles: []string{testTestFiles},
 	}
 	passed := runner.RunV3([]string{testV3WithSubSubFolderChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithFailingTemplatePassedTest(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithFailingTemplateChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
