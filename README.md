@@ -219,7 +219,7 @@ And there are some other helm commands you might want to use:
 
 Alternatively, you can also use generic tests frameworks:
 
-- [Python](https://github.com/lrills/helm-unittest/issues/110)
+- [Python](https://github.com/apache/airflow/issues/11657)
 
 - Go - [terratest](https://blog.gruntwork.io/automated-testing-for-kubernetes-and-helm-charts-using-terratest-a4ddc4e67344)
 
