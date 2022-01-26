@@ -11,3 +11,5 @@ untt.exe
 _dist
 
 .DS_Store
+
+.idea
