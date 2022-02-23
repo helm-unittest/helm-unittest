@@ -212,6 +212,7 @@ func (t *TestJob) RunV2(
 		manifestsOfFiles,
 		snapshotComparer,
 		renderSucceed,
+		nil,
 		failfast,
 	)
 
@@ -236,10 +237,10 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, renderSucceed, err := t.renderV3Chart(targetChart, userValues)
-	if err != nil {
-		result.ExecError = err
-		return result
+	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
+	if renderError != nil {
+		result.ExecError = renderError
+		// Continue to enable matching error via failedTemplate assert
 	}
 
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
@@ -253,6 +254,7 @@ func (t *TestJob) RunV3(
 		manifestsOfFiles,
 		snapshotComparer,
 		renderSucceed,
+		renderError,
 		failfast,
 	)
 
@@ -631,7 +633,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
-	renderSucceed, failfast bool,
+	renderSucceed bool, renderError error, failfast bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := true
 	assertsResult := make([]*results.AssertionResult, 0)
@@ -641,6 +643,7 @@ func (t *TestJob) runAssertions(
 			manifestsOfFiles,
 			snapshotComparer,
 			renderSucceed,
+			renderError,
 			&results.AssertionResult{Index: idx},
 		)
 

@@ -27,6 +27,7 @@ type ValidateContext struct {
 	Index    int
 	Negative bool
 	SnapshotComparer
+	RenderError error
 }
 
 func (c *ValidateContext) getManifests() ([]common.K8sManifest, error) {
