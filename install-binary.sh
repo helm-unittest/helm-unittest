@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # borrowed from https://github.com/technosophos/helm-template
 
