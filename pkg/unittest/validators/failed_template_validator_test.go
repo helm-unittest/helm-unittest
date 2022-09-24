@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/lrills/helm-unittest/internal/common"
@@ -85,4 +86,16 @@ func TestFailedTemplateValidatorWhenInvalidIndex(t *testing.T) {
 		"Error:",
 		"	documentIndex 2 out of range",
 	}, diff)
+}
+
+func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
+	validator := FailedTemplateValidator{"values don't meet the specifications of the schema(s)"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:        []common.K8sManifest{},
+		Index:       -1,
+		RenderError: errors.New("values don't meet the specifications of the schema(s)"),
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

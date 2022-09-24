@@ -28,6 +28,7 @@ func (a *Assertion) Assert(
 	templatesResult map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
 	renderSucceed bool,
+	renderError error,
 	result *results.AssertionResult,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
@@ -41,7 +42,7 @@ func (a *Assertion) Assert(
 		rendered, ok := templatesResult[template]
 		var validatePassed bool
 		var singleFailInfo []string
-		if !ok {
+		if !ok && a.requireRenderSuccess {
 			noFile := []string{"Error:", a.noFileErrMessage(template)}
 			failInfo = append(failInfo, noFile...)
 			assertionPassed = false
@@ -59,6 +60,7 @@ func (a *Assertion) Assert(
 			Index:            a.DocumentIndex,
 			Negative:         a.Not != a.antonym,
 			SnapshotComparer: snapshotComparer,
+			RenderError:      renderError,
 		})
 
 		if !validatePassed {

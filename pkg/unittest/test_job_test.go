@@ -702,7 +702,7 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithToLongReleaseName(t *testing.T) {
+func TestV3RunJobWithTooLongReleaseName(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: to long releasename
@@ -784,7 +784,7 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithFailingTempalte(t *testing.T) {
+func TestV3RunJobWithFailingTemplate(t *testing.T) {
 	c, _ := loader.Load(testV3WithFailingTemplateChart)
 	manifest := `
 it: should work
@@ -802,6 +802,28 @@ asserts:
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithSchema(t *testing.T) {
+	c, _ := loader.Load(testV3WithSchemaChart)
+	manifest := `
+it: should work
+template: dummy.yaml
+asserts:
+  - failedTemplate:
+      errorMessage: "values don't meet the specifications of the schema(s) in the following chart(s):\nwith-schema:\n- (root): image is required\n"
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.NotNil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
