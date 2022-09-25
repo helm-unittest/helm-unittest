@@ -35,14 +35,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Insatll ghr
-          command: go get -u github.com/tcnksm/ghr
-      - run:
           name: Build binaries
           command: make dist
       - run:
           name: Upload binaries
-          command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+          command: |
+            go get -u github.com/tcnksm/ghr
+            ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
 
   distribute_docker:
     docker:
