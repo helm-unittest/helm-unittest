@@ -12,12 +12,11 @@ jobs:
             mkdir -p /tmp/test-results
       - run:
           name: Install JUnit plugin for uploading testresults
-          command: go get -u github.com/jstemmer/go-junit-report
+          command: go install github.com/jstemmer/go-junit-report/v2@latest
       - run:
           name: Test include Codecoverage
           command: |
-            trap "go-junit-report < /tmp/go-test-output > /tmp/test-results/go-test-report.xml" EXIT
-            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic | tee /tmp/go-test-output
+            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/go-test-output/go-test-report.xml
       - sonarcloud/scan
       - run:
           name: Check formated
