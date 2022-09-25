@@ -12,6 +12,7 @@ Feature:
   - create **nothing** on your cluster
   - [define values and release options](./DOCUMENT.md#test-job)
   - [snapshot testing](#snapshot-testing)
+  - [test suite code completion and validation](#test-suite-code-completion-and-validation)
 
 ## Documentation
 
@@ -197,6 +198,42 @@ tests:
       - ...
 ```
 Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
+
+
+## Test Suite code completion and validation
+
+Most popular IDEs (IntelliJ, Visual Studio Code, etc.) support applying schemas to YAML files using a JSON Schema. This provides comprehensive documentation as well as code completion while editing the test-suite file:
+
+![Code completion](./.images/testsuite-yaml-codecompletion.png)
+
+In addition, test-suite files can be validated while editing so wrongfully added additional properties or incorrect data types can be detected while editing:
+
+![Code Validation](./.images/testsuite-yaml-codevalidation.png)
+
+### Visual Studio Code
+When developing with VSCode, the very popular YAML plug-in (created by RedHat) allows adding references to schemas by adding a comment line on top of the file:
+
+``` yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/quintush/helm-unittest/master/schema/helm-testsuite.json
+suite: http-service.configmap_test.yaml
+templates: [configmap.yaml]
+release:
+  name: test-release
+  namespace: TEST_NAMESPACE
+```
+
+Alternatively, you can add the schema globally to the IDE, using a well defined pattern:
+
+``` json
+"yaml.schemas": {
+  "https://raw.githubusercontent.com/quintush/helm-unittest/master/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
+}
+```
+
+### IntelliJ
+Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferences: Languages & Frameworks -> Schemas and DTDs -> JSON Schema Mappings
+
+![Add Json Schema](./.images/testsuite-yaml-addschema-intellij.png)
 
 ## Frequently Asked Questions
 

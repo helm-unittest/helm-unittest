@@ -57,7 +57,7 @@ type TestSuite struct {
 	}
 	Chart struct {
 		Version    string
-		AppVersion string
+		AppVersion string `yaml:"appVersion"`
 	}
 	Capabilities struct {
 		MajorVersion string   `yaml:"majorVersion"`

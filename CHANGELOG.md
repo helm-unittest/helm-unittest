@@ -1,3 +1,13 @@
+0.2.9 / 2022-09-24
+==================
+- Add JSON Schema for validating testsuite files (credits to: @armingerten, resolves #161)
+- Support failedTemplate assert schema for valdiation errors (credits to: @rquino)
+- Switch shell instead of bash to support other (credits to: @tewfik-ghariani)
+- Correct loading appVersion (resolves #172)
+- Update plugin to go 1.18
+- Update documentation based on user questions
+- Update packages to latest version
+
 0.2.8 / 2021-11-01
 ==================
 - Add support for Macosx arm64 (credits to: @svobol13)
@@ -5,7 +15,7 @@
 - Add releasename validation (credits to: @jainbhavya65)
 - Fixed reloading the project to prevent unwanted side-effects  (credits to: @armingerten, resolves #111)
 - Fixed pre-processing rendered data before comparison (credits to: @wenhulove333)
-- Update packages to lates version
+- Update packages to latest version
 
 0.2.7 / 2021-07-26
 ==================
