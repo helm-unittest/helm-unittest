@@ -40,7 +40,7 @@ jobs:
       - run:
           name: Upload binaries
           command: |
-            go get -u github.com/tcnksm/ghr
+            go install github.com/tcnksm/ghr@latest
             ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
 
   distribute_docker:
