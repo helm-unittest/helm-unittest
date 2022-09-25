@@ -16,7 +16,7 @@ jobs:
       - run:
           name: Test include Codecoverage
           command: |
-            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/go-test-output/go-test-report.xml
+            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/go-test-report.xml
       - sonarcloud/scan
       - run:
           name: Check formated
