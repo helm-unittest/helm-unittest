@@ -5,8 +5,7 @@
 PROJECT_NAME="helm-unittest"
 PROJECT_GH="quintush/$PROJECT_NAME"
 PROJECT_CHECKSUM_FILE="$PROJECT_NAME-checksum.sha"
-
-: "${HELM_PLUGIN_PATH:="$HELM_PLUGIN_DIR"}"
+HELM_PLUGIN_PATH="$HELM_PLUGIN_DIR"
 
 # Convert the HELM_PLUGIN_PATH to unix if cygpath is
 # available. This is the case when using MSYS2 or Cygwin
