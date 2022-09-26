@@ -16,7 +16,7 @@ if type cygpath &> /dev/null; then
   HELM_PLUGIN_PATH=$(cygpath -u "$HELM_PLUGIN_PATH")
 fi
 
-if [[ "$SKIP_BIN_INSTALL" == "1" ]]; then
+if [ "$SKIP_BIN_INSTALL" = "1" ]; then
   echo "Skipping binary install"
   exit
 fi
@@ -69,7 +69,7 @@ verifySupported() {
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
-  if [[ -z $HELM_PLUGIN_UPDATE ]]; then
+  if [ -z "$HELM_PLUGIN_UPDATE" ]; then
     local version=$(git describe --tags --exact-match 2>/dev/null)
     if [ -n "$version" ]; then
       latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
@@ -79,7 +79,7 @@ getDownloadURL() {
   if type "curl" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     # Backward compatibility when arch type is not yet used.
-    if [[ -z $DOWNLOAD_URL ]]; then
+    if [ -z "$DOWNLOAD_URL" ]; then
       echo "No download_url found only searching for $OS"
       DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     fi
@@ -87,7 +87,7 @@ getDownloadURL() {
   elif type "wget" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     # Backward compatibility when arch type is not yet used.
-    if [[ -z $DOWNLOAD_URL ]]; then
+    if [ -z "$DOWNLOAD_URL" ]; then
       echo "No download_url found only searching for $OS"
       DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
     fi
@@ -112,10 +112,6 @@ downloadFile() {
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
-  DIST=""
-  if [ "$OS" == "linux" ]; then
-    DIST=$(cat /etc/os-release 2>&1)
-  fi
   cd "/tmp"
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
   if [ -n "$PROJECT_CHECKSUM" ]; then
@@ -124,7 +120,7 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        if [[ "$DIST" == *"ID=alpine"* ]]; then
+        if grep -q "ID=alpine" /etc/os-release; then
           curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
         else
           curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
@@ -136,7 +132,7 @@ installFile() {
       if type "shasum" >/dev/null 2>&1; then
         wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
-        if [[ "$DIST" == *"ID=alpine"* ]]; then
+        if grep -q "ID=alpine" /etc/os-release; then
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
         else
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
