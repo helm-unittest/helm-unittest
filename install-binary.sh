@@ -11,7 +11,8 @@ HELM_PLUGIN_PATH="$HELM_PLUGIN_DIR"
 # available. This is the case when using MSYS2 or Cygwin
 # on Windows where helm returns a Windows path but we
 # need a Unix path
-if type cygpath &> /dev/null; then
+if type cygpath >/dev/null 2>&1; then
+  echo Use Sygpath
   HELM_PLUGIN_PATH=$(cygpath -u "$HELM_PLUGIN_PATH")
 fi
 
