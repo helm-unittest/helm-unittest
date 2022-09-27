@@ -1,7 +1,3 @@
-**⚠ THIS REPOSITORY IS NOT MAINTAINED ANYMORE. ⚠**
-
-You can consider other working forks like [quintush/helm-unittest](https://github.com/quintush/helm-unittest). If anyone would like to continue maintaining this repo, please mail zeldalink0515@gmail.com. I'd be glad to transfer ownership and see it live again.
-
 # helm unittest
 
 [![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
@@ -32,6 +28,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Snapshot Testing](#snapshot-testing)
 - [Dependend subchart Testing](#dependend-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
+- [test suite code completion and validation](#test-suite-code-completion-and-validation)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Related Projects / Commands](#related-projects--commands)
 - [Contributing](#contributing)
