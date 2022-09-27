@@ -1,0 +1,30 @@
+suite: Custom Resource Definition Test
+templates:
+  - crd_backup.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+  revision: 1
+  upgrade: true
+capabilities:
+  majorVersion: 1
+  minorVersion: 10
+  apiVersions:
+    - br.dev.local/v2
+tests:
+  - it: should pass all kinds of assertion
+    capabilities:
+      majorVersion: 1
+      minorVersion: 12
+      apiVersions:
+        - br.dev.local/v1
+    asserts:
+      - isKind:
+          of: BrPolicy
+      - isAPIVersion:
+          of: br.dev.local/v1
+      - equal:
+          path: metadata.name
+          value: my-release-basic-backuppolicy
+      - hasDocuments:
+          count: 1

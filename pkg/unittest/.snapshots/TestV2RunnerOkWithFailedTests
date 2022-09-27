@@ -1,0 +1,557 @@
+
+### Chart [ basic ] ../../test/data/v2/basic
+
+
+ FAIL  Configmap mulit line Test	../../test/data/v2/basic/tests_failed/configmap_test.yaml
+	- should NOT configure ssl params if NOT set to be exposed
+
+		- asserts[0] `matchRegex` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Path:	data.my/.conf
+			Expected to match:
+				cacertfile
+			Actual:
+				abc                   = qqq
+				qqq                   = abc
+
+		- asserts[1] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count -1 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
+
+		- asserts[2] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count 8 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
+
+		- asserts[3] `contains` fail
+			Template:	basic/templates/configmap.yaml
+			DocumentIndex:	0
+			Error:
+				expect count 1234578901234567890 in 'data.my/.array' to be in array, got 1:
+				- value1
+				- value2
+ FAIL  test autoscaling	../../test/data/v2/basic/tests_failed/nofile_test.yaml
+	- should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled
+
+		- asserts[0] `isKind` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[1] `hasDocuments` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[2] `equal` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[3] `equal` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+	- should use release hpa config when Global autoscaling is disabled but release scaling is enabled.
+
+		- asserts[0] `isKind` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[1] `hasDocuments` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[2] `equal` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+		- asserts[3] `equal` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+
+	- should'n't use any autoscaling config when release autoscaling is disabled
+
+		- asserts[0] `hasDocuments` fail
+			Error:
+				template "basic/templates/horizontalpodautoscaler.yaml" not exists or not selected in test suite
+ FAIL  test deployment	../../test/data/v2/basic/tests_failed/empty_deployment_test.yaml
+	- should fail
+
+		- asserts[0] `isKind` fail
+			Template:	basic/templates/empty_deployment.yaml
+ FAIL  test deployment that would be fail	../../test/data/v2/basic/tests_failed/deployment_test.yaml
+	- should fail all kinds of assertion
+
+		- asserts[0] `equal` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0].image
+			Expected to equal:
+				nginx:stable
+			Actual:
+				apache:latest
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,2 +1,2 @@
+				-nginx:stable
+				+apache:latest
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers[0].image
+			Expected to equal:
+				nginx:stable
+			Actual:
+				apache:latest
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,2 +1,2 @@
+				-nginx:stable
+				+apache:latest
+
+		- asserts[1] `notEqual` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0].image
+			Expected NOT to equal:
+				apache:latest
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers[0].image
+			Expected NOT to equal:
+				apache:latest
+
+		- asserts[2] `matchRegex` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	metadata.name
+			Expected to match:
+				^.*-foobar$
+			Actual:
+				RELEASE-NAME-basic
+			DocumentIndex:	1
+			Path:	metadata.name
+			Expected to match:
+				^.*-foobar$
+			Actual:
+				RELEASE-NAME-basic-db
+
+		- asserts[3] `notMatchRegex` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	metadata.name
+			Expected NOT to match:
+				^.*-basic$
+			Actual:
+				RELEASE-NAME-basic
+
+		- asserts[4] `contains` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0].ports
+			Expected to contain:
+				- containerPort: 80
+			Actual:
+				- containerPort: 8080
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers[0].ports
+			Expected to contain:
+				- containerPort: 80
+			Actual:
+				- containerPort: null
+
+		- asserts[5] `notContains` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0].ports
+			Expected NOT to contain:
+				- containerPort: 8080
+			Actual:
+				- containerPort: 8080
+
+		- asserts[6] `isNull` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template
+			Expected to be null, got:
+				metadata:
+				  labels:
+				    app: basic
+				    release: RELEASE-NAME
+				spec:
+				  containers:
+				  - image: apache:latest
+				    imagePullPolicy: Always
+				    livenessProbe:
+				      httpGet:
+				        path: /
+				        port: 8080
+				    name: basic
+				    ports:
+				    - containerPort: 8080
+				    readinessProbe:
+				      httpGet:
+				        path: /
+				        port: 8080
+				    resources: {}
+			DocumentIndex:	1
+			Path:	spec.template
+			Expected to be null, got:
+				metadata:
+				  annotations:
+				    some_template: |
+				      ---
+				      apiVersion: ...
+				      this: is test for old separator workaround bug
+				  labels:
+				    app: basic
+				    release: RELEASE-NAME
+				spec:
+				  containers:
+				  - image: apache:latest
+				    imagePullPolicy: Always
+				    name: basic
+				    ports:
+				    - containerPort: null
+
+		- asserts[7] `isNotNull` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.nodeSelector
+			Expected NOT to be null, got:
+				null
+			DocumentIndex:	1
+			Path:	spec.template.nodeSelector
+			Expected NOT to be null, got:
+				null
+
+		- asserts[8] `isEmpty` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0]
+			Expected to be empty, got:
+				image: apache:latest
+				imagePullPolicy: Always
+				livenessProbe:
+				  httpGet:
+				    path: /
+				    port: 8080
+				name: basic
+				ports:
+				- containerPort: 8080
+				readinessProbe:
+				  httpGet:
+				    path: /
+				    port: 8080
+				resources: {}
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers[0]
+			Expected to be empty, got:
+				image: apache:latest
+				imagePullPolicy: Always
+				name: basic
+				ports:
+				- containerPort: null
+
+		- asserts[9] `isNotEmpty` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers[0].resources
+			Expected NOT to be empty, got:
+				{}
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers[0].resources
+			Expected NOT to be empty, got:
+				null
+
+		- asserts[10] `isKind` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Expected to be kind:
+				Pod
+			Actual:
+				Deployment
+			DocumentIndex:	1
+			Expected to be kind:
+				Pod
+			Actual:
+				Deployment
+
+		- asserts[11] `isAPIVersion` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Expected to be apiVersion:
+				v2
+			Actual:
+				extensions/v1beta1
+			DocumentIndex:	1
+			Expected to be apiVersion:
+				v2
+			Actual:
+				extensions/v1beta1
+
+		- asserts[12] `hasDocuments` fail
+			Template:	basic/templates/deployment.yaml
+			Expected documents count to be:
+				1
+			Actual:
+				2
+
+		- asserts[14] `contains` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers
+			Expected to contain:
+				- foo
+			Actual:
+				- image: apache:latest
+				  imagePullPolicy: Always
+				  livenessProbe:
+				    httpGet:
+				      path: /
+				      port: 8080
+				  name: basic
+				  ports:
+				  - containerPort: 8080
+				  readinessProbe:
+				    httpGet:
+				      path: /
+				      port: 8080
+				  resources: {}
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers
+			Expected to contain:
+				- foo
+			Actual:
+				- image: apache:latest
+				  imagePullPolicy: Always
+				  name: basic
+				  ports:
+				  - containerPort: null
+ FAIL  test deployment that would be fail	../../test/data/v2/basic/tests_failed/include_deployment_test.yaml
+	- should fail all kinds of assertion
+
+		- asserts[0] `equal` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[1] `notEqual` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[2] `matchRegex` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[3] `notMatchRegex` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[4] `contains` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[5] `notContains` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[6] `isNull` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[7] `isNotNull` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[8] `isEmpty` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[9] `isNotEmpty` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[10] `isKind` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[11] `isAPIVersion` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[12] `hasDocuments` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+
+		- asserts[13] `matchSnapshot` fail
+			Error: Invalid rendering: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+ FAIL  test ingress that should fail	../../test/data/v2/basic/tests_failed/ingress_test.yaml
+	- should fail render nothing if not enabled
+
+		- asserts[0] `hasDocuments` fail
+			Template:	basic/templates/ingress.yaml
+			Expected documents count to be:
+				1
+			Actual:
+				0
+
+	- should fail render ingress right if enabled
+
+		- asserts[0] `contains` fail
+			Template:	basic/templates/ingress.yaml
+			DocumentIndex:	0
+			Path:	spec.rules[0].http.paths
+			Expected to contain:
+				- backend:
+				    serviceName: my-release-basic
+				    servicePort: 54321
+				  path: /
+			Actual:
+				- backend:
+				    serviceName: my-release-basic
+				    servicePort: 12345
+				  path: /
+
+		- asserts[1] `isNotNull` fail
+			Template:	basic/templates/ingress.yaml
+			DocumentIndex:	0
+			Path:	spec.tls
+			Expected NOT to be null, got:
+				null
+
+	- should fail set annotations if given
+
+		- asserts[0] `isEmpty` fail
+			Template:	basic/templates/ingress.yaml
+			DocumentIndex:	0
+			Path:	metadata.annotations
+			Expected to be empty, got:
+				ingress.kubernetes.io/rewrite-target: /
+				kubernetes.io/ingress.class: nginx
+				kubernetes.io/tls-acme: "true"
+
+	- should fail set tls if given
+
+		- asserts[0] `equal` fail
+			Template:	basic/templates/ingress.yaml
+			DocumentIndex:	0
+			Path:	spec.tls
+			Expected to equal:
+				- secretName: my-tls-secret
+			Actual:
+				null
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,2 +1,2 @@
+				-- secretName: my-tls-secret
+				+null
+ FAIL  test notes	../../test/data/v2/basic/tests_failed/notes_test.yaml
+	- should fail the notes file with ingress enabled
+
+		- asserts[0] `notEqualRaw` fail
+			Template:	basic/templates/NOTES.txt
+			Expected NOT to equal:
+				|
+				  1. Get the application URL by running these commands:
+				    http://chart-example.local
+
+	- should fail the notes file with service type NodePort
+
+		- asserts[0] `equalRaw` fail
+			Template:	basic/templates/NOTES.txt
+			Expected to equal:
+				"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl
+				  get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n
+				  / export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n
+				  / echo http://$NODE_IP:$NODE_PORT/n  /n"
+			Actual:
+				|
+				  1. Get the application URL by running these commands:
+				    export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-basic)
+				    export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath="{.items[0].status.addresses[0].address}")
+				    echo http://$NODE_IP:$NODE_PORT
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,5 +1,6 @@
+				-"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl
+				-  get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n
+				-  / export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n
+				-  / echo http://$NODE_IP:$NODE_PORT/n  /n"
+				+|
+				+  1. Get the application URL by running these commands:
+				+    export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-basic)
+				+    export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath="{.items[0].status.addresses[0].address}")
+				+    echo http://$NODE_IP:$NODE_PORT
+
+	- should fail the notes file with service type LoadBalancer
+
+		- asserts[0] `matchRegexRaw` fail
+			Template:	basic/templates/NOTES.txt
+			Expected to match:
+				http:///$SERVICE_IP:80
+			Actual:
+				1. Get the application URL by running these commands:
+				     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+				           You can watch the status of by running 'kubectl get svc -w RELEASE-NAME-basic'
+				  export SERVICE_IP=$(kubectl get svc --namespace NAMESPACE RELEASE-NAME-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+				  echo http://$SERVICE_IP:9999
+ FAIL  test service	../../test/data/v2/basic/tests_failed/service_test.yaml
+	- should failed
+
+		- asserts[0] `notContains` fail
+			Template:	basic/templates/service.yaml
+			DocumentIndex:	0
+			Path:	spec.ports
+			Expected NOT to contain:
+				- name: nginx
+				  port: 80
+				  protocol: TCP
+				  targetPort: 80
+			Actual:
+				- name: nginx
+				  port: 80
+				  protocol: TCP
+				  targetPort: 80
+
+		- asserts[1] `notEqual` fail
+			Template:	basic/templates/service.yaml
+			DocumentIndex:	0
+			Path:	spec.type
+			Expected NOT to equal:
+				ClusterIP
+
+		- asserts[2] `notEqual` fail
+			Template:	basic/templates/service.yaml
+			DocumentIndex:	0
+			Path:	spec.selector
+			Expected NOT to equal:
+				app: basic
+				release: my-release
+
+	- should fail renders right if values given
+
+		- asserts[0] `notContains` fail
+			Template:	basic/templates/service.yaml
+			DocumentIndex:	0
+			Path:	spec.ports
+			Expected NOT to contain:
+				- name: cool-service
+				  port: 4321
+				  protocol: TCP
+				  targetPort: 1234
+			Actual:
+				- name: cool-service
+				  port: 4321
+				  protocol: TCP
+				  targetPort: 1234
+
+		- asserts[1] `notEqual` fail
+			Template:	basic/templates/service.yaml
+			DocumentIndex:	0
+			Path:	spec.type
+			Expected NOT to equal:
+				NodePort
+
+
+
+Charts:      1 failed, 0 passed, 1 total
+Test Suites: 8 failed, 0 passed, 8 total
+Tests:       16 failed, 0 passed, 16 total
+Snapshot:    2 passed, 2 total
+Time:        XX.XXXms
+
+

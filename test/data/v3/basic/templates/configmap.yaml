@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "basic.fullname" . }}
+  labels:
+    app: {{ template "basic.name" . }}
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  my.conf: |
+    {{- if .Values.expose }}
+    cacertfile            = /etc/cert/cacert.pem
+    certfile              = /etc/cert/tls.crt
+    keyfile               = /etc/cert/tls.key
+    verify                = verify_none
+    {{- end }}
+    abc                   = qqq
+    qqq                   = abc
+  my.array:
+    - value1
+    - value2
+  special.array:
+    - phony-service.phony:graphql

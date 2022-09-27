@@ -1,0 +1,4 @@
+apiVersion: v2
+description: A chart with a JSON schema
+name: with-schema
+version: 0.1.0

@@ -1,0 +1,20 @@
+should pass the notes file with ingress enabled:
+  1: |
+    |
+      1. Get the application URL by running these commands:
+        http://chart-example.local
+should pass the notes file with service type LoadBalancer:
+  1: |
+    |
+      1. Get the application URL by running these commands:
+           NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+                 You can watch the status of by running 'kubectl get svc -w RELEASE-NAME-child-chart'
+        export SERVICE_IP=$(kubectl get svc --namespace NAMESPACE RELEASE-NAME-child-chart -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo http://$SERVICE_IP:9999
+should pass the notes file with service type NodePort:
+  1: |
+    |
+      1. Get the application URL by running these commands:
+        export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-child-chart)
+        export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath="{.items[0].status.addresses[0].address}")
+        echo http://$NODE_IP:$NODE_PORT

@@ -1,0 +1,18 @@
+
+### Chart [ with-subchart ] ../../test/data/v3/with-subchart
+
+
+ PASS  test deployment	../../test/data/v3/with-subchart/tests/deployment_test.yaml
+ PASS  test ingress	../../test/data/v3/with-subchart/tests/ingress_test.yaml
+ PASS  test notes	../../test/data/v3/with-subchart/tests/notes_test.yaml
+ PASS  test postgresql deployment	../../test/data/v3/with-subchart/tests/postgresql_deployment_test.yaml
+ PASS  test service	../../test/data/v3/with-subchart/tests/service_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 5 passed, 5 total
+Tests:       11 passed, 11 total
+Snapshot:    5 passed, 5 total
+Time:        XX.XXXms
+
+

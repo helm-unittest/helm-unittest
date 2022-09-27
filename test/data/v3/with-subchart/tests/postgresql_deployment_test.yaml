@@ -1,0 +1,16 @@
+suite: test postgresql deployment
+templates:
+  - charts/postgresql/templates/deployment.yaml 
+tests:
+  - it: should pass all kinds of assertion for subchart
+    values:
+      - ./values/image.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - isAPIVersion:
+          of: extensions/v1beta1
+      - hasDocuments:
+          count: 1
+      - matchSnapshot:
+          path: spec
