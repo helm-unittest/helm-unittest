@@ -1,8 +1,8 @@
 # helm unittest
 
 [![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/quintush/helm-unittest)](https://goreportcard.com/report/github.com/quintush/helm-unittest)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=quintush_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=quintush_helm-unittest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
 
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
 
@@ -37,7 +37,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 ## Install
 
 ```
-$ helm plugin install https://github.com/quintush/helm-unittest
+$ helm plugin install https://github.com/helm-unittest/helm-unittest
 ```
 
 It will install the latest version of binary into helm plugin directory.
@@ -49,20 +49,16 @@ It will install the latest version of binary into helm plugin directory.
 docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest
 
 # run help of specific helm version with specific helm unittest plugin version
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2
-
-# run unittests of a helm 2 chart
-# make sure to mount local folder to /apps in container
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:2.16.10-0.2.2 .
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-0.3.0
 
 # run unittests of a helm 3 chart
 # make sure to mount local folder to /apps in container
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 .
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-0.3.0 .
 
 # run unittests of a helm 3 chart with Junit output for CI validation
 # make sure to mount local folder to /apps in container
 # the test-output.xml will be available in the local folder.
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.3.0-0.2.2 -3 -o test-output.xml -t junit .
+docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-0.3.0 -o test-output.xml -t junit .
 ```
 
 The docker container contains the fully installed helm client, including the helm-unittest plugin.
@@ -122,7 +118,6 @@ defined in test suite files.
       --strict                 strict parse the testsuites (default false)
   -v, --values stringArray     absolute or glob paths of values files location, default no values files
   -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
-  -3, --helm3                  parse helm charts as helm3 charts (default false)
   -q, --failfast               direct quit testing, when a test is failed (default false)
   -h, --help                   help for unittest
   -t, --output-type string     the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
@@ -133,8 +128,7 @@ defined in test suite files.
 
 ## Example
 
-Check [`test/data/v2/basic/`](./test/data/v2/basic) for some basic use cases of a simple chart (version < 2).
-Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart (version > 3).
+Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart (helm version 3).
 
 ## Snapshot Testing
 
@@ -180,7 +174,7 @@ tests:
 Note 1: if dependent subcharts uses an alias, use the alias name in the templates.
 Note 2: using the folder structure in templates can also be used to unittest templates which are placed in subfolders or unittest subcharts from the rootchart.
 
-Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
+Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Tests within subchart
 
@@ -198,8 +192,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`test/data/v2/with-subchart/`](./test/data/v2/with-subchart) or [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
-
+Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Test Suite code completion and validation
 
@@ -215,7 +208,7 @@ In addition, test-suite files can be validated while editing so wrongfully added
 When developing with VSCode, the very popular YAML plug-in (created by RedHat) allows adding references to schemas by adding a comment line on top of the file:
 
 ``` yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/quintush/helm-unittest/master/schema/helm-testsuite.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/master/schema/helm-testsuite.json
 suite: http-service.configmap_test.yaml
 templates: [configmap.yaml]
 release:
@@ -227,7 +220,7 @@ Alternatively, you can add the schema globally to the IDE, using a well defined 
 
 ``` json
 "yaml.schemas": {
-  "https://raw.githubusercontent.com/quintush/helm-unittest/master/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
+  "https://raw.githubusercontent.com/helm-unittest/helm-unittest/master/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
 }
 ```
 
@@ -271,7 +264,7 @@ Issues and PRs are welcome!
 Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.18 installed, and run:
 
 ```
-git clone git@github.com:quintush/helm-unittest.git
+git clone git@github.com:helm-unittest/helm-unittest.git
 cd helm-unittest
 ```
 

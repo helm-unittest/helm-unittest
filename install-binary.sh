@@ -3,7 +3,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PROJECT_NAME="helm-unittest"
-PROJECT_GH="quintush/$PROJECT_NAME"
+PROJECT_GH="helm-unittest/$PROJECT_NAME"
 PROJECT_CHECKSUM_FILE="$PROJECT_NAME-checksum.sha"
 HELM_PLUGIN_PATH="$HELM_PLUGIN_DIR"
 
