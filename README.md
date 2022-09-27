@@ -1,6 +1,6 @@
 # helm unittest
 
-[![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
+[![CircleCI](https://circleci.com/gh/helm-unittest/helm-unittest.svg?style=svg)](https://circleci.com/gh/helm-unittest/helm-unittest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
 
