@@ -81,7 +81,7 @@ details about how to write tests.
 			OutputFile:     testConfig.outputFile,
 		}
 
-		passed := runner.RunV2(chartPaths)
+		passed := runner.RunV3(chartPaths)
 
 		if !passed {
 			os.Exit(1)
