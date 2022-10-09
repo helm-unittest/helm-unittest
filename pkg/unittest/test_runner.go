@@ -13,8 +13,6 @@ import (
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
-	v2util "k8s.io/helm/pkg/chartutil"
-	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
@@ -96,48 +94,6 @@ type TestRunner struct {
 	testResults      []*results.TestSuiteResult
 }
 
-// RunV2 test suites in chart in ChartPaths.
-func (tr *TestRunner) RunV2(ChartPaths []string) bool {
-	allPassed := true
-	start := time.Now()
-	for _, chartPath := range ChartPaths {
-		chart, err := v2util.Load(chartPath)
-		if err != nil {
-			tr.printErroredChartHeader(err)
-			tr.countChart(false, err)
-			allPassed = false
-			if tr.Failfast {
-				break
-			}
-			continue
-		}
-		chartRoute := chart.Metadata.Name
-		testSuites, err := tr.getV2TestSuites(chartPath, chartRoute, chart)
-		if err != nil {
-			tr.printErroredChartHeader(err)
-			tr.countChart(false, err)
-			allPassed = false
-			if tr.Failfast {
-				break
-			}
-			continue
-		}
-
-		tr.printChartHeader(chartRoute, chartPath)
-		chartPassed := tr.runV2SuitesOfChart(testSuites, chart)
-
-		tr.countChart(chartPassed, nil)
-		allPassed = allPassed && chartPassed
-	}
-	err := tr.writeTestOutput()
-	if err != nil {
-		tr.printErroredChartHeader(err)
-	}
-	tr.printSnapshotSummary()
-	tr.printSummary(time.Since(start))
-	return allPassed
-}
-
 // RunV3 test suites in chart in ChartPaths.
 func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	allPassed := true
@@ -207,30 +163,6 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 	return resultSuites, nil
 }
 
-// getV2TestSuites return test files of the chart which matched patterns
-func (tr *TestRunner) getV2TestSuites(chartPath, chartRoute string, chart *v2chart.Chart) ([]*TestSuite, error) {
-	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
-	if err != nil {
-		return nil, err
-	}
-
-	if tr.WithSubChart {
-		for _, subchart := range chart.Dependencies {
-			subchartSuites, err := tr.getV2TestSuites(
-				filepath.Join(chartPath, "charts", subchart.Metadata.Name),
-				filepath.Join(chartRoute, "charts", subchart.Metadata.Name),
-				subchart,
-			)
-			if err != nil {
-				continue
-			}
-			resultSuites = append(resultSuites, subchartSuites...)
-		}
-	}
-
-	return resultSuites, nil
-}
-
 // getV3TestSuites return test files of the chart which matched patterns
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
@@ -253,35 +185,6 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 	}
 
 	return resultSuites, nil
-}
-
-// runV2SuitesOfChart runs suite files of the chart and print output
-func (tr *TestRunner) runV2SuitesOfChart(suites []*TestSuite, chart *v2chart.Chart) bool {
-	chartPassed := true
-	for _, suite := range suites {
-		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.definitionFile, tr.UpdateSnapshot)
-		if err != nil {
-			tr.handleSuiteResult(&results.TestSuiteResult{
-				FilePath:  suite.definitionFile,
-				ExecError: err,
-			})
-			chartPassed = false
-			continue
-		}
-
-		result := suite.RunV2(chart, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
-		chartPassed = chartPassed && result.Passed
-		tr.handleSuiteResult(result)
-		tr.testResults = append(tr.testResults, result)
-
-		snapshotCache.StoreToFileIfNeeded()
-
-		if !chartPassed && tr.Failfast {
-			break
-		}
-	}
-
-	return chartPassed
 }
 
 // runV3SuitesOfChart runs suite files of the chart and print output

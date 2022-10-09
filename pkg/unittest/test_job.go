@@ -21,10 +21,6 @@ import (
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
-	v2util "k8s.io/helm/pkg/chartutil"
-	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
-	v2renderutil "k8s.io/helm/pkg/renderutil"
-	v2timeconv "k8s.io/helm/pkg/timeconv"
 )
 
 const templatePrefix string = "templates"
@@ -61,16 +57,6 @@ func scopeValuesWithRoutes(routes []string, values map[interface{}]interface{}) 
 		)
 	}
 	return values
-}
-
-func parseV2RenderError(errorMessage string) (string, string) {
-	// Split the error into several groups.
-	// those groups are required to parse the correct value.
-	const regexPattern string = "^.+\"(.+)\":(?:.+:)* (.+)$"
-
-	filePath, content := parseRenderError(regexPattern, errorMessage)
-
-	return filePath, content
 }
 
 func parseV3RenderError(errorMessage string) (string, string) {
@@ -178,48 +164,6 @@ type TestJob struct {
 	requireRenderSuccess bool
 }
 
-// RunV2 render the chart and validate it with assertions in TestJob.
-func (t *TestJob) RunV2(
-	targetChart *v2chart.Chart,
-	cache *snapshot.Cache,
-	failfast bool,
-	result *results.TestJobResult,
-) *results.TestJobResult {
-	startTestRun := time.Now()
-	t.polishAssertionsTemplate(targetChart.Metadata.Name)
-	result.DisplayName = t.Name
-
-	userValues, err := t.getUserValues()
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
-	outputOfFiles, renderSucceed, err := t.renderV2Chart(targetChart, userValues)
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
-	if err != nil {
-		result.ExecError = err
-		return result
-	}
-
-	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
-	result.Passed, result.AssertsResult = t.runAssertions(
-		manifestsOfFiles,
-		snapshotComparer,
-		renderSucceed,
-		nil,
-		failfast,
-	)
-
-	result.Duration = time.Since(startTestRun)
-	return result
-}
-
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	targetChart *v3chart.Chart,
@@ -296,118 +240,6 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 	return yaml.Marshal(base)
-}
-
-// render the V2chart and return result map
-func (t *TestJob) renderV2Chart(targetChart *v2chart.Chart, userValues []byte) (map[string]string, bool, error) {
-	renderSucceed := true
-	config := &v2chart.Config{Raw: string(userValues), Values: map[string]*v2chart.Value{}}
-	kubeVersion := fmt.Sprintf("%s.%s", v2util.DefaultKubeVersion.Major, v2util.DefaultKubeVersion.Minor)
-
-	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
-		kubeVersion = fmt.Sprintf("%s.%s", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion)
-	}
-
-	renderOpts := v2renderutil.Options{
-		ReleaseOptions: *t.releaseV2Option(),
-		KubeVersion:    kubeVersion,
-		APIVersions:    t.Capabilities.APIVersions,
-	}
-
-	// Override the chart version when version is setup in test.
-	if t.Chart.Version != "" {
-		targetChart.Metadata.Version = t.Chart.Version
-	}
-
-	// Override the chart appVErsion when version is setup in test.
-	if t.Chart.AppVersion != "" {
-		targetChart.Metadata.AppVersion = t.Chart.AppVersion
-	}
-
-	// Filter the files that needs to be validated
-	filteredChart := t.filterV2Chart(targetChart)
-
-	outputOfFiles, err := v2renderutil.Render(filteredChart, config, renderOpts)
-	// When rendering failed, due to fail or required,
-	// make sure to translate the error to outputOfFiles.
-	if err != nil {
-		renderSucceed = false
-		// Parse the error and create an outputFile
-		filePath, content := parseV2RenderError(err.Error())
-		// If error not parsed well, rethrow as normal.
-		if filePath == "" {
-			return nil, renderSucceed, err
-		}
-		outputOfFiles[filePath] = content
-	}
-
-	return outputOfFiles, renderSucceed, nil
-}
-
-// Filter the V2Chart and its dependencies with partials and selected test files.
-func (t *TestJob) filterV2Chart(targetChart *v2chart.Chart) *v2chart.Chart {
-	copiedChart := new(v2chart.Chart)
-	*copiedChart = *targetChart
-
-	suiteIsFromRootChart := len(strings.Split(t.chartRoute, string(filepath.Separator))) <= 1
-	dependencyChart := ""
-
-	if len(t.defaultTemplatesToAssert) == 0 && suiteIsFromRootChart {
-		return copiedChart
-	}
-
-	if suiteIsFromRootChart {
-		copiedChart.Templates = t.filterV2Templates(t.chartRoute, dependencyChart, targetChart)
-	}
-
-	// Filter trough dependencies.
-	filteredDependencies := make([]*v2chart.Chart, 0)
-	for _, dependency := range targetChart.Dependencies {
-		if suiteIsFromRootChart {
-			dependencyChart = dependency.Metadata.Name
-		}
-
-		filteredDependencyTemplates := t.filterV2Templates(t.chartRoute, dependencyChart, dependency)
-		if len(filteredDependencyTemplates) > 0 {
-			copiedDependencyChart := new(v2chart.Chart)
-			*copiedDependencyChart = *dependency
-			copiedDependencyChart.Templates = filteredDependencyTemplates
-			filteredDependencies = append(filteredDependencies, copiedDependencyChart)
-		}
-	}
-	copiedChart.Dependencies = filteredDependencies
-
-	return copiedChart
-}
-
-// filterV2Templates, Filter the V2Templates with only the partials and selected test files.
-func (t *TestJob) filterV2Templates(chartRoute, dependecyChart string, targetChart *v2chart.Chart) []*v2chart.Template {
-	filteredV2Template := make([]*v2chart.Template, 0)
-
-	for _, fileName := range t.defaultTemplatesToAssert {
-		for _, template := range targetChart.Templates {
-			selectedV2TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
-			foundV2TemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
-
-			if dependecyChart != "" {
-				foundV2TemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
-			}
-
-			if foundV2TemplateName == selectedV2TemplateName {
-				filteredV2Template = append(filteredV2Template, template)
-				break
-			}
-		}
-	}
-
-	// add partial templates
-	for _, template := range targetChart.Templates {
-		if strings.HasPrefix(filepath.Base(template.Name), "_") {
-			filteredV2Template = append(filteredV2Template, template)
-		}
-	}
-
-	return filteredV2Template
 }
 
 // render the chart and return result map
@@ -546,25 +378,6 @@ func (t *TestJob) filterV3Templates(chartRoute, dependecyChart string, targetCha
 	}
 
 	return filteredV3Template
-}
-
-// get chartutil.ReleaseOptions ready for render
-func (t *TestJob) releaseV2Option() *v2util.ReleaseOptions {
-	options := v2util.ReleaseOptions{
-		Name:      "RELEASE-NAME",
-		Namespace: "NAMESPACE",
-		Time:      v2timeconv.Now(),
-		Revision:  t.Release.Revision,
-		IsInstall: !t.Release.IsUpgrade,
-		IsUpgrade: t.Release.IsUpgrade,
-	}
-	if t.Release.Name != "" {
-		options.Name = t.Release.Name
-	}
-	if t.Release.Namespace != "" {
-		options.Namespace = t.Release.Namespace
-	}
-	return &options
 }
 
 // get chartutil.ReleaseOptions ready for render

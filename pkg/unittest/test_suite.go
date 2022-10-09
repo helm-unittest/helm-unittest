@@ -10,7 +10,6 @@ import (
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"gopkg.in/yaml.v2"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
-	v2chart "k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
@@ -70,28 +69,6 @@ type TestSuite struct {
 	// route indicate which chart in the dependency hierarchy
 	// like "parent-chart", "parent-charts/charts/child-chart"
 	chartRoute string
-}
-
-// RunV2 runs all the test jobs defined in TestSuite.
-func (s *TestSuite) RunV2(
-	targetChart *v2chart.Chart,
-	snapshotCache *snapshot.Cache,
-	failfast bool,
-	result *results.TestSuiteResult,
-) *results.TestSuiteResult {
-	s.polishTestJobsPathInfo()
-
-	result.DisplayName = s.Name
-	result.FilePath = s.definitionFile
-
-	result.Passed, result.TestsResult = s.runV2TestJobs(
-		targetChart,
-		snapshotCache,
-		failfast,
-	)
-
-	result.CountSnapshot(snapshotCache)
-	return result
 }
 
 // RunV3 runs all the test jobs defined in TestSuite.
@@ -185,33 +162,6 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 	if s.Chart.AppVersion != "" {
 		test.Chart.AppVersion = s.Chart.AppVersion
 	}
-}
-
-func (s *TestSuite) runV2TestJobs(
-	chart *v2chart.Chart,
-	cache *snapshot.Cache,
-	failfast bool,
-) (bool, []*results.TestJobResult) {
-	suitePass := true
-	jobResults := make([]*results.TestJobResult, len(s.Tests))
-	dependenciesBackup := make([]*v2chart.Chart, len(chart.Dependencies))
-	copy(dependenciesBackup, chart.Dependencies)
-
-	for idx, testJob := range s.Tests {
-		jobResult := testJob.RunV2(chart, cache, failfast, &results.TestJobResult{Index: idx})
-		jobResults[idx] = jobResult
-
-		if !jobResult.Passed {
-			suitePass = false
-		}
-
-		chart.Dependencies = dependenciesBackup
-
-		if !suitePass && failfast {
-			break
-		}
-	}
-	return suitePass, jobResults
 }
 
 func (s *TestSuite) runV3TestJobs(
