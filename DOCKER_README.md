@@ -8,7 +8,7 @@ More information on how to use the helm unittest plugin see https://github.com/h
 
 The latest docker tag is the latest helm release (https://github.com/helm/helm/releases/latest) containing the latest helm unittest plugin (https://github.com/helm-unittest/helm-unittest/releases/latest)
 
-Please be aware to use the latest tag, as it can change the helm client and the helm unittest plugin version. Tag with the right versions is the proper way, such as ``` helm-unittest/helm-unittest:3.10.0-0.3.0 ```
+Please be aware to use the latest tag, as it can change the helm client and the helm unittest plugin version. Tag with the right versions is the proper way, such as ``` helm-unittest/helm-unittest:3.10.0-1.0.0 ```
 
 ## Github Repo ##
 
@@ -26,16 +26,16 @@ https://hub.docker.com/r/helm-unittest/helm-unittest/tags/ </br>
 docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest
 
 # run help of specific helm version with specific helm unittest plugin version
-docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-0.3.0
+docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0
 
 # run unittests of a helm 3 chart
 # make sure to mount local folder to /apps in container
-docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-0.3.0 .
+docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0 .
 
 # run unittests of a helm 3 chart with Junit output for CI validation
 # make sure to mount local folder to /apps in container
 # the test-output.xml will be available in the local folder.
-docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-0.3.0 -o test-output.xml .
+docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0 -o test-output.xml .
 ```
 *More information on how to use the helm unittest plugin see https://github.com/helm-unittest/helm-unittest/blob/master/DOCUMENT.md*
 

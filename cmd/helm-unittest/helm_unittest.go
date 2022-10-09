@@ -13,7 +13,6 @@ import (
 
 // testOptions stores options setup by user in command line
 type testOptions struct {
-	useHelmV3      bool
 	useFailfast    bool
 	useStrict      bool
 	colored        bool
@@ -58,7 +57,7 @@ Or specify the suite files glob path pattern:
 
 $ helm unittest -f 'my-tests/*.yaml' my-chart
 
-Check https://github.com/quintush/helm-unittest for more
+Check https://github.com/helm-unittest/helm-unittest for more
 details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
@@ -81,13 +80,8 @@ details about how to write tests.
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
 		}
-		var passed bool
 
-		if !testConfig.useHelmV3 {
-			passed = runner.RunV2(chartPaths)
-		} else {
-			passed = runner.RunV3(chartPaths)
-		}
+		passed := runner.RunV3(chartPaths)
 
 		if !passed {
 			os.Exit(1)
@@ -143,11 +137,6 @@ func init() {
 	cmd.PersistentFlags().StringVarP(
 		&testConfig.outputType, "output-type", "t", "XUnit",
 		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit)",
-	)
-
-	cmd.PersistentFlags().BoolVarP(
-		&testConfig.useHelmV3, "helm3", "3", false,
-		"parse helm charts as helm3 charts",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

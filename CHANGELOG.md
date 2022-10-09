@@ -1,3 +1,7 @@
+1.0.0 / 2022-10-24
+==================
+- Remove Helm 2 support
+
 0.2.9 / 2022-09-24
 ==================
 - Add JSON Schema for validating testsuite files (credits to: @armingerten, resolves #161)
