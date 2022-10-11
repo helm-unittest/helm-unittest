@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/lrills/helm-unittest/internal/common"
 )
 
@@ -14,12 +15,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, e
 	if path == "" {
 		return manifest, nil
 	}
-	tr := fetchTraverser{manifest}
-	reader := bytes.NewBufferString(path)
-	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
-		return nil, e
-	}
-	return tr.data, nil
+	return jsonpath.Get(path, manifest)
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
@@ -70,39 +66,6 @@ func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface
 type parseTraverser interface {
 	traverseMapKey(string) error
 	traverseListIdx(int) error
-}
-
-type fetchTraverser struct {
-	data interface{}
-}
-
-func (tr *fetchTraverser) traverseMapKey(key string) error {
-	if dmap, ok := tr.data.(map[interface{}]interface{}); ok {
-		tr.data = dmap[key]
-		return nil
-	} else if dman, ok := tr.data.(common.K8sManifest); ok {
-		tr.data = dman[key]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [\"%s\"] from a non map type:\n%s",
-		key, common.TrustedMarshalYAML(tr.data),
-	)
-}
-
-func (tr *fetchTraverser) traverseListIdx(idx int) error {
-	if d, ok := tr.data.([]interface{}); ok {
-		if idx < 0 || idx >= len(d) {
-			tr.data = nil
-			return nil
-		}
-		tr.data = d[idx]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [%d] from a non array type:\n%s",
-		idx, common.TrustedMarshalYAML(tr.data),
-	)
 }
 
 type buildTraverser struct {

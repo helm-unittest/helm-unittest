@@ -20,13 +20,15 @@ func TestGetValueOfSetPath(t *testing.T) {
 	}
 
 	var expectionsMapping = map[string]interface{}{
-		"a.b[1].c": "yes",
-		"a.b[0]":   "_",
-		"a.b[2]":   nil,
-		"a.b":      []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
-		"a.[d]":    "no",
-		"a.[e.f]":  "false",
-		"a.g.h":    "\"quotes\"",
+		"a.b[1].c":   "yes",
+		"a.b[0]":     "_",
+		"a.b[2]":     nil,
+		"a.b":        []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+		"a['d']":     "no",
+		"a[\"e.f\"]": "false",
+		"a.g.h":      "\"quotes\"",
+		"a.x":        nil,
+		"":           data,
 	}
 
 	for path, expect := range expectionsMapping {
@@ -82,11 +84,18 @@ func TestBuildValueSetPathError(t *testing.T) {
 	a := assert.New(t)
 	data := map[interface{}]interface{}{"foo": "bar"}
 
-	actual, err := BuildValueOfSetPath(data, "")
+	var expectionsMapping = map[string]string{
+		"":   "set path is empty",
+		"{":  "invalid token found {",
+		"[[": "invalid escaping token [",
+		"..": "unexpected end of",
+	}
 
-	a.Nil(actual)
-	a.NotNil(err)
-	a.EqualError(err, "set path is empty")
+	for path, expect := range expectionsMapping {
+		actual, err := BuildValueOfSetPath(data, path)
+		a.Nil(actual)
+		a.EqualError(err, expect)
+	}
 }
 
 func TestMergeValues(t *testing.T) {

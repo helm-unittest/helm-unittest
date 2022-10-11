@@ -8,7 +8,7 @@
 		- asserts[0] `matchRegex` fail
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
-			Path:	data.my/.conf
+			Path:	data["my.conf"]
 			Expected to match:
 				cacertfile
 			Actual:
@@ -19,7 +19,7 @@
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
 			Error:
-				expect count -1 in 'data.my/.array' to be in array, got 1:
+				expect count -1 in 'data["my.array"]' to be in array, got 1:
 				- value1
 				- value2
 
@@ -27,7 +27,7 @@
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
 			Error:
-				expect count 8 in 'data.my/.array' to be in array, got 1:
+				expect count 8 in 'data["my.array"]' to be in array, got 1:
 				- value1
 				- value2
 
@@ -35,7 +35,7 @@
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
 			Error:
-				expect count 1234578901234567890 in 'data.my/.array' to be in array, got 1:
+				expect count 1234578901234567890 in 'data["my.array"]' to be in array, got 1:
 				- value1
 				- value2
  FAIL  test autoscaling	../../test/data/v3/basic/tests_failed/nofile_test.yaml

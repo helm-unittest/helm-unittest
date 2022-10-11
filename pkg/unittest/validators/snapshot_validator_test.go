@@ -156,7 +156,6 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"b\"] from a non map type:",
-		"	null",
+		"	unknown parameter x",
 	}, diff)
 }

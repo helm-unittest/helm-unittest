@@ -5,17 +5,17 @@ tests:
   - it: should NOT configure ssl params if NOT set to be exposed
     asserts:
       - matchRegex:
-          path: data.my\.conf
+          path: data["my.conf"]
           pattern: cacertfile
       - contains:
-          path: data.my\.array
+          path: data["my.array"]
           content: 'value1'
           count: -1
       - contains:
-          path: data.my\.array
+          path: data["my.array"]
           content: 'value2'
           count: 8.9
       - contains:
-          path: data.my\.array
+          path: data["my.array"]
           content: 'value1'
           count: 1234578901234567890
