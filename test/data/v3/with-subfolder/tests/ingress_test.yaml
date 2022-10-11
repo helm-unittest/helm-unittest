@@ -52,13 +52,13 @@ tests:
         ingress.kubernetes.io/rewrite-target: /
     asserts:
       - equal:
-          path: metadata.annotations.[kubernetes.io/ingress.class]
+          path: metadata.annotations["kubernetes.io/ingress.class"]
           value: nginx
       - equal:
-          path: metadata.annotations.[kubernetes.io/tls-acme]
+          path: metadata.annotations["kubernetes.io/tls-acme"]
           value: "true"
       - equal:
-          path: metadata.annotations.[ingress.kubernetes.io/rewrite-target]
+          path: metadata.annotations["ingress.kubernetes.io/rewrite-target"]
           value: /
 
   - it: should set tls if given

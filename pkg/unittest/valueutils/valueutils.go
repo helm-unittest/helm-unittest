@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/lrills/helm-unittest/internal/common"
 )
 
@@ -14,12 +15,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, e
 	if path == "" {
 		return manifest, nil
 	}
-	tr := fetchTraverser{manifest}
-	reader := bytes.NewBufferString(path)
-	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
-		return nil, e
-	}
-	return tr.data, nil
+	return jsonpath.Get(path, manifest)
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
@@ -70,38 +66,6 @@ func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface
 type parseTraverser interface {
 	traverseMapKey(string) error
 	traverseListIdx(int) error
-}
-
-type fetchTraverser struct {
-	data interface{}
-}
-
-func (tr *fetchTraverser) traverseMapKey(key string) error {
-	if dmap, ok := tr.data.(map[interface{}]interface{}); ok {
-		tr.data = dmap[key]
-		return nil
-	} else if dman, ok := tr.data.(common.K8sManifest); ok {
-		tr.data = dman[key]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [\"%s\"] from a non map type:\n%s",
-		key, common.TrustedMarshalYAML(tr.data),
-	)
-}
-
-func (tr *fetchTraverser) traverseListIdx(idx int) error {
-	if d, ok := tr.data.([]interface{}); ok {
-		if idx < 0 || idx >= len(d) {
-			return fmt.Errorf("[%d] :\n%s", idx, common.TrustedMarshalYAML(d))
-		}
-		tr.data = d[idx]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [%d] from a non array type:\n%s",
-		idx, common.TrustedMarshalYAML(tr.data),
-	)
 }
 
 type buildTraverser struct {
@@ -158,7 +122,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	stop := runeSet([]rune{'.', '[', ']', ',', '{', '}', '='})
 	k, last, err := runesUntil(in, stop)
 	if _, ok := illegal[last]; ok {
-		return fmt.Errorf("Invalid token found %s", string(last))
+		return fmt.Errorf("invalid token found %s", string(last))
 	}
 
 	if err != nil {
@@ -169,7 +133,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 			case len(k) == 0 && state == expectDenotation:
 				return nil
 			default:
-				return fmt.Errorf("Unexpected end of")
+				return fmt.Errorf("unexpected end of")
 			}
 		}
 		return err
@@ -199,7 +163,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 
 func handleExpectIndex(k []rune, last rune, traverser parseTraverser) (int, error) {
 	if last != ']' {
-		return -1, fmt.Errorf("Missing index value")
+		return -1, fmt.Errorf("missing index value")
 	}
 	idx, idxErr := strconv.Atoi(string(k))
 	if idxErr != nil {
@@ -218,7 +182,7 @@ func handleExpectDenotation(k []rune, last rune) (int, error) {
 	case '[':
 		return expectIndex, nil
 	default:
-		return -1, fmt.Errorf("Invalid denotation token %s", string(last))
+		return -1, fmt.Errorf("invalid denotation token %s", string(last))
 	}
 }
 
@@ -239,7 +203,7 @@ func handleExpectKey(k []rune, last rune, traverser parseTraverser) (int, error)
 		}
 		return expectIndex, nil
 	default:
-		return -1, fmt.Errorf("Invalid key %s", string(last))
+		return -1, fmt.Errorf("invalid key %s", string(last))
 	}
 }
 
@@ -255,7 +219,7 @@ func handleExpectEscaping(k []rune, last rune, traverser parseTraverser) (int, e
 		}
 		return expectDenotation, nil
 	default:
-		return -1, fmt.Errorf("Invalid escaping token %s", string(last))
+		return -1, fmt.Errorf("invalid escaping token %s", string(last))
 	}
 }
 

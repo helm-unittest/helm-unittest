@@ -125,7 +125,6 @@ func TestIsEmptyValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"a\"] from a non map type:",
-		"	null",
+		"	unknown parameter x",
 	}, diff)
 }

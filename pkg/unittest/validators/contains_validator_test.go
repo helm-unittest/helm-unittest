@@ -336,11 +336,11 @@ func TestContainsValidatorWhenInvalidIndex(t *testing.T) {
 	}, diff)
 }
 
-func TestContainsValidatorWhenInvalidPath(t *testing.T) {
+func TestContainsValidatorWhenInvalidParameter(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b.e",
+		"a.b[e]",
 		common.K8sManifest{"e": "bar"},
 		nil,
 		false,
@@ -353,11 +353,7 @@ func TestContainsValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"e\"] from a non map type:",
-		"	- c: hello world",
-		"	- d: foo bar",
-		"	- e: bar",
-		"	- e: bar",
+		"	unknown parameter e",
 	}, diff)
 }
 
