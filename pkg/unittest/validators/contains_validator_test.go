@@ -357,8 +357,14 @@ func TestContainsValidatorWhenInvalidParameter(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Error:",
-		"	unknown parameter e",
+		"Path:	a.b[e]",
+		"Expected to contain:",
+		"	- e: bar",
+		"Actual:",
+		"	- c: hello world",
+		"	- d: foo bar",
+		"	- e: bar",
+		"	- e: bar",
 	}, diff)
 }
 

@@ -168,6 +168,6 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	unknown parameter a",
+		"	unknown parameter a.b",
 	}, diff)
 }

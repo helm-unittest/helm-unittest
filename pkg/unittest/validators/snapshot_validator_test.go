@@ -156,6 +156,6 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	unknown parameter x",
+		"	unknown parameter x.b",
 	}, diff)
 }

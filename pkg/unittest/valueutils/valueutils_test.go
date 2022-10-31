@@ -10,30 +10,31 @@ import (
 
 func TestGetValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
-	data := common.K8sManifest{
-		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+	data := map[string]interface{}{
+		"a": map[string]interface{}{
+			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
 			"d":   "no",
 			"e.f": "false",
-			"g":   map[interface{}]interface{}{"h": "\"quotes\""},
+			"g":   map[string]interface{}{"h": "\"quotes\""},
+			"i":   []interface{}{map[string]interface{}{"i1": "1"}, map[string]interface{}{"i2": "2"}},
 		},
 	}
 
 	var expectionsMapping = map[string]interface{}{
 		"a.b[1].c":   "yes",
 		"a.b[0]":     "_",
-		"a.b[2]":     nil,
-		"a.b":        []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+		"a.b":        []interface{}{"_", map[string]interface{}{"c": "yes"}},
 		"a['d']":     "no",
 		"a[\"e.f\"]": "false",
 		"a.g.h":      "\"quotes\"",
 		"a.x":        nil,
 		"":           data,
+		//"a.i[? @.i1 == \"1\"]": []interface{}([]interface{}{map[string]interface{}{"i1": "1"}}),
 	}
 
 	for path, expect := range expectionsMapping {
 		actual, err := GetValueOfSetPath(data, path)
-		a.Equal(actual, expect)
+		a.Equal(expect, actual)
 		a.Nil(err)
 	}
 }
@@ -75,7 +76,7 @@ func TestBuildValueOfSetPath(t *testing.T) {
 
 	for path, expected := range expectionsMapping {
 		actual, err := BuildValueOfSetPath(data, path)
-		a.Equal(actual, expected)
+		a.Equal(expected, actual)
 		a.Nil(err)
 	}
 }

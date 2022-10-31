@@ -7,15 +7,23 @@ import (
 	"strconv"
 
 	"github.com/PaesslerAG/jsonpath"
-	"github.com/lrills/helm-unittest/internal/common"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
-func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, error) {
+func GetValueOfSetPath(manifest map[string]interface{}, path string) (interface{}, error) {
 	if path == "" {
 		return manifest, nil
 	}
-	return jsonpath.Get(path, manifest)
+
+	// Translate
+
+	manifestPart, err := jsonpath.Get(path, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	// return found manifestPart
+	return manifestPart, nil
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
