@@ -3,6 +3,7 @@ module github.com/lrills/helm-unittest
 go 1.18
 
 require (
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/bradleyjkemp/cupaloy/v2 v2.8.0
 	github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21
 	github.com/fatih/color v1.13.0
@@ -20,7 +21,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
-	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
