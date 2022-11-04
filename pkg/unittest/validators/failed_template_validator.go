@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lrills/helm-unittest/internal/common"
 )
 
@@ -14,6 +16,10 @@ type FailedTemplateValidator struct {
 
 func (a FailedTemplateValidator) failInfo(actual interface{}, index int, not bool) []string {
 	customMessage := " to equal"
+
+	log.WithField("validator", "failed_template").Debugln("expected content:", a.ErrorMessage)
+	log.WithField("validator", "failed_template").Debugln("actual content:", actual)
+
 	if not {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
@@ -41,6 +47,7 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 	validateErrors := make([]string, 0)
 
 	if context.RenderError != nil {
+
 		validateSuccess = true
 		if reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative {
 			validateSuccess = false

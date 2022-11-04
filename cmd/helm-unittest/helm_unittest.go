@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lrills/helm-unittest/internal/printer"
 	"github.com/lrills/helm-unittest/pkg/unittest"
 	"github.com/lrills/helm-unittest/pkg/unittest/formatter"
@@ -13,6 +15,7 @@ import (
 
 // testOptions stores options setup by user in command line
 type testOptions struct {
+	debugLogging   bool
 	useHelmV3      bool
 	useFailfast    bool
 	useStrict      bool
@@ -82,6 +85,15 @@ details about how to write tests.
 			OutputFile:     testConfig.outputFile,
 		}
 		var passed bool
+
+		log.SetFormatter(&log.TextFormatter{
+			DisableColors: !testConfig.colored,
+			FullTimestamp: true,
+		})
+
+		if testConfig.debugLogging {
+			log.SetLevel(log.DebugLevel)
+		}
 
 		if !testConfig.useHelmV3 {
 			passed = runner.RunV2(chartPaths)
@@ -153,5 +165,10 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useFailfast, "failfast", "q", false,
 		"direct quit testing, when a test is failed",
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.debugLogging, "debug", "d", false,
+		"enable debug logging",
 	)
 }

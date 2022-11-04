@@ -7,9 +7,9 @@ tests:
       ingress.enabled: true
       service.externalPort: ""
     asserts:
-      - failedTemplate:
+      - failedTemplate: 
           errorMessage: The externalPort is required
-
+            
   - it: should render Ingress right if enabled
     set:
       ingress.enabled: true

@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/lrills/helm-unittest/internal/common"
+	log "github.com/sirupsen/logrus"
 )
 
 // MatchRegexRawValidator validate value of Path match Pattern
@@ -12,6 +13,10 @@ type MatchRegexRawValidator struct {
 }
 
 func (v MatchRegexRawValidator) failInfo(actual string, not bool) []string {
+
+	log.WithField("validator", "match_regex_raw").Debugln("expected pattern:", v.Pattern)
+	log.WithField("validator", "match_regex_raw").Debugln("actual content:", actual)
+
 	return splitInfof(
 		setFailFormat(not, false, true, false, " to match"),
 		-1,

@@ -47,9 +47,9 @@ func TestGetValueOfSetPathError(t *testing.T) {
 	var expectionsMapping = map[string]string{
 		"a.b[0].c": "can't get [\"c\"] from a non map type:\n_\n",
 		"a[0]":     "can't get [0] from a non array type:\nb:\n- _\nc.d: \"no\"\n",
-		",":        "Invalid token found ,",
-		"a.b[0[]]": "Missing index value",
-		"a.[c[0]]": "Invalid escaping token [",
+		",":        "invalid token found ,",
+		"a.b[0[]]": "missing index value",
+		"a.[c[0]]": "invalid escaping token [",
 	}
 
 	for path, expect := range expectionsMapping {
