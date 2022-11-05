@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,6 +53,8 @@ func TestIsNullValidatorWhenNegativeAndOk(t *testing.T) {
 func TestIsNullValidatorWhenFail(t *testing.T) {
 	doc := "a: A"
 	manifest := makeManifest(doc)
+
+	log.SetLevel(log.DebugLevel)
 
 	v := IsNullValidator{"a"}
 	pass, diff := v.Validate(&ValidateContext{

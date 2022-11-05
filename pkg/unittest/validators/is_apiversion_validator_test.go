@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,6 +38,8 @@ func TestIsAPiVersionValidatorWhenNegativeAndOk(t *testing.T) {
 func TestIsAPIVersionValidatorWhenFail(t *testing.T) {
 	doc := "apiVersion: v1"
 	manifest := makeManifest(doc)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := IsAPIVersionValidator{"v2"}
 	pass, diff := validator.Validate(&ValidateContext{

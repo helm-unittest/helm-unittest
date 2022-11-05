@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,6 +54,8 @@ func TestMatchRegexRawValidatorWhenRegexCompileFail(t *testing.T) {
 
 func TestMatchRegexRawValidatorWhenMatchFail(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegexRaw)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := MatchRegexRawValidator{"^foo"}
 	pass, diff := validator.Validate(&ValidateContext{

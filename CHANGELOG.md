@@ -1,7 +1,7 @@
 0.2.10 / 2022-11-05
 ==================
 - isSubset assertion to handle multiple keys (credits to: @iben12, resolves #162)
-- Out Of Bounds array will result in a null value (resolves #174)
+- Out Of Bounds array will result in a null value (resolves #167, #174)
 - Additional debug option to validate failed tests with same expected and actual results (resolves #180)
 - Update documentation based on user questions
 - Update packages to latest version

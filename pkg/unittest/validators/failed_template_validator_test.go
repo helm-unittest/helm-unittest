@@ -6,6 +6,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,6 +41,8 @@ func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := FailedTemplateValidator{"A field should not be required"}
 	pass, diff := validator.Validate(&ValidateContext{
