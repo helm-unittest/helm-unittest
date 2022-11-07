@@ -43,8 +43,11 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		if actual, ok := actual.(map[interface{}]interface{}); ok {
-			found := validateSubset(actual, v.Content)
+		actualMap, actualOk := actual.(map[interface{}]interface{})
+		contentMap, contentOk := v.Content.(map[interface{}]interface{})
+
+		if actualOk && contentOk {
+			found := validateSubset(actualMap, contentMap)
 
 			if found == context.Negative {
 				validateSuccess = false

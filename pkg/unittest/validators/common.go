@@ -125,15 +125,15 @@ func uniformContent(content interface{}) string {
 }
 
 // Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)
-func validateSubset(actual map[interface{}]interface{}, content interface{}) bool {
-	found := false
-	for key, value := range actual {
-		ele := map[interface{}]interface{}{key: value}
-		if reflect.DeepEqual(ele, content) {
-			found = true
+func validateSubset(actual map[interface{}]interface{}, content map[interface{}]interface{}) bool {
+	for key := range content {
+		if !reflect.DeepEqual(actual[key], content[key]) {
+
+			return false
 		}
 	}
-	return found
+
+	return true
 }
 
 // Determine if the original value still is a success.
