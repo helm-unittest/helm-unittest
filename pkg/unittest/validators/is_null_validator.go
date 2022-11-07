@@ -3,6 +3,7 @@ package validators
 import (
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 )
 
 // IsNullValidator validate value of Path id kind
@@ -11,11 +12,15 @@ type IsNullValidator struct {
 }
 
 func (v IsNullValidator) failInfo(actual interface{}, index int, not bool) []string {
+	actualYAML := common.TrustedMarshalYAML(actual)
+
+	log.WithField("validator", "is_null").Debugln("actual content:", actualYAML)
+
 	return splitInfof(
 		setFailFormat(not, true, false, false, " to be null, got"),
 		index,
 		v.Path,
-		common.TrustedMarshalYAML(actual),
+		actualYAML,
 	)
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,6 +55,9 @@ func TestSnapshotRawValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestSnapshotRawValidatorWhenFail(t *testing.T) {
 	data := common.K8sManifest{common.RAW: "b"}
+
+	log.SetLevel(log.DebugLevel)
+
 	validator := MatchSnapshotRawValidator{}
 
 	mockComparer := new(mockSnapshotComparer)

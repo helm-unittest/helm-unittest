@@ -15,6 +15,7 @@ type ContainsDocumentValidator struct {
 }
 
 func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not bool) []string {
+
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
 		index,

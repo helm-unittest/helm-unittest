@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,6 +39,8 @@ func TestIsKindValidatorWhenNegativeAndOk(t *testing.T) {
 func TestIsKindValidatorWhenFail(t *testing.T) {
 	doc := "kind: Pod"
 	manifest := makeManifest(doc)
+
+	log.SetLevel(log.DebugLevel)
 
 	v := IsKindValidator{"Service"}
 	pass, diff := v.Validate(&ValidateContext{

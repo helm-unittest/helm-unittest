@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -56,6 +57,8 @@ func TestIsEmptyValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestIsEmptyValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docWithNonEmptyElement)
+
+	log.SetLevel(log.DebugLevel)
 
 	for key, value := range manifest {
 		validator := IsEmptyValidator{key}

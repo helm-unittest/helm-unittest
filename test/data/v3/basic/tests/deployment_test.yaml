@@ -42,6 +42,8 @@ tests:
             containerPort: 80
       - isNull:
           path: spec.template.nodeSelector
+      - isNull:
+          path: spec.template.spec.containers[1]
       - isNotNull:
           path: spec.template
       - isEmpty:

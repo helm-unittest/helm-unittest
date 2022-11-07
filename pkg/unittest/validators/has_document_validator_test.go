@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,6 +36,8 @@ func TestHasDocumentsValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestHasDocumentsValidatorWhenFail(t *testing.T) {
 	data := common.K8sManifest{}
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := HasDocumentsValidator{1}
 	pass, diff := validator.Validate(&ValidateContext{

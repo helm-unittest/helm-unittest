@@ -2,6 +2,8 @@ package validators
 
 import (
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // HasDocumentsValidator validate whether the count of manifests rendered form template is Count
@@ -10,19 +12,25 @@ type HasDocumentsValidator struct {
 }
 
 func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
+	expectedCount := strconv.Itoa(v.Count)
+	actualCount := strconv.Itoa(actual)
 	customMessage := " documents count to be"
+
+	log.WithField("validator", "has_document").Debugln("expected content:", expectedCount)
+	log.WithField("validator", "has_document").Debugln("actual content:", actualCount)
+
 	if not {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
 			-1,
-			strconv.Itoa(v.Count),
+			expectedCount,
 		)
 	}
 	return splitInfof(
 		setFailFormat(not, false, true, false, customMessage),
 		-1,
-		strconv.Itoa(v.Count),
-		strconv.Itoa(actual),
+		expectedCount,
+		actualCount,
 	)
 }
 

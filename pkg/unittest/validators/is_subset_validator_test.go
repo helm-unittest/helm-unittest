@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,6 +49,8 @@ func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestIsSubsetValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestIsSubset)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := IsSubsetValidator{
 		"a.b",

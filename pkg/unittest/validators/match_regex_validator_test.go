@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -86,6 +87,8 @@ func TestMatchRegexValidatorWhenNotString(t *testing.T) {
 
 func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegex)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := MatchRegexValidator{"a.b[0].c", "^foo"}
 	pass, diff := validator.Validate(&ValidateContext{

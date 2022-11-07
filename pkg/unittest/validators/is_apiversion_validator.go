@@ -1,6 +1,10 @@
 package validators
 
-import "github.com/lrills/helm-unittest/internal/common"
+import (
+	log "github.com/sirupsen/logrus"
+
+	"github.com/lrills/helm-unittest/internal/common"
+)
 
 // IsAPIVersionValidator validate apiVersion of manifest is Of
 type IsAPIVersionValidator struct {
@@ -8,7 +12,12 @@ type IsAPIVersionValidator struct {
 }
 
 func (v IsAPIVersionValidator) failInfo(actual interface{}, index int, not bool) []string {
+	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be apiVersion"
+
+	log.WithField("validator", "is_apiversion").Debugln("expected content:", v.Of)
+	log.WithField("validator", "is_apiversion").Debugln("actual content:", actualYAML)
+
 	if not {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
@@ -20,7 +29,7 @@ func (v IsAPIVersionValidator) failInfo(actual interface{}, index int, not bool)
 		setFailFormat(not, false, true, false, customMessage),
 		index,
 		v.Of,
-		common.TrustedMarshalYAML(actual),
+		actualYAML,
 	)
 }
 

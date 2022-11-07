@@ -3,6 +3,8 @@ package validators
 import (
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
 )
@@ -15,7 +17,12 @@ type EqualValidator struct {
 
 func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
+	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"
+
+	log.WithField("validator", "equal").Debugln("expected content:", expectedYAML)
+	log.WithField("validator", "equal").Debugln("actual content:", actual)
+
 	if not {
 		return splitInfof(
 			setFailFormat(not, true, false, false, customMessage),
@@ -25,7 +32,6 @@ func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []stri
 		)
 	}
 
-	actualYAML := common.TrustedMarshalYAML(actual)
 	return splitInfof(
 		setFailFormat(not, true, true, true, customMessage),
 		index,
