@@ -22,6 +22,7 @@ func TestGetValueOfSetPath(t *testing.T) {
 	var expectionsMapping = map[string]interface{}{
 		"a.b[1].c": "yes",
 		"a.b[0]":   "_",
+		"a.b[2]":   nil,
 		"a.b":      []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
 		"a.[d]":    "no",
 		"a.[e.f]":  "false",
@@ -47,6 +48,7 @@ func TestGetValueOfSetPathError(t *testing.T) {
 	var expectionsMapping = map[string]string{
 		"a.b[0].c": "can't get [\"c\"] from a non map type:\n_\n",
 		"a[0]":     "can't get [0] from a non array type:\nb:\n- _\nc.d: \"no\"\n",
+		"a[null]":  "strconv.Atoi: parsing \"null\": invalid syntax",
 		",":        "invalid token found ,",
 		"a.b[0[]]": "missing index value",
 		"a.[c[0]]": "invalid escaping token [",
