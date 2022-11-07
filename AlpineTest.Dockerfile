@@ -10,6 +10,8 @@ ARG HELM_VERSION
 ENV HELM_BASE_URL="https://get.helm.sh"
 ENV HELM_TAR_FILE="helm-v${HELM_VERSION}-linux-amd64.tar.gz"
 ENV PLUGIN_URL="~"
+# Install the plugin for all users
+ENV HELM_DATA_HOME=/usr/local/share/helm
 
 RUN if printf "$HELM_VERSION" | grep -Eq '^3.+'; then \
     apk add --update --no-cache curl ca-certificates git && \
