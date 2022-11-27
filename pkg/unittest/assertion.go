@@ -50,8 +50,13 @@ func (a *Assertion) Assert(
 		}
 
 		if a.requireRenderSuccess != renderSucceed {
-			invalidRender := []string{fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])}
-			failInfo = append(failInfo, invalidRender...)
+			invalidRender := ""
+			if len(rendered) > 0 {
+				invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
+			} else {
+				invalidRender = "Error: rendered manifest is empty"
+			}
+			failInfo = append(failInfo, invalidRender)
 			break
 		}
 
