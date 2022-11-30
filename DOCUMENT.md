@@ -21,7 +21,7 @@ release:
   name: my-release
   namespace: my-namespace
   revision: 1
-  isUpgrade: true
+  upgrade: true
 capabilities:
   majorVersion: 1
   minorVersion: 10
@@ -43,7 +43,7 @@ tests:
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
-  - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+  - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
@@ -77,7 +77,7 @@ tests:
       name: my-release
       namespace:
       revision: 9
-      isUpgrade: true
+      upgrade: true
     capabilities:
       majorVersion: 1
       minorVersion: 12
@@ -106,7 +106,7 @@ tests:
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
-  - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+  - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.

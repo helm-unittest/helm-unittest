@@ -648,10 +648,10 @@
           "description": "The revision of current build, default to 0.",
           "markdownDescription": "**revision** (string) _optional_\n\nThe revision of current build, default to `0`."
         },
-        "isUpgrade": {
+        "upgrade": {
           "type": "boolean",
           "description": "Whether the build is an upgrade, default to false.",
-          "markdownDescription": "**isUpgrade** (boolean) _optional_\n\nWhether the build is an upgrade, default to `false`."
+          "markdownDescription": "**upgrade** (boolean) _optional_\n\nWhether the build is an upgrade, default to `false`."
         }
       },
       "additionalProperties": false
