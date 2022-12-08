@@ -96,6 +96,8 @@
                 "isNotEmpty": true,
                 "isKind": true,
                 "isAPIVersion": true,
+                "isSubset": true,
+                "isNotSubset": true,
                 "hasDocuments": true,
                 "containsDocument": true,
                 "matchSnapshot": true,
@@ -451,6 +453,54 @@
                           "type": "string",
                           "description": "Expected apiVersion of manifest.",
                           "markdownDescription": "**of** (string) _required_\n\nExpected `apiVersion` of manifest."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that contains the content.",
+                      "markdownDescription": "**isSubset** (object)\n\nAssert the object as the value of specified path that contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNotSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that NOT contains the content.",
+                      "markdownDescription": "**isNotSubset** (object)\n\nAssert the object as the value of specified path that NOT contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content NOT to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
                         }
                       },
                       "additionalProperties": false
