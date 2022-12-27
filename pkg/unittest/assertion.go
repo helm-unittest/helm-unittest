@@ -187,4 +187,5 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"failedTemplate":    {reflect.TypeOf(validators.FailedTemplateValidator{}), false, false},
 	"notFailedTemplate": {reflect.TypeOf(validators.FailedTemplateValidator{}), true, true},
 	"containsDocument":  {reflect.TypeOf(validators.ContainsDocumentValidator{}), false, true},
+	"lengthEqual":       {reflect.TypeOf(validators.LengthEqualDocumentsValidator{}), false, true},
 }
