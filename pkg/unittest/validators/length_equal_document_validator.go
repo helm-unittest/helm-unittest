@@ -62,8 +62,6 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
-			fmt.Printf("path to be validated(Config: %s):\n%s",
-				fmt.Sprintf("%s,count:%d", v.Path, v.Count), spec)
 			specArr, ok := spec.([]interface{})
 			if !ok {
 				validateSuccess = false
