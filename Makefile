@@ -1,9 +1,8 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_HOME ?= $(shell helm env | grep HELM_DATA_HOME | sed 's/HELM_DATA_HOME=\(.*\)/\1/')
-HELM_DATA_HOME ?= $(HELM_HOME)
-HELM_PLUGIN_DIR := $(HELM_DATA_HOME)/plugins/helm-unittest
+HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -12,8 +11,14 @@ DOCKER ?= "quintush/helm-unittest"
 .PHONY: install
 install: bootstrap build
 	mkdir -p $(HELM_PLUGIN_DIR)
-	cp -t $(HELM_PLUGIN_DIR) untt
-	cp -t $(HELM_PLUGIN_DIR) plugin.yaml
+	cp untt $(HELM_PLUGIN_DIR)
+	cp plugin.yaml $(HELM_PLUGIN_DIR)
+
+.PHONY: install-dbg
+install-dbg: bootstrap build-debug
+	mkdir -p $(HELM_PLUGIN_DIR)
+	cp untt-dbg $(HELM_PLUGIN_DIR)
+	cp plugin-dbg.yaml $(HELM_PLUGIN_DIR)/plugin.yaml
 
 .PHONY: hookInstall
 hookInstall: bootstrap build
@@ -23,6 +28,10 @@ unittest:
 	go test ./... -v -cover
 
 .PHONY: build
+
+build-debug:
+	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
+
 build: unittest
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
