@@ -80,8 +80,8 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 		continue
 	}
 	if !validateSuccess {
-		errorMesasge := v.failInfo(v.Kind, 0, context.Negative)
-		validateErrors = append(validateErrors, errorMesasge...)
+		errorMessage := v.failInfo(v.Kind, 0, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
 	}
 	validateSuccess = determineSuccess(1, validateSuccess, true)
 
