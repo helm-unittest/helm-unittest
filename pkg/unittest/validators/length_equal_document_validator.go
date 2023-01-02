@@ -2,10 +2,9 @@ package validators
 
 import (
 	"fmt"
-	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
-	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
 )
 
 // LengthEqualDocumentsValidator validate whether the count of manifests rendered form template is Count
@@ -15,27 +14,23 @@ type LengthEqualDocumentsValidator struct {
 	Count int      // optional if paths defined
 }
 
-func (v LengthEqualDocumentsValidator) failInfo(actual int, not bool) []string {
-	expectedCount := strconv.Itoa(v.Count)
-	actualCount := strconv.Itoa(actual)
-	customMessage := " documents count to be"
-
-	log.WithField("validator", "length_equal").Debugln("expected content:", expectedCount)
-	log.WithField("validator", "length_equal").Debugln("actual content:", actualCount)
-
-	if not {
-		return splitInfof(
-			setFailFormat(not, false, false, false, customMessage),
-			-1,
-			expectedCount,
-		)
+func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, idx, count int) (bool, []string, int) {
+	spec, err := valueutils.GetValueOfSetPath(manifest, path)
+	if err != nil {
+		return false, splitInfof(errorFormat, idx, err.Error()), 0
 	}
-	return splitInfof(
-		setFailFormat(not, false, true, false, customMessage),
-		-1,
-		expectedCount,
-		actualCount,
-	)
+	specArr, ok := spec.([]interface{})
+	if !ok {
+		return false, splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", path)), 0
+	}
+	specLen := len(specArr)
+	if count > -1 {
+		if specLen != count {
+			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
+				"count doesn't match. expected: %d != %d actual", count, specLen)), 0
+		}
+	}
+	return true, []string{}, specLen
 }
 
 // Validate implement Validatable
@@ -55,49 +50,20 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	validateErrors := make([]string, 0)
 	for idx, manifest := range manifests {
 		if singleMode {
-			spec, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-			if err != nil {
-				validateSuccess = false
-				errorMessage := splitInfof(errorFormat, idx, err.Error())
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-			specArr, ok := spec.([]interface{})
-			if !ok {
-				validateSuccess = false
-				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", v.Path))
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-			specLen := len(specArr)
-			if specLen != v.Count {
-				validateSuccess = false
-				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-					"count doesn't match. expected: %d != %d actual", v.Count, specLen))
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
+			var validateSingleErrors []string
+			validateSuccess, validateSingleErrors, _ = v.singleValidateCounts(manifest, v.Path, idx, v.Count)
+			validateErrors = append(validateErrors, validateSingleErrors...)
+			continue
 		} else {
 			px := map[string]int{}
 			c := true
 			for _, p := range v.Paths {
-				sp, err := valueutils.GetValueOfSetPath(manifest, p)
-				if err != nil {
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, err.Error())
-					validateErrors = append(validateErrors, errorMessage...)
+				var validateSingleErrors []string
+				validateSuccess, validateSingleErrors, px[p] = v.singleValidateCounts(manifest, p, idx, -1)
+				if !validateSuccess {
+					validateErrors = append(validateErrors, validateSingleErrors...)
 					c = false
-					break
 				}
-				specArr, ok := sp.([]interface{})
-				if !ok {
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", p))
-					validateErrors = append(validateErrors, errorMessage...)
-					c = false
-					break
-				}
-				px[p] = len(specArr)
 			}
 			if !c {
 				continue
@@ -121,11 +87,5 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 		}
 		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
-	if !validateSuccess {
-		//errorMesasge := v.failInfo(v.Kind, 0, context.Negative)
-		errorMessage := []string{}
-		validateErrors = append(validateErrors, errorMessage...)
-	}
-	validateSuccess = determineSuccess(1, validateSuccess, true)
 	return validateSuccess, validateErrors
 }
