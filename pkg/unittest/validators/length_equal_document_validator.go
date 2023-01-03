@@ -33,6 +33,20 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	return true, []string{}, specLen
 }
 
+func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string]int, idx int) (bool, []string, int) {
+	arrayCount := -1
+	for k, pathCountValue := range pathCount {
+		if arrayCount == -1 {
+			arrayCount = pathCountValue
+		} else if arrayCount != pathCountValue {
+			arrayCount = -1
+			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
+				"%s count is '%d'(doesn't match others)", k, pathCountValue)), arrayCount
+		}
+	}
+	return true, []string{}, arrayCount
+}
+
 // Validate implement Validatable
 func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
 	if len(v.Path) > 0 && v.Count == 0 {
@@ -55,33 +69,27 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 			validateErrors = append(validateErrors, validateSingleErrors...)
 			continue
 		} else {
-			px := map[string]int{}
-			c := true
-			for _, p := range v.Paths {
+			pathCount := map[string]int{}
+			optimizeCheck := true
+			for _, path := range v.Paths {
 				var validateSingleErrors []string
-				validateSuccess, validateSingleErrors, px[p] = v.singleValidateCounts(manifest, p, idx, -1)
+				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, -1)
 				if !validateSuccess {
 					validateErrors = append(validateErrors, validateSingleErrors...)
-					c = false
+					optimizeCheck = false
 				}
 			}
-			if !c {
+
+			if !optimizeCheck {
 				continue
 			}
-			acc := -1
-			for k, vv := range px {
-				if acc == -1 {
-					acc = vv
-				} else if acc != vv {
-					acc = -1
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-						"%s count is '%d'(doesn't match others)", k, vv))
-					validateErrors = append(validateErrors, errorMessage...)
-					break
-				}
-			}
-			if acc == -1 {
+
+			var arrayCount int
+			var validateSingleErrors []string
+			validateSuccess, validateSingleErrors, arrayCount = v.arraysValidateCounts(pathCount, idx)
+			validateErrors = append(validateErrors, validateSingleErrors...)
+
+			if arrayCount == -1 {
 				continue
 			}
 		}

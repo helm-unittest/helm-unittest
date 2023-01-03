@@ -16,3 +16,10 @@ With the debug option it is possible to see the the expected and actual content 
 ```
 $ helm helm-unittest ... -d
 ```
+
+## DevOps
+Q: **How can I setup the helm-unittest plugin in a build environment**
+A: The helm-unittest plugin has the options _-t, --output-type_ and _-o, --output-file_ which can be use to generate testresults in a file. Most of the Buildservers have a task that can upload the testresult into the server and generate a buildreport, or determine the success or failure of the tests.
+```
+$ helm helm-unittest ... -t JUnit -o junit-results.xml
+```
