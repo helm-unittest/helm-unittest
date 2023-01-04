@@ -1,6 +1,24 @@
-1.0.0 / 2022-10-24
-==================
+1.0.0 / 2023-01-05
+===================
 - Remove Helm 2 support
+- Add JsonPath ...
+
+0.2.11 / 2023-01-03
+===================
+- Added lenghtEqual assertion to validate array counts (credits to: @lokkersp, resolves #190)
+- Correct empty rendered manifest (credits to: @zifter)
+- Correct subchart testing link (credits to: ludovicalarcon, resolves #185)
+- Update documentation based on user questions
+- Update packages to latest version
+
+0.2.10 / 2022-11-07
+===================
+- Helm Unittest plugin is not available for non-root user (resolves #179)
+- isSubset assertion to handle multiple keys (credits to: @iben12, resolves #162)
+- Out Of Bounds array will result in a null value (resolves #167, #174)
+- Additional debug option to validate failed tests with same expected and actual results (resolves #109, #180)
+- Update documentation based on user questions
+- Update packages to latest version
 
 0.2.9 / 2022-09-24
 ==================

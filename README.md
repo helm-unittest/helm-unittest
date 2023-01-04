@@ -26,7 +26,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
   - [Flags](#flags)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
-- [Dependend subchart Testing](#dependend-subchart-testing)
+- [Dependent subchart Testing](#dependent-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
 - [test suite code completion and validation](#test-suite-code-completion-and-validation)
 - [Frequently Asked Questions](#frequently-asked-questions)

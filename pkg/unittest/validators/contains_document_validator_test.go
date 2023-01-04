@@ -112,7 +112,7 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestContainsDocumentValidatorWhenFail(t *testing.T) {
+func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Deployment",
 		"apps/v1",
@@ -131,5 +131,27 @@ func TestContainsDocumentValidatorWhenFail(t *testing.T) {
 		"DocumentIndex:\t0",
 		"Expected to contain document:",
 		"\tKind = Deployment, apiVersion = apps/v1",
+	}, diff)
+}
+
+func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"apps/v1",
+		"foo",
+		"bar",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Index: -1,
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2)},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = apps/v1",
 	}, diff)
 }

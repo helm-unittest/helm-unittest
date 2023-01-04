@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +14,21 @@ func TestIsNullValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(doc)
 
 	v := IsNullValidator{"a"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullValidatorWhenArrayOk(t *testing.T) {
+	doc := `
+a:
+  - b
+`
+	manifest := makeManifest(doc)
+
+	v := IsNullValidator{"a[1]"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -37,6 +53,8 @@ func TestIsNullValidatorWhenNegativeAndOk(t *testing.T) {
 func TestIsNullValidatorWhenFail(t *testing.T) {
 	doc := "a: A"
 	manifest := makeManifest(doc)
+
+	log.SetLevel(log.DebugLevel)
 
 	v := IsNullValidator{"a"}
 	pass, diff := v.Validate(&ValidateContext{

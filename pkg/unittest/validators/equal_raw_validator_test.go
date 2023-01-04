@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,6 +40,8 @@ func TestEqualRawValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestEqualRawValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqualRaw)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := EqualRawValidator{"Invalid text."}
 	pass, diff := validator.Validate(&ValidateContext{

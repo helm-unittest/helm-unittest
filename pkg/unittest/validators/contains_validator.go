@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
 	yaml "gopkg.in/yaml.v2"
@@ -18,14 +20,19 @@ type ContainsValidator struct {
 }
 
 func (v ContainsValidator) failInfo(actual interface{}, index int, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML([]interface{}{v.Content})
+	actualYAML := common.TrustedMarshalYAML(actual)
 	containsFailFormat := setFailFormat(not, true, true, false, " to contain")
+
+	log.WithField("validator", "contains").Debugln("expected content:", expectedYAML)
+	log.WithField("validator", "contains").Debugln("actual content:", actualYAML)
 
 	return splitInfof(
 		containsFailFormat,
 		index,
 		v.Path,
-		common.TrustedMarshalYAML([]interface{}{v.Content}),
-		common.TrustedMarshalYAML(actual),
+		expectedYAML,
+		actualYAML,
 	)
 }
 
@@ -36,8 +43,10 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 	for _, ele := range actual {
 		// When any enabled, only the key is validated
 		if v.Any {
-			if subset, ok := ele.(map[interface{}]interface{}); ok {
-				if validateSubset(subset, v.Content) {
+			subset, subsetOk := ele.(map[interface{}]interface{})
+			content, contentOk := v.Content.(map[interface{}]interface{})
+			if subsetOk && contentOk {
+				if validateSubset(subset, content) {
 					found = true
 					validateFoundCount++
 				}

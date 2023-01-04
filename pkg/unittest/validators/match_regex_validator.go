@@ -6,6 +6,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 )
 
 // MatchRegexValidator validate value of Path match Pattern
@@ -15,6 +16,10 @@ type MatchRegexValidator struct {
 }
 
 func (v MatchRegexValidator) failInfo(actual string, index int, not bool) []string {
+
+	log.WithField("validator", "match_regex").Debugln("expected pattern:", v.Pattern)
+	log.WithField("validator", "match_regex").Debugln("actual content:", actual)
+
 	return splitInfof(
 		setFailFormat(not, true, true, false, " to match"),
 		index,

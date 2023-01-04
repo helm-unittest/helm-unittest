@@ -1,0 +1,9 @@
+name: "unittest"
+version: "1.0.0"
+usage: "unittest for helm charts"
+description: "Unit test for helm chart in YAML with ease to keep your chart functional and robust."
+ignoreFlags: false
+command: "dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec $HELM_PLUGIN_DIR/untt-dbg -- "
+hooks:
+  install: "cd $HELM_PLUGIN_DIR; ./install-binary.sh"
+  update: "cd $HELM_PLUGIN_DIR; HELM_PLUGIN_UPDATE=1 ./install-binary.sh"

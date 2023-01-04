@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -15,12 +16,18 @@ type IsSubsetValidator struct {
 }
 
 func (v IsSubsetValidator) failInfo(actual interface{}, index int, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML(v.Content)
+	actualYAML := common.TrustedMarshalYAML(actual)
+
+	log.WithField("validator", "is_subset").Debugln("expected content:", expectedYAML)
+	log.WithField("validator", "is_subset").Debugln("actual content:", actualYAML)
+
 	return splitInfof(
 		setFailFormat(not, true, true, false, " to contain"),
 		index,
 		v.Path,
-		common.TrustedMarshalYAML(v.Content),
-		common.TrustedMarshalYAML(actual),
+		expectedYAML,
+		actualYAML,
 	)
 }
 
@@ -43,8 +50,11 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		if actual, ok := actual.(map[interface{}]interface{}); ok {
-			found := validateSubset(actual, v.Content)
+		actualMap, actualOk := actual.(map[interface{}]interface{})
+		contentMap, contentOk := v.Content.(map[interface{}]interface{})
+
+		if actualOk && contentOk {
+			found := validateSubset(actualMap, contentMap)
 
 			if found == context.Negative {
 				validateSuccess = false

@@ -96,11 +96,14 @@
                 "isNotEmpty": true,
                 "isKind": true,
                 "isAPIVersion": true,
+                "isSubset": true,
+                "isNotSubset": true,
                 "hasDocuments": true,
                 "containsDocument": true,
                 "matchSnapshot": true,
                 "matchSnapshotRaw": true,
                 "failedTemplate": true,
+                "lengthEqual": true,
                 "not": {
                   "type": "boolean",
                   "description": "Set to true to assert contrarily, default to false.",
@@ -459,6 +462,54 @@
                 },
                 {
                   "properties": {
+                    "isSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that contains the content.",
+                      "markdownDescription": "**isSubset** (object)\n\nAssert the object as the value of specified path that contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNotSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that NOT contains the content.",
+                      "markdownDescription": "**isNotSubset** (object)\n\nAssert the object as the value of specified path that NOT contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content NOT to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
                     "hasDocuments": {
                       "type": "object",
                       "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
@@ -469,6 +520,25 @@
                           "description": "Expected count of documents rendered.",
                           "markdownDescription": "**count** (integer) _required_\n\nExpected count of documents rendered."
                         }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "lengthEqual": {
+                      "type": "object",
+                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
+                      "markdownDescription": "**lengthEqual** (object)\n\nAssert the spec count rendered by the `path|paths` specified.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of spec rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
+                        },
+                        "path": {"$ref": "#/definitions/assertion/path"},
+                        "paths": {"$ref": "#/definitions/assertion/paths"}
                       },
                       "additionalProperties": false
                     }
@@ -573,6 +643,14 @@
   },
   "definitions": {
     "assertion": {
+      "paths": {
+        "type": "array",
+        "description": "The set of paths to assert.Map keys in path containing periods (.) are supported with the use of a jq-like syntax.",
+        "markdownDescription": "**templates** (array<string>) _optional_\n. List of specs for length comparison. ",
+        "items": {
+          "type": "string"
+        }
+      },
       "path": {
         "type": "string",
         "description": "The set path to assert. Map keys in path containing periods (.) are supported with the use of a jq-like syntax.",
@@ -648,10 +726,10 @@
           "description": "The revision of current build, default to 0.",
           "markdownDescription": "**revision** (string) _optional_\n\nThe revision of current build, default to `0`."
         },
-        "isUpgrade": {
+        "upgrade": {
           "type": "boolean",
           "description": "Whether the build is an upgrade, default to false.",
-          "markdownDescription": "**isUpgrade** (boolean) _optional_\n\nWhether the build is an upgrade, default to `false`."
+          "markdownDescription": "**upgrade** (boolean) _optional_\n\nWhether the build is an upgrade, default to `false`."
         }
       },
       "additionalProperties": false

@@ -21,7 +21,7 @@ release:
   name: my-release
   namespace: my-namespace
   revision: 1
-  isUpgrade: true
+  upgrade: true
 capabilities:
   majorVersion: 1
   minorVersion: 10
@@ -43,7 +43,7 @@ tests:
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
-  - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+  - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
@@ -77,7 +77,7 @@ tests:
       name: my-release
       namespace:
       revision: 9
-      isUpgrade: true
+      upgrade: true
     capabilities:
       majorVersion: 1
       minorVersion: 12
@@ -106,7 +106,7 @@ tests:
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
   - **revision**: *string, optional*. The revision of current build, default to `0`.
-  - **isUpgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
+  - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
   - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
@@ -163,28 +163,30 @@ Available assertion types are listed below:
 
 | Assertion Type | Parameters | Description | Example |
 |----------------|------------|-------------|---------|
-| `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value. | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
-| `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |
-| `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**. | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
-| `notEqualRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file not to be. | Assert equal NOT to the **value**. | <pre>notEqual:<br/>  value: my-deploy</pre> |
-| `matchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern to match (without quoting `/`). | Assert the value of specified **path** match **pattern**. | <pre>matchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chart$</pre> |
-| `matchRegexRaw` | **pattern**: *string*. The regex pattern to match (without quoting `/`) in a NOTES.txt file. | Assert the value match **pattern**. | <pre>matchRegexRaw:<br/>  pattern: -my-notes$</pre> |
-| `notMatchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern NOT to match (without quoting `/`). | Assert the value of specified **path** NOT match **pattern**. | <pre>notMatchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chat$</pre> |
-| `notMatchRegexRaw` | **pattern**: *string*. The regex pattern NOT to match (without quoting `/`) in a NOTES.txt file. | Assert the value NOT match **pattern**. | <pre>notMatchRegexRaw:<br/>  pattern: -my-notes$</pre> |
+| `containsDocument` | **kind**: *string*. Expected `kind` of manifest.<br/> **apiVersion**: *string*. Expected `apiVersion` of manifest.<br/>**name**: *string, optional*. The value of the `metadata.name`.<br/>**namespace**: *string, optional*. The value of the `metadata.namespace`. | Asserts the documents rendered by the `kind` and `apiVersion` specified. | <pre>containsDocument:<br/>  kind: Deployment<br/>  apiVersion: apps/v1<br/>  name:foo<br/>  namespace: bar</pre> |
 | `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocle:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
 | `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocle: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
-| `isNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is `null`. |<pre>isNull:<br/>  path: spec.strategy</pre> |
-| `isNotNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT `null`. |<pre>isNotNull:<br/>  path: spec.replicas</pre> |
+| `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value. | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
+| `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**. | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
+| `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |
+| `notEqualRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file not to be. | Assert equal NOT to the **value**. | <pre>notEqual:<br/>  value: my-deploy</pre> |
+| `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template rendering error. Also allows to match an error that would happen before template execution (ex: validation of values against schema) | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> |
+| `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
+| `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
 | `isEmpty` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is empty (`null`, `""`, `0`, `[]`, `{}`). |<pre>isEmpty:<br/>  path: spec.tls</pre> |
 | `isNotEmpty` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT empty (`null`, `""`, `0`, `[]`, `{}`). |<pre>isNotEmpty:<br/>  path: spec.selector</pre> |
 | `isKind` | **of**: *String*. Expected `kind` of manifest. | Assert the `kind` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: kind<br/>  value: ...<br/> | <pre>isKind:<br/>  of: Deployment</pre> |
-| `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
-| `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
-| `containsDocument` | **kind**: *string*. Expected `kind` of manifest.<br/> **apiVersion**: *string*. Expected `apiVersion` of manifest.<br/>**name**: *string, optional*. The value of the `metadata.name`.<br/>**namespace**: *string, optional*. The value of the `metadata.namespace`. | Asserts the documents rendered by the `kind` and `apiVersion` specified. | <pre>containsDocument:<br/>  kind: Deployment<br/>  apiVersion: apps/v1<br/>  name:foo<br/>  namespace: bar</pre> |
+| `isNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is `null`. |<pre>isNull:<br/>  path: spec.strategy</pre> |
+| `isNotNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT `null`. |<pre>isNotNull:<br/>  path: spec.replicas</pre> |
+| `isSubset` | **path**: *string*. The `set` path to assert, the value must be an *object*. <br/>**content**: *any*. The content to be contained. | Assert the object as the value of specified **path** that contains the **content**. |<pre>isSubset:<br/>  path: spec.template<br/>  content:<br/>    metadata: <br/>    labels: <br/>        app: basic<br/>        release: MY-RELEASE<br/></pre> |
+| `isNotSubset` | **path**: *string*. The `set` path to assert, the value must be an *object*. <br/>**content**: *any*. The content NOT to be contained. | Assert the object as the value of specified **path** that NOT contains the **content**. |<pre>isSubset:<br/>  path: spec.template<br/>  content:<br/>    metadata: <br/>    labels: <br/>        app: basic<br/>        release: MY-RELEASE<br/></pre> |
+| `lengthEqual` | **path**: *string, optional*. The `set` path to assert the count of array values. <br/>**paths**: *string, optional*. The `set` array of paths to assert the count validation of the founded arrays. <br/>**count**: *int, optional*. The count of the values in the array. | Assert the **count** of the **path** or **paths**. |<pre>lengthEqual:<br/>  path: spec.tls<br/>  count: 1<br/></pre> |
+| `matchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern to match (without quoting `/`). | Assert the value of specified **path** match **pattern**. | <pre>matchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chart$</pre> |
+| `notMatchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern NOT to match (without quoting `/`). | Assert the value of specified **path** NOT match **pattern**. | <pre>notMatchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chat$</pre> |
+| `matchRegexRaw` | **pattern**: *string*. The regex pattern to match (without quoting `/`) in a NOTES.txt file. | Assert the value match **pattern**. | <pre>matchRegexRaw:<br/>  pattern: -my-notes$</pre> |
+| `notMatchRegexRaw` | **pattern**: *string*. The regex pattern NOT to match (without quoting `/`) in a NOTES.txt file. | Assert the value NOT match **pattern**. | <pre>notMatchRegexRaw:<br/>  pattern: -my-notes$</pre> |
 | `matchSnapshot` | **path**: *string*. The `set` path for snapshot. | Assert the value of **path** is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshot:<br/>  path: spec</pre> |
 | `matchSnapshotRaw` | | Assert the value in the NOTES.txt is the same as snapshotted last time. Check [doc](./README.md#snapshot-testing) below. | <pre>matchSnapshotRaw: {}<br/></pre> |
-| `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template rendering error. Also allows to match an error that would happen before template execution (ex: validation of values against schema) | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> |
-
 
 ### Antonym and `not`
 

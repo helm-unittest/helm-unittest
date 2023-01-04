@@ -7,7 +7,9 @@ vendor/
 _dist/
 
 untt
+untt-dbg
 untt.exe
+untt-dbg.exe
 _dist
 
 .DS_Store

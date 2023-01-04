@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 )
 
 // MatchSnapshotValidator validate snapshot of value of Path the same as cached
@@ -14,6 +15,10 @@ type MatchSnapshotValidator struct {
 
 func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, index int, not bool) []string {
 	customMessage := " to match snapshot " + strconv.Itoa(int(compared.Index))
+
+	log.WithField("validator", "snapshot").Debugln("expected content:", compared.CachedSnapshot)
+	log.WithField("validator", "snapshot").Debugln("actual content:", compared.NewSnapshot)
+
 	var infoToShow string
 	if not {
 		infoToShow = compared.CachedSnapshot

@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +14,7 @@ a:
   b:
     c: hello world
     d: foo bar
+    x: baz
 `
 
 func TestIsSubsetValidatorWhenOk(t *testing.T) {
@@ -20,7 +22,7 @@ func TestIsSubsetValidatorWhenOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"}}
+		map[interface{}]interface{}{"d": "foo bar", "x": "baz"}}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -35,7 +37,7 @@ func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "hello bar"}}
+		map[interface{}]interface{}{"d": "hello bar", "c": "hello world"}}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -47,6 +49,8 @@ func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestIsSubsetValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestIsSubset)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := IsSubsetValidator{
 		"a.b",
@@ -65,6 +69,7 @@ func TestIsSubsetValidatorWhenFail(t *testing.T) {
 		"Actual:",
 		"	c: hello world",
 		"	d: foo bar",
+		"	x: baz",
 	}, diff)
 }
 
@@ -120,6 +125,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"Actual:",
 		"	c: hello world",
 		"	d: foo bar",
+		"	x: baz",
 		"DocumentIndex:	1",
 		"Path:	a.b",
 		"Expected to contain:",
@@ -127,6 +133,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"Actual:",
 		"	c: hello world",
 		"	d: foo bar",
+		"	x: baz",
 	}, diff)
 }
 
@@ -151,6 +158,7 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 		"Actual:",
 		"	c: hello world",
 		"	d: foo bar",
+		"	x: baz",
 	}, diff)
 }
 

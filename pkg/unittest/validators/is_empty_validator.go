@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 )
 
 // IsEmptyValidator validate value of Path is empty
@@ -13,11 +14,15 @@ type IsEmptyValidator struct {
 }
 
 func (v IsEmptyValidator) failInfo(actual interface{}, index int, not bool) []string {
+	actualYAML := common.TrustedMarshalYAML(actual)
+
+	log.WithField("validator", "is_empty").Debugln("actual content:", actualYAML)
+
 	return splitInfof(
 		setFailFormat(not, true, false, false, " to be empty, got"),
 		index,
 		v.Path,
-		common.TrustedMarshalYAML(actual),
+		actualYAML,
 	)
 }
 

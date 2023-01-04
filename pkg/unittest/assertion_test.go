@@ -57,12 +57,16 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - isAPIVersion:
 - hasDocuments:
 - isSubset:
+- isNotSubset:
 - failedTemplate:
+- notFailedTemplate:
+- containsDocument:
+- lengthEqual:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 19)
+	assertionsAsMap := make([]map[string]interface{}, 23)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 19)
+	assertions := make([]Assertion, 23)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -238,8 +242,12 @@ e:
     path: e
     content: 
       f: g
+- template: t.yaml
+  lengthEqual:
+    path: c
+    count: 1
 `
-	validateSucceededTestAssertions(t, assertionsYAML, 14, renderedMap)
+	validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap)
 }
 
 func TestAssertionRawAssertWhenOk(t *testing.T) {

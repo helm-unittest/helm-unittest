@@ -3,6 +3,8 @@ package validators_test
 import (
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
 
@@ -118,6 +120,9 @@ a:
       value: bla2
 `
 	manifest := makeManifest(docToTestContainsAny)
+
+	// Enable debug logging
+	log.SetLevel(log.DebugLevel)
 
 	validator := ContainsValidator{
 		"a.b",

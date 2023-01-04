@@ -5,6 +5,7 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,6 +57,8 @@ func TestEqualValidatorWhenNegativeAndOk(t *testing.T) {
 
 func TestEqualValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
+
+	log.SetLevel(log.DebugLevel)
 
 	validator := EqualValidator{
 		"a.b[0]",
