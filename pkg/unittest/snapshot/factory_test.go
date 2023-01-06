@@ -76,7 +76,7 @@ func TestCreateSnapshotOfSuiteWhenCacheFileExisted(t *testing.T) {
 	a.Nil(err)
 	a.True(info.IsDir())
 
-	info, statCacheFileErr := os.Stat(cache.Filepath)
+	_, statCacheFileErr := os.Stat(cache.Filepath)
 	a.True(cache.Existed)
 	a.Nil(statCacheFileErr)
 

@@ -7,19 +7,49 @@ import (
 	"strconv"
 
 	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
-func GetValueOfSetPath(manifest common.K8sManifest, path string) (interface{}, error) {
+func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{}, error) {
+	manifestResult := make([]interface{}, 0)
 	if path == "" {
-		return manifest, nil
+		return append(manifestResult, manifest), nil
 	}
-	tr := fetchTraverser{manifest}
-	reader := bytes.NewBufferString(path)
-	if e := traverseSetPath(reader, &tr, expectKey); e != nil {
-		return nil, e
+
+	// Convert K8Manifest to yaml.Node
+	var rawManifest yaml.Node
+	byteBuffer, err := yaml.Marshal(manifest)
+	if err != nil {
+		return nil, err
 	}
-	return tr.data, nil
+
+	if err := yaml.Unmarshal(byteBuffer, &rawManifest); err != nil {
+		return nil, err
+	}
+
+	// Set Path
+	yamlPath, err := yamlpath.NewPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Search for nodes
+	manifestParts, err := yamlPath.Find(&rawManifest)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range manifestParts {
+		var singleResult interface{}
+		if err := node.Decode(&singleResult); err != nil {
+			return nil, err
+		}
+		manifestResult = append(manifestResult, singleResult)
+	}
+
+	return manifestResult, nil
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
@@ -70,39 +100,6 @@ func MergeValues(dest map[interface{}]interface{}, src map[interface{}]interface
 type parseTraverser interface {
 	traverseMapKey(string) error
 	traverseListIdx(int) error
-}
-
-type fetchTraverser struct {
-	data interface{}
-}
-
-func (tr *fetchTraverser) traverseMapKey(key string) error {
-	if dmap, ok := tr.data.(map[interface{}]interface{}); ok {
-		tr.data = dmap[key]
-		return nil
-	} else if dman, ok := tr.data.(common.K8sManifest); ok {
-		tr.data = dman[key]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [\"%s\"] from a non map type:\n%s",
-		key, common.TrustedMarshalYAML(tr.data),
-	)
-}
-
-func (tr *fetchTraverser) traverseListIdx(idx int) error {
-	if d, ok := tr.data.([]interface{}); ok {
-		if idx < 0 || idx >= len(d) {
-			tr.data = nil
-			return nil
-		}
-		tr.data = d[idx]
-		return nil
-	}
-	return fmt.Errorf(
-		"can't get [%d] from a non array type:\n%s",
-		idx, common.TrustedMarshalYAML(tr.data),
-	)
 }
 
 type buildTraverser struct {

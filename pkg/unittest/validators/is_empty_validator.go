@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/lrills/helm-unittest/internal/common"
@@ -45,7 +46,15 @@ func (v IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		actualValue := reflect.ValueOf(actual)
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		singleValue := actual[0]
+		actualValue := reflect.ValueOf(singleValue)
 		var isEmpty bool
 		switch actualValue.Kind() {
 		case reflect.Invalid:
@@ -59,7 +68,7 @@ func (v IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 
 		if isEmpty == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(actual, idx, context.Negative)
+			errorMessage := v.failInfo(singleValue, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

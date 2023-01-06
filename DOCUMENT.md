@@ -149,11 +149,11 @@ The assertion is defined with the assertion type as the key and its parameters a
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
 
-Map keys in `path` containing periods (`.`) are supported with the use of a `jq`-like syntax:
+Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath`-like syntax:
 
 ```yaml
 - equal:
-    path: metadata.annotations.[kubernetes.io/ingress.class]
+    path: metadata.annotations["kubernetes.io/ingress.class"]
     value: nginx
 ```
 

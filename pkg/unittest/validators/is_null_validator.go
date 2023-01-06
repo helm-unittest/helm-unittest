@@ -43,9 +43,16 @@ func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		if actual == nil == context.Negative {
+		var singleActual interface{}
+		if len(actual) > 0 {
+			singleActual = actual[0]
+		} else {
+			singleActual = nil
+		}
+
+		if singleActual == nil == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(actual, idx, context.Negative)
+			errorMessage := v.failInfo(singleActual, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

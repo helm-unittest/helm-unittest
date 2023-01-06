@@ -4,7 +4,7 @@ import (
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/mock"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 func makeManifest(doc string) common.K8sManifest {

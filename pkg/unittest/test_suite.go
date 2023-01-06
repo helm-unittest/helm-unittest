@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lrills/helm-unittest/pkg/unittest/results"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
@@ -27,14 +28,11 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 		return &suite, err
 	}
 
-	if strict {
-		if err := yaml.UnmarshalStrict(content, &suite); err != nil {
-			return &suite, err
-		}
-	} else {
-		if err := yaml.Unmarshal(content, &suite); err != nil {
-			return &suite, err
-		}
+	// Use decoder to setup strict or unstrict
+	yamlDecoder := yaml.NewDecoder(strings.NewReader(string(content)))
+	yamlDecoder.KnownFields(strict)
+	if err := yamlDecoder.Decode(&suite); err != nil {
+		return &suite, err
 	}
 
 	// Append the valuesfiles from command to the testsuites.

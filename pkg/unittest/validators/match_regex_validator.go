@@ -61,7 +61,15 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 			break
 		}
 
-		if s, ok := actual.(string); ok {
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		singleActual := actual[0]
+		if s, ok := singleActual.(string); ok {
 			if p.MatchString(s) == context.Negative {
 				validateSuccess = false
 				errorMessage := v.failInfo(s, idx, context.Negative)
@@ -77,7 +85,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be a string, got:\n%s",
 			v.Path,
-			common.TrustedMarshalYAML(actual),
+			common.TrustedMarshalYAML(singleActual),
 		))
 		validateErrors = append(validateErrors, errorMessage...)
 	}

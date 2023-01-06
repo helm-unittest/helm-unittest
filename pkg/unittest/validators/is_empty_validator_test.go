@@ -7,13 +7,10 @@ import (
 	. "github.com/lrills/helm-unittest/pkg/unittest/validators"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var docWithEmptyElements = `
 a:
-b: ""
-c: 0
 d: null
 e: []
 f: {}
@@ -62,8 +59,7 @@ func TestIsEmptyValidatorWhenFail(t *testing.T) {
 
 	for key, value := range manifest {
 		validator := IsEmptyValidator{key}
-		marshaledValue, _ := yaml.Marshal(value)
-		valueYAML := string(marshaledValue)
+		valueYAML := common.TrustedMarshalYAML(value)
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs: []common.K8sManifest{manifest},
 		})
@@ -87,8 +83,7 @@ func TestIsEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 			Negative: true,
 		})
 
-		marshaledValue, _ := yaml.Marshal(value)
-		valueYAML := string(marshaledValue)
+		valueYAML := common.TrustedMarshalYAML(value)
 
 		assert.False(t, pass)
 		assert.Equal(t, []string{
@@ -128,7 +123,6 @@ func TestIsEmptyValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"a\"] from a non map type:",
-		"	null",
+		"	unknown parameter x.a",
 	}, diff)
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/lrills/helm-unittest/pkg/unittest/validators"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3util "helm.sh/helm/v3/pkg/chartutil"

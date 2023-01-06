@@ -159,7 +159,7 @@ func TestMatchRegexValidatorWhenNoPattern(t *testing.T) {
 func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 	manifest := makeManifest("a.b.d::error")
 
-	validator := MatchRegexValidator{"a.b[0].c", "^hello"}
+	validator := MatchRegexValidator{"a.[b]", "^hello"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -168,7 +168,6 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"b\"] from a non map type:",
-		"	null",
+		"	child name missing at position 2, following \"a.\"",
 	}, diff)
 }

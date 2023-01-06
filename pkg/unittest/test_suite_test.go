@@ -11,7 +11,7 @@ import (
 	"github.com/lrills/helm-unittest/pkg/unittest/results"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Most used test files

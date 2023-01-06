@@ -146,7 +146,7 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 		NewSnapshot:    cached,
 	})
 
-	validator := MatchSnapshotValidator{Path: "x.b"}
+	validator := MatchSnapshotValidator{Path: "a[b]"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:             []common.K8sManifest{manifest},
 		SnapshotComparer: mockComparer,
@@ -156,7 +156,6 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	can't get [\"b\"] from a non map type:",
-		"	null",
+		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }

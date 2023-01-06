@@ -1,11 +1,12 @@
 package snapshot
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 
 	"github.com/lrills/helm-unittest/internal/common"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // CompareResult result return by Cache.Compare
@@ -124,12 +125,15 @@ func (s *Cache) StoreToFileIfNeeded() (bool, error) {
 	}
 
 	if s.IsUpdating || s.insertedCount > 0 || s.VanishedCount() > 0 {
-		cacheData, err := yaml.Marshal(s.current)
-		if err != nil {
+		byteBuffer := new(bytes.Buffer)
+		yamlEncoder := yaml.NewEncoder(byteBuffer)
+		yamlEncoder.SetIndent(common.YAMLINDENTION)
+		defer yamlEncoder.Close()
+		if err := yamlEncoder.Encode(s.current); err != nil {
 			return false, err
 		}
 
-		if err := ioutil.WriteFile(s.Filepath, cacheData, 0644); err != nil {
+		if err := ioutil.WriteFile(s.Filepath, byteBuffer.Bytes(), 0644); err != nil {
 			return false, err
 		}
 

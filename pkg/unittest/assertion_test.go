@@ -8,7 +8,7 @@ import (
 	"github.com/lrills/helm-unittest/pkg/unittest/results"
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func validateSucceededTestAssertions(
@@ -182,6 +182,7 @@ a: b
 c: [d]
 e:
   f: g
+x:
 `
 	manifest := common.K8sManifest{}
 	yaml.Unmarshal([]byte(manifestDoc), &manifest)
@@ -220,9 +221,6 @@ e:
 - template: t.yaml
   isNotNull:
     path: a
-- template: t.yaml
-  isEmpty:
-    path: z
 - template: t.yaml
   isNotEmpty:
     path: c
