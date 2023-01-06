@@ -22,7 +22,7 @@ func TestIsSubsetValidatorWhenOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar", "x": "baz"}}
+		map[string]interface{}{"d": "foo bar", "x": "baz"}}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -37,7 +37,7 @@ func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "hello bar", "c": "hello world"}}
+		map[string]interface{}{"d": "hello bar", "c": "hello world"}}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -54,7 +54,7 @@ func TestIsSubsetValidatorWhenFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "bar bar"},
+		map[string]interface{}{"e": "bar bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -85,7 +85,7 @@ a:
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  manifests,
@@ -109,7 +109,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "foo bar"},
+		map[string]interface{}{"e": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  manifests,
@@ -142,7 +142,7 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -204,7 +204,7 @@ a:
 func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
 	manifest := makeManifest("a::error")
 
-	validator := IsSubsetValidator{"a.b", common.K8sManifest{"d": "foo bar"}}
+	validator := IsSubsetValidator{"a[b]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -213,6 +213,6 @@ func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	unknown parameter a.b",
+		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }

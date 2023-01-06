@@ -19,7 +19,12 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	if err != nil {
 		return false, splitInfof(errorFormat, idx, err.Error()), 0
 	}
-	specArr, ok := spec.([]interface{})
+
+	if len(spec) == 0 {
+		return false, splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", path)), 0
+	}
+
+	specArr, ok := spec[0].([]interface{})
 	if !ok {
 		return false, splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", path)), 0
 	}

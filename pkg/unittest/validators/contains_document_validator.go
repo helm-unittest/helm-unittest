@@ -42,7 +42,7 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest,
 			return false
 		}
 
-		if (actual == v.Name) == negative {
+		if (actual[0] == v.Name) == negative {
 			return false
 		}
 	}
@@ -54,7 +54,7 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest,
 			return false
 		}
 
-		if (actual == v.Namespace) == negative {
+		if (actual[0] == v.Namespace) == negative {
 			return false
 		}
 	}

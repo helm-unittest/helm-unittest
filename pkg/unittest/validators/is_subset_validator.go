@@ -6,7 +6,6 @@ import (
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // IsSubsetValidator validate whether value of Path contains Content
@@ -50,15 +49,23 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		actualMap, actualOk := actual.(map[interface{}]interface{})
-		contentMap, contentOk := v.Content.(map[interface{}]interface{})
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		singleActual := actual[0]
+		actualMap, actualOk := singleActual.(map[string]interface{})
+		contentMap, contentOk := v.Content.(map[string]interface{})
 
 		if actualOk && contentOk {
 			found := validateSubset(actualMap, contentMap)
 
 			if found == context.Negative {
 				validateSuccess = false
-				errorMessage := v.failInfo(actual, idx, context.Negative)
+				errorMessage := v.failInfo(singleActual, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
@@ -67,12 +74,12 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		actualYAML, _ := yaml.Marshal(actual)
+		actualYAML := common.TrustedMarshalYAML(singleActual)
 		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be an object, got:\n%s",
 			v.Path,
-			string(actualYAML),
+			actualYAML,
 		))
 		validateErrors = append(validateErrors, errorMessage...)
 	}

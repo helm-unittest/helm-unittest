@@ -96,7 +96,7 @@ a:
 
 	validator := EqualValidator{
 		"a.b[0]",
-		map[interface{}]interface{}{"c": 321},
+		map[string]interface{}{"c": 321},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  []common.K8sManifest{manifest1, manifest2},
@@ -125,7 +125,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := EqualValidator{
 		"a.b[0]",
-		map[interface{}]interface{}{"c": 321},
+		map[string]interface{}{"c": 321},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  []common.K8sManifest{manifest, manifest},
@@ -164,7 +164,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[0]", map[interface{}]interface{}{"c": 123}}
+	v := EqualValidator{"a.b[0]", map[string]interface{}{"c": 123}}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -190,17 +190,8 @@ func TestEqualValidatorWhenWrongPath(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Path:	a.b[e]",
-		"Expected to equal:",
-		"	d: 321",
-		"Actual:",
-		"	- c: 123",
-		"Diff:",
-		"	--- Expected",
-		"	+++ Actual",
-		"	@@ -1,2 +1,2 @@",
-		"	-d: 321",
-		"	+- c: 123",
+		"Error:",
+		"	invalid array index [e] before position 6: non-integer array index",
 	}, diff)
 }
 

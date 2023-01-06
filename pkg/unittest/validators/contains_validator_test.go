@@ -31,7 +31,7 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 		nil,
 		false,
 	}
@@ -49,7 +49,7 @@ func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 		nil,
 		false,
 	}
@@ -98,7 +98,7 @@ a:
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"name": "VALUE1"},
+		map[string]interface{}{"name": "VALUE1"},
 		nil,
 		true,
 	}
@@ -126,7 +126,7 @@ a:
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"name": "VALUE3"},
+		map[string]interface{}{"name": "VALUE3"},
 		nil,
 		true,
 	}
@@ -153,7 +153,7 @@ func TestContainsValidatorWhenNegativeAndOk(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "hello bar"},
+		map[string]interface{}{"d": "hello bar"},
 		nil,
 		false,
 	}
@@ -171,7 +171,7 @@ func TestContainsValidatorWhenFail(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "bar bar"},
+		map[string]interface{}{"e": "bar bar"},
 		nil,
 		false,
 	}
@@ -205,7 +205,7 @@ a:
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 		nil,
 		false,
 	}
@@ -231,7 +231,7 @@ func TestContainsValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "foo bar"},
+		map[string]interface{}{"e": "foo bar"},
 		nil,
 		false,
 	}
@@ -268,7 +268,7 @@ func TestContainsValidatorWhenNegativeAndFail(t *testing.T) {
 
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"d": "foo bar"},
+		map[string]interface{}{"d": "foo bar"},
 		nil,
 		false,
 	}
@@ -357,14 +357,8 @@ func TestContainsValidatorWhenInvalidParameter(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Path:	a.b[e]",
-		"Expected to contain:",
-		"	- e: bar",
-		"Actual:",
-		"	- c: hello world",
-		"	- d: foo bar",
-		"	- e: bar",
-		"	- e: bar",
+		"Error:",
+		"	invalid array index [e] before position 6: non-integer array index",
 	}, diff)
 }
 
@@ -375,7 +369,7 @@ func TestContainsValidatorWhenMultipleTimesInArray(t *testing.T) {
 	*counter = 2
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "bar"},
+		map[string]interface{}{"e": "bar"},
 		counter,
 		false,
 	}
@@ -394,7 +388,7 @@ func TestContainsValidatorInverseWhenNotMultipleTimesInArray(t *testing.T) {
 	*counter = 1
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "bar"},
+		map[string]interface{}{"e": "bar"},
 		counter,
 		false,
 	}
@@ -414,7 +408,7 @@ func TestContainsValidatorWhenNotMultipleTimesInArray(t *testing.T) {
 	*counter = 1
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"e": "bar"},
+		map[string]interface{}{"e": "bar"},
 		counter,
 		false,
 	}
@@ -441,7 +435,7 @@ func TestContainsValidatorWhenNotFoundMultipleTimesInArray(t *testing.T) {
 	*counter = 1
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"f": "bar"},
+		map[string]interface{}{"f": "bar"},
 		counter,
 		false,
 	}
@@ -470,7 +464,7 @@ func TestContainsValidatorInverseWhenNotFoundMultipleTimesInArray(t *testing.T) 
 	*counter = 1
 	validator := ContainsValidator{
 		"a.b",
-		map[interface{}]interface{}{"f": "bar"},
+		map[string]interface{}{"f": "bar"},
 		counter,
 		false,
 	}

@@ -110,7 +110,7 @@ func TestIsNullValidatorWhenInvalidPath(t *testing.T) {
 	doc := "x:"
 	manifest := makeManifest(doc)
 
-	validator := IsNullValidator{"x.b"}
+	validator := IsNullValidator{"x[b]"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -119,6 +119,6 @@ func TestIsNullValidatorWhenInvalidPath(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
 		"Error:",
-		"	unknown parameter x.b",
+		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }

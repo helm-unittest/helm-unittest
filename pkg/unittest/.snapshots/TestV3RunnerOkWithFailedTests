@@ -185,20 +185,20 @@
 				    release: RELEASE-NAME
 				spec:
 				  containers:
-				  - image: apache:latest
-				    imagePullPolicy: Always
-				    livenessProbe:
-				      httpGet:
-				        path: /
-				        port: 8080
-				    name: basic
-				    ports:
-				    - containerPort: 8080
-				    readinessProbe:
-				      httpGet:
-				        path: /
-				        port: 8080
-				    resources: {}
+				    - image: apache:latest
+				      imagePullPolicy: Always
+				      livenessProbe:
+				        httpGet:
+				          path: /
+				          port: 8080
+				      name: basic
+				      ports:
+				        - containerPort: 8080
+				      readinessProbe:
+				        httpGet:
+				          path: /
+				          port: 8080
+				      resources: {}
 			DocumentIndex:	1
 			Path:	spec.template
 			Expected to be null, got:
@@ -213,11 +213,11 @@
 				    release: RELEASE-NAME
 				spec:
 				  containers:
-				  - image: apache:latest
-				    imagePullPolicy: Always
-				    name: basic
-				    ports:
-				    - containerPort: null
+				    - image: apache:latest
+				      imagePullPolicy: Always
+				      name: basic
+				      ports:
+				        - containerPort: null
 
 		- asserts[7] `isNotNull` fail
 			Template:	basic/templates/deployment.yaml
@@ -243,7 +243,7 @@
 				    port: 8080
 				name: basic
 				ports:
-				- containerPort: 8080
+				  - containerPort: 8080
 				readinessProbe:
 				  httpGet:
 				    path: /
@@ -256,7 +256,7 @@
 				imagePullPolicy: Always
 				name: basic
 				ports:
-				- containerPort: null
+				  - containerPort: null
 
 		- asserts[9] `isNotEmpty` fail
 			Template:	basic/templates/deployment.yaml
@@ -265,9 +265,8 @@
 			Expected NOT to be empty, got:
 				{}
 			DocumentIndex:	1
-			Path:	spec.template.spec.containers[0].resources
-			Expected NOT to be empty, got:
-				null
+			Error:
+				unknown parameter spec.template.spec.containers[0].resources
 
 		- asserts[10] `isKind` fail
 			Template:	basic/templates/deployment.yaml
@@ -317,7 +316,7 @@
 				      port: 8080
 				  name: basic
 				  ports:
-				  - containerPort: 8080
+				    - containerPort: 8080
 				  readinessProbe:
 				    httpGet:
 				      path: /
@@ -332,7 +331,7 @@
 				  imagePullPolicy: Always
 				  name: basic
 				  ports:
-				  - containerPort: null
+				    - containerPort: null
  FAIL  test deployment that would be fail	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should fail all kinds of assertion
 		Error: template: basic/templates/deployment.yaml:13:24: executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>: error calling include: template: no template "basic/templates/configmap.yaml" associated with template "gotpl"
@@ -386,17 +385,8 @@
 		- asserts[0] `equal` fail
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
-			Path:	spec.tls
-			Expected to equal:
-				- secretName: my-tls-secret
-			Actual:
-				null
-			Diff:
-				--- Expected
-				+++ Actual
-				@@ -1,2 +1,2 @@
-				-- secretName: my-tls-secret
-				+null
+			Error:
+				unknown parameter spec.tls
  FAIL  test notes	../../test/data/v3/basic/tests_failed/notes_test.yaml
 	- should fail the notes file with ingress enabled
 
@@ -412,10 +402,7 @@
 		- asserts[0] `equalRaw` fail
 			Template:	basic/templates/NOTES.txt
 			Expected to equal:
-				"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl
-				  get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n
-				  / export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n
-				  / echo http://$NODE_IP:$NODE_PORT/n  /n"
+				"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n  export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n  echo http://$NODE_IP:$NODE_PORT/n  /n"
 			Actual:
 				|
 				  1. Get the application URL by running these commands:
@@ -425,11 +412,8 @@
 			Diff:
 				--- Expected
 				+++ Actual
-				@@ -1,5 +1,6 @@
-				-"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl
-				-  get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n
-				-  / export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n
-				-  / echo http://$NODE_IP:$NODE_PORT/n  /n"
+				@@ -1,2 +1,6 @@
+				-"1. Get the application URL by running these commands:/n  export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath=/"{.spec.ports[0].nodePort}/" services MY-RELEASE)/n  export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath=/"{.items[0].status.addresses[0].address}/")/n  echo http://$NODE_IP:$NODE_PORT/n  /n"
 				+|
 				+  1. Get the application URL by running these commands:
 				+    export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services RELEASE-NAME-basic)

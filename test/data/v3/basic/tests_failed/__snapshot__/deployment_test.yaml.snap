@@ -8,20 +8,20 @@ should fail all kinds of assertion:
           release: RELEASE-NAME
       spec:
         containers:
-        - image: apache:latest
-          imagePullPolicy: Always
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-          name: basic
-          ports:
-          - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-          resources: {}
+          - image: apache:latest
+            imagePullPolicy: Always
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 8080
+            name: basic
+            ports:
+              - containerPort: 8080
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 8080
+            resources: {}
   2: |
     replicas: 1
     template:
@@ -36,8 +36,8 @@ should fail all kinds of assertion:
           release: RELEASE-NAME
       spec:
         containers:
-        - image: apache:latest
-          imagePullPolicy: Always
-          name: basic
-          ports:
-          - containerPort: null
+          - image: apache:latest
+            imagePullPolicy: Always
+            name: basic
+            ports:
+              - containerPort: null

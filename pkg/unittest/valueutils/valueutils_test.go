@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetValueOfSetPath(t *testing.T) {
+func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 	a := assert.New(t)
-	data := map[string]interface{}{
+	data := common.K8sManifest{
 		"a": map[string]interface{}{
 			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
 			"d":   "no",
@@ -21,20 +21,19 @@ func TestGetValueOfSetPath(t *testing.T) {
 	}
 
 	var expectionsMapping = map[string]interface{}{
-		"a.b[1].c":   "yes",
-		"a.b[0]":     "_",
-		"a.b":        []interface{}{"_", map[string]interface{}{"c": "yes"}},
-		"a['d']":     "no",
-		"a[\"e.f\"]": "false",
-		"a.g.h":      "\"quotes\"",
-		"a.x":        nil,
-		"":           data,
-		//"a.i[? @.i1 == \"1\"]": []interface{}([]interface{}{map[string]interface{}{"i1": "1"}}),
+		"a.b[1].c":              "yes",
+		"a.b[0]":                "_",
+		"a.b":                   []interface{}{"_", map[string]interface{}{"c": "yes"}},
+		"a['d']":                "no",
+		"a[\"e.f\"]":            "false",
+		"a.g.h":                 "\"quotes\"",
+		"":                      data,
+		"a.i[?(@.i1 == \"1\")]": map[string]interface{}(map[string]interface{}{"i1": "1"}),
 	}
 
 	for path, expect := range expectionsMapping {
 		actual, err := GetValueOfSetPath(data, path)
-		a.Equal(expect, actual)
+		a.Equal(expect, actual[0])
 		a.Nil(err)
 	}
 }
@@ -49,12 +48,9 @@ func TestGetValueOfSetPathError(t *testing.T) {
 	}
 
 	var expectionsMapping = map[string]string{
-		"a.b[0].c": "can't get [\"c\"] from a non map type:\n_\n",
-		"a[0]":     "can't get [0] from a non array type:\nb:\n- _\nc.d: \"no\"\n",
-		"a[null]":  "strconv.Atoi: parsing \"null\": invalid syntax",
-		",":        "invalid token found ,",
-		"a.b[0[]]": "missing index value",
-		"a.[c[0]]": "invalid escaping token [",
+		"a[null]":  "invalid array index [null] before position 7: non-integer array index",
+		"a.b[0[]]": "invalid array index [0[] before position 7: non-integer array index",
+		"a.[c[0]]": "child name missing at position 2, following \"a.\"",
 	}
 
 	for path, expect := range expectionsMapping {

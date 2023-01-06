@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
@@ -52,7 +53,15 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 			continue
 		}
 
-		result := context.CompareToSnapshot(actual)
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		singleActual := actual[0]
+		result := context.CompareToSnapshot(singleActual)
 
 		if result.Passed == context.Negative {
 			validateSuccess = false

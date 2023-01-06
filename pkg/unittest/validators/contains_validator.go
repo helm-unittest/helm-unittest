@@ -8,7 +8,6 @@ import (
 
 	"github.com/lrills/helm-unittest/internal/common"
 	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // ContainsValidator validate whether value of Path is an array and contains Content
@@ -43,8 +42,8 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 	for _, ele := range actual {
 		// When any enabled, only the key is validated
 		if v.Any {
-			subset, subsetOk := ele.(map[interface{}]interface{})
-			content, contentOk := v.Content.(map[interface{}]interface{})
+			subset, subsetOk := ele.(map[string]interface{})
+			content, contentOk := v.Content.(map[string]interface{})
 			if subsetOk && contentOk {
 				if validateSubset(subset, content) {
 					found = true
@@ -93,13 +92,21 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		if actual, ok := actual.([]interface{}); ok {
-			found, validateFoundCount := v.validateContent(actual)
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
+		}
+
+		singleActual := actual[0]
+		if singleActual, ok := singleActual.([]interface{}); ok {
+			found, validateFoundCount := v.validateContent(singleActual)
 
 			// no found, regardless count, inverse awareness
 			if v.validateFound(found, context.Negative, validateFoundCount) {
 				validateSuccess = false
-				errorMessage := v.failInfo(actual, idx, context.Negative)
+				errorMessage := v.failInfo(singleActual, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
@@ -107,14 +114,14 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 			// invalid count, found
 			// valid count (so found), invalid found
 			if v.validateFoundCount(found, context.Negative, validateFoundCount) {
-				actualYAML, _ := yaml.Marshal(actual)
+				actualYAML := common.TrustedMarshalYAML(singleActual)
 				validateSuccess = false
 				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 					"expect count %d in '%s' to be in array, got %d:\n%s",
 					*v.Count,
 					v.Path,
 					validateFoundCount,
-					string(actualYAML),
+					actualYAML,
 				))
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
@@ -124,12 +131,12 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		actualYAML, _ := yaml.Marshal(actual)
+		actualYAML := common.TrustedMarshalYAML(singleActual)
 		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
 			"expect '%s' to be an array, got:\n%s",
 			v.Path,
-			string(actualYAML),
+			actualYAML,
 		))
 		validateErrors = append(validateErrors, errorMessage...)
 	}

@@ -6,24 +6,50 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/PaesslerAG/jsonpath"
+	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
-func GetValueOfSetPath(manifest map[string]interface{}, path string) (interface{}, error) {
+func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{}, error) {
+	manifestResult := make([]interface{}, 0)
 	if path == "" {
-		return manifest, nil
+		return append(manifestResult, manifest), nil
 	}
 
-	// Translate
-
-	manifestPart, err := jsonpath.Get(path, manifest)
+	// Convert K8Manifest to yaml.Node
+	var rawManifest yaml.Node
+	byteBuffer, err := yaml.Marshal(manifest)
 	if err != nil {
 		return nil, err
 	}
 
-	// return found manifestPart
-	return manifestPart, nil
+	if err := yaml.Unmarshal(byteBuffer, &rawManifest); err != nil {
+		return nil, err
+	}
+
+	// Set Path
+	yamlPath, err := yamlpath.NewPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Search for nodes
+	manifestParts, err := yamlPath.Find(&rawManifest)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range manifestParts {
+		var singleResult interface{}
+		if err := node.Decode(&singleResult); err != nil {
+			return nil, err
+		}
+		manifestResult = append(manifestResult, singleResult)
+	}
+
+	return manifestResult, nil
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value

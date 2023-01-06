@@ -13,20 +13,20 @@ should pass all kinds of assertion for both deployments:
           release: RELEASE-NAME
       spec:
         containers:
-        - image: apache:latest
-          imagePullPolicy: Always
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-          name: with-subfolder
-          ports:
-          - containerPort: null
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-          resources: {}
+          - image: apache:latest
+            imagePullPolicy: Always
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 80
+            name: with-subfolder
+            ports:
+              - containerPort: null
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 80
+            resources: {}
   2: |
     replicas: 1
     template:
@@ -36,17 +36,17 @@ should pass all kinds of assertion for both deployments:
           release: RELEASE-NAME
       spec:
         containers:
-        - image: apache:latest
-          imagePullPolicy: Always
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-          name: with-subfolder
-          ports:
-          - containerPort: 80
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-          resources: {}
+          - image: apache:latest
+            imagePullPolicy: Always
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 80
+            name: with-subfolder
+            ports:
+              - containerPort: 80
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 80
+            resources: {}

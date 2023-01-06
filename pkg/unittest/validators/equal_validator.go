@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"fmt"
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
@@ -61,14 +62,21 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		_, ok := actual.(string)
-		if ok {
-			actual = uniformContent(actual)
+		if len(actual) == 0 {
+			validateSuccess = false
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", a.Path))
+			validateErrors = append(validateErrors, errorMessage...)
+			continue
 		}
 
-		if reflect.DeepEqual(a.Value, actual) == context.Negative {
+		singleActual := actual[0]
+		if _, ok := singleActual.(string); ok {
+			singleActual = uniformContent(singleActual)
+		}
+
+		if reflect.DeepEqual(a.Value, singleActual) == context.Negative {
 			validateSuccess = false
-			errorMessage := a.failInfo(actual, idx, context.Negative)
+			errorMessage := a.failInfo(singleActual, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

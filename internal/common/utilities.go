@@ -1,12 +1,19 @@
 package common
 
-import yaml "gopkg.in/yaml.v2"
+import (
+	"bytes"
+
+	yaml "gopkg.in/yaml.v3"
+)
 
 // TrustedMarshalYAML marshal yaml without error returned, if an error happens it panics
 func TrustedMarshalYAML(d interface{}) string {
-	s, err := yaml.Marshal(d)
-	if err != nil {
+	byteBuffer := new(bytes.Buffer)
+	yamlEncoder := yaml.NewEncoder(byteBuffer)
+	yamlEncoder.SetIndent(YAMLINDENTION)
+	defer yamlEncoder.Close()
+	if err := yamlEncoder.Encode(d); err != nil {
 		panic(err)
 	}
-	return string(s)
+	return byteBuffer.String()
 }
