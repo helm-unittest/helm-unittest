@@ -54,7 +54,7 @@ jobs:
           command: make dockerdist
 
 orbs:
-  sonarcloud: sonarsource/sonarcloud@1.0.1
+  sonarcloud: sonarsource/sonarcloud@1.1.1
 
 workflows:
   test-and-build:
@@ -80,3 +80,5 @@ workflows:
               only: /v[0-9]+(\.[0-9]+)*(-.*)?/
             branches:
               ignore: /.*/
+
+# VS Code Extension Version: 1.5.1
