@@ -8,7 +8,7 @@ ARG PLUGIN_VERSION
 
 ENV HELM_BASE_URL="https://get.helm.sh"
 ENV HELM_TAR_FILE="helm-v${HELM_VERSION}-linux-amd64.tar.gz"
-ENV PLUGIN_URL="https://github.com/helm-unittest/helm-unittest/"
+ENV PLUGIN_URL="https://github.com/quintush/helm-unittest/"
 # Install the plugin for all users
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
@@ -19,7 +19,12 @@ RUN apk add --update --no-cache curl ca-certificates git bash && \
     helm plugin install ${PLUGIN_URL} --version ${PLUGIN_VERSION} && \
     rm -rf linux-amd64 && \
     apk del curl git bash && \
-    rm -f /var/cache/apk/* ;
+    rm -f /var/cache/apk/*
+
+RUN addgroup -S helmgroup && \
+    adduser -S helmuser -G helmgroup
+
+USER helmuser
 
 WORKDIR /apps
 VOLUME [ "/apps" ]

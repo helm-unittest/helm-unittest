@@ -2,7 +2,7 @@
 
 Auto trigger docker build for [kubernetes helm unittest plugin](https://github.com/helm-unittest/helm-unittest) when a new release is created. </br>
 The build comes with latest 3 version. </br>
-More information on how to use the helm unittest plugin see https://github.com/helm-unittest/helm-unittest/blob/master/DOCUMENT.md
+More information on how to use the helm unittest plugin see https://github.com/helm-unittest/helm-unittest/blob/main/DOCUMENT.md
 
 # README #
 
@@ -23,10 +23,10 @@ https://hub.docker.com/r/helm-unittest/helm-unittest/tags/ </br>
 # Usage #
 ``` 
 # run help of latest helm with latest helm unittest plugin
-docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest
+docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest .
 
 # run help of specific helm version with specific helm unittest plugin version
-docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0
+docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0 .
 
 # run unittests of a helm 3 chart
 # make sure to mount local folder to /apps in container
@@ -37,7 +37,7 @@ docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0 .
 # the test-output.xml will be available in the local folder.
 docker run -ti --rm -v $(pwd):/apps helm-unittest/helm-unittest:3.10.0-1.0.0 -o test-output.xml .
 ```
-*More information on how to use the helm unittest plugin see https://github.com/helm-unittest/helm-unittest/blob/master/DOCUMENT.md*
+*More information on how to use the helm unittest plugin see https://github.com/helm-unittest/helm-unittest/blob/main/DOCUMENT.md*
 
 # Who can benefit from these image(s) #
 
