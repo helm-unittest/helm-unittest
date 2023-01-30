@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-deployment
+spec:
+  template:
+    metadata:
+      annotations:
+      {{- with .Values.global.app.annotations }}
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      {{- with .Values.annotations }}
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}

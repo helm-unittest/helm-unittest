@@ -1,0 +1,14 @@
+apiVersion: v2
+description: An example chart with customized subchart
+name: with-subchart
+version: 0.1.0
+dependencies:
+  - name: postgresql
+    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 0.8.3
+    condition: postgresql.enabled
+  - name: postgresql
+    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 0.8.3
+    alias: another-postgresql
+    condition: another-postgresql.enabled

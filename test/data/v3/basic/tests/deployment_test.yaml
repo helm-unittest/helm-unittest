@@ -1,0 +1,60 @@
+suite: test deployment
+values:
+  - ./values/image.yaml
+templates:
+  - templates/configmap.yaml
+  - templates/deployment.yaml
+chart:
+  version: 9.9.9+test
+  appVersion: 9.9.9
+tests:
+  - it: should pass all kinds of assertion
+    set:
+      service.internalPort: 8080
+    template: templates/deployment.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "basic")].image
+          value: apache:latest
+      - notEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].image
+          value: nginx:stable
+      - equal:
+          path: metadata.labels.chart
+          value: basic-9.9.9_test
+      - equal:
+          path: metadata.labels.appVersion
+          value: 9.9.9
+      - matchRegex:
+          path: metadata.name
+          pattern: ^.*-basic$
+      - notMatchRegex:
+          path: metadata.name
+          pattern: ^.*-foobar$
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "basic")].ports
+          content:
+            containerPort: 8080
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "basic")].ports
+          content:
+            containerPort: 80
+      - isNull:
+          path: spec.template.nodeSelector
+      - isNull:
+          path: spec.template.spec.containers[1]
+      - isNotNull:
+          path: spec.template
+      - isEmpty:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources
+      - isNotEmpty:
+          path: spec.template.spec.containers[?(@.name == "basic")]
+      - isKind:
+          of: Deployment
+      - isAPIVersion:
+          of: extensions/v1beta1
+      - hasDocuments:
+          count: 2
+      - matchSnapshot:
+          path: spec

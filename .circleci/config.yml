@@ -1,68 +1,69 @@
-version: 2
+version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.12
-    working_directory: /go/src/github.com/lrills/helm-unittest
+      - image: cimg/go:1.18
     steps:
       - checkout
       - run:
-          name: Get dep
+          name: Create temp directories for artifacts
           command: |
-            curl -o install-dep.sh https://raw.githubusercontent.com/golang/dep/master/install.sh
-            chmod +x install-dep.sh
-            ./install-dep.sh
-      - restore_cache:
-          keys:
-            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-            - helm-untt-deps-{{ .Branch }}-
-            - helm-untt-deps-
+            mkdir -p /tmp/test-artifacts
+            mkdir -p /tmp/test-results
       - run:
-          name: Check dep status
-          command: dep status -v
+          name: Install JUnit plugin for uploading testresults
+          command: go install github.com/jstemmer/go-junit-report/v2@latest
       - run:
-          name: Ensure dep
-          command: dep ensure -vendor-only -v
-      - save_cache:
-          key: helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-          paths:
-            - /go/src/github.com/lrills/helm-unittest/vendor
-      - run:
-          name: Test
-          command: go test -v ./unittest/...
+          name: Test include Codecoverage
+          command: |
+            go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/test-results/go-test-report.xml
+      - sonarcloud/scan
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
+      - run:
+          name: Cleanup dependencies
+          command: go mod tidy
+      - store_test_results:
+          path: /tmp/test-results
+      - store_artifacts:
+          path: /tmp/test-artifacts
 
   distribute:
     docker:
-      - image: golang:1.10
-    working_directory: /go/src/github.com/lrills/helm-unittest
+      - image: golang:1.18
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - helm-untt-deps-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
-            - helm-untt-deps-{{ .Branch }}-
-            - helm-untt-deps-
-      - run:
-          name: Insatll ghr
-          command: go get -u github.com/tcnksm/ghr
       - run:
           name: Build binaries
           command: make dist
       - run:
           name: Upload binaries
-          command: ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+          command: |
+            go install github.com/tcnksm/ghr@latest
+            ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+
+  distribute_docker:
+    docker:
+      - image: cimg/go:1.18
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and push docker images
+          command: make dockerdist
+
+orbs:
+  sonarcloud: sonarsource/sonarcloud@1.1.1
 
 workflows:
-  version: 2
   test-and-build:
     jobs:
       - test:
           filters:
             tags:
               only: /.*/
+          context: SonarCloud
       - distribute:
           requires:
             - test
@@ -71,3 +72,13 @@ workflows:
               only: /v[0-9]+(\.[0-9]+)*(-.*)?/
             branches:
               ignore: /.*/
+      - distribute_docker:
+          requires:
+            - distribute
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)?/
+            branches:
+              ignore: /.*/
+
+# VS Code Extension Version: 1.5.1

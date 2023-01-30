@@ -1,0 +1,76 @@
+suite: test autoscaling
+templates:
+  - templates/horizontalpodautoscaler.yaml
+
+tests:
+  - it: should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled
+    set:
+      infra:
+        autoScaling:
+          enabled: true
+          minReplicas: 100
+          maxReplicas: 500
+      releases:
+        - name: default
+          environment: nimbus
+          infra:
+            autoScaling:
+              enabled: true
+              type: "hpa"
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.minReplicas
+          value: 100
+      - equal:
+          path: spec.maxReplicas
+          value: 500
+
+  - it: should use release hpa config when Global autoscaling is disabled but release scaling is enabled.
+    set:
+      infra:
+        autoScaling:
+          enabled: false
+          minReplicas: 5000
+          maxReplicas: 7000
+      releases:
+        - name: default
+          environment: nimbus
+          infra:
+            autoScaling:
+              enabled: true
+              minReplicas: 2
+              maxReplicas: 2
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 2
+
+  - it: should'n't use any autoscaling config when release autoscaling is disabled
+    set:
+      infra:
+        autoScaling:
+          enabled: true
+          minReplicas: 5000
+          maxReplicas: 7000
+      releases:
+        - name: default
+          environment: nimbus
+          infra:
+            autoScaling:
+              enabled: false
+              minReplicas: 2
+              maxReplicas: 2
+    asserts:
+      - hasDocuments:
+          count: 0

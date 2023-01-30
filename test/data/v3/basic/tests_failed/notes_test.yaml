@@ -1,0 +1,31 @@
+suite: test notes
+templates:
+  - templates/NOTES.txt
+tests:
+  - it: should fail the notes file with ingress enabled
+    set:
+      ingress.enabled: true
+    asserts:
+      - notEqualRaw:
+          value: | 
+            1. Get the application URL by running these commands:
+              http://chart-example.local
+
+  - it: should fail the notes file with service type NodePort
+    set:
+      service.type: NodePort
+    asserts:
+      - equalRaw:
+          value: | 
+            1. Get the application URL by running these commands:
+              export NODE_PORT=$(kubectl get --namespace NAMESPACE -o jsonpath="{.spec.ports[0].nodePort}" services MY-RELEASE)
+              export NODE_IP=$(kubectl get nodes --namespace NAMESPACE -o jsonpath="{.items[0].status.addresses[0].address}")
+              echo http://$NODE_IP:$NODE_PORT
+              
+  - it: should fail the notes file with service type LoadBalancer
+    set:
+      service.type: LoadBalancer
+      service.externalPort: 9999
+    asserts:
+      - matchRegexRaw:
+          pattern: http://\$SERVICE_IP:80

@@ -1,0 +1,777 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "description": "A helm test suite is a collection of tests with the same purpose and scope defined in one single file.",
+  "required": [
+    "tests"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "suite": {
+      "type": "string",
+      "description": "The suite name to show on test result output.",
+      "markdownDescription": "**suite** (string) _optional_\n\nThe suite name to show on test result output."
+    },
+    "values": {
+      "$ref": "#/definitions/values"
+    },
+    "templates": {
+      "$ref": "#/definitions/templates"
+    },
+    "release": {
+      "$ref": "#/definitions/release"
+    },
+    "capabilities": {
+      "$ref": "#/definitions/capabilities"
+    },
+    "chart": {
+      "$ref": "#/definitions/chart"
+    },
+    "tests": {
+      "type": "array",
+      "description": "Where you define your test jobs to run",
+      "markdownDescription": "**tests** (array<object>) _required_\n\nWhere you define your test jobs to run",
+      "required": [
+        "asserts"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "it": {
+            "type": "string",
+            "description": "Define the name of the test with TDD style or any message you like.",
+            "markdownDescription": "**it** (string) _recommended_\n\nDefine the name of the test with TDD style or any message you like."
+          },
+          "values": {
+            "type": "array",
+            "description": "The values files used to renders the chart, think it as the -f, --values options of helm install. The file path should be the relative path from the test suite file itself.",
+            "markdownDescription": "**values** (array<string>) _optional_\n\nThe values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "set": {
+            "type": "object",
+            "description": "Set the values directly in the suite file. The key is the value path with the format just like --set option of helm install, for example image.pullPolicy. The value is anything you want to set to the path specified by the key, which can be even an array or an object.",
+            "markdownDescription": "**set** (object) _optional_\n\nSet the values directly in the suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`.\n\nThe value is anything you want to set to the path specified by the key, which can be even an array or an object.",
+            "additionalProperties": true
+          },
+          "template": {
+            "type": "string",
+            "description": "The template file(s) which render the manifest to be tested, default to the list of template file defined in templates of suite file, unless template is defined in the assertion(s).",
+            "markdownDescription": "**template** (string) _optional_\n\nThe template file(s) which render the manifest to be tested, default to the list of template file defined in templates of suite file, unless template is defined in the assertion(s)."
+          },
+          "templates": {
+            "$ref": "#/definitions/templates"
+          },
+          "documentIndex": {
+            "$ref": "#/definitions/documentIndex"
+          },
+          "release": {
+            "$ref": "#/definitions/release"
+          },
+          "capabilities": {
+            "$ref": "#/definitions/capabilities"
+          },
+          "chart": {
+            "$ref": "#/definitions/chart"
+          },
+          "asserts": {
+            "type": "array",
+            "description": "The assertions to validate the rendered chart.",
+            "markdownDescription": "**asserts** (array<object>) _required_\n\nThe assertions to validate the rendered chart.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "equal": true,
+                "equalRaw": true,
+                "notEqual": true,
+                "notEqualRaw": true,
+                "matchRegex": true,
+                "matchRegexRaw": true,
+                "notMatchRegex": true,
+                "notMatchRegexRaw": true,
+                "contains": true,
+                "notContains": true,
+                "isNull": true,
+                "isNotNull": true,
+                "isEmpty": true,
+                "isNotEmpty": true,
+                "isKind": true,
+                "isAPIVersion": true,
+                "isSubset": true,
+                "isNotSubset": true,
+                "hasDocuments": true,
+                "containsDocument": true,
+                "matchSnapshot": true,
+                "matchSnapshotRaw": true,
+                "failedTemplate": true,
+                "lengthEqual": true,
+                "notLengthEqual": true,
+                "not": {
+                  "type": "boolean",
+                  "description": "Set to true to assert contrarily, default to false.",
+                  "markdownDescription": "**not** (boolean) _optional_\n\nSet to `true` to assert contrarily, default to `false`."
+                },
+                "template": {
+                  "type": "string",
+                  "description": "The template file which render the manifest to be asserted, default to the list of template files defined in templates of the suite file, unless the template is in the testjob.",
+                  "markdownDescription": "**template** (string) _optional_\n\nThe template file which render the manifest to be asserted, default to the list of template files defined in `templates` of the suite file, unless the template is in the testjob."
+                },
+                "documentIndex": {
+                  "$ref": "#/definitions/documentIndex"
+                }
+              },
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "equal": {
+                      "type": "object",
+                      "description": "Assert the value of the specified path is equal to the value.",
+                      "markdownDescription": "**equal** (object)\n\nAssert the value of the specified path is equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "type": "object",
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (object) _requried_\n\nThe expected value."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "equalRaw": {
+                      "type": "object",
+                      "description": "Assert equal to the raw value.",
+                      "markdownDescription": "**equal** (object)\n\nAssert equal to the raw value.",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "description": "Assert the expected value in a NOTES.txt file.",
+                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notEqual": {
+                      "type": "object",
+                      "description": "Assert the value of specified path NOT equal to the value.",
+                      "markdownDescription": "**notEqual** (object)\n\nAssert the value of specified path NOT equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "type": "object",
+                          "description": "The value expected not to be.",
+                          "markdownDescription": "**value** (object) _required_\n\nThe value expected not to be."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notEqualRaw": {
+                      "type": "object",
+                      "description": "Assert equal NOT to the value.",
+                      "markdownDescription": "**notEqualRaw** (object)\n\nAssert equal NOT to the value.",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "description": "Assert the expected value in a NOTES.txt file not to be.",
+                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file not to be."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "matchRegex": {
+                      "type": "object",
+                      "description": "Assert the value of specified path match pattern.",
+                      "markdownDescription": "**matchRegex** (object)\n\nAssert the value of specified path match pattern.",
+                      "required": [
+                        "path",
+                        "pattern"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern to match (without quoting /).",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`).",
+                          "examples": [
+                            "-my-chart$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "matchRegexRaw": {
+                      "type": "object",
+                      "description": "Assert the value match pattern.",
+                      "markdownDescription": "**matchRegexRaw** (object)\n\nAssert the value match pattern.",
+                      "required": [
+                        "pattern"
+                      ],
+                      "properties": {
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern to match (without quoting /) in a NOTES.txt file.",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "examples": [
+                            "-my-notes$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notMatchRegex": {
+                      "type": "object",
+                      "description": "Assert the value of specified path NOT match pattern.",
+                      "markdownDescription": "**notMatchRegex** (object)\n\nAssert the value of specified path NOT match pattern.",
+                      "required": [
+                        "path",
+                        "pattern"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern NOT to match (without quoting /).",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`).",
+                          "examples": [
+                            "-my-chart$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notMatchRegexRaw": {
+                      "type": "object",
+                      "description": "Assert the value NOT match pattern.",
+                      "markdownDescription": "**notMatchRegexRaw** (object)\n\nAssert the value NOT match pattern.",
+                      "required": [
+                        "pattern"
+                      ],
+                      "properties": {
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern NOT to match (without quoting /) in a NOTES.txt file.",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "examples": [
+                            "-my-notes$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "contains": {
+                      "type": "object",
+                      "description": "Assert the array as the value of specified path contains the content.",
+                      "markdownDescription": "**contains** (object)\n\nAssert the array as the value of specified path contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "description": "The count of content to be contained.",
+                          "markdownDescription": "**count** (integer) _optional_\n\nThe count of content to be contained."
+                        },
+                        "any": {
+                          "type": "boolean",
+                          "description": "Ignores any other values within the found content.",
+                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other values within the found content."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notContains": {
+                      "type": "object",
+                      "description": "Assert the array as the value of specified path NOT contains the content.",
+                      "markdownDescription": "**notContains** (object)\n\nAssert the array as the value of specified path NOT contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content NOT to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNull": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is null.",
+                      "markdownDescription": "**isNull** (object)\n\nAssert the value of specified path is `null`.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNotNull": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT null.",
+                      "markdownDescription": "**isNotNull** (object)\n\nAssert the value of specified path is NOT `null`.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isEmpty": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNotEmpty": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is NOT empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isKind": {
+                      "type": "object",
+                      "description": "Assert the kind value of manifest.",
+                      "markdownDescription": "**isKind** (object)\n\nAssert the `kind` value of manifest.",
+                      "properties": {
+                        "of": {
+                          "type": "string",
+                          "description": "Expected kind of manifest.",
+                          "markdownDescription": "**of** (string) _required_\n\nExpected `kind` of manifest."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isAPIVersion": {
+                      "type": "object",
+                      "description": "Assert the apiVersion value of manifest.",
+                      "markdownDescription": "**isAPIVersion** (object)\n\nAssert the `apiVersion` value of manifest.",
+                      "properties": {
+                        "of": {
+                          "type": "string",
+                          "description": "Expected apiVersion of manifest.",
+                          "markdownDescription": "**of** (string) _required_\n\nExpected `apiVersion` of manifest."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that contains the content.",
+                      "markdownDescription": "**isSubset** (object)\n\nAssert the object as the value of specified path that contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "isNotSubset": {
+                      "type": "object",
+                      "description": "Assert the object as the value of specified path that NOT contains the content.",
+                      "markdownDescription": "**isNotSubset** (object)\n\nAssert the object as the value of specified path that NOT contains the content.",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "content": {
+                          "type": "object",
+                          "description": "The content NOT to be contained.",
+                          "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "hasDocuments": {
+                      "type": "object",
+                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
+                      "markdownDescription": "**hasDocuments** (object)\n\nAssert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of documents rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of documents rendered."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "lengthEqual": {
+                      "type": "object",
+                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
+                      "markdownDescription": "**lengthEqual** (object)\n\nAssert the spec count rendered by the `path|paths` specified.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of spec rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
+                        },
+                        "path": {"$ref": "#/definitions/assertion/path"},
+                        "paths": {"$ref": "#/definitions/assertion/paths"}
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "notLengthEqual": {
+                      "type": "object",
+                      "description": "Assert the count rendered by the template specified to be equal. The documentIndex option is ignored here.",
+                      "markdownDescription": "**notLengthEqual** (object)\n\nAssert the spec count rendered by the `path|paths` specified NOT to be equal.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of spec rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
+                        },
+                        "path": {"$ref": "#/definitions/assertion/path"},
+                        "paths": {"$ref": "#/definitions/assertion/paths"}
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "containsDocument": {
+                      "type": "object",
+                      "description": "Asserts the documents rendered by the kind and apiVersion specified.",
+                      "markdownDescription": "**containsDocument** (object)\n\nAsserts the documents rendered by the `kind` and `apiVersion` specified.",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "description": "Expected kind of manifest.",
+                          "markdownDescription": "**kind** (string) _required_\n\nExpected `kind` of manifest.",
+                          "examples": [
+                            "Deployment"
+                          ]
+                        },
+                        "apiVersion": {
+                          "type": "string",
+                          "description": "Expected apiVersion of manifest.",
+                          "markdownDescription": "**apiVersion** (string) _required_\n\nExpected `apiVersion` of manifest.",
+                          "examples": [
+                            "apps/v1"
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The value of the metadata.name.",
+                          "markdownDescription": "**name** (string) _optional_\n\nThe value of the `metadata.name`.",
+                          "examples": [
+                            "foo"
+                          ]
+                        },
+                        "namespace": {
+                          "type": "string",
+                          "description": "The value of the metadata.namespace.",
+                          "markdownDescription": "**namespace** (string) _optional_\n\nThe value of the `metadata.namespace`.",
+                          "examples": [
+                            "bar"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "matchSnapshot": {
+                      "type": "object",
+                      "description": "Assert the value of path is the same as snapshotted last time. ",
+                      "markdownDescription": "**matchSnapshot** (object)\n\nAssert the value of `path` is the same as snapshotted last time.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "matchSnapshotRaw": {
+                      "type": "object",
+                      "description": "Assert the value in the NOTES.txt is the same as snapshotted last time. ",
+                      "markdownDescription": "**matchSnapshotRaw**\n\nAssert the value in the NOTES.txt is the same as snapshotted last time.",
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "failedTemplate": {
+                      "type": "object",
+                      "description": "Assert the value of errorMessage is the same as the human readable template error.",
+                      "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
+                      "properties": {
+                        "errorMessage": {
+                          "type": "string",
+                          "description": "The (human readable) errorMessage that should occur.",
+                          "markdownDescription": "**failedTemplate** (string) _required_\n\nThe (human readable) `errorMessage` that should occur.",
+                          "examples": [
+                            "Required value"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "definitions": {
+    "assertion": {
+      "paths": {
+        "type": "array",
+        "description": "The set of paths to assert.Map keys in path containing periods (.) are supported with the use of a jq-like syntax.",
+        "markdownDescription": "**templates** (array<string>) _optional_\n. List of specs for length comparison. ",
+        "items": {
+          "type": "string"
+        }
+      },
+      "path": {
+        "type": "string",
+        "description": "The set path to assert. Map keys in path containing periods (.) are supported with the use of a jq-like syntax.",
+        "markdownDescription": "**path** (string) _required_\n\nThe `set` path to assert.\n\nMap keys in path containing periods (.) are supported with the use of a jq-like syntax."
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Define the {{ .Capabilities }} object.",
+      "markdownDescription": "**capabilities** (object) _optional_\n\nDefine the `{{ .Capabilities }}` object.",
+      "properties": {
+        "majorVersion": {
+          "type": "string",
+          "description": "The kubernetes major version, default to the major version which is set by helm.",
+          "markdownDescription": "**majorVersion** (string) _optional_\n\nThe kubernetes major version, default to the major version which is set by helm."
+        },
+        "minorVersion": {
+          "type": "string",
+          "description": "The kubernetes minor version, default to the minor version which is set by helm.",
+          "markdownDescription": "**minorVersion** (string) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
+        },
+        "apiVersions": {
+          "type": "array",
+          "description": "A set of versions, default to the versionset used by the defined kubernetes version.",
+          "markdownDescription": "**apiVersions** (array<string>) _optional_\n\nA set of versions, default to the versionset used by the defined kubernetes version.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "chart": {
+      "type": "object",
+      "description": "Define the {{ .Chart }} object.",
+      "markdownDescription": "**chart** (object) _optional_\n\nDefine the `{{ .Chart }}` object.",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "The semantic version of the chart, default to the version set in the Chart.",
+          "markdownDescription": "**version** (string) _optional_\n\nThe semantic version of the chart, default to the version set in the Chart."
+        },
+        "appVersion": {
+          "type": "string",
+          "description": "The app-version of the chart, default to the app-version set in the Chart.",
+          "markdownDescription": "**appVersion** (string) _optional_\n\nThe app-version of the chart, default to the app-version set in the Chart."
+        }
+      },
+      "additionalProperties": false
+    },
+    "documentIndex": {
+      "type": "integer",
+      "description": "The index of rendered documents (divided by ---) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.",
+      "markdownDescription": "**documentIndex** (integer) _optional_\n\nThe index of rendered documents (divided by ---) to be tested, default to -1, which results in asserting all documents (see Assertion).\n\nGenerally you can ignored this field if the template file render only one document."
+    },
+    "release": {
+      "type": "object",
+      "description": "Define the {{ .Release }} object.",
+      "markdownDescription": "**release** (object) _optional_\n\nDefine the `{{ .Release }}` object.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The release name, default to \"RELEASE-NAME\".",
+          "markdownDescription": "**name** (string) _optional_\n\nThe release name, default to `\"RELEASE-NAME\"`."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace which release be installed to, default to \"NAMESPACE\".",
+          "markdownDescription": "**namespace** (string) _optional_\n\nThe namespace which release be installed to, default to `\"NAMESPACE\"`."
+        },
+        "revision": {
+          "type": "string",
+          "description": "The revision of current build, default to 0.",
+          "markdownDescription": "**revision** (string) _optional_\n\nThe revision of current build, default to `0`."
+        },
+        "upgrade": {
+          "type": "boolean",
+          "description": "Whether the build is an upgrade, default to false.",
+          "markdownDescription": "**upgrade** (boolean) _optional_\n\nWhether the build is an upgrade, default to `false`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "templates": {
+      "type": "array",
+      "description": "The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the templates/ can be omitted. Partial templates (which are prefixed with and _) are added automatically even if it is in a templates sub-folder, you don't need to add them again.",
+      "markdownDescription": "**templates** (array<string>) _recommended_\n\nThe template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation.\n\n Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted.\n\nPartial templates (which are prefixed with and _) are added automatically even if it is in a templates sub-folder, you don't need to add them again.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "values": {
+      "type": "array",
+      "description": "The test values to apply for rendering of this chart.",
+      "markdownDescription": "**values** (array<string>) _recommended_\n\n.The test values to apply for rendering of this chart.",
+      "items": {
+        "type": "string"
+      }    
+    }
+  }
+}

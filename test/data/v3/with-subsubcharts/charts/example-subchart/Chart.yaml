@@ -1,0 +1,7 @@
+apiVersion: v2
+name: example-subchart
+version: 0.2.0
+
+dependencies:
+- name: example-sub-subchart
+  version: 0.3.0

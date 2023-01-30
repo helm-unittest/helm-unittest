@@ -1,0 +1,5 @@
+apiVersion: v2
+name: failing-template
+description: Test failed template assert
+type: application
+version: 0.1.0
