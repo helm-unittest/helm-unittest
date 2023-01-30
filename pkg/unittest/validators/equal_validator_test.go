@@ -195,6 +195,22 @@ func TestEqualValidatorWhenWrongPath(t *testing.T) {
 	}, diff)
 }
 
+func TestEqualValidatorWhenUnkownPath(t *testing.T) {
+	manifest := makeManifest(docToTestEqual)
+
+	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a.b[5]",
+	}, diff)
+}
+
 func TestEqualValidatorWhenInvalidIndex(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 	validator := EqualValidator{"a.b[0].c", 123}

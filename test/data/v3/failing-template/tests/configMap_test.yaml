@@ -1,6 +1,6 @@
 suite: Test failing template
 templates:
-  - configMap.yaml
+  - templates/configMap.yaml
 tests:
   - it: template should be failing
     asserts:

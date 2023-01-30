@@ -149,7 +149,8 @@ The assertion is defined with the assertion type as the key and its parameters a
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
 
-Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath`-like syntax:
+Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath` syntax:
+For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
 
 ```yaml
 - equal:
@@ -180,7 +181,8 @@ Available assertion types are listed below:
 | `isNotNull` | **path**: *string*. The `set` path to assert. | Assert the value of specified **path** is NOT `null`. |<pre>isNotNull:<br/>  path: spec.replicas</pre> |
 | `isSubset` | **path**: *string*. The `set` path to assert, the value must be an *object*. <br/>**content**: *any*. The content to be contained. | Assert the object as the value of specified **path** that contains the **content**. |<pre>isSubset:<br/>  path: spec.template<br/>  content:<br/>    metadata: <br/>    labels: <br/>        app: basic<br/>        release: MY-RELEASE<br/></pre> |
 | `isNotSubset` | **path**: *string*. The `set` path to assert, the value must be an *object*. <br/>**content**: *any*. The content NOT to be contained. | Assert the object as the value of specified **path** that NOT contains the **content**. |<pre>isSubset:<br/>  path: spec.template<br/>  content:<br/>    metadata: <br/>    labels: <br/>        app: basic<br/>        release: MY-RELEASE<br/></pre> |
-| `lengthEqual` | **path**: *string, optional*. The `set` path to assert the count of array values. <br/>**paths**: *string, optional*. The `set` array of paths to assert the count validation of the founded arrays. <br/>**count**: *int, optional*. The count of the values in the array. | Assert the **count** of the **path** or **paths**. |<pre>lengthEqual:<br/>  path: spec.tls<br/>  count: 1<br/></pre> |
+| `lengthEqual` | **path**: *string, optional*. The `set` path to assert the count of array values. <br/>**paths**: *string, optional*. The `set` array of paths to assert the count validation of the founded arrays. <br/>**count**: *int, optional*. The count of the values in the array. | Assert the **count** of the **path** or **paths** to be equal. |<pre>lengthEqual:<br/>  path: spec.tls<br/>  count: 1<br/></pre> |
+| `notLengthEqual` | **path**: *string, optional*. The `set` path to assert the count of array values. <br/>**paths**: *string, optional*. The `set` array of paths to assert the count validation of the founded arrays. <br/>**count**: *int, optional*. The count of the values in the array. | Assert the **count** of the **path** or **paths** NOT to be equal. |<pre>lengthEqual:<br/>  path: spec.tls<br/>  count: 1<br/></pre> |
 | `matchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern to match (without quoting `/`). | Assert the value of specified **path** match **pattern**. | <pre>matchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chart$</pre> |
 | `notMatchRegex` | **path**: *string*. The `set` path to assert, the value must be a *string*. <br/>**pattern**: *string*. The regex pattern NOT to match (without quoting `/`). | Assert the value of specified **path** NOT match **pattern**. | <pre>notMatchRegex:<br/>  path: metadata.name<br/>  pattern: -my-chat$</pre> |
 | `matchRegexRaw` | **pattern**: *string*. The regex pattern to match (without quoting `/`) in a NOTES.txt file. | Assert the value match **pattern**. | <pre>matchRegexRaw:<br/>  pattern: -my-notes$</pre> |

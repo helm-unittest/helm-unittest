@@ -64,7 +64,7 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 
 		if len(actual) == 0 {
 			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", a.Path))
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", a.Path))
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

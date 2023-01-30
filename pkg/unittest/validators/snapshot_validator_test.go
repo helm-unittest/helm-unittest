@@ -159,3 +159,28 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }
+
+func TestSnapshotValidatorWhenUnknownPath(t *testing.T) {
+	manifest := makeManifest("a:b")
+
+	cached := "a:\n  b: c\n"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed:         true,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+	})
+
+	validator := MatchSnapshotValidator{Path: "a[3]"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a[3]",
+	}, diff)
+}

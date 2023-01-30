@@ -19,7 +19,12 @@ RUN apk add --update --no-cache curl ca-certificates git bash && \
     helm plugin install ${PLUGIN_URL} --version ${PLUGIN_VERSION} && \
     rm -rf linux-amd64 && \
     apk del curl git bash && \
-    rm -f /var/cache/apk/* ;
+    rm -f /var/cache/apk/*
+
+RUN addgroup -S helmgroup && \
+    adduser -S helmuser -G helmgroup
+
+USER helmuser
 
 WORKDIR /apps
 VOLUME [ "/apps" ]

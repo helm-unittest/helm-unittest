@@ -1,6 +1,6 @@
 suite: test ingress
 templates:
-  - ingress.yaml
+  - templates/ingress.yaml
 tests:
   - it: should render nothing if not enabled
     asserts:

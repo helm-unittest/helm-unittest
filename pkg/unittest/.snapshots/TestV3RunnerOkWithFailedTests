@@ -266,7 +266,7 @@
 				{}
 			DocumentIndex:	1
 			Error:
-				unknown parameter spec.template.spec.containers[0].resources
+				unknown path spec.template.spec.containers[0].resources
 
 		- asserts[10] `isKind` fail
 			Template:	basic/templates/deployment.yaml
@@ -386,7 +386,7 @@
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
 			Error:
-				unknown parameter spec.tls
+				unknown path spec.tls
  FAIL  test notes	../../test/data/v3/basic/tests_failed/notes_test.yaml
 	- should fail the notes file with ingress enabled
 

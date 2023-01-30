@@ -362,6 +362,27 @@ func TestContainsValidatorWhenInvalidParameter(t *testing.T) {
 	}, diff)
 }
 
+func TestContainsValidatorWhenUnknownPath(t *testing.T) {
+	manifest := makeManifest(docToTestContains)
+
+	validator := ContainsValidator{
+		"a.b[5]",
+		common.K8sManifest{"e": "bar"},
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a.b[5]",
+	}, diff)
+}
+
 func TestContainsValidatorWhenMultipleTimesInArray(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 

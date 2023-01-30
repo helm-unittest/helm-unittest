@@ -1,6 +1,6 @@
 suite: test service
 templates:
-  - service.yaml
+  - templates/service.yaml
 tests:
   - it: should failed
     release:

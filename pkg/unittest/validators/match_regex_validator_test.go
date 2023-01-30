@@ -171,3 +171,19 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 		"	child name missing at position 2, following \"a.\"",
 	}, diff)
 }
+
+func TestMatchRegexValidatorWhenUnknownPath(t *testing.T) {
+	manifest := makeManifest("a.b.d::error")
+
+	validator := MatchRegexValidator{"a[2]", "^hello"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a[2]",
+	}, diff)
+}

@@ -1,6 +1,6 @@
 suite: test deployment
 templates:
-  - empty_deployment.yaml
+  - templates/empty_deployment.yaml
 tests:
   - it: should fail
     asserts:

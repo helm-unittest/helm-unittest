@@ -68,7 +68,7 @@ func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"deployment.yaml"}, suite.Templates)
+	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 }
 
@@ -78,7 +78,7 @@ func TestV3ParseTestSuiteFileOk(t *testing.T) {
 
 	a.Nil(err)
 	a.Equal(suite.Name, "test deployment")
-	a.Equal(suite.Templates, []string{"configmap.yaml", "deployment.yaml"})
+	a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
 	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
 }
 
@@ -88,7 +88,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 
 	a.Nil(err)
 	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"configmap.yaml", "deployment.yaml"}, suite.Templates)
+	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 	a.Equal(2, len(suite.Values)) // Expect images and additional_values.yaml
 }

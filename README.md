@@ -24,6 +24,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Test Suite File](#test-suite-file)
 - [Usage](#usage)
   - [Flags](#flags)
+  - [Yaml JsonPath Support](#yaml-jsonpath-support)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
@@ -126,6 +127,21 @@ defined in test suite files.
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
 ```
 
+### Yaml JsonPath Support
+Now JsonPath is supported for mappings and arrays.
+This makes it possible to find items in an array, based on JsonPath.
+For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
+
+Due to the change to JsonPath, the map keys in `path` containing periods (`.`) are now supported with the use of `""`:
+
+```yaml
+- equal:
+    path: metadata.annotations["kubernetes.io/ingress.class"]
+    value: nginx
+```
+
+The next releases it will be possible to validate multiple paths when JsonPath result into multiple results. 
+
 ## Example
 
 Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart.
@@ -136,7 +152,7 @@ Sometimes you may just want to keep the rendered manifest not changed between ch
 
 ```yaml
 templates:
-  - deployment.yaml
+  - templates/deployment.yaml
 tests:
   - it: pod spec should match snapshot
     asserts:
@@ -183,7 +199,7 @@ If you have customized subchart (not installed via `helm dependency`) existed in
 ```yaml
 # with-subchart/charts/child-chart/tests/xxx_test.yaml
 templates:
-  - xxx.yaml
+  - templates/xxx.yaml
 tests:
   - it:
     set:
@@ -208,7 +224,7 @@ In addition, test-suite files can be validated while editing so wrongfully added
 When developing with VSCode, the very popular YAML plug-in (created by RedHat) allows adding references to schemas by adding a comment line on top of the file:
 
 ``` yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/master/schema/helm-testsuite.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
 suite: http-service.configmap_test.yaml
 templates: [configmap.yaml]
 release:
@@ -220,7 +236,7 @@ Alternatively, you can add the schema globally to the IDE, using a well defined 
 
 ``` json
 "yaml.schemas": {
-  "https://raw.githubusercontent.com/helm-unittest/helm-unittest/master/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
+  "https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
 }
 ```
 
