@@ -1,6 +1,6 @@
 suite: test autoscaling
 templates:
-  - horizontalpodautoscaler.yaml
+  - templates/horizontalpodautoscaler.yaml
 
 tests:
   - it: should use GLOBAL scaling config when release autoscaling AND Global autoscaling are enabled

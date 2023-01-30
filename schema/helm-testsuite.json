@@ -12,6 +12,9 @@
       "description": "The suite name to show on test result output.",
       "markdownDescription": "**suite** (string) _optional_\n\nThe suite name to show on test result output."
     },
+    "values": {
+      "$ref": "#/definitions/values"
+    },
     "templates": {
       "$ref": "#/definitions/templates"
     },
@@ -104,6 +107,7 @@
                 "matchSnapshotRaw": true,
                 "failedTemplate": true,
                 "lengthEqual": true,
+                "notLengthEqual": true,
                 "not": {
                   "type": "boolean",
                   "description": "Set to true to assert contrarily, default to false.",
@@ -546,6 +550,25 @@
                 },
                 {
                   "properties": {
+                    "notLengthEqual": {
+                      "type": "object",
+                      "description": "Assert the count rendered by the template specified to be equal. The documentIndex option is ignored here.",
+                      "markdownDescription": "**notLengthEqual** (object)\n\nAssert the spec count rendered by the `path|paths` specified NOT to be equal.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of spec rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
+                        },
+                        "path": {"$ref": "#/definitions/assertion/path"},
+                        "paths": {"$ref": "#/definitions/assertion/paths"}
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
                     "containsDocument": {
                       "type": "object",
                       "description": "Asserts the documents rendered by the kind and apiVersion specified.",
@@ -741,6 +764,14 @@
       "items": {
         "type": "string"
       }
+    },
+    "values": {
+      "type": "array",
+      "description": "The test values to apply for rendering of this chart.",
+      "markdownDescription": "**values** (array<string>) _recommended_\n\n.The test values to apply for rendering of this chart.",
+      "items": {
+        "type": "string"
+      }    
     }
   }
 }

@@ -63,7 +63,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 
 		if len(actual) == 0 {
 			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown parameter %s", v.Path))
+			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

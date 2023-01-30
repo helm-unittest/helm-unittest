@@ -128,7 +128,6 @@ func (s *Cache) StoreToFileIfNeeded() (bool, error) {
 		byteBuffer := new(bytes.Buffer)
 		yamlEncoder := yaml.NewEncoder(byteBuffer)
 		yamlEncoder.SetIndent(common.YAMLINDENTION)
-		defer yamlEncoder.Close()
 		if err := yamlEncoder.Encode(s.current); err != nil {
 			return false, err
 		}

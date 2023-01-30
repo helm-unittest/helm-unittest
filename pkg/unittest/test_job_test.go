@@ -68,12 +68,12 @@ asserts:
       path: kind
       value: Deployment
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: -basic$
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -92,7 +92,7 @@ func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should work
-template: deployment.yaml
+template: templates/deployment.yaml
 documentIndex: 0
 asserts:
   - equal:
@@ -120,17 +120,17 @@ func TestV3RunJobWithTestJobTemplatesOk(t *testing.T) {
 	manifest := `
 it: should work
 templates:
-  - deployment.yaml
-  - configmap.yaml
+  - templates/deployment.yaml
+  - templates/configmap.yaml
 asserts:
   - equal:
       path: kind
       value: Deployment   
-    template: deployment.yaml
+    template: templates/deployment.yaml
   - equal:
       path: kind
       value: ConfigMap   
-    template: configmap.yaml
+    template: templates/configmap.yaml
   - isNotNull:
       path: metadata.name
 `
@@ -154,7 +154,7 @@ it: should work
 set:
   ingress.enabled: true
   service.externalPort: ""
-template: ingress.yaml
+template: templates/ingress.yaml
 asserts:
   - failedTemplate:
       errorMessage: The externalPort is required
@@ -181,12 +181,12 @@ asserts:
       path: kind
       value: WrongKind
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: pattern-not-match
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -211,12 +211,12 @@ asserts:
       path: kind
       value: WrongKind
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: pattern-not-match
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -243,7 +243,7 @@ asserts:
       path: metadata.name
       value: RELEASE-NAME-john-doe
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -269,7 +269,7 @@ asserts:
       path: metadata.name
       value: RELEASE-NAME-mary-jane
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
 	file.WriteString("nameOverride: mary-jane")
@@ -299,7 +299,7 @@ asserts:
       path: metadata.name
       value: my-release-basic
     documentIndex: 0
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -321,7 +321,7 @@ it: should work
 asserts:
   - hasDocuments:
       count: 0
-    template: crd_backup.yaml
+    template: templates/crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -345,7 +345,7 @@ release:
 asserts:
   - hasDocuments:
       count: 1
-    template: crd_backup.yaml
+    template: templates/crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -371,7 +371,7 @@ capabilities:
 asserts:
   - hasDocuments:
       count: 1
-    template: crd_backup.yaml
+    template: templates/crd_backup.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -399,11 +399,11 @@ asserts:
   - equal:
       path: metadata.labels.chart
       value: basic-9.9.9_test
-    template: deployment.yaml
+    template: templates/deployment.yaml
   - equal:
       path: spec.template.spec.containers[0].image
       value: nginx:9999
-    template: deployment.yaml
+    template: templates/deployment.yaml
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
@@ -422,7 +422,7 @@ func TestV3RunJobWithFailingTemplate(t *testing.T) {
 	c, _ := loader.Load(testV3WithFailingTemplateChart)
 	manifest := `
 it: should work
-template: configMap.yaml
+template: templates/configMap.yaml
 asserts:
   - failedTemplate:
       errorMessage: no template "non-existing-named-template" associated with template "gotpl"
@@ -444,7 +444,7 @@ func TestV3RunJobWithSchema(t *testing.T) {
 	c, _ := loader.Load(testV3WithSchemaChart)
 	manifest := `
 it: should work
-template: dummy.yaml
+template: templates/dummy.yaml
 asserts:
   - failedTemplate:
       errorMessage: "values don't meet the specifications of the schema(s) in the following chart(s):\nwith-schema:\n- (root): image is required\n"

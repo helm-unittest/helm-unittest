@@ -1,6 +1,6 @@
 suite: test ingress
 templates:
-  - ingress.yaml
+  - templates/ingress.yaml
 tests:
   - it: should fail render ingress if enabled and externalPort not filled
     set:

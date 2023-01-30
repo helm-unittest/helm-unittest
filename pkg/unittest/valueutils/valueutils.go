@@ -18,14 +18,21 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 		return append(manifestResult, manifest), nil
 	}
 
+	byteBuffer := new(bytes.Buffer)
+
 	// Convert K8Manifest to yaml.Node
 	var rawManifest yaml.Node
-	byteBuffer, err := yaml.Marshal(manifest)
+	yamlEncoder := yaml.NewEncoder(byteBuffer)
+	yamlEncoder.SetIndent(common.YAMLINDENTION)
+
+	err := yamlEncoder.Encode(manifest)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := yaml.Unmarshal(byteBuffer, &rawManifest); err != nil {
+	yamlDecoder := yaml.NewDecoder(byteBuffer)
+
+	if err := yamlDecoder.Decode(&rawManifest); err != nil {
 		return nil, err
 	}
 

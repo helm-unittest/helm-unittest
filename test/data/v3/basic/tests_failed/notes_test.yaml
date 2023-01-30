@@ -1,6 +1,6 @@
 suite: test notes
 templates:
-  - NOTES.txt
+  - templates/NOTES.txt
 tests:
   - it: should fail the notes file with ingress enabled
     set:

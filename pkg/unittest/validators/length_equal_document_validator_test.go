@@ -98,6 +98,21 @@ func TestLengthEqualDocumentsValidatorOk_Multi(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestLengthEqualDocumentsValidatorNegativeOk_Multi(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual3_Success)
+
+	validator := LengthEqualDocumentsValidator{
+		Paths: []string{"spec.tls", "spec.rules"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"\texpected result does not match"}, diff)
+}
+
 func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
 
@@ -110,7 +125,23 @@ func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tcount doesn't match. expected: 1 != 2 actual"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tcount doesn't match as expected. expected: 1 actual: 2", "\texpected result does not match"}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual2)
+
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: 1,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tcount doesn't match as expected. expected: 1 actual: 2"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorFail_Multi(t *testing.T) {
@@ -124,7 +155,7 @@ func TestLengthEqualDocumentsValidatorFail_Multi(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tspec.rules count is '1'(doesn't match others)"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tspec.rules count doesn't match as expected. actual: 1", "\texpected result does not match"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorWhenPathAndNoCount(t *testing.T) {

@@ -216,3 +216,19 @@ func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
 		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }
+
+func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
+	manifest := makeManifest("a::error")
+
+	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a[5]",
+	}, diff)
+}

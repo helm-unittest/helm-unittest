@@ -32,7 +32,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	if count > -1 {
 		if specLen != count {
 			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
-				"count doesn't match. expected: %d != %d actual", count, specLen)), 0
+				"count doesn't match as expected. expected: %d actual: %d", count, specLen)), 0
 		}
 	}
 	return true, []string{}, specLen
@@ -46,18 +46,27 @@ func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string
 		} else if arrayCount != pathCountValue {
 			arrayCount = -1
 			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
-				"%s count is '%d'(doesn't match others)", k, pathCountValue)), arrayCount
+				"%s count doesn't match as expected. actual: %d", k, pathCountValue)), arrayCount
 		}
 	}
+
 	return true, []string{}, arrayCount
+}
+
+func (v LengthEqualDocumentsValidator) validatePathCount(context *ValidateContext) bool {
+	return len(v.Path) > 0 && v.Count == 0
+}
+
+func (v LengthEqualDocumentsValidator) validatePathPaths(context *ValidateContext) bool {
+	return len(v.Path) > 0 && len(v.Paths) > 0
 }
 
 // Validate implement Validatable
 func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
-	if len(v.Path) > 0 && v.Count == 0 {
+	if v.validatePathCount(context) {
 		return false, splitInfof(errorFormat, -1, "'count' field must be set if 'path' is used")
 	}
-	if len(v.Path) > 0 && len(v.Paths) > 0 {
+	if v.validatePathPaths(context) {
 		return false, splitInfof(errorFormat, -1, "'paths' couldn't be used with 'path'")
 	}
 	singleMode := len(v.Path) > 0
@@ -98,7 +107,12 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 				continue
 			}
 		}
-		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
+
+	if validateSuccess == context.Negative {
+		validateSuccess = false
+		validateErrors = append(validateErrors, "\texpected result does not match")
+	}
+
 	return validateSuccess, validateErrors
 }
