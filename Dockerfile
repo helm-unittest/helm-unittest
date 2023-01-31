@@ -8,7 +8,7 @@ ARG PLUGIN_VERSION
 
 ENV HELM_BASE_URL="https://get.helm.sh"
 ENV HELM_TAR_FILE="helm-v${HELM_VERSION}-linux-amd64.tar.gz"
-ENV PLUGIN_URL="https://github.com/quintush/helm-unittest/"
+ENV PLUGIN_URL="https://github.com/helm-unittest/helm-unittest/"
 # Install the plugin for all users
 ENV HELM_DATA_HOME=/usr/local/share/helm
 

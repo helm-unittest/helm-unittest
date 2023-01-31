@@ -43,8 +43,8 @@ if [[ ${CI} == 'true' ]]; then
   helmLatest=`curl -sL -H "Authorization: token ${GITHUB_TOKEN}"  https://api.github.com/repos/${helmRepo}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
   pluginLatest=`curl -sL -H "Authorization: token ${GITHUB_TOKEN}"  https://api.github.com/repos/${pluginRepo}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
 else
-  helmLatest=`curl -sL https://api.github.com/repos/${helmRepo}/tags?per_page=2 |jq -r ".[].name"| sed 's/^v//'| sort -V |grep -v -`
-  pluginLatest=`curl -sL https://api.github.com/repos/${pluginRepo}/tags?per_page=2 |jq -r ".[].name"| sed 's/^v//'| sort -V |grep -v -`
+  helmLatest=`curl -sL https://api.github.com/repos/${helmRepo}/tags?per_page=1 |jq -r ".[].name"| sed 's/^v//'| sort -V |grep -v -`
+  pluginLatest=`curl -sL https://api.github.com/repos/${pluginRepo}/tags?per_page=1 |jq -r ".[].name"| sed 's/^v//'| sort -V |grep -v -`
 fi
 
 for helmVersion in ${helmLatest}
