@@ -3,6 +3,8 @@ package formatter
 import (
 	"encoding/xml"
 	"io"
+	"os"
+	"time"
 
 	"github.com/lrills/helm-unittest/pkg/unittest/results"
 )
@@ -16,14 +18,20 @@ type JUnitTestSuites struct {
 // JUnitTestSuite is a single JUnit test suite which may contain many
 // testcases.
 type JUnitTestSuite struct {
-	XMLName    xml.Name        `xml:"testsuite"`
-	Tests      int             `xml:"tests,attr"`
-	Failures   int             `xml:"failures,attr"`
-	Errors     int             `xml:"errors,attr"`
-	Time       string          `xml:"time,attr"`
-	Name       string          `xml:"name,attr"`
-	Properties []JUnitProperty `xml:"properties>property,omitempty"`
-	TestCases  []JUnitTestCase `xml:"testcase"`
+	XMLName     xml.Name        `xml:"testsuite"`
+	Id          int             `xml:"id,attr"`
+	Tests       int             `xml:"tests,attr"`
+	Failures    int             `xml:"failures,attr"`
+	Errors      int             `xml:"errors,attr"`
+	Package     string          `xml:"package,attr"`
+	Time        string          `xml:"time,attr"`
+	Name        string          `xml:"name,attr"`
+	Timestamp   string          `xml:"timestamp,attr"`
+	Hostname    string          `xml:"hostname,attr"`
+	Properties  []JUnitProperty `xml:"properties>property,omitempty"`
+	TestCases   []JUnitTestCase `xml:"testcase"`
+	SystemOut   string          `xml:"system-out,omitempty"`
+	SystemError string          `xml:"system-err,omitempty"`
 }
 
 // JUnitTestCase is a single test case with its result.
@@ -32,6 +40,7 @@ type JUnitTestCase struct {
 	Classname   string            `xml:"classname,attr"`
 	Name        string            `xml:"name,attr"`
 	Time        string            `xml:"time,attr"`
+	Error       *JUnitFailure     `xml:"error,omitempty"`
 	SkipMessage *JUnitSkipMessage `xml:"skipped,omitempty"`
 	Failure     *JUnitFailure     `xml:"failure,omitempty"`
 }
@@ -47,7 +56,7 @@ type JUnitProperty struct {
 	Value string `xml:"value,attr"`
 }
 
-// JUnitFailure contains data related to a failed test.
+// JUnitFailure or error contains data related to a failed or errored test.
 type JUnitFailure struct {
 	Message  string `xml:"message,attr"`
 	Type     string `xml:"type,attr"`
@@ -67,8 +76,8 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 	suites := JUnitTestSuites{}
 
 	// convert TestSuiteResults to JUnit test suites
-	for _, testSuiteResult := range testSuiteResults {
-		ts := j.createJUnitTestSuite(testSuiteResult)
+	for idx, testSuiteResult := range testSuiteResults {
+		ts := j.createJUnitTestSuite(idx, testSuiteResult)
 
 		// properties
 		ts.Properties = append(ts.Properties, JUnitProperty{"helm-unittest.version", "1.6"})
@@ -77,8 +86,13 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		for _, test := range testSuiteResult.TestsResult {
 			testCase := j.createJUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
+			if test.ExecError != nil {
+				ts.Errors++
+				testCase.Error = j.createJUnitFailure("Error", "", test.ExecError.Error())
+			}
+
 			// Write when a test is failed
-			if !test.Passed {
+			if !test.Passed && test.ExecError == nil {
 				ts.Failures++
 				testCase.Failure = j.createJUnitFailure("Failed", "", test.Stringify())
 			}
@@ -97,12 +111,17 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 	return nil
 }
 
-func (j *jUnitReportXML) createJUnitTestSuite(testSuiteResult *results.TestSuiteResult) JUnitTestSuite {
+func (j *jUnitReportXML) createJUnitTestSuite(idx int, testSuiteResult *results.TestSuiteResult) JUnitTestSuite {
+	name, _ := os.Hostname()
 	return JUnitTestSuite{
 		Tests:      len(testSuiteResult.TestsResult),
+		Id:         idx,
 		Failures:   0,
+		Errors:     0,
 		Time:       formatDuration(testSuiteResult.CalculateTestSuiteDuration()),
+		Timestamp:  formatDateTime(time.Now()),
 		Name:       testSuiteResult.DisplayName,
+		Hostname:   name,
 		Properties: []JUnitProperty{},
 		TestCases:  []JUnitTestCase{},
 	}
