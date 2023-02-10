@@ -139,14 +139,14 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "object",
                           "description": "The expected value.",
                           "markdownDescription": "**value** (object) _requried_\n\nThe expected value."
                         }
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["equal"]
                 },
                 {
                   "properties": {
@@ -166,7 +166,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["equalRaw"]
                 },
                 {
                   "properties": {
@@ -183,14 +184,14 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "object",
                           "description": "The value expected not to be.",
                           "markdownDescription": "**value** (object) _required_\n\nThe value expected not to be."
                         }
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notEqual"]
                 },
                 {
                   "properties": {
@@ -210,7 +211,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notEqualRaw"]
                 },
                 {
                   "properties": {
@@ -237,7 +239,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["matchRegex"]
                 },
                 {
                   "properties": {
@@ -260,7 +263,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["matchRegexRaw"]
                 },
                 {
                   "properties": {
@@ -287,7 +291,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notMatchRegex"]
                 },
                 {
                   "properties": {
@@ -310,7 +315,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notMatchRegexRaw"]
                 },
                 {
                   "properties": {
@@ -327,7 +333,6 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "content": {
-                          "type": "object",
                           "description": "The content to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
                         },
@@ -344,7 +349,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["contains"]
                 },
                 {
                   "properties": {
@@ -361,14 +367,14 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "content": {
-                          "type": "object",
                           "description": "The content NOT to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
                         }
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notContains"]
                 },
                 {
                   "properties": {
@@ -383,7 +389,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isNull"]
                 },
                 {
                   "properties": {
@@ -398,7 +405,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isNotNull"]
                 },
                 {
                   "properties": {
@@ -413,7 +421,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isEmpty"]
                 },
                 {
                   "properties": {
@@ -428,7 +437,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isNotEmpty"]
                 },
                 {
                   "properties": {
@@ -445,7 +455,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isKind"]
                 },
                 {
                   "properties": {
@@ -462,7 +473,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isAPIVersion"]
                 },
                 {
                   "properties": {
@@ -479,14 +491,14 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "content": {
-                          "type": "object",
                           "description": "The content to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
                         }
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isSubset"]
                 },
                 {
                   "properties": {
@@ -503,14 +515,14 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "content": {
-                          "type": "object",
                           "description": "The content NOT to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
                         }
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["isNotSubset"]
                 },
                 {
                   "properties": {
@@ -527,7 +539,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["hasDocuments"]
                 },
                 {
                   "properties": {
@@ -546,7 +559,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["lengthEqual"]
                 },
                 {
                   "properties": {
@@ -565,7 +579,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["notLengthEqual"]
                 },
                 {
                   "properties": {
@@ -609,7 +624,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["containsDocument"]
                 },
                 {
                   "properties": {
@@ -624,7 +640,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["matchSnapshot"]
                 },
                 {
                   "properties": {
@@ -634,7 +651,8 @@
                       "markdownDescription": "**matchSnapshotRaw**\n\nAssert the value in the NOTES.txt is the same as snapshotted last time.",
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["matchSnapshotRaw"]
                 },
                 {
                   "properties": {
@@ -654,7 +672,8 @@
                       },
                       "additionalProperties": false
                     }
-                  }
+                  },
+                  "required": ["failedTemplate"]
                 }
               ]
             }
