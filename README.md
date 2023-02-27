@@ -47,19 +47,19 @@ It will install the latest version of binary into helm plugin directory.
 
 ``` 
 # run help of latest helm with latest helm unittest plugin
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest
+docker run -ti --rm -v $(pwd):/apps helmunittest/helm-unittest
 
 # run help of specific helm version with specific helm unittest plugin version
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-1.0.0
+docker run -ti --rm -v $(pwd):/apps helmunittest/helm-unittest:3.11.1-0.3.0
 
 # run unittests of a helm 3 chart
 # make sure to mount local folder to /apps in container
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-1.0.0 .
+docker run -ti --rm -v $(pwd):/apps helmunittest/helm-unittest:3.11.1-0.3.0 .
 
 # run unittests of a helm 3 chart with Junit output for CI validation
 # make sure to mount local folder to /apps in container
 # the test-output.xml will be available in the local folder.
-docker run -ti --rm -v $(pwd):/apps quintush/helm-unittest:3.10.0-1.0.0 -o test-output.xml -t junit .
+docker run -ti --rm -v $(pwd):/apps helmunittest/helm-unittest:3.11.1-0.3.0 -o test-output.xml -t junit .
 ```
 
 The docker container contains the fully installed helm client, including the helm-unittest plugin.

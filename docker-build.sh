@@ -6,7 +6,7 @@
 # DOCKER_PASSWORD
 # GITHUB_TOKEN
 
-# set -ex
+set -ex
 
 build() {
 
@@ -35,7 +35,7 @@ build() {
   fi
 }
 
-image="quintush/helm-unittest"
+image="helmunittest/helm-unittest"
 helmRepo="helm/helm"
 pluginRepo="helm-unittest/helm-unittest"
 
