@@ -25,6 +25,10 @@ func determineClassnameFromDisplayName(displayName string) string {
 	return classname
 }
 
+func formatDateTime(t time.Time) string {
+	return t.Format("2006-01-02T15:04:05")
+}
+
 func formatDate(t time.Time) string {
 	return t.Format("2006-01-02")
 }

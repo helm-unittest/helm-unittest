@@ -1,3 +1,9 @@
+0.3.1 / 2023-01-30
+===================
+- Improvement JUnit export format (credits @steigr)
+- Update documentation based on user questions
+- Update packages to latest version
+
 0.3.0 / 2023-01-30
 ===================
 - Moved to origal repo (resolves quintush/helm-unittest#124)
