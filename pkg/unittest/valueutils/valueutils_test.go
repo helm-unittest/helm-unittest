@@ -41,7 +41,7 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 func TestGetValueOfSetPathError(t *testing.T) {
 	a := assert.New(t)
 	data := common.K8sManifest{
-		"a": map[interface{}]interface{}{
+		"a": map[string]interface{}{
 			"b":   []interface{}{"_"},
 			"c.d": "no",
 		},
@@ -62,12 +62,12 @@ func TestGetValueOfSetPathError(t *testing.T) {
 
 func TestBuildValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
-	data := map[interface{}]interface{}{"foo": "bar"}
+	data := map[string]interface{}{"foo": "bar"}
 
 	var expectionsMapping = map[string]interface{}{
-		"a.b":    map[interface{}]interface{}{"a": map[interface{}]interface{}{"b": data}},
-		"a[1]":   map[interface{}]interface{}{"a": []interface{}{nil, data}},
-		"a[1].b": map[interface{}]interface{}{"a": []interface{}{nil, map[interface{}]interface{}{"b": data}}},
+		"a.b":    map[string]interface{}{"a": map[string]interface{}{"b": data}},
+		"a[1]":   map[string]interface{}{"a": []interface{}{nil, data}},
+		"a[1].b": map[string]interface{}{"a": []interface{}{nil, map[string]interface{}{"b": data}}},
 	}
 
 	for path, expected := range expectionsMapping {
@@ -79,7 +79,7 @@ func TestBuildValueOfSetPath(t *testing.T) {
 
 func TestBuildValueSetPathError(t *testing.T) {
 	a := assert.New(t)
-	data := map[interface{}]interface{}{"foo": "bar"}
+	data := map[string]interface{}{"foo": "bar"}
 
 	var expectionsMapping = map[string]string{
 		"":   "set path is empty",
@@ -97,22 +97,22 @@ func TestBuildValueSetPathError(t *testing.T) {
 
 func TestMergeValues(t *testing.T) {
 	a := assert.New(t)
-	dest := map[interface{}]interface{}{
-		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "yes"}},
+	dest := map[string]interface{}{
+		"a": map[string]interface{}{
+			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
 			"e.f": "false",
 		},
 	}
-	src := map[interface{}]interface{}{
-		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}, "a"},
+	src := map[string]interface{}{
+		"a": map[string]interface{}{
+			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},
 	}
-	expected := map[interface{}]interface{}{
-		"a": map[interface{}]interface{}{
-			"b":   []interface{}{"_", map[interface{}]interface{}{"c": "no"}, "a"},
+	expected := map[string]interface{}{
+		"a": map[string]interface{}{
+			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},

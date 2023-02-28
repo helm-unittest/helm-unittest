@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.global.app | required "global.app is mandatory" }}
+spec:
+  selector:
+    matchLabels:
+      blabla: blibli
+  template:
+    metadata:
+      labels:
+        blabla: blibli
+    spec:
+      containers:
+        - name: {{ .Values.global.containerName }}
+          image: "image:1.2.3"
