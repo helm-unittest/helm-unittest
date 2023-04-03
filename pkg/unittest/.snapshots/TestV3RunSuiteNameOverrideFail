@@ -1,20 +1,21 @@
 (*results.TestSuiteResult)({
   DisplayName: (string) (len=24) "test suite name too long",
   FilePath: (string) "",
-  Passed: (bool) true,
+  Passed: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
     (*results.TestJobResult)({
       DisplayName: (string) (len=39) "should fail as nameOverride is too long",
       Index: (int) 0,
-      Passed: (bool) true,
+      Passed: (bool) false,
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) (len=1) {
         (*results.AssertionResult)({
           Index: (int) 0,
-          FailInfo: ([]string) {
+          FailInfo: ([]string) (len=1) {
+            (string) (len=41) "Template:\tbasic/templates/deployment.yaml"
           },
-          Passed: (bool) true,
+          Passed: (bool) false,
           AssertType: (string) (len=14) "failedTemplate",
           Not: (bool) false,
           CustomInfo: (string) ""
