@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
-	. "github.com/lrills/helm-unittest/pkg/unittest/formatter"
-	"github.com/lrills/helm-unittest/pkg/unittest/results"
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/stretchr/testify/assert"
 )
 

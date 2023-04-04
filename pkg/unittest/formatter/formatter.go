@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lrills/helm-unittest/pkg/unittest/results"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 )
 
 // testFramework the default name of the test framework.

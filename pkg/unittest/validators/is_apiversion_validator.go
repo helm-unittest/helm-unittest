@@ -3,7 +3,7 @@ package validators
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
 // IsAPIVersionValidator validate apiVersion of manifest is Of

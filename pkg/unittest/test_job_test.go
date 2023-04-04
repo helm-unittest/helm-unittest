@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
-	. "github.com/lrills/helm-unittest/pkg/unittest"
-	"github.com/lrills/helm-unittest/pkg/unittest/results"
-	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/chart/loader"

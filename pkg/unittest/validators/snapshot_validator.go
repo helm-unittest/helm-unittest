@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
-	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 )
 
