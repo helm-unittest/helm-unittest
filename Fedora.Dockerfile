@@ -24,6 +24,11 @@ RUN yum install -y git && \
     yum remove -y git && \
     rm -rf /var/cache/yum/* ;
 
+RUN groupadd -r nonroot \
+    && useradd -r nonroot -g nonroot
+
+USER nonroot
+
 WORKDIR /apps
 VOLUME [ "/apps" ]
 
