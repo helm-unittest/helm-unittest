@@ -3,7 +3,7 @@ package unittest
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -177,7 +177,7 @@ func (t *TestJob) RunV3(
 	// Setup Assertion Templates based on the chartname and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -210,7 +210,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
 		}
 
-		bytes, err := ioutil.ReadFile(valueFilePath)
+		bytes, err := os.ReadFile(valueFilePath)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -352,13 +352,17 @@ func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 }
 
 // parse rendered manifest if it's yaml
-func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
+func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, outputOfFiles map[string]string) (
 	map[string][]common.K8sManifest,
 	error,
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
+
+		if !strings.HasPrefix(file, targetChartName) {
+			file = filepath.ToSlash(filepath.Join(targetChartName, file))
+		}
 
 		switch filepath.Ext(file) {
 		case ".yaml":
@@ -432,7 +436,7 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 			if len(t.Templates) > 0 {
 				templatesToAssert = append(templatesToAssert, t.Templates...)
 			} else if t.Template == "" {
-				templatesToAssert, prefixedChartsNameFiles = t.resolveDefaultTemplatesToAssert(targetChartName, outputOfFiles)
+				templatesToAssert, prefixedChartsNameFiles = t.resolveDefaultTemplatesToAssert(outputOfFiles)
 			} else {
 				templatesToAssert = append(templatesToAssert, t.Template)
 			}
@@ -445,22 +449,7 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 	}
 }
 
-func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedChartsNameFiles bool) []string {
-	templatesPath := make([]string, 0)
-
-	if !prefixedChartsNameFiles {
-		for _, template := range templatesToAssert {
-			templatePath := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(template)))
-			templatesPath = append(templatesPath, templatePath)
-		}
-	} else {
-		templatesPath = templatesToAssert
-	}
-
-	return templatesPath
-}
-
-func (t *TestJob) resolveDefaultTemplatesToAssert(targetChartName string, outputOfFiles map[string]string) ([]string, bool) {
+func (t *TestJob) resolveDefaultTemplatesToAssert(outputOfFiles map[string]string) ([]string, bool) {
 	defaultTemplatesPath := make([]string, 0)
 	resetAsserts := false
 
@@ -480,4 +469,19 @@ func (t *TestJob) resolveDefaultTemplatesToAssert(targetChartName string, output
 	}
 
 	return defaultTemplatesPath, resetAsserts
+}
+
+func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedChartsNameFiles bool) []string {
+	templatesPath := make([]string, 0)
+
+	if !prefixedChartsNameFiles {
+		for _, template := range templatesToAssert {
+			templatePath := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(template)))
+			templatesPath = append(templatesPath, templatePath)
+		}
+	} else {
+		templatesPath = templatesToAssert
+	}
+
+	return templatesPath
 }

@@ -2,7 +2,8 @@ package unittest_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
+
 	"testing"
 	"time"
 
@@ -271,7 +272,7 @@ asserts:
     documentIndex: 0
     template: templates/deployment.yaml
 `
-	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
+	file, _ := os.CreateTemp("", "testjob_test_TestRunJobWithValuesFile.yaml")
 	file.WriteString("nameOverride: mary-jane")
 
 	var tj TestJob

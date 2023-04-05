@@ -1,7 +1,7 @@
 package unittest
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -16,7 +16,7 @@ import (
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) (*TestSuite, error) {
 	suite := TestSuite{chartRoute: chartRoute}
-	content, err := ioutil.ReadFile(suiteFilePath)
+	content, err := os.ReadFile(suiteFilePath)
 	if err != nil {
 		return &suite, err
 	}
@@ -172,7 +172,7 @@ func (s *TestSuite) runV3TestJobs(
 
 	for idx, testJob := range s.Tests {
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 

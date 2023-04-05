@@ -3,7 +3,9 @@ FROM centos:7
 # variable "HELM_VERSION" must be passed as docker environment variables during the image build
 # docker build --no-cache --build-arg HELM_VERSION=3.3.0 -t centos/helm-unittest:test -f CentOSTest.Dockerfile .
 
-ADD . ~
+ADD ./plugin.yaml ~
+ADD ./plugin-dbg.yaml ~
+ADD ./install-binary.sh ~
 
 ARG HELM_VERSION
 

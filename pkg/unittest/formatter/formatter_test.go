@@ -2,7 +2,7 @@ package formatter_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -60,7 +60,7 @@ func loadFormatterTestcase(assert *assert.Assertions, outputFile string, given [
 	// Unmarshall and validate the output with expected.
 	testResult, rerr := os.Open(outputFile)
 	assert.Nil(rerr)
-	bytevalue, _ := ioutil.ReadAll(testResult)
+	bytevalue, _ := io.ReadAll(testResult)
 
 	testResult.Close()
 	os.Remove(outputFile)

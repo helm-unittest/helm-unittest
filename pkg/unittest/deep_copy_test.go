@@ -1,7 +1,7 @@
 package unittest_test
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -32,7 +32,7 @@ func TestCopyHelmChartWithSubSubCharts(t *testing.T) {
 	templateAsserts := []string{"**"}
 
 	// Load the chart used by this suite (with logging temporarily disabled)
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	initialChart, _ := v3loader.Load(testV3GlobalDoubleChart)
 	log.SetOutput(os.Stdout)
 

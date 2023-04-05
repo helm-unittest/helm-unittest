@@ -1,7 +1,7 @@
 package unittest_test
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 	"time"
@@ -30,7 +30,7 @@ const testV3WithFailingTemplateChart string = "../../test/data/v3/failing-templa
 const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
 const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
 
-var tmpdir, _ = ioutil.TempDir("", testSuiteTests)
+var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
 func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.TestSuiteResult {
 
