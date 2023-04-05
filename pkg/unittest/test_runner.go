@@ -225,7 +225,7 @@ func (tr *TestRunner) handleSuiteResult(result *results.TestSuiteResult) {
 	}
 }
 
-//printSummary print summary footer
+// printSummary print summary footer
 func (tr *TestRunner) printSummary(elapsed time.Duration) {
 	summaryFormat := `
 Charts:      %s
