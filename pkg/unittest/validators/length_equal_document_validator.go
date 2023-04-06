@@ -3,8 +3,8 @@ package validators
 import (
 	"fmt"
 
-	"github.com/lrills/helm-unittest/internal/common"
-	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
 // LengthEqualDocumentsValidator validate whether the count of manifests rendered form template is Count

@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/lrills/helm-unittest/internal/printer"
-	"github.com/lrills/helm-unittest/pkg/unittest/formatter"
-	"github.com/lrills/helm-unittest/pkg/unittest/results"
-	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
@@ -225,7 +225,7 @@ func (tr *TestRunner) handleSuiteResult(result *results.TestSuiteResult) {
 	}
 }
 
-//printSummary print summary footer
+// printSummary print summary footer
 func (tr *TestRunner) printSummary(elapsed time.Duration) {
 	summaryFormat := `
 Charts:      %s

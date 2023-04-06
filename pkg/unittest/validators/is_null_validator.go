@@ -1,8 +1,8 @@
 package validators
 
 import (
-	"github.com/lrills/helm-unittest/internal/common"
-	"github.com/lrills/helm-unittest/pkg/unittest/valueutils"
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 )
 

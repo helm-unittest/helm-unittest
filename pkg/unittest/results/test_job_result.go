@@ -3,7 +3,7 @@ package results
 import (
 	"time"
 
-	"github.com/lrills/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/internal/printer"
 )
 
 // TestJobResult result return by TestJob.Run

@@ -1,8 +1,8 @@
 package validators_test
 
 import (
-	"github.com/lrills/helm-unittest/internal/common"
-	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/mock"
 	yaml "gopkg.in/yaml.v3"
 )
