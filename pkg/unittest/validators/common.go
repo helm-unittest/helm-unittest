@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lrills/helm-unittest/internal/common"
-	"github.com/lrills/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/pmezard/go-difflib/difflib"
 )
 

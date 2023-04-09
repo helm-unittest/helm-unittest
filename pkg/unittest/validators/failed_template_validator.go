@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
 // FailedTemplateValidator validate whether the errorMessage equal to errorMessage

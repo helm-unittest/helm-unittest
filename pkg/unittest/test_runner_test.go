@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
-	"github.com/lrills/helm-unittest/internal/printer"
-	. "github.com/lrills/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/internal/printer"
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/lrills/helm-unittest/internal/printer"
-	"github.com/lrills/helm-unittest/pkg/unittest"
-	"github.com/lrills/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/spf13/cobra"
 )
 

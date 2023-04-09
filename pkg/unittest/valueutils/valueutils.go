@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/lrills/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	yaml "gopkg.in/yaml.v3"
 )

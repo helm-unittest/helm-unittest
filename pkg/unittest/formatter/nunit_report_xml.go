@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/jibber_jabber"
-	"github.com/lrills/helm-unittest/pkg/unittest/results"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 )
 
 // OSVersion the default value of the OS.
