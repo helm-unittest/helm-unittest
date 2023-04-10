@@ -41,7 +41,7 @@ jobs:
           name: Upload binaries
           command: |
             go install github.com/tcnksm/ghr@latest
-            ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+            ghr -u $CIRCLE_PROJECT_USERNAME $CIRCLE_TAG _dist
 
   distribute_docker:
     docker:
@@ -80,5 +80,4 @@ workflows:
               only: /v[0-9]+(\.[0-9]+)*(-.*)?/
             branches:
               ignore: /.*/
-
 # VS Code Extension Version: 1.5.1

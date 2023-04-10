@@ -1,5 +1,5 @@
 templates:
-  - '**/configmap.yaml'
+  - "**/configmap.yaml"
 tests:
   - it: library usage test
     values:

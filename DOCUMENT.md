@@ -37,7 +37,7 @@ tests:
 
 - **suite**: *string, optional*. The suite name to show on test result output.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Partial templates (which are prefixed with and `_`) are added automatically even if it is in a templates sub-folder, you don't need to add them again.
+- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_`) are added automatically even if it is in a templates sub-folder, you don't need to add them.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
