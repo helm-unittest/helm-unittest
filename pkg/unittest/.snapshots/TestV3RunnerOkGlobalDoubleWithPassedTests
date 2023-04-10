@@ -1,0 +1,15 @@
+
+### Chart [ global-double-setting ] ../../test/data/v3/global-double-setting
+
+
+ PASS  	../../test/data/v3/global-double-setting/tests/configmap_test.yaml
+ PASS  	../../test/data/v3/global-double-setting/tests/deployment_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 2 passed, 2 total
+Tests:       2 passed, 2 total
+Snapshot:    0 passed, 0 total
+Time:        XX.XXXms
+
+

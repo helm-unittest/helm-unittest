@@ -3,7 +3,7 @@ package unittest
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -23,20 +23,7 @@ import (
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
 
-const templatePrefix string = "templates"
-const subchartPrefix string = "charts"
 const noValueContent string = "<no value>"
-
-// getTemplateFileName,
-// Validate if prefix templates is not there,
-// used for backward compatibility of old unittests.
-func getTemplateFileName(fileName string) string {
-	if !strings.HasPrefix(fileName, templatePrefix) && !strings.HasPrefix(fileName, subchartPrefix) {
-		// Within templates unix separators are always used.
-		return filepath.ToSlash(filepath.Join(templatePrefix, fileName))
-	}
-	return fileName
-}
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -47,11 +34,11 @@ func spliteChartRoutes(routePath string) []string {
 	return routes
 }
 
-func scopeValuesWithRoutes(routes []string, values map[interface{}]interface{}) map[interface{}]interface{} {
+func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[string]interface{} {
 	if len(routes) > 1 {
 		return scopeValuesWithRoutes(
 			routes[:len(routes)-1],
-			map[interface{}]interface{}{
+			map[string]interface{}{
 				routes[len(routes)-1]: values,
 			},
 		)
@@ -172,7 +159,7 @@ func (t *TestJob) RunV3(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
-	t.polishAssertionsTemplate(targetChart.Name())
+	t.determineRenderSuccess()
 	result.DisplayName = t.Name
 
 	userValues, err := t.getUserValues()
@@ -187,7 +174,10 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(outputOfFiles)
+	// Setup Assertion Templates based on the chartname and outputOfFiles
+	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
+
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -208,11 +198,11 @@ func (t *TestJob) RunV3(
 
 // liberally borrows from helm-template
 func (t *TestJob) getUserValues() ([]byte, error) {
-	base := map[interface{}]interface{}{}
+	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
 	for _, specifiedPath := range t.Values {
-		value := map[interface{}]interface{}{}
+		value := map[string]interface{}{}
 		var valueFilePath string
 		if path.IsAbs(specifiedPath) {
 			valueFilePath = specifiedPath
@@ -220,7 +210,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
 		}
 
-		bytes, err := ioutil.ReadFile(valueFilePath)
+		bytes, err := os.ReadFile(valueFilePath)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -280,19 +270,29 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := t.filterV3Chart(targetChart)
+	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 
-	// When rendering failed, due to fail or required,
-	// make sure to translate the error to outputOfFiles.
+	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
 	if err != nil {
+		return nil, false, err
+	}
+
+	return outputOfFiles, renderSucceed, nil
+}
+
+// When rendering failed, due to fail or required,
+// make sure to translate the error to outputOfFiles.
+func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[string]string) (map[string]string, bool, error) {
+	renderSucceed := true
+	if err != nil {
+		renderSucceed = false
 		// When no failed assertion is set, the error can be send directly as a failure.
 		if t.requireRenderSuccess {
-			return nil, false, err
+			return nil, renderSucceed, err
 		}
 
-		renderSucceed = false
 		// Parse the error and create an outputFile
 		filePath, content := parseV3RenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
@@ -312,72 +312,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	return outputOfFiles, renderSucceed, nil
-}
-
-// Filter the V3Chart and its dependencies with partials and selected test files.
-func (t *TestJob) filterV3Chart(targetChart *v3chart.Chart) *v3chart.Chart {
-	copiedChart := new(v3chart.Chart)
-	*copiedChart = *targetChart
-
-	suiteIsFromRootChart := len(strings.Split(t.chartRoute, string(filepath.Separator))) <= 1
-	dependencyChart := ""
-
-	if len(t.defaultTemplatesToAssert) == 0 && suiteIsFromRootChart {
-		return copiedChart
-	}
-
-	if suiteIsFromRootChart {
-		copiedChart.Templates = t.filterV3Templates(t.chartRoute, dependencyChart, targetChart)
-	}
-
-	// Filter trough dependencies.
-	filteredDependencies := make([]*v3chart.Chart, 0)
-	for _, dependency := range targetChart.Dependencies() {
-		if suiteIsFromRootChart {
-			dependencyChart = dependency.Metadata.Name
-		}
-
-		filteredDependencyTemplates := t.filterV3Templates(t.chartRoute, dependencyChart, dependency)
-		if len(filteredDependencyTemplates) > 0 {
-			copiedDependencyChart := new(v3chart.Chart)
-			*copiedDependencyChart = *dependency
-			copiedDependencyChart.Templates = filteredDependencyTemplates
-			filteredDependencies = append(filteredDependencies, copiedDependencyChart)
-		}
-	}
-	copiedChart.SetDependencies(filteredDependencies...)
-
-	return copiedChart
-}
-
-// filterV3Templates, Filter the V3Templates with only the partials and selected test files.
-func (t *TestJob) filterV3Templates(chartRoute, dependecyChart string, targetChart *v3chart.Chart) []*v3chart.File {
-	filteredV3Template := make([]*v3chart.File, 0)
-	// check templates in chart
-	for _, fileName := range t.defaultTemplatesToAssert {
-		for _, template := range targetChart.Templates {
-			selectedV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
-			foundV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
-
-			if dependecyChart != "" {
-				foundV3TemplateName = filepath.ToSlash(filepath.Join(chartRoute, "charts", dependecyChart, template.Name))
-			}
-
-			if foundV3TemplateName == selectedV3TemplateName {
-				filteredV3Template = append(filteredV3Template, template)
-				break
-			}
-		}
-	}
-
-	// add partial templates
-	for _, template := range targetChart.Templates {
-		if strings.HasPrefix(filepath.Base(template.Name), "_") {
-			filteredV3Template = append(filteredV3Template, template)
-		}
-	}
-
-	return filteredV3Template
 }
 
 // get chartutil.ReleaseOptions ready for render
@@ -418,13 +352,17 @@ func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 }
 
 // parse rendered manifest if it's yaml
-func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
+func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, outputOfFiles map[string]string) (
 	map[string][]common.K8sManifest,
 	error,
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
+
+		if !strings.HasPrefix(file, targetChartName) {
+			file = filepath.ToSlash(filepath.Join(targetChartName, file))
+		}
 
 		switch filepath.Ext(file) {
 		case ".yaml":
@@ -470,16 +408,24 @@ func (t *TestJob) runAssertions(
 	return testPass, assertsResult
 }
 
-// add prefix to Assertion.Template
-func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
-	if t.chartRoute == "" {
-		t.chartRoute = targetChartName
-	}
-
+// determine if the success for rendering is required,
+// to return an errorCode direct.
+func (t *TestJob) determineRenderSuccess() {
 	t.requireRenderSuccess = true
 
 	for _, assertion := range t.Assertions {
 		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
+	}
+}
+
+// add prefix to Assertion.Template
+func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles map[string]string) {
+	if t.chartRoute == "" {
+		t.chartRoute = targetChartName
+	}
+
+	for _, assertion := range t.Assertions {
+		prefixedChartsNameFiles := false
 		templatesToAssert := make([]string, 0)
 
 		if t.DocumentIndex != nil {
@@ -490,7 +436,7 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 			if len(t.Templates) > 0 {
 				templatesToAssert = append(templatesToAssert, t.Templates...)
 			} else if t.Template == "" {
-				templatesToAssert = t.defaultTemplatesToAssert
+				templatesToAssert, prefixedChartsNameFiles = t.resolveDefaultTemplatesToAssert(outputOfFiles)
 			} else {
 				templatesToAssert = append(templatesToAssert, t.Template)
 			}
@@ -499,11 +445,43 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string) {
 		}
 
 		// map the file name to the path of helm rendered result
-		templatesPath := make([]string, 0)
+		assertion.defaultTemplates = t.prefixTemplatesToAssert(templatesToAssert, prefixedChartsNameFiles)
+	}
+}
+
+func (t *TestJob) resolveDefaultTemplatesToAssert(outputOfFiles map[string]string) ([]string, bool) {
+	defaultTemplatesPath := make([]string, 0)
+	resetAsserts := false
+
+	for _, template := range t.defaultTemplatesToAssert {
+		if strings.Contains(template, "*") {
+			resetAsserts = true
+			break
+		}
+	}
+
+	if resetAsserts {
+		for template := range outputOfFiles {
+			defaultTemplatesPath = append(defaultTemplatesPath, template)
+		}
+	} else {
+		defaultTemplatesPath = t.defaultTemplatesToAssert
+	}
+
+	return defaultTemplatesPath, resetAsserts
+}
+
+func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedChartsNameFiles bool) []string {
+	templatesPath := make([]string, 0)
+
+	if !prefixedChartsNameFiles {
 		for _, template := range templatesToAssert {
 			templatePath := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(template)))
 			templatesPath = append(templatesPath, templatePath)
 		}
-		assertion.defaultTemplates = templatesPath
+	} else {
+		templatesPath = templatesToAssert
 	}
+
+	return templatesPath
 }

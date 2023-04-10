@@ -1,9 +1,11 @@
-FROM centos:7
+FROM fedora:39
 
 # variable "HELM_VERSION" must be passed as docker environment variables during the image build
 # docker build --no-cache --build-arg HELM_VERSION=3.3.0 -t centos/helm-unittest:test -f CentOSTest.Dockerfile .
 
-ADD . ~
+ADD ./plugin.yaml ~/plugin.yaml
+ADD ./plugin-dbg.yaml ~/plugin-dbg.yaml
+ADD ./install-binary.sh ~/install-binary.sh
 
 ARG HELM_VERSION
 
@@ -21,6 +23,11 @@ RUN yum install -y git && \
     rm -rf linux-amd64 && \
     yum remove -y git && \
     rm -rf /var/cache/yum/* ;
+
+RUN groupadd -r nonroot \
+    && useradd -r nonroot -g nonroot
+
+USER nonroot
 
 WORKDIR /apps
 VOLUME [ "/apps" ]

@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -32,7 +31,7 @@ type Cache struct {
 
 // RestoreFromFile restore cached snapshot from cache file
 func (s *Cache) RestoreFromFile() error {
-	content, err := ioutil.ReadFile(s.Filepath)
+	content, err := os.ReadFile(s.Filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -132,7 +131,7 @@ func (s *Cache) StoreToFileIfNeeded() (bool, error) {
 			return false, err
 		}
 
-		if err := ioutil.WriteFile(s.Filepath, byteBuffer.Bytes(), 0644); err != nil {
+		if err := os.WriteFile(s.Filepath, byteBuffer.Bytes(), 0644); err != nil {
 			return false, err
 		}
 

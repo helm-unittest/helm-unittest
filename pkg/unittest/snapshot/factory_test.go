@@ -1,7 +1,6 @@
 package snapshot_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestCreateSnapshotOfSuiteReturnCacheRight(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "test")
+	dir, _ := os.MkdirTemp("", "test")
 	cache, err := CreateSnapshotOfSuite(filepath.Join(dir, "my_test.yaml"), true)
 	cache2, err2 := CreateSnapshotOfSuite(filepath.Join(dir, "another_test.yaml"), false)
 
@@ -26,7 +25,7 @@ func TestCreateSnapshotOfSuiteReturnCacheRight(t *testing.T) {
 }
 
 func TestCreateSnapshotOfSuiteWhenNoCacheDir(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "test")
+	dir, _ := os.MkdirTemp("", "test")
 	cache, _ := CreateSnapshotOfSuite(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
@@ -43,7 +42,7 @@ func TestCreateSnapshotOfSuiteWhenNoCacheDir(t *testing.T) {
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "test")
+	dir, _ := os.MkdirTemp("", "test")
 	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
 	cache, _ := CreateSnapshotOfSuite(filepath.Join(dir, "service_test.yaml"), false)
 
@@ -61,9 +60,9 @@ func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheFileExisted(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "test")
+	dir, _ := os.MkdirTemp("", "test")
 	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
-	ioutil.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
+	os.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
   1: |
     a:
       b: c

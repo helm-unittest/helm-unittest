@@ -1,7 +1,7 @@
 templates:
   - deployment.yaml
 tests:
-  - it: should only add annotation `foo` with value `bar`
+  - it: should only add annotation `foo` with value `bar` and base localKey
     set:
       global.app.annotations:
         foo: bar
@@ -23,7 +23,7 @@ tests:
           value:
             hello: world
 
-  - it: should only add annotation `hello` with value `world`
+  - it: should only add annotation `hello` with value `world` and base localKey
     set:
       global.app.annotations:
         hello: world

@@ -1,7 +1,6 @@
 package snapshot_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -43,10 +42,10 @@ var contentNew = map[string]interface{}{
 }
 
 func createCache(existed bool) *Cache {
-	dir, _ := ioutil.TempDir("", "test")
+	dir, _ := os.MkdirTemp("", "test")
 	cacheFile := filepath.Join(dir, "cache_test.yaml")
 	if existed {
-		ioutil.WriteFile(cacheFile, []byte(lastTimeContent), os.ModePerm)
+		os.WriteFile(cacheFile, []byte(lastTimeContent), os.ModePerm)
 	}
 
 	return &Cache{Filepath: cacheFile}
@@ -93,7 +92,7 @@ func TestCacheWhenFirstTime(t *testing.T) {
     a:
       b: c
 `
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(expectedCacheContent, string(bytes))
 }
 
@@ -118,7 +117,7 @@ func TestCacheWhenNotChanged(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
 }
 
@@ -142,7 +141,7 @@ func TestCacheWhenChanged(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 2, 0, 1, 1, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
 }
 
@@ -168,7 +167,7 @@ func TestCacheWhenNotChangedIfIsUpdating(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, false, 2, 0, 0, 0, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(lastTimeContent, string(bytes))
 }
 
@@ -193,7 +192,7 @@ func TestCacheWhenChangedIfIsUpdating(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 2, 0, 1, 0, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
   1: |
     a:
@@ -220,7 +219,7 @@ func TestCacheWhenHasVanished(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
   1: |
     a:
@@ -251,7 +250,7 @@ func TestCacheWhenHasInserted(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 3, 1, 0, 0, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
   1: |
     a:
@@ -289,7 +288,7 @@ func TestCacheWhenNewOneAtMiddle(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 3, 1, 1, 1, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
   1: |
     a:
@@ -328,7 +327,7 @@ func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
 	a.Nil(storeErr)
 	verifyCache(a, cache, true, true, 3, 1, 1, 0, 0)
 
-	bytes, _ := ioutil.ReadFile(cache.Filepath)
+	bytes, _ := os.ReadFile(cache.Filepath)
 	a.Equal(`cached before:
   1: |
     a:

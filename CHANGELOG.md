@@ -1,8 +1,14 @@
-0.3.1 / 2023-01-30
+0.3.1 / 2023-04-10
 ===================
 - Improvement JUnit export format (credits @steigr)
+- Enable wildcard selection for test templates (resolves quintush/helm-unittest#173, quintush/helm-unittest#192)
+- Update package name to align with github organisation (credits @mavimo, resolved #127)
+- Fix set and values to be used simultaneously (resolves #124)
+- Fix test suite code completion and make general available in https://www.schemastore.org (credits @armingerten, resolves quintush/helm-unittest#161)
+- Stabelize template loading (resolves #123, quintush/helm-unittest#143, quintush/helm-unittest#205)
 - Update documentation based on user questions
 - Update packages to latest version
+- Update docker containers to latest version
 
 0.3.0 / 2023-01-30
 ===================

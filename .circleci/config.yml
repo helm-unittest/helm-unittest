@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20.3
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.18
+      - image: golang:1.20.3
     steps:
       - checkout
       - run:
@@ -41,11 +41,11 @@ jobs:
           name: Upload binaries
           command: |
             go install github.com/tcnksm/ghr@latest
-            ghr -u $CIRCLE_USERNAME $CIRCLE_TAG _dist
+            ghr -u $CIRCLE_PROJECT_USERNAME $CIRCLE_TAG _dist
 
   distribute_docker:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20.3
     steps:
       - checkout
       - setup_remote_docker
@@ -80,5 +80,4 @@ workflows:
               only: /v[0-9]+(\.[0-9]+)*(-.*)?/
             branches:
               ignore: /.*/
-
 # VS Code Extension Version: 1.5.1

@@ -1,0 +1,13 @@
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: reproducer test
+    values:
+      - ./values/requiredValues.yaml
+    set:
+      global:
+        containerName: blibli
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: blibli

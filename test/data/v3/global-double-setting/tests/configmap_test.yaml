@@ -1,0 +1,16 @@
+templates:
+  - "**/configmap.yaml"
+tests:
+  - it: library usage test
+    values:
+      - ./values/requiredValues.yaml
+    set:
+      global:
+        containerName: blibli
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-configmap
+      - equal:
+          path: data.myvalue
+          value: "Hello World"

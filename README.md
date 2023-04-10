@@ -8,8 +8,9 @@ Unit test for *helm chart* in YAML to keep your chart consistent and robust!
 
 Feature:
   - write test file in pure YAML
-  - render locally with no need of *tiller*
+  - render locally
   - create **nothing** on your cluster
+  - [wildcard selection for templates](./DOCUMENT.md#test-suite)
   - [define values and release options](./DOCUMENT.md#test-job)
   - [snapshot testing](#snapshot-testing)
   - [test suite code completion and validation](#test-suite-code-completion-and-validation)
@@ -29,7 +30,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
-- [test suite code completion and validation](#test-suite-code-completion-and-validation)
+- [Test suite code completion and validation](#test-suite-code-completion-and-validation)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Related Projects / Commands](#related-projects--commands)
 - [Contributing](#contributing)

@@ -3,7 +3,7 @@ package formatter_test
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpNunitTestDir, _ = ioutil.TempDir("", testSuiteTests)
+var tmpNunitTestDir, _ = os.MkdirTemp("", testSuiteTests)
 
 func createNUnitTestCase(name, description, failureContent string, executed bool) NUnitTestCase {
 	testCase := NUnitTestCase{
