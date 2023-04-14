@@ -24,6 +24,11 @@ RUN apk add --update --no-cache curl ca-certificates git && \
     apk del curl git && \
     rm -f /var/cache/apk/* ;
 
+RUN addgroup -S helmgroup && \
+    adduser -S helmuser -G helmgroup
+
+USER helmuser
+
 WORKDIR /apps
 VOLUME [ "/apps" ]
 

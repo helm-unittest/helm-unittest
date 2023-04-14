@@ -128,7 +128,7 @@ func init() {
 
 	cmd.PersistentFlags().StringArrayVarP(
 		&testConfig.valuesFiles, "values", "v", []string{},
-		"absolute or glob paths of values files location, default no values files",
+		"absolute or glob paths of values files location to override helmchart values",
 	)
 
 	cmd.PersistentFlags().BoolVarP(
