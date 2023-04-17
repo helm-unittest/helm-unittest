@@ -33,8 +33,6 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 	*copiedChart = *targetChart
 
 	// Clean all parts and rebuild the chart which is needed
-	copiedChart.Files = nil
-	copiedChart.Raw = nil
 	copiedChart.Templates = nil
 
 	// Filter the templates based on the templates to Assert

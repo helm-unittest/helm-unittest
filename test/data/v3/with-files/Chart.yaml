@@ -1,0 +1,4 @@
+apiVersion: v2
+description: A chart with files
+name: with-files
+version: 0.1.0

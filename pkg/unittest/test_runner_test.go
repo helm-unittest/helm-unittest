@@ -194,3 +194,14 @@ func TestV3RunnerOkGlobalDoubleWithPassedTests(t *testing.T) {
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
+
+func TestV3RunnerOkWithFiles(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithFilesChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}

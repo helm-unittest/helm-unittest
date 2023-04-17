@@ -1,0 +1,1 @@
+{{ $.Files.Get "files/foo.yaml" }}

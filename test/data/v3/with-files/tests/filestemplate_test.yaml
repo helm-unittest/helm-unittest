@@ -1,0 +1,9 @@
+suite: test loading of files
+templates:
+  - filestemplate.yaml
+tests:
+  - it: loaded content of the file should be valid
+    asserts:
+      - equal:
+          path: foo
+          value: bar
