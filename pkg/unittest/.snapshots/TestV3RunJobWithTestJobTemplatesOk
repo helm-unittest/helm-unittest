@@ -27,7 +27,7 @@
       FailInfo: ([]string) {
       },
       Passed: (bool) true,
-      AssertType: (string) (len=9) "isNotNull",
+      AssertType: (string) (len=6) "exists",
       Not: (bool) false,
       CustomInfo: (string) ""
     })

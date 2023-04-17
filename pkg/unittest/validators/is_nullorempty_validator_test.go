@@ -23,11 +23,11 @@ c: 1
 d: [d]
 `
 
-func TestIsEmptyValidatorWhenOk(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
 	for key := range manifest {
-		validator := IsEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs: []common.K8sManifest{manifest},
 		})
@@ -37,11 +37,11 @@ func TestIsEmptyValidatorWhenOk(t *testing.T) {
 	}
 }
 
-func TestIsEmptyValidatorWhenNegativeAndOk(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docWithNonEmptyElement)
 
 	for key := range manifest {
-		validator := IsEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs:     []common.K8sManifest{manifest},
 			Negative: true,
@@ -52,13 +52,13 @@ func TestIsEmptyValidatorWhenNegativeAndOk(t *testing.T) {
 	}
 }
 
-func TestIsEmptyValidatorWhenFail(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docWithNonEmptyElement)
 
 	log.SetLevel(log.DebugLevel)
 
 	for key, value := range manifest {
-		validator := IsEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{key}
 		valueYAML := common.TrustedMarshalYAML(value)
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs: []common.K8sManifest{manifest},
@@ -67,17 +67,17 @@ func TestIsEmptyValidatorWhenFail(t *testing.T) {
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
 			"Path:	" + key,
-			"Expected to be empty, got:",
+			"Expected to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
 		}, diff)
 	}
 }
 
-func TestIsEmptyValidatorWhenNegativeAndFail(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
 	for key, value := range manifest {
-		validator := IsEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs:     []common.K8sManifest{manifest},
 			Negative: true,
@@ -89,16 +89,16 @@ func TestIsEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
 			"Path:	" + key,
-			"Expected NOT to be empty, got:",
+			"Expected NOT to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
 		}, diff)
 	}
 }
 
-func TestIsEmptyValidatorWhenInvalidIndex(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenInvalidIndex(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsEmptyValidator{"a"}
+	validator := IsNullOrEmptyValidator{"a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  []common.K8sManifest{manifest},
 		Index: 2,
@@ -111,10 +111,10 @@ func TestIsEmptyValidatorWhenInvalidIndex(t *testing.T) {
 	}, diff)
 }
 
-func TestIsEmptyValidatorWhenInvalidPath(t *testing.T) {
+func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsEmptyValidator{"x.a"}
+	validator := IsNullOrEmptyValidator{"x.a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})

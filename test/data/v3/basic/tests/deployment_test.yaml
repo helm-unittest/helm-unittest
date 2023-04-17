@@ -40,15 +40,15 @@ tests:
           path: spec.template.spec.containers[?(@.name == "basic")].ports
           content:
             containerPort: 80
-      - isNull:
+      - notExists:
           path: spec.template.nodeSelector
-      - isNull:
+      - notExists:
           path: spec.template.spec.containers[1]
-      - isNotNull:
+      - exists:
           path: spec.template
-      - isEmpty:
+      - isNullOrEmpty:
           path: spec.template.spec.containers[?(@.name == "basic")].resources
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: spec.template.spec.containers[?(@.name == "basic")]
       - isKind:
           of: Deployment

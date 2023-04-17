@@ -19,11 +19,11 @@ tests:
       global:
         containerName: blibli
     asserts:
-      - isEmpty:
+      - isNullOrEmpty:
           path: spec.template.spec.containers[0].resources
-      - isNull:
+      - notExists:
           path: spec.template.spec.nodeSelector
-      - isNull:
+      - notExists:
           path: spec.template.spec.affinity
-      - isNull:
+      - notExists:
           path: spec.template.spec.tolerations

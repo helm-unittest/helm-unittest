@@ -85,6 +85,8 @@
               "properties": {
                 "equal": true,
                 "equalRaw": true,
+                "exists": true,
+                "notExists": true,
                 "notEqual": true,
                 "notEqualRaw": true,
                 "matchRegex": true,
@@ -93,10 +95,8 @@
                 "notMatchRegexRaw": true,
                 "contains": true,
                 "notContains": true,
-                "isNull": true,
-                "isNotNull": true,
-                "isEmpty": true,
-                "isNotEmpty": true,
+                "isNullOrEmpty": true,
+                "isNotNullOrEmpty": true,
                 "isKind": true,
                 "isAPIVersion": true,
                 "isSubset": true,
@@ -146,7 +146,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["equal"]
+                  "required": [
+                    "equal"
+                  ]
                 },
                 {
                   "properties": {
@@ -167,7 +169,45 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["equalRaw"]
+                  "required": [
+                    "equalRaw"
+                  ]
+                },
+                {
+                  "properties": {
+                    "exists": {
+                      "type": "object",
+                      "description": "Assert if the specified path exists.",
+                      "markdownDescription": "**exists** (object)\n\nAssert if the specified path `exists`.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "exists"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notExists": {
+                      "type": "object",
+                      "description": "Assert if the specified path NOT exists.",
+                      "markdownDescription": "**notExists** (object)\n\nAssert if the specified path NOT `exists`.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notExists"
+                  ]
                 },
                 {
                   "properties": {
@@ -191,7 +231,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notEqual"]
+                  "required": [
+                    "notEqual"
+                  ]
                 },
                 {
                   "properties": {
@@ -212,7 +254,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notEqualRaw"]
+                  "required": [
+                    "notEqualRaw"
+                  ]
                 },
                 {
                   "properties": {
@@ -240,7 +284,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["matchRegex"]
+                  "required": [
+                    "matchRegex"
+                  ]
                 },
                 {
                   "properties": {
@@ -264,7 +310,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["matchRegexRaw"]
+                  "required": [
+                    "matchRegexRaw"
+                  ]
                 },
                 {
                   "properties": {
@@ -292,7 +340,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notMatchRegex"]
+                  "required": [
+                    "notMatchRegex"
+                  ]
                 },
                 {
                   "properties": {
@@ -316,7 +366,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notMatchRegexRaw"]
+                  "required": [
+                    "notMatchRegexRaw"
+                  ]
                 },
                 {
                   "properties": {
@@ -350,7 +402,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["contains"]
+                  "required": [
+                    "contains"
+                  ]
                 },
                 {
                   "properties": {
@@ -374,14 +428,16 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notContains"]
+                  "required": [
+                    "notContains"
+                  ]
                 },
                 {
                   "properties": {
-                    "isNull": {
+                    "isNullOrEmpty": {
                       "type": "object",
-                      "description": "Assert the value of specified path is null.",
-                      "markdownDescription": "**isNull** (object)\n\nAssert the value of specified path is `null`.",
+                      "description": "Assert the value of specified path is null or empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isNullOrEmpty** (object)\n\nAssert the value of specified path is null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
@@ -390,14 +446,16 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isNull"]
+                  "required": [
+                    "isNullOrEmpty"
+                  ]
                 },
                 {
                   "properties": {
-                    "isNotNull": {
+                    "isNotNullOrEmpty": {
                       "type": "object",
-                      "description": "Assert the value of specified path is NOT null.",
-                      "markdownDescription": "**isNotNull** (object)\n\nAssert the value of specified path is NOT `null`.",
+                      "description": "Assert the value of specified path is NOT null or empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is NOT null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
@@ -406,39 +464,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isNotNull"]
-                },
-                {
-                  "properties": {
-                    "isEmpty": {
-                      "type": "object",
-                      "description": "Assert the value of specified path is empty (null, \"\", 0, [], {}).",
-                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": ["isEmpty"]
-                },
-                {
-                  "properties": {
-                    "isNotEmpty": {
-                      "type": "object",
-                      "description": "Assert the value of specified path is NOT empty (null, \"\", 0, [], {}).",
-                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is NOT empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": ["isNotEmpty"]
+                  "required": [
+                    "isNotNullOrEmpty"
+                  ]
                 },
                 {
                   "properties": {
@@ -456,7 +484,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isKind"]
+                  "required": [
+                    "isKind"
+                  ]
                 },
                 {
                   "properties": {
@@ -474,7 +504,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isAPIVersion"]
+                  "required": [
+                    "isAPIVersion"
+                  ]
                 },
                 {
                   "properties": {
@@ -498,7 +530,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isSubset"]
+                  "required": [
+                    "isSubset"
+                  ]
                 },
                 {
                   "properties": {
@@ -522,7 +556,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["isNotSubset"]
+                  "required": [
+                    "isNotSubset"
+                  ]
                 },
                 {
                   "properties": {
@@ -540,7 +576,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["hasDocuments"]
+                  "required": [
+                    "hasDocuments"
+                  ]
                 },
                 {
                   "properties": {
@@ -554,13 +592,19 @@
                           "description": "Expected count of spec rendered.",
                           "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
                         },
-                        "path": {"$ref": "#/definitions/assertion/path"},
-                        "paths": {"$ref": "#/definitions/assertion/paths"}
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "paths": {
+                          "$ref": "#/definitions/assertion/paths"
+                        }
                       },
                       "additionalProperties": false
                     }
                   },
-                  "required": ["lengthEqual"]
+                  "required": [
+                    "lengthEqual"
+                  ]
                 },
                 {
                   "properties": {
@@ -574,13 +618,19 @@
                           "description": "Expected count of spec rendered.",
                           "markdownDescription": "**count** (integer) _required_\n\nExpected count of spec rendered."
                         },
-                        "path": {"$ref": "#/definitions/assertion/path"},
-                        "paths": {"$ref": "#/definitions/assertion/paths"}
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "paths": {
+                          "$ref": "#/definitions/assertion/paths"
+                        }
                       },
                       "additionalProperties": false
                     }
                   },
-                  "required": ["notLengthEqual"]
+                  "required": [
+                    "notLengthEqual"
+                  ]
                 },
                 {
                   "properties": {
@@ -625,7 +675,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["containsDocument"]
+                  "required": [
+                    "containsDocument"
+                  ]
                 },
                 {
                   "properties": {
@@ -641,7 +693,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["matchSnapshot"]
+                  "required": [
+                    "matchSnapshot"
+                  ]
                 },
                 {
                   "properties": {
@@ -652,7 +706,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["matchSnapshotRaw"]
+                  "required": [
+                    "matchSnapshotRaw"
+                  ]
                 },
                 {
                   "properties": {
@@ -673,7 +729,9 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["failedTemplate"]
+                  "required": [
+                    "failedTemplate"
+                  ]
                 }
               ]
             }
@@ -790,7 +848,7 @@
       "markdownDescription": "**values** (array<string>) _recommended_\n\n.The test values to apply for rendering of this chart.",
       "items": {
         "type": "string"
-      }    
+      }
     }
   }
 }

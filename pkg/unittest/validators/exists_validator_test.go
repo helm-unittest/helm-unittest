@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsNullValidatorWhenOk(t *testing.T) {
+func TestExistsValidatorWhenOk(t *testing.T) {
 	doc := "a:"
 	manifest := makeManifest(doc)
 
-	v := IsNullValidator{"a"}
+	v := ExistsValidator{"a"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -21,14 +21,14 @@ func TestIsNullValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestIsNullValidatorWhenArrayOk(t *testing.T) {
+func TestExistsValidatorWhenArrayOk(t *testing.T) {
 	doc := `
 a:
   - b
 `
 	manifest := makeManifest(doc)
 
-	v := IsNullValidator{"a[1]"}
+	v := ExistsValidator{"a[0]"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -36,11 +36,11 @@ a:
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestIsNullValidatorWhenNegativeAndOk(t *testing.T) {
+func TestExistsValidatorWhenNegativeAndOk(t *testing.T) {
 	doc := "a: 0"
 	manifest := makeManifest(doc)
 
-	v := IsNullValidator{"a"}
+	v := ExistsValidator{"b"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -50,13 +50,13 @@ func TestIsNullValidatorWhenNegativeAndOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestIsNullValidatorWhenFail(t *testing.T) {
+func TestExistsValidatorWhenFail(t *testing.T) {
 	doc := "a: A"
 	manifest := makeManifest(doc)
 
 	log.SetLevel(log.DebugLevel)
 
-	v := IsNullValidator{"a"}
+	v := ExistsValidator{"b"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -64,17 +64,15 @@ func TestIsNullValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Path:	a",
-		"Expected to be null, got:",
-		"	A",
+		"Path:	b expected to exists",
 	}, diff)
 }
 
-func TestIsNullValidatorWhenNegativeAndFail(t *testing.T) {
+func TestExistsValidatorWhenNegativeAndFail(t *testing.T) {
 	doc := "a:"
 	manifest := makeManifest(doc)
 
-	v := IsNullValidator{"a"}
+	v := ExistsValidator{"a"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -83,17 +81,15 @@ func TestIsNullValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
-		"Path:	a",
-		"Expected NOT to be null, got:",
-		"	null",
+		"Path:	a expected to NOT exists",
 	}, diff)
 }
 
-func TestIsNullValidatorWhenInvalidIndex(t *testing.T) {
+func TestExistsValidatorWhenInvalidIndex(t *testing.T) {
 	doc := "a:"
 	manifest := makeManifest(doc)
 
-	validator := IsNullValidator{"a"}
+	validator := ExistsValidator{"a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:  []common.K8sManifest{manifest},
 		Index: 2,
@@ -106,11 +102,11 @@ func TestIsNullValidatorWhenInvalidIndex(t *testing.T) {
 	}, diff)
 }
 
-func TestIsNullValidatorWhenInvalidPath(t *testing.T) {
+func TestExistsValidatorWhenInvalidPath(t *testing.T) {
 	doc := "x:"
 	manifest := makeManifest(doc)
 
-	validator := IsNullValidator{"x[b]"}
+	validator := ExistsValidator{"x[b]"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})

@@ -53,6 +53,10 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - isNotNull:
 - isEmpty:
 - isNotEmpty:
+- exists:
+- notExists:
+- isNullOrEmpty:
+- isNotNullOrEmpty:
 - isKind:
 - isAPIVersion:
 - hasDocuments:
@@ -64,9 +68,9 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - lengthEqual:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 23)
+	assertionsAsMap := make([]map[string]interface{}, 27)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 23)
+	assertions := make([]Assertion, 27)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -99,6 +103,14 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - notContains:
   not: true
+- exists:
+  not: true
+- notExists:
+  not: true
+- isNullOrEmpty:
+  not: true
+- isNotNullOrEmpty:
+  not: true
 - isNull:
   not: true
 - isNotNull:
@@ -118,7 +130,7 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 - failedTemplate:
   not: true
 `
-	assertions := make([]Assertion, 19)
+	assertions := make([]Assertion, 23)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -144,6 +156,12 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - contains:
   not: true
 - notContains:
+- exists:
+  not: true
+- notExists:
+- isNullOrEmpty:
+  not: true
+- isNotNullOrEmpty:
 - isNull:
   not: true
 - isNotNull:
@@ -157,7 +175,7 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
   not: true
 - notFailedTemplate:
 `
-	assertions := make([]Assertion, 17)
+	assertions := make([]Assertion, 22)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -216,13 +234,13 @@ x:
     path:    c
     content: e
 - template: t.yaml
-  isNull:
+  exists:
     path: x
 - template: t.yaml
-  isNotNull:
-    path: a
+  notExists:
+    path: g
 - template: t.yaml
-  isNotEmpty:
+  isNotNullOrEmpty:
     path: c
 - template: t.yaml
   isKind:

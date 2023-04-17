@@ -9,18 +9,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// IsEmptyValidator validate value of Path is empty
-type IsEmptyValidator struct {
+// IsNullOrEmptyValidator validate value of Path is empty
+type IsNullOrEmptyValidator struct {
 	Path string
 }
 
-func (v IsEmptyValidator) failInfo(actual interface{}, index int, not bool) []string {
+func (v IsNullOrEmptyValidator) failInfo(actual interface{}, index int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 
-	log.WithField("validator", "is_empty").Debugln("actual content:", actualYAML)
+	log.WithField("validator", "is_nullorempty").Debugln("actual content:", actualYAML)
 
 	return splitInfof(
-		setFailFormat(not, true, false, false, " to be empty, got"),
+		setFailFormat(not, true, false, false, " to be null or empty, got"),
 		index,
 		v.Path,
 		actualYAML,
@@ -28,7 +28,7 @@ func (v IsEmptyValidator) failInfo(actual interface{}, index int, not bool) []st
 }
 
 // Validate implement Validatable
-func (v IsEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests, err := context.getManifests()
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, err.Error())

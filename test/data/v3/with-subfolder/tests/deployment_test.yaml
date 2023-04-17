@@ -19,13 +19,13 @@ tests:
       - notMatchRegex:
           path: metadata.name
           pattern: ^.*-foobar$
-      - isNull:
+      - notExists:
           path: spec.template.nodeSelector
-      - isNotNull:
+      - exists:
           path: spec.template
-      - isEmpty:
+      - isNullOrEmpty:
           path: spec.template.spec.containers[0].resources
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: spec.template.spec.containers[0]
       - isKind:
           of: Deployment

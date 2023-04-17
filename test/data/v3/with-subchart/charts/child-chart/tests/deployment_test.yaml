@@ -28,13 +28,13 @@ tests:
           path: spec.template.spec.containers[0].ports
           content:
             containerPort: 80
-      - isNull:
+      - notExists:
           path: spec.template.nodeSelector
-      - isNotNull:
+      - exists:
           path: spec.template
-      - isEmpty:
+      - isNullOrEmpty:
           path: spec.template.spec.containers[0].resources
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: spec.template.spec.containers[0]
       - isKind:
           of: Deployment
