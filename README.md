@@ -39,7 +39,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 ## Install
 
 ```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest
+$ helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ```
 
 It will install the latest version of binary into helm plugin directory.
