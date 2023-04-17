@@ -1,6 +1,8 @@
 0.3.2 / 2023-04-17
 ===================
-
+- Fix tests not rendering when using $.Files.Get (resolves #135)
+- Refactor IsNull to Exists and IsEmpty to IsNullOrEmpty (resolves #134)
+- Update documentation based on user questions (resolves #129)
 
 0.3.1 / 2023-04-10
 ===================
