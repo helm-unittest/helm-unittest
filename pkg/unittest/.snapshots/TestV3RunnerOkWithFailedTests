@@ -174,67 +174,25 @@
 			Actual:
 				- containerPort: 8080
 
-		- asserts[6] `isNull` fail
+		- asserts[6] `notExists` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Path:	spec.template
-			Expected to be null, got:
-				metadata:
-				  labels:
-				    app: basic
-				    release: RELEASE-NAME
-				spec:
-				  containers:
-				    - image: apache:latest
-				      imagePullPolicy: Always
-				      livenessProbe:
-				        httpGet:
-				          path: /
-				          port: 8080
-				      name: basic
-				      ports:
-				        - containerPort: 8080
-				      readinessProbe:
-				        httpGet:
-				          path: /
-				          port: 8080
-				      resources: {}
+			Path:	spec.template expected to NOT exists
 			DocumentIndex:	1
-			Path:	spec.template
-			Expected to be null, got:
-				metadata:
-				  annotations:
-				    some_template: |
-				      ---
-				      apiVersion: ...
-				      this: is test for old separator workaround bug
-				  labels:
-				    app: basic
-				    release: RELEASE-NAME
-				spec:
-				  containers:
-				    - image: apache:latest
-				      imagePullPolicy: Always
-				      name: basic
-				      ports:
-				        - containerPort: null
+			Path:	spec.template expected to NOT exists
 
-		- asserts[7] `isNotNull` fail
+		- asserts[7] `exists` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Path:	spec.template.nodeSelector
-			Expected NOT to be null, got:
-				null
+			Path:	spec.template.nodeSelector expected to exists
 			DocumentIndex:	1
-			Path:	spec.template.nodeSelector
-			Expected NOT to be null, got:
-				null
+			Path:	spec.template.nodeSelector expected to exists
 
-		- asserts[8] `isEmpty` fail
+		- asserts[8] `isNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	spec.template.spec.containers[0]
-			Expected to be empty, got:
+			Expected to be null or empty, got:
 				image: apache:latest
 				imagePullPolicy: Always
 				livenessProbe:
@@ -251,18 +209,18 @@
 				resources: {}
 			DocumentIndex:	1
 			Path:	spec.template.spec.containers[0]
-			Expected to be empty, got:
+			Expected to be null or empty, got:
 				image: apache:latest
 				imagePullPolicy: Always
 				name: basic
 				ports:
 				  - containerPort: null
 
-		- asserts[9] `isNotEmpty` fail
+		- asserts[9] `isNotNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	spec.template.spec.containers[0].resources
-			Expected NOT to be empty, got:
+			Expected NOT to be null or empty, got:
 				{}
 			DocumentIndex:	1
 			Error:
@@ -421,67 +379,25 @@
 			Actual:
 				- containerPort: 8080
 
-		- asserts[6] `isNull` fail
+		- asserts[6] `notExists` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Path:	spec.template
-			Expected to be null, got:
-				metadata:
-				  labels:
-				    app: basic
-				    release: RELEASE-NAME
-				spec:
-				  containers:
-				    - image: apache:latest
-				      imagePullPolicy: Always
-				      livenessProbe:
-				        httpGet:
-				          path: /
-				          port: 8080
-				      name: basic
-				      ports:
-				        - containerPort: 8080
-				      readinessProbe:
-				        httpGet:
-				          path: /
-				          port: 8080
-				      resources: {}
+			Path:	spec.template expected to NOT exists
 			DocumentIndex:	1
-			Path:	spec.template
-			Expected to be null, got:
-				metadata:
-				  annotations:
-				    some_template: |
-				      ---
-				      apiVersion: ...
-				      this: is test for old separator workaround bug
-				  labels:
-				    app: basic
-				    release: RELEASE-NAME
-				spec:
-				  containers:
-				    - image: apache:latest
-				      imagePullPolicy: Always
-				      name: basic
-				      ports:
-				        - containerPort: null
+			Path:	spec.template expected to NOT exists
 
-		- asserts[7] `isNotNull` fail
+		- asserts[7] `exists` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Path:	spec.template.nodeSelector
-			Expected NOT to be null, got:
-				null
+			Path:	spec.template.nodeSelector expected to exists
 			DocumentIndex:	1
-			Path:	spec.template.nodeSelector
-			Expected NOT to be null, got:
-				null
+			Path:	spec.template.nodeSelector expected to exists
 
-		- asserts[8] `isEmpty` fail
+		- asserts[8] `isNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	spec.template.spec.containers[0]
-			Expected to be empty, got:
+			Expected to be null or empty, got:
 				image: apache:latest
 				imagePullPolicy: Always
 				livenessProbe:
@@ -498,18 +414,18 @@
 				resources: {}
 			DocumentIndex:	1
 			Path:	spec.template.spec.containers[0]
-			Expected to be empty, got:
+			Expected to be null or empty, got:
 				image: apache:latest
 				imagePullPolicy: Always
 				name: basic
 				ports:
 				  - containerPort: null
 
-		- asserts[9] `isNotEmpty` fail
+		- asserts[9] `isNotNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Path:	spec.template.spec.containers[0].resources
-			Expected NOT to be empty, got:
+			Expected NOT to be null or empty, got:
 				{}
 			DocumentIndex:	1
 			Error:
@@ -574,12 +490,10 @@
 				    servicePort: 12345
 				  path: /
 
-		- asserts[1] `isNotNull` fail
+		- asserts[1] `exists` fail
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
-			Path:	spec.tls
-			Expected NOT to be null, got:
-				null
+			Path:	spec.tls expected to exists
 
 	- should fail set annotations if given
 
@@ -587,7 +501,7 @@
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
 			Path:	metadata.annotations
-			Expected to be empty, got:
+			Expected to be null or empty, got:
 				ingress.kubernetes.io/rewrite-target: /
 				kubernetes.io/ingress.class: nginx
 				kubernetes.io/tls-acme: "true"

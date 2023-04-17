@@ -11,3 +11,19 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].name
           value: blibli
+
+  - it: reproducer test
+    values:
+      - ./values/requiredValues.yaml
+    set:
+      global:
+        containerName: blibli
+    asserts:
+      - isNullOrEmpty:
+          path: spec.template.spec.containers[0].resources
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.affinity
+      - notExists:
+          path: spec.template.spec.tolerations

@@ -1,3 +1,9 @@
 global:
   app:
   containerName: blabla
+
+nodeSelector: {}
+
+affinity: {}
+
+tolerations: {}

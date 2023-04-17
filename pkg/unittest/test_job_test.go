@@ -132,7 +132,7 @@ asserts:
       path: kind
       value: ConfigMap   
     template: templates/configmap.yaml
-  - isNotNull:
+  - exists:
       path: metadata.name
 `
 	var tj TestJob

@@ -21,7 +21,7 @@ tests:
             backend:
               serviceName: my-release-basic
               servicePort: 54321
-      - isNotNull:
+      - exists:
           path: spec.tls
 
   - it: should fail set annotations if given

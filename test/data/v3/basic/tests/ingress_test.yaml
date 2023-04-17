@@ -28,7 +28,7 @@ tests:
             backend:
               serviceName: my-release-basic
               servicePort: 12345
-      - isNull:
+      - notExists:
           path: spec.tls
 
   - it: should set annotations if given
@@ -72,11 +72,11 @@ tests:
         kubernetes.io/tls-acme: "true"
         ingress.kubernetes.io/rewrite-target: /
     asserts:
-      - isNotNull:
+      - exists:
           path: metadata.annotations["kubernetes.io/ingress.class"]
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: metadata.annotations["kubernetes.io/tls-acme"]
-      - isNull:
+      - notExists:
           path: metadata.annotations["ingress.kubernetes.io/cookie-name"]
 
   - it: should set tls if given

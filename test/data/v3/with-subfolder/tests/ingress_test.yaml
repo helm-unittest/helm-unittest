@@ -25,7 +25,7 @@ tests:
             backend:
               serviceName: my-release-with-subfolder
               servicePort: 12345
-      - isNull:
+      - notExists:
           path: spec.tls
 
   - it: should set annotations if given

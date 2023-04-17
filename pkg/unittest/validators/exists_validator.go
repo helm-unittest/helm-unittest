@@ -1,31 +1,32 @@
 package validators
 
 import (
-	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	log "github.com/sirupsen/logrus"
 )
 
-// IsNullValidator validate value of Path id kind
-type IsNullValidator struct {
+// ExistsValidator validate value of Path id kind
+type ExistsValidator struct {
 	Path string
 }
 
-func (v IsNullValidator) failInfo(actual interface{}, index int, not bool) []string {
-	actualYAML := common.TrustedMarshalYAML(actual)
+func (v ExistsValidator) failInfo(index int, not bool) []string {
+	format := "Path:%s expected to "
 
-	log.WithField("validator", "is_null").Debugln("actual content:", actualYAML)
+	if not {
+		format = format + "NOT "
+	}
+
+	format = format + "exists"
 
 	return splitInfof(
-		setFailFormat(not, true, false, false, " to be null, got"),
+		format,
 		index,
 		v.Path,
-		actualYAML,
 	)
 }
 
 // Validate implement Validatable
-func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
+func (v ExistsValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests, err := context.getManifests()
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, err.Error())
@@ -43,16 +44,9 @@ func (v IsNullValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		var singleActual interface{}
-		if len(actual) > 0 {
-			singleActual = actual[0]
-		} else {
-			singleActual = nil
-		}
-
-		if singleActual == nil == context.Negative {
+		if len(actual) > 0 == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(singleActual, idx, context.Negative)
+			errorMessage := v.failInfo(idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

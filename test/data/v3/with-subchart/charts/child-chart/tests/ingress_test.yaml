@@ -27,7 +27,7 @@ tests:
             backend:
               serviceName: my-release-child-chart
               servicePort: 12345
-      - isNull:
+      - notExists:
           path: spec.tls
 
   - it: should set annotations if given

@@ -28,13 +28,13 @@ tests:
           path: spec.template.spec.containers[0].ports
           content:
             containerPort: 8080
-      - isNull:
+      - notExists:
           path: spec.template
-      - isNotNull:
+      - exists:
           path: spec.template.nodeSelector
-      - isEmpty:
+      - isNullOrEmpty:
           path: spec.template.spec.containers[0]
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: spec.template.spec.containers[0].resources
       - isKind:
           of: Pod
