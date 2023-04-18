@@ -194,8 +194,8 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"containsDocument":  {reflect.TypeOf(validators.ContainsDocumentValidator{}), false, true},
 	"lengthEqual":       {reflect.TypeOf(validators.LengthEqualDocumentsValidator{}), false, true},
 	"notLengthEqual":    {reflect.TypeOf(validators.LengthEqualDocumentsValidator{}), true, true},
-	"isNull":            {reflect.TypeOf(validators.ExistsValidator{}), false, true},
-	"isNotNull":         {reflect.TypeOf(validators.ExistsValidator{}), true, true},
+	"isNull":            {reflect.TypeOf(validators.ExistsValidator{}), true, true},
+	"isNotNull":         {reflect.TypeOf(validators.ExistsValidator{}), false, true},
 	"isEmpty":           {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), false, true},
 	"isNotEmpty":        {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), true, true},
 }
