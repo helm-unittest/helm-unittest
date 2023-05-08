@@ -3,6 +3,8 @@
 - Fix negative containsDocument validation when an empty document is found (resolves #145)
 - Update examples to validate multiple templates (resolves #142)
 
+- Update packages to latest version
+
 0.3.2 / 2023-04-17
 ===================
 - Fix tests not rendering when using $.Files.Get (resolves #135)
