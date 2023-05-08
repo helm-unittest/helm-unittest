@@ -24,6 +24,39 @@ metadata:
   namespace: foo
 `
 
+func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"v1",
+		"bar",
+		"foo",
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Index: -1,
+		Docs:  []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:	0", "Expected to contain document:", "	Kind = Service, apiVersion = v1"}, diff)
+}
+
+func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"v1",
+		"bar",
+		"foo",
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Index:    -1,
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestContainsDocumentValidatorWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Service",
