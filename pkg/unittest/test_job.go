@@ -234,7 +234,6 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 // render the chart and return result map
 func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, bool, error) {
-	renderSucceed := true
 	values, err := v3util.ReadValues(userValues)
 	if err != nil {
 		return nil, false, err
@@ -274,6 +273,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 
+	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
 	if err != nil {
 		return nil, false, err
