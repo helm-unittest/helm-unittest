@@ -1,0 +1,49 @@
+suite: test override names and fullNames in Kubernetes resources
+templates:
+  - templates/configmap.yaml
+  - templates/deployment.yaml
+  - templates/ingress.yaml
+  - templates/service.yaml
+tests:
+  - it: initial service resource should end with releasename-chartname
+    set:
+      ingress:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: RELEASE-NAME-basic
+      - equal:
+          path: metadata.labels.app
+          value: basic
+      - equal:
+          path: metadata.labels.appVersion
+          value: 1.0.0
+      - equal:
+          path: metadata.labels.chart
+          value: basic-0.1.0
+      - equal:
+          path: metadata.labels.release
+          value: RELEASE-NAME
+
+  - it: service resource with nameoverride should end with releasename-nameoverride
+    set:
+      nameOverride: mytest
+      ingress:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: RELEASE-NAME-mytest
+      - equal:
+          path: metadata.labels.app
+          value: mytest
+      - equal:
+          path: metadata.labels.appVersion
+          value: 1.0.0
+      - equal:
+          path: metadata.labels.chart
+          value: basic-0.1.0
+      - equal:
+          path: metadata.labels.release
+          value: RELEASE-NAME

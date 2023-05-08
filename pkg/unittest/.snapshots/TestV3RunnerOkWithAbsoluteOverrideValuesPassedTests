@@ -7,12 +7,13 @@
  PASS  test deployment	../../test/data/v3/basic/tests/deployment_test.yaml
  PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
+ PASS  test override names and fullNames in Kubernetes resources	../../test/data/v3/basic/tests/namesOverride_test.yaml
  PASS  test service	../../test/data/v3/basic/tests/service_test.yaml
 
 
 Charts:      1 passed, 1 total
-Test Suites: 6 passed, 6 total
-Tests:       15 passed, 15 total
+Test Suites: 7 passed, 7 total
+Tests:       17 passed, 17 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 
