@@ -106,6 +106,7 @@
                 "matchSnapshot": true,
                 "matchSnapshotRaw": true,
                 "failedTemplate": true,
+                "notFailedTemplate": true,
                 "lengthEqual": true,
                 "notLengthEqual": true,
                 "not": {
@@ -731,6 +732,19 @@
                   },
                   "required": [
                     "failedTemplate"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notFailedTemplate": {
+                      "type": "object",
+                      "description": "Assert that no failure occurs while templating.",
+                      "markdownDescription": "**notFailedTemplate** (object)\n\nAssert that no failure occurs while templating.",
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notFailedTemplate"
                   ]
                 }
               ]
