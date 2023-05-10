@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"encoding/base64"
 	"fmt"
 	"regexp"
 
@@ -11,8 +12,9 @@ import (
 
 // MatchRegexValidator validate value of Path match Pattern
 type MatchRegexValidator struct {
-	Path    string
-	Pattern string
+	Path         string
+	Pattern      string
+	DecodeBase64 bool
 }
 
 func (v MatchRegexValidator) failInfo(actual string, index int, not bool) []string {
@@ -70,6 +72,17 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 
 		singleActual := actual[0]
 		if s, ok := singleActual.(string); ok {
+			if v.DecodeBase64 {
+				decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+				if err != nil {
+					validateSuccess = false
+					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
+					validateErrors = append(validateErrors, errorMessage...)
+					continue
+				}
+				s = string(decodedSingleActual)
+			}
+
 			if p.MatchString(s) == context.Negative {
 				validateSuccess = false
 				errorMessage := v.failInfo(s, idx, context.Negative)
