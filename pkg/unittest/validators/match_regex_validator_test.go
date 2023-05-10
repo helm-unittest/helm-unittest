@@ -47,6 +47,18 @@ func TestMatchRegexValidatorWhenMultiLineOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestMatchRegexValidatorWithBase64WhenNOk(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	validator := MatchRegexValidator{"a.b[0].c", "^hello", true}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:	0", "Error:", "	unable to decode base64 expected content hello world"}, diff)
+}
+
 func TestMatchRegexValidatorWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegexWithBase64)
 

@@ -47,6 +47,18 @@ func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
+	manifest := makeManifest(docToTestEqual)
+	validator := EqualValidator{"a.e", "Line1\nLine2\n", true}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:	0", "Error:", "	unable to decode base64 expected content Line1 ", "	Line2"}, diff)
+}
+
 func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualWithBase64)
 	validator := EqualValidator{"a", "123", true}
