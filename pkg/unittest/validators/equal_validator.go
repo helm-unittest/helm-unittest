@@ -15,7 +15,7 @@ import (
 type EqualValidator struct {
 	Path         string
 	Value        interface{}
-	DecodeBase64 bool
+	DecodeBase64 bool `yaml:"decodeBase64"`
 }
 
 func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []string {
