@@ -46,6 +46,7 @@ metadata:
   name: {{ template "basic.fullname" . }}-db
   labels:
     app: {{ template "basic.name" . }}
+    appVersion: {{ .Chart.AppVersion | quote }}    
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}

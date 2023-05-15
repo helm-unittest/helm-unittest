@@ -142,6 +142,11 @@
                         "value": {
                           "description": "The expected value.",
                           "markdownDescription": "**value** (object) _requried_\n\nThe expected value."
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false
@@ -227,6 +232,11 @@
                         "value": {
                           "description": "The value expected not to be.",
                           "markdownDescription": "**value** (object) _required_\n\nThe value expected not to be."
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false
@@ -280,6 +290,11 @@
                           "examples": [
                             "-my-chart$"
                           ]
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false
@@ -336,6 +351,11 @@
                           "examples": [
                             "-my-chart$"
                           ]
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false

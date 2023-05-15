@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 
@@ -12,8 +13,9 @@ import (
 
 // EqualValidator validate whether the value of Path equal to Value
 type EqualValidator struct {
-	Path  string
-	Value interface{}
+	Path         string
+	Value        interface{}
+	DecodeBase64 bool `yaml:"decodeBase64"`
 }
 
 func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []string {
@@ -70,8 +72,18 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 		}
 
 		singleActual := actual[0]
-		if _, ok := singleActual.(string); ok {
-			singleActual = uniformContent(singleActual)
+		if s, ok := singleActual.(string); ok {
+			if a.DecodeBase64 {
+				decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+				if err != nil {
+					validateSuccess = false
+					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
+					validateErrors = append(validateErrors, errorMessage...)
+					continue
+				}
+				s = string(decodedSingleActual)
+			}
+			singleActual = uniformContent(s)
 		}
 
 		if reflect.DeepEqual(a.Value, singleActual) == context.Negative {

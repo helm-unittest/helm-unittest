@@ -24,13 +24,13 @@ func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not b
 	)
 }
 
-func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest, negative bool) bool {
-	if kind, ok := manifest["kind"].(string); (ok && kind == v.Kind) == negative {
+func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest) bool {
+	if kind, ok := manifest["kind"].(string); ok && kind != v.Kind {
 		// if no match, move onto next document
 		return false
 	}
 
-	if api, ok := manifest["apiVersion"].(string); (ok && api == v.APIVersion) == negative {
+	if api, ok := manifest["apiVersion"].(string); ok && api != v.APIVersion {
 		// if no match, move onto next document
 		return false
 	}
@@ -42,7 +42,7 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest,
 			return false
 		}
 
-		if (actual[0] == v.Name) == negative {
+		if actual[0] != v.Name {
 			return false
 		}
 	}
@@ -54,7 +54,7 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest,
 			return false
 		}
 
-		if (actual[0] == v.Namespace) == negative {
+		if actual[0] != v.Namespace {
 			return false
 		}
 	}
@@ -73,13 +73,13 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	validateErrors := make([]string, 0)
 
 	for _, manifest := range manifests {
-		validateSuccess = v.validateManifest(manifest, context.Negative)
+		validateSuccess = v.validateManifest(manifest)
 		if validateSuccess {
 			break
 		}
 		continue
 	}
-	if !validateSuccess {
+	if !validateSuccess && !context.Negative {
 		errorMessage := v.failInfo(v.Kind, 0, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	}
