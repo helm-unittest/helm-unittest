@@ -1,0 +1,10 @@
+suite: Full Snapshot
+templates:
+  - '*.yaml'
+tests:
+  - it: matches the snapshot
+    set:
+      autoscaling.enabled: true
+      ingress.enabled: true
+    asserts:
+      - matchSnapshot: {}
