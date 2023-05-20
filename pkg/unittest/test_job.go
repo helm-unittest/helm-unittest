@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -357,6 +358,12 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, output
 	error,
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
+
+	keys := make([]string, 0, len(outputOfFiles))
+	for k := range outputOfFiles {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
 	for file, rendered := range outputOfFiles {
 

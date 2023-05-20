@@ -1,46 +1,12 @@
-suite: test deployment that would be fail
+suite: test deployment that would be fail as it is missing the include
 values:
   - ./values/image.yaml
 templates:
   - templates/deployment.yaml
 tests:
-  - it: should fail all kinds of assertion
-    set:
-      service.internalPort: 8080
+  - it: should not render
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: nginx:stable
-      - notEqual:
-          path: spec.template.spec.containers[0].image
-          value: apache:latest
-      - matchRegex:
-          path: metadata.name
-          pattern: ^.*-foobar$
-      - notMatchRegex:
-          path: metadata.name
-          pattern: ^.*-basic$
-      - contains:
-          path: spec.template.spec.containers[0].ports
-          content:
-            containerPort: 80
-      - notContains:
-          path: spec.template.spec.containers[0].ports
-          content:
-            containerPort: 8080
-      - notExists:
-          path: spec.template
-      - exists:
-          path: spec.template.nodeSelector
-      - isNullOrEmpty:
-          path: spec.template.spec.containers[0]
-      - isNotNullOrEmpty:
-          path: spec.template.spec.containers[0].resources
-      - isKind:
-          of: Pod
-      - isAPIVersion:
-          of: v2
       - hasDocuments:
           count: 1
-      - matchSnapshot:
-          path: spec
+      - notFailedTemplate:
+          errorMessage: ""
