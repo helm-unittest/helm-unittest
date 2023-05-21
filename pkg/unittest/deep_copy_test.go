@@ -31,7 +31,7 @@ func templatesCount(targetChart *chart.Chart) int {
 }
 
 func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
-	templateAsserts := []string{}
+	templateAsserts := []string{"**"}
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)

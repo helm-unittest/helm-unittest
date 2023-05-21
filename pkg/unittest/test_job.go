@@ -268,6 +268,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, false, err
 	}
 
+	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
+	if len(t.defaultTemplatesToAssert) == 0 {
+		// Set all files
+		t.defaultTemplatesToAssert = []string{multiWildcard}
+	}
+
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 

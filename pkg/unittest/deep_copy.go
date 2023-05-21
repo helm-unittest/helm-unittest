@@ -74,11 +74,6 @@ func filterV3Templates(chartRoute string, templateToAssert []string, targetChart
 	log.WithField("filterV3Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
 	log.WithField("filterV3Templates", "templateToAssert").Debugln("expected templateToAssert:", templateToAssert)
 
-	if len(templateToAssert) == 0 {
-		// Set all files
-		templateToAssert = []string{multiWildcard}
-	}
-
 	// check templates in chart
 	for _, fileName := range templateToAssert {
 		selectedV3TemplateName := mergeFullPath(chartRoute, getTemplateFileName(fileName))

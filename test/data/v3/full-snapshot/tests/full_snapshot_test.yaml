@@ -1,6 +1,7 @@
 suite: Full Snapshot
-templates:
-  - '**'
+capabilities:
+  majorVersion: 1
+  minorVersion: 20
 tests:
   - it: matches the snapshot
     set:
