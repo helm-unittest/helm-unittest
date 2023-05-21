@@ -422,8 +422,10 @@ asserts:
 func TestV3RunJobWithFailingTemplate(t *testing.T) {
 	c, _ := loader.Load(testV3WithFailingTemplateChart)
 	manifest := `
-it: should work
+it: should load complete chart and validate configMap
 template: templates/configMap.yaml
+release:
+  name: ab
 asserts:
   - failedTemplate:
       errorMessage: no template "non-existing-named-template" associated with template "gotpl"

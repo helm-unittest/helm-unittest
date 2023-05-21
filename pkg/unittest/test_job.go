@@ -370,7 +370,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, output
 		}
 
 		switch filepath.Ext(file) {
-		case ".yaml", ".yml":
+		case ".yaml", ".yml", ".tpl":
 			manifest, err := parseYamlFile(rendered)
 			if err != nil {
 				return nil, err
