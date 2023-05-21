@@ -14,6 +14,8 @@ A test suite is a collection of tests with the same purpose and scope defined in
 
 ```yaml
 suite: test deploy and service
+values:
+  - overallValues.yaml
 templates:
   - templates/deployment.yaml
   - templates/web/service.yaml
@@ -37,7 +39,9 @@ tests:
 
 - **suite**: *string, optional*. The suite name to show on test result output.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_`) are added automatically even if it is in a templates sub-folder, you don't need to add them.
+- **values**: *array of string, optional*. The values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.
+
+- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_` or have the .tpl extension) are added automatically even if it is in a templates sub-folder, you don't need to add them.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -94,9 +98,9 @@ tests:
 
 - **it**: *string, recommended*. Define the name of the test with TDD style or any message you like.
 
-- **values**: *array of string, optional*. The values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.
+- **values**: *array of string, optional*. The values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself. This file will override existing values set in the suite values.
 
-- **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object.
+- **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object. This set will override values which are already set in the values file.
 
 - **template**: *string, optional*. **templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
 
@@ -165,8 +169,8 @@ Available assertion types are listed below:
 | Assertion Type | Parameters | Description | Example |
 |----------------|------------|-------------|---------|
 | `containsDocument` | **kind**: *string*. Expected `kind` of manifest.<br/> **apiVersion**: *string*. Expected `apiVersion` of manifest.<br/>**name**: *string, optional*. The value of the `metadata.name`.<br/>**namespace**: *string, optional*. The value of the `metadata.namespace`. | Asserts the documents rendered by the `kind` and `apiVersion` specified. | <pre>containsDocument:<br/>  kind: Deployment<br/>  apiVersion: apps/v1<br/>  name:foo<br/>  namespace: bar</pre> |
-| `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocle:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
-| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocle: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
+| `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocol:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
+| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocol: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
 | `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
 | `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
 | `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |
