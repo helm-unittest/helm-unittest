@@ -3,6 +3,7 @@ package unittest
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -37,6 +38,9 @@ func (a *Assertion) Assert(
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
 	failInfo := make([]string, 0)
+
+	// Sort or defaultTemplates to ensure a consistent output
+	sort.Strings(a.defaultTemplates)
 
 	for idx, template := range a.defaultTemplates {
 		rendered, ok := templatesResult[template]

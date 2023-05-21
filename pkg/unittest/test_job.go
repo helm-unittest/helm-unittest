@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
 
@@ -359,29 +358,20 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, output
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
-	// Sort outputfiles based on filename, to ensure a stable assertion order.
-	fileNames := make([]string, 0, len(outputOfFiles))
-	for fileName := range outputOfFiles {
-		fileNames = append(fileNames, fileName)
-	}
-	sort.Strings(fileNames)
-
-	for _, originalFile := range fileNames {
-		file := originalFile
-
-		if !strings.HasPrefix(originalFile, targetChartName) {
-			file = filepath.ToSlash(filepath.Join(targetChartName, originalFile))
+	for file, rendered := range outputOfFiles {
+		if !strings.HasPrefix(file, targetChartName) {
+			file = filepath.ToSlash(filepath.Join(targetChartName, file))
 		}
 
-		switch filepath.Ext(originalFile) {
+		switch filepath.Ext(file) {
 		case ".yaml":
-			manifest, err := parseYamlFile(outputOfFiles[originalFile])
+			manifest, err := parseYamlFile(rendered)
 			if err != nil {
 				return nil, err
 			}
 			manifestsOfFiles[file] = manifest
 		case ".txt":
-			manifestsOfFiles[file] = parseTextFile(outputOfFiles[originalFile])
+			manifestsOfFiles[file] = parseTextFile(rendered)
 		}
 
 	}
