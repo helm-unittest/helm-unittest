@@ -1,0 +1,17 @@
+suite: Full Snapshot
+capabilities:
+  majorVersion: 1
+  minorVersion: 20
+tests:
+  - it: matches the snapshot
+    set:
+      full-snapshot-sub:
+        autoscaling:
+          enabled: true
+        ingress:
+          enabled: true
+
+      autoscaling.enabled: true
+      ingress.enabled: true
+    asserts:
+      - matchSnapshot: {}

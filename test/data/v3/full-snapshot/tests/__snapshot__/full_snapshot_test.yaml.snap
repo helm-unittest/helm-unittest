@@ -1,0 +1,293 @@
+matches the snapshot:
+  1: |
+    raw: |
+      1. Get the application URL by running these commands:
+        http://chart-example.local/
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: RELEASE-NAME
+          app.kubernetes.io/name: full-snapshot-sub
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/name: full-snapshot-sub
+        spec:
+          containers:
+            - image: nginx:1.16.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: http
+              name: full-snapshot-sub
+              ports:
+                - containerPort: 80
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: http
+              resources: {}
+              securityContext: {}
+          securityContext: {}
+          serviceAccountName: RELEASE-NAME-full-snapshot-sub
+  3: |
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub
+    spec:
+      maxReplicas: 100
+      metrics:
+        - resource:
+            name: cpu
+            targetAverageUtilization: 80
+          type: Resource
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: RELEASE-NAME-full-snapshot-sub
+  4: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub
+    spec:
+      rules:
+        - host: chart-example.local
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: RELEASE-NAME-full-snapshot-sub
+                    port:
+                      number: 80
+                path: /
+                pathType: ImplementationSpecific
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub
+    spec:
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/name: full-snapshot-sub
+      type: ClusterIP
+  6: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub
+  7: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      annotations:
+        helm.sh/hook: test
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot-sub
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-sub-0.1.0
+      name: RELEASE-NAME-full-snapshot-sub-test-connection
+    spec:
+      containers:
+        - args:
+            - RELEASE-NAME-full-snapshot-sub:80
+          command:
+            - wget
+          image: busybox
+          name: wget
+      restartPolicy: Never
+  8: |
+    raw: |
+      1. Get the application URL by running these commands:
+        http://chart-example.local/
+  9: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: RELEASE-NAME
+          app.kubernetes.io/name: full-snapshot
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/name: full-snapshot
+        spec:
+          containers:
+            - image: nginx:1.16.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: http
+              name: full-snapshot
+              ports:
+                - containerPort: 80
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: http
+              resources: {}
+              securityContext: {}
+          securityContext: {}
+          serviceAccountName: RELEASE-NAME-full-snapshot
+  10: |
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot
+    spec:
+      maxReplicas: 100
+      metrics:
+        - resource:
+            name: cpu
+            targetAverageUtilization: 80
+          type: Resource
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: RELEASE-NAME-full-snapshot
+  11: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot
+    spec:
+      rules:
+        - host: chart-example.local
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: RELEASE-NAME-full-snapshot
+                    port:
+                      number: 80
+                path: /
+                pathType: ImplementationSpecific
+  12: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot
+    spec:
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/name: full-snapshot
+      type: ClusterIP
+  13: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot
+  14: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      annotations:
+        helm.sh/hook: test
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: full-snapshot
+        app.kubernetes.io/version: 1.16.0
+        helm.sh/chart: full-snapshot-0.1.0
+      name: RELEASE-NAME-full-snapshot-test-connection
+    spec:
+      containers:
+        - args:
+            - RELEASE-NAME-full-snapshot:80
+          command:
+            - wget
+          image: busybox
+          name: wget
+      restartPolicy: Never

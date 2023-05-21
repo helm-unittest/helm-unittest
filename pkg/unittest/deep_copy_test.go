@@ -31,7 +31,7 @@ func templatesCount(targetChart *chart.Chart) int {
 }
 
 func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
-	templateAsserts := []string{}
+	templateAsserts := []string{"**"}
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
@@ -46,6 +46,61 @@ func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
 	// Validate loaded chart
 	assert.NotNil(t, sut)
 	assert.Equal(t, 14, templatesCount)
+}
+
+func TestCopyHelmChartSingleDeployment(t *testing.T) {
+	templateAsserts := []string{"templates/deployment.yaml"}
+
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3GlobalDoubleChart)
+	log.SetOutput(os.Stdout)
+
+	// Copy
+	sut := CopyV3Chart(initialChart.Name(), templateAsserts, initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 1, templatesCount)
+}
+
+func TestCopyHelmChartSingleSubChartInRootDeployment(t *testing.T) {
+	templateAsserts := []string{"charts/postgresql/templates/deployment.yaml"}
+
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	log.SetOutput(os.Stdout)
+
+	// Copy
+	sut := CopyV3Chart(initialChart.Name(), templateAsserts, initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 1, templatesCount)
+}
+
+func TestCopyHelmChartSingleSubChartInSubChartDeployment(t *testing.T) {
+	templateAsserts := []string{"templates/deployment.yaml"}
+
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	log.SetOutput(os.Stdout)
+	chartRoute := filepath.ToSlash(filepath.Join(initialChart.Name(), "charts", "postgresql"))
+
+	// Copy
+	sut := CopyV3Chart(chartRoute, templateAsserts, initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 1, templatesCount)
 }
 
 func TestCopyHelmChartWithSubSubChartsAllConfigMapFilter(t *testing.T) {

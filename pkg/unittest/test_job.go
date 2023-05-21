@@ -268,6 +268,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, false, err
 	}
 
+	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
+	if len(t.defaultTemplatesToAssert) == 0 {
+		// Set all files
+		t.defaultTemplatesToAssert = []string{multiWildcard}
+	}
+
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
@@ -359,13 +365,12 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, output
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
-
 		if !strings.HasPrefix(file, targetChartName) {
 			file = filepath.ToSlash(filepath.Join(targetChartName, file))
 		}
 
 		switch filepath.Ext(file) {
-		case ".yaml":
+		case ".yaml", ".yml", ".tpl":
 			manifest, err := parseYamlFile(rendered)
 			if err != nil {
 				return nil, err

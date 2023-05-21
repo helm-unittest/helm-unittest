@@ -1,9 +1,12 @@
 0.3.3 / 
 ===================
+- Fix template order which result in stable assertion validations (resolves #133)
 - Fix negative containsDocument validation when an empty document is found (resolves #145)
-- Update examples to validate multiple templates (resolves #142)
-
-- Update packages to latest version
+- Fix template filter, to only load templates that are defined (resolves #153)
+- Fix loading tpl files and yml files (resolves #158)
+- Update examples to validate multiple templates (resolves #142, resolves #149)
+- Update documentation to use values files in suite (resolves #155)
+- Update packages to latest patch versions
 
 0.3.2 / 2023-04-17
 ===================

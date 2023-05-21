@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	v3chart "helm.sh/helm/v3/pkg/chart"
 )
 
@@ -12,6 +14,7 @@ const templatePrefix string = "templates"
 const subchartPrefix string = "charts"
 const multiWildcard string = "**"
 const singleWildcard string = "*"
+const pathSeparator string = "/"
 
 // getTemplateFileName,
 // Validate if prefix templates is not there,
@@ -24,6 +27,19 @@ func getTemplateFileName(fileName string) string {
 		// Within templates unix separators are always used.
 		return filepath.ToSlash(filepath.Join(templatePrefix, fileName))
 	}
+	return fileName
+}
+
+func mergeFullPath(chartRoute, fileName string) string {
+	chartRouteParts := strings.Split(chartRoute, pathSeparator)
+
+	for i := len(chartRouteParts); i > 0; i-- {
+		chartRoutePart := chartRouteParts[i-1]
+		if !strings.Contains(fileName, chartRoutePart) {
+			fileName = filepath.ToSlash(filepath.Join(chartRoutePart, fileName))
+		}
+	}
+
 	return fileName
 }
 
@@ -54,18 +70,13 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 // filterV3Templates, Filter the V3Templates with only the partials and selected test files.
 func filterV3Templates(chartRoute string, templateToAssert []string, targetChart *v3chart.Chart) []*v3chart.File {
 	filteredV3Template := make([]*v3chart.File, 0)
-	selectedV3TemplateName := chartRoute
 
-	if len(templateToAssert) == 0 {
-		// Set all files
-		templateToAssert = []string{multiWildcard}
-	}
+	log.WithField("filterV3Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
+	log.WithField("filterV3Templates", "templateToAssert").Debugln("expected templateToAssert:", templateToAssert)
 
 	// check templates in chart
 	for _, fileName := range templateToAssert {
-		if strings.Contains(fileName, singleWildcard) {
-			selectedV3TemplateName = filepath.ToSlash(filepath.Join(targetChart.Root().Name(), getTemplateFileName(fileName)))
-		}
+		selectedV3TemplateName := mergeFullPath(chartRoute, getTemplateFileName(fileName))
 
 		// Set selectedV3TemplateName as regular expression to search
 		selectedV3TemplateNamePattern := strings.ReplaceAll(selectedV3TemplateName, multiWildcard, "[a-zA-Z/\\.]+")

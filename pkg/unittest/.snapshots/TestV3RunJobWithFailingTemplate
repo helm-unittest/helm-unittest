@@ -1,5 +1,5 @@
 (*results.TestJobResult)({
-  DisplayName: (string) (len=11) "should work",
+  DisplayName: (string) (len=49) "should load complete chart and validate configMap",
   Index: (int) 0,
   Passed: (bool) true,
   ExecError: (error) <nil>,

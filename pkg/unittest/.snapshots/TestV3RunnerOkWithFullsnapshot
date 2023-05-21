@@ -1,0 +1,14 @@
+
+### Chart [ full-snapshot ] ../../test/data/v3/full-snapshot
+
+
+ PASS  Full Snapshot	../../test/data/v3/full-snapshot/tests/full_snapshot_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshot:    14 passed, 14 total
+Time:        XX.XXXms
+
+
