@@ -25,6 +25,7 @@ type testOptions struct {
 	valuesFiles    []string
 	outputFile     string
 	outputType     string
+	excludeCharts  []string
 }
 
 var testConfig = testOptions{}
@@ -82,6 +83,7 @@ details about how to write tests.
 			TestFiles:      testConfig.testFiles,
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
+			ExcludedCharts: testConfig.excludeCharts,
 		}
 
 		log.SetFormatter(&log.TextFormatter{
@@ -160,4 +162,7 @@ func init() {
 		&testConfig.debugLogging, "debug", "d", false,
 		"enable debug logging",
 	)
+
+	cmd.PersistentFlags().StringArrayVarP(&testConfig.excludeCharts, "exclude-charts", "e", []string{},
+		"exclude-charts, a list of charts to exclude from unit testing")
 }
