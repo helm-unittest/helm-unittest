@@ -112,3 +112,14 @@ func TestNewFormatterWithOutputFileAndOutputTypeXUnit(t *testing.T) {
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)
 }
+
+func TestNewFormatterWithOutputFileAndOutputTypeSonar(t *testing.T) {
+	assert := assert.New(t)
+	outputType := "Sonar"
+	given := testOutputFile
+	givenDirectory := filepath.Dir(given)
+	defer os.Remove(givenDirectory)
+	sut := NewFormatter(given, outputType)
+	assert.NotNil(sut)
+	assert.DirExists(givenDirectory)
+}

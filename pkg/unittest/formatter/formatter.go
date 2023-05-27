@@ -41,6 +41,10 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.3f", d.Seconds())
 }
 
+func formatDurationMilliSeconds(d time.Duration) string {
+	return fmt.Sprintf("%d", d.Milliseconds())
+}
+
 func writeContentToFile(noXMLHeader bool, content interface{}, w io.Writer) error {
 
 	// to xml
@@ -84,6 +88,8 @@ func NewFormatter(outputFile, outputType string) Formatter {
 			return NewNUnitReportXML()
 		case "xunit":
 			return NewXUnitReportXML()
+		case "sonar":
+			return NewSonarReportXML()
 		default:
 			return nil
 		}
