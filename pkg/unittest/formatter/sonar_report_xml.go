@@ -35,16 +35,22 @@ type SonarTestCase struct {
 // SonarSkipped is set when a test case was skipped.
 type SonarSkipped struct {
 	XMLName xml.Name `xml:"skipped"`
+	Message string   `xml:"message,attr"`
+	Reason  string   `xml:",cdata"`
 }
 
 // SonarError is set when a test case have an error.
 type SonarError struct {
-	XMLName xml.Name `xml:"error"`
+	XMLName    xml.Name `xml:"error"`
+	Message    string   `xml:"message,attr"`
+	Stacktrace string   `xml:",cdata"`
 }
 
 // SonarFailure is set when a test case fails.
 type SonarFailure struct {
-	XMLName xml.Name `xml:"failure"`
+	XMLName    xml.Name `xml:"failure"`
+	Message    string   `xml:"message,attr"`
+	Stacktrace string   `xml:",cdata"`
 }
 
 type SonarReportXML struct{}
@@ -55,7 +61,7 @@ func NewSonarReportXML() Formatter {
 }
 
 // WriteTestOutput writes a Sonar xml representation of the given report
-// in the format described at https://docs.Sonar.org/latest/analyzing-source-code/test-coverage/generic-test-data/#generic-test-execution
+// in the format described at https://docs.sonarqube.org/8.9/analyzing-source-code/generic-test-data/
 func (j *SonarReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteResult, noXMLHeader bool, w io.Writer) error {
 	suites := SonarTestExecutions{}
 	suites.Version = 1
@@ -70,9 +76,9 @@ func (j *SonarReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 
 			if !test.Passed {
 				if test.ExecError != nil {
-					testCase.Error = j.createSonarError()
+					testCase.Error = j.createSonarError("Error", test.ExecError.Error())
 				} else {
-					testCase.Failure = j.createSonarFailure()
+					testCase.Failure = j.createSonarFailure("Failed", test.Stringify())
 				}
 			}
 
@@ -108,16 +114,25 @@ func (j *SonarReportXML) createSonarTestCase(testJobResult *results.TestJobResul
 	}
 }
 
-func (j *SonarReportXML) createSonarError() *SonarError {
-	return &SonarError{}
+func (j *SonarReportXML) createSonarError(message string, stacktrace string) *SonarError {
+	return &SonarError{
+		Message:    message,
+		Stacktrace: stacktrace,
+	}
 }
 
-func (j *SonarReportXML) createSonarFailure() *SonarFailure {
-	return &SonarFailure{}
+func (j *SonarReportXML) createSonarFailure(message string, stacktrace string) *SonarFailure {
+	return &SonarFailure{
+		Message:    message,
+		Stacktrace: stacktrace,
+	}
 }
 
 /* skip status currently not supported
-func (j *SonarReportXML) createSonarSkipped() *SonarSkipped {
-	return &SonarSkipped{}
+func (j *SonarReportXML) createSonarSkipped(message string, reason string) *SonarSkipped {
+	return &SonarSkipped{
+		Message:    message,
+		Reason: reason,
+	}
 }
 */
