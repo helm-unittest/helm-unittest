@@ -288,7 +288,7 @@ cd helm-unittest
 And please make CI passed when request a PR which would check following things:
 
 - `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
-- `go test ./unittest/...` passed.
+- `go test ./pkg/unittest/...` passed.
 
 In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
 
