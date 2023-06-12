@@ -148,7 +148,7 @@ func init() {
 
 	cmd.PersistentFlags().StringVarP(
 		&testConfig.outputType, "output-type", "t", "XUnit",
-		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit)",
+		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit, Sonar)",
 	)
 
 	cmd.PersistentFlags().BoolVarP(
