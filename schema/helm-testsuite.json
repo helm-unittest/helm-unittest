@@ -797,14 +797,14 @@
       "markdownDescription": "**capabilities** (object) _optional_\n\nDefine the `{{ .Capabilities }}` object.",
       "properties": {
         "majorVersion": {
-          "type": "string",
+          "type": "integer",
           "description": "The kubernetes major version, default to the major version which is set by helm.",
-          "markdownDescription": "**majorVersion** (string) _optional_\n\nThe kubernetes major version, default to the major version which is set by helm."
+          "markdownDescription": "**majorVersion** (integer) _optional_\n\nThe kubernetes major version, default to the major version which is set by helm."
         },
         "minorVersion": {
-          "type": "string",
+          "type": "integer",
           "description": "The kubernetes minor version, default to the minor version which is set by helm.",
-          "markdownDescription": "**minorVersion** (string) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
+          "markdownDescription": "**minorVersion** (integer) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
         },
         "apiVersions": {
           "type": "array",
@@ -856,9 +856,9 @@
           "markdownDescription": "**namespace** (string) _optional_\n\nThe namespace which release be installed to, default to `\"NAMESPACE\"`."
         },
         "revision": {
-          "type": "string",
+          "type": "integer",
           "description": "The revision of current build, default to 0.",
-          "markdownDescription": "**revision** (string) _optional_\n\nThe revision of current build, default to `0`."
+          "markdownDescription": "**revision** (integer) _optional_\n\nThe revision of current build, default to `0`."
         },
         "upgrade": {
           "type": "boolean",
