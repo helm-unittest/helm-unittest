@@ -25,17 +25,18 @@ func TestEqualRawValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestEqualRawValidatorWhenNegativeAndOk(t *testing.T) {
-	manifest := makeManifest(docToTestEqualRaw)
+func TestEqualRawValidatorWhenEmptyNOk(t *testing.T) {
+	validator := EqualRawValidator{"This is a NOTES.txt document."}
 
-	validator := EqualRawValidator{"Invalid text."}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:     []common.K8sManifest{manifest},
-		Negative: true,
+		Docs: []common.K8sManifest{},
 	})
 
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"\tdocumentIndex 0 out of range",
+	}, diff)
 }
 
 func TestEqualRawValidatorWhenFail(t *testing.T) {

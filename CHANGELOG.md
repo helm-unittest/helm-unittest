@@ -1,8 +1,13 @@
-0.3.3 / 
+0.3.4 / 2023-06-26
+===================
+- Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
+
+0.3.3 / 2023-05-21
 ===================
 - Fix template order which result in stable assertion validations (resolves #133)
 - Fix negative containsDocument validation when an empty document is found (resolves #145)
 - Fix template filter, to only load templates that are defined (resolves #153)
+- Fix JUnit error output (resolves #154)
 - Fix loading tpl files and yml files (resolves #158)
 - Update examples to validate multiple templates (resolves #142, resolves #149)
 - Update documentation to use values files in suite (resolves #155)

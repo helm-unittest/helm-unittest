@@ -20,7 +20,8 @@ func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not b
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
 		index,
-		fmt.Sprintf("Kind = %s, apiVersion = %s", v.Kind, v.APIVersion),
+		fmt.Sprintf("Kind = %s, apiVersion = %s, Name = %s, Namespace = %s",
+			v.Kind, v.APIVersion, v.Name, v.Namespace),
 	)
 }
 
@@ -72,18 +73,21 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for _, manifest := range manifests {
-		validateSuccess = v.validateManifest(manifest)
-		if validateSuccess {
-			break
+	for idx, manifest := range manifests {
+		singleSuccess := v.validateManifest(manifest)
+		validateSuccess = determineSuccess(idx, validateSuccess, singleSuccess && !context.Negative)
+
+		if !singleSuccess && !context.Negative ||
+			singleSuccess && context.Negative {
+			errorMessage := v.failInfo(v.Kind, idx, context.Negative)
+			validateErrors = append(validateErrors, errorMessage...)
 		}
-		continue
 	}
-	if !validateSuccess && !context.Negative {
+
+	if len(manifests) == 0 && !context.Negative {
 		errorMessage := v.failInfo(v.Kind, 0, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	}
-	validateSuccess = determineSuccess(1, validateSuccess, true)
 
 	return validateSuccess, validateErrors
 }
