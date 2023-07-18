@@ -67,32 +67,9 @@ verifySupported() {
 
 # getDownloadURL checks the latest available version.
 getDownloadURL() {
-  # Use the GitHub API to find the latest version for this project.
-  local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
-  if [ -z "$HELM_PLUGIN_UPDATE" ]; then
-    local version=$(git describe --tags --exact-match 2>/dev/null)
-    if [ -n "$version" ]; then
-      latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
-    fi
-  fi
-  echo "Retrieving $latest_url"
-  if type "curl" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-    # Backward compatibility when arch type is not yet used.
-    if [ -z "$DOWNLOAD_URL" ]; then
-      echo "No download_url found only searching for $OS"
-      DOWNLOAD_URL=$(curl -sL "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-    fi
-    PROJECT_CHECKSUM=$(curl -sL "$latest_url" | grep "checksum" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-  elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS-$ARCH" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-    # Backward compatibility when arch type is not yet used.
-    if [ -z "$DOWNLOAD_URL" ]; then
-      echo "No download_url found only searching for $OS"
-      DOWNLOAD_URL=$(wget -q -O - "$latest_url" | grep "$OS" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-    fi
-    PROJECT_CHECKSUM=$(wget -q -O - "$latest_url" | grep "checksum" | awk '/\"browser_download_url\":/{gsub(/[,\"]/,"", $2); print $2}' 2>/dev/null)
-  fi
+  local version
+  version="$(git describe --tags --abbrev=0)"
+  DOWNLOAD_URL="https://github.com/helm-unittest/helm-unittest/releases/download/${version}/helm-unittest-${OS}-${ARCH}-${version#v}.tgz"
 }
 
 # downloadFile downloads the latest binary package and also the checksum
