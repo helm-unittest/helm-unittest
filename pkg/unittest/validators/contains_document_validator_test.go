@@ -37,7 +37,11 @@ func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:	0", "Expected to contain document:", "	Kind = Service, apiVersion = v1"}, diff)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
+	}, diff)
 }
 
 func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
@@ -57,7 +61,7 @@ func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestContainsDocumentValidatorWhenOk(t *testing.T) {
+func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Service",
 		"v1",
@@ -70,8 +74,34 @@ func TestContainsDocumentValidatorWhenOk(t *testing.T) {
 			makeManifest(docToTestContainsDocument2)},
 	})
 
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
+	}, diff)
+}
+
+func TestContainsDocumentValidatorWhenNotAllDocumentsAreOkInverse(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"v1",
+		"bar",
+		"foo",
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Index: -1,
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2)},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t1",
+		"Expected NOT to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
+	}, diff)
 }
 
 func TestContainsDocumentValidatorIndexWhenOk(t *testing.T) {
@@ -101,8 +131,7 @@ func TestContainsDocumentValidatorNoNameWhenOk(t *testing.T) {
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
-		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
-			makeManifest(docToTestContainsDocument2)},
+		Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument2)},
 	})
 
 	assert.True(t, pass)
@@ -119,8 +148,7 @@ func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
-		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
-			makeManifest(docToTestContainsDocument2)},
+		Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument1)},
 	})
 
 	assert.True(t, pass)
@@ -145,6 +173,32 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"v1",
+		"",
+		"",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Index: -1,
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2)},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Expected NOT to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = , Namespace =",
+		"DocumentIndex:\t1",
+		"Expected NOT to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = , Namespace =",
+	}, diff)
+}
+
 func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Deployment",
@@ -163,7 +217,10 @@ func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:\t0",
 		"Expected to contain document:",
-		"\tKind = Deployment, apiVersion = apps/v1",
+		"\tKind = Deployment, apiVersion = apps/v1, Name = foo, Namespace = bar",
+		"DocumentIndex:\t1",
+		"Expected to contain document:",
+		"\tKind = Deployment, apiVersion = apps/v1, Name = foo, Namespace = bar",
 	}, diff)
 }
 
@@ -185,6 +242,9 @@ func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:\t0",
 		"Expected to contain document:",
-		"\tKind = Service, apiVersion = apps/v1",
+		"\tKind = Service, apiVersion = apps/v1, Name = foo, Namespace = bar",
+		"DocumentIndex:\t1",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = apps/v1, Name = foo, Namespace = bar",
 	}, diff)
 }
