@@ -46,12 +46,12 @@ tests:
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
-  - **revision**: *string, optional*. The revision of current build, default to `0`.
+  - **revision**: *int, optional*. The revision of current build, default to `0`.
   - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
-  - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
-  - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
+  - **majorVersion**: *int, optional*. The kubernetes major version, default to the major version which is set by helm.
+  - **minorVersion**: *int, optional*. The kubernetes minor version, default to the minor version which is set by helm.
   - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
 
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
@@ -109,12 +109,12 @@ tests:
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
   - **namespace**: *string, optional*. The namespace which release be installed to, default to `"NAMESPACE"`.
-  - **revision**: *string, optional*. The revision of current build, default to `0`.
+  - **revision**: *int, optional*. The revision of current build, default to `0`.
   - **upgrade**: *bool, optional*. Whether the build is an upgrade, default to `false`.
 
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
-  - **majorVersion**: *string, optional*. The kubernetes major version, default to the major version which is set by helm.
-  - **minorVersion**: *string, optional*. The kubernetes minor version, default to the minor version which is set by helm.
+  - **majorVersion**: *int, optional*. The kubernetes major version, default to the major version which is set by helm.
+  - **minorVersion**: *int, optional*. The kubernetes minor version, default to the minor version which is set by helm.
   - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
 
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.

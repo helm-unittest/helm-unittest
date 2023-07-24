@@ -1,6 +1,7 @@
 0.3.4 / 2023-07-26
 ===================
 - Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
+- Fix schema definition types (resolves #174)
 - Update packages to latest patch versions
 
 0.3.3 / 2023-05-21
