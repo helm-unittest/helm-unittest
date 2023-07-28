@@ -93,7 +93,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a.Equal("test deployment", suite.Name)
 	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
-	a.Equal(2, len(suite.Values)) // Expect images and additional_values.yaml
+	a.Equal(1, len(suite.Values)) // Expect services_values.yaml
 }
 
 func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
