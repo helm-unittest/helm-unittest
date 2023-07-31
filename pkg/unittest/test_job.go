@@ -403,7 +403,7 @@ func (t *TestJob) runAssertions(
 	snapshotComparer validators.SnapshotComparer,
 	renderSucceed bool, renderError error, failfast bool,
 ) (bool, []*results.AssertionResult) {
-	testPass := true
+	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
 
 	for idx, assertion := range t.Assertions {
@@ -416,6 +416,11 @@ func (t *TestJob) runAssertions(
 		)
 
 		assertsResult = append(assertsResult, result)
+
+		if idx == 0 {
+			testPass = result.Passed
+		}
+
 		testPass = testPass && result.Passed
 
 		if !testPass && failfast {

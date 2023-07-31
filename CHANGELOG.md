@@ -2,7 +2,11 @@
 ===================
 - Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
 - Fix schema definition types (resolves #174)
+- Fix validation of required fields in suite (resolves #178)
+- Remove GitHub API usage during instal (credits @raxod502-plaid, resolves #181)
+- Enable suite-level set block (resolves #155)
 - Update packages to latest patch versions
+- Update documentation
 
 0.3.3 / 2023-05-21
 ===================

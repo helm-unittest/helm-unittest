@@ -1,0 +1,23 @@
+(*results.TestSuiteResult)({
+  DisplayName: (string) (len=22) "validate empty asserts",
+  FilePath: (string) "",
+  Passed: (bool) false,
+  ExecError: (error) <nil>,
+  TestsResult: ([]*results.TestJobResult) (len=1) {
+    (*results.TestJobResult)({
+      DisplayName: (string) (len=27) "should fail with no asserts",
+      Index: (int) 0,
+      Passed: (bool) false,
+      ExecError: (error) <nil>,
+      AssertsResult: ([]*results.AssertionResult) {
+      },
+      Duration: (time.Duration) 0s
+    })
+  },
+  SnapshotCounting: (struct { Total uint; Failed uint; Created uint; Vanished uint }) {
+    Total: (uint) 0,
+    Failed: (uint) 0,
+    Created: (uint) 0,
+    Vanished: (uint) 0
+  }
+})

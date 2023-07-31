@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -32,6 +33,11 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	yamlDecoder := yaml.NewDecoder(strings.NewReader(string(content)))
 	yamlDecoder.KnownFields(strict)
 	if err := yamlDecoder.Decode(&suite); err != nil {
+		return &suite, err
+	}
+
+	err = suite.validateTestSuite()
+	if err != nil {
 		return &suite, err
 	}
 
@@ -170,7 +176,7 @@ func (s *TestSuite) runV3TestJobs(
 	cache *snapshot.Cache,
 	failfast bool,
 ) (bool, []*results.TestJobResult) {
-	suitePass := true
+	suitePass := false
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
 	for idx, testJob := range s.Tests {
@@ -182,13 +188,29 @@ func (s *TestSuite) runV3TestJobs(
 		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
-		if !jobResult.Passed {
-			suitePass = false
+		if idx == 0 {
+			suitePass = jobResult.Passed
 		}
+
+		suitePass = suitePass && jobResult.Passed
 
 		if !suitePass && failfast {
 			break
 		}
 	}
 	return suitePass, jobResults
+}
+
+func (s *TestSuite) validateTestSuite() error {
+	if len(s.Tests) == 0 {
+		return fmt.Errorf("no tests found")
+	}
+
+	for _, testJob := range s.Tests {
+		if len(testJob.Assertions) == 0 {
+			return fmt.Errorf("no asserts found")
+		}
+	}
+
+	return nil
 }
