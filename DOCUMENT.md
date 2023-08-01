@@ -16,6 +16,8 @@ A test suite is a collection of tests with the same purpose and scope defined in
 suite: test deploy and service
 values:
   - overallValues.yaml
+set:
+  image.pullPolicy: Always
 templates:
   - templates/deployment.yaml
   - templates/web/service.yaml
@@ -40,6 +42,8 @@ tests:
 - **suite**: *string, optional*. The suite name to show on test result output.
 
 - **values**: *array of string, optional*. The values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.
+
+- **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object. This set will override values which are already set in the values file.
 
 - **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_` or have the .tpl extension) are added automatically even if it is in a templates sub-folder, you don't need to add them.
 

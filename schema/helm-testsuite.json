@@ -15,6 +15,9 @@
     "values": {
       "$ref": "#/definitions/values"
     },
+    "set": {
+      "$ref": "#/definitions/set"
+    },
     "templates": {
       "$ref": "#/definitions/templates"
     },
@@ -43,18 +46,10 @@
             "markdownDescription": "**it** (string) _recommended_\n\nDefine the name of the test with TDD style or any message you like."
           },
           "values": {
-            "type": "array",
-            "description": "The values files used to renders the chart, think it as the -f, --values options of helm install. The file path should be the relative path from the test suite file itself.",
-            "markdownDescription": "**values** (array<string>) _optional_\n\nThe values files used to renders the chart, think it as the `-f, --values` options of `helm install`. The file path should be the relative path from the test suite file itself.",
-            "items": {
-              "type": "string"
-            }
+            "$ref": "#/definitions/values"
           },
           "set": {
-            "type": "object",
-            "description": "Set the values directly in the suite file. The key is the value path with the format just like --set option of helm install, for example image.pullPolicy. The value is anything you want to set to the path specified by the key, which can be even an array or an object.",
-            "markdownDescription": "**set** (object) _optional_\n\nSet the values directly in the suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`.\n\nThe value is anything you want to set to the path specified by the key, which can be even an array or an object.",
-            "additionalProperties": true
+            "$ref": "#/definitions/set"
           },
           "template": {
             "type": "string",
@@ -875,6 +870,12 @@
       "items": {
         "type": "string"
       }
+    },
+    "set": {
+      "type": "object",
+      "description": "Set the values directly in the suite file. The key is the value path with the format just like --set option of helm install, for example image.pullPolicy. The value is anything you want to set to the path specified by the key, which can be even an array or an object.",
+      "markdownDescription": "**set** (object) _optional_\n\nSet the values directly in the suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`.\n\nThe value is anything you want to set to the path specified by the key, which can be even an array or an object.",
+      "additionalProperties": true
     },
     "values": {
       "type": "array",

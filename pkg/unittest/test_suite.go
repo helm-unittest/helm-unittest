@@ -45,6 +45,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 type TestSuite struct {
 	Name      string `yaml:"suite"`
 	Values    []string
+	Set       map[string]interface{}
 	Templates []string
 	Release   struct {
 		Name      string
@@ -100,6 +101,8 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
 		s.polishChartSettings(test)
+
+		test.globalSet = s.Set
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)

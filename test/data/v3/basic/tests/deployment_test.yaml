@@ -1,6 +1,9 @@
 suite: test deployment
-values:
-  - ./values/image.yaml
+set:
+  image:
+    repository: apache
+    tag: latest
+    pullPolicy: Always
 templates:
   - templates/configmap.yaml
   - templates/deployment.yaml

@@ -140,6 +140,8 @@ type TestJob struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
+	// global set values
+	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
 	// like "parant-chart", "parent-charts/charts/child-chart"
 	chartRoute string
@@ -219,6 +221,16 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
+	}
+
+	// Merge global set values before merging the other set values
+	for path, values := range t.globalSet {
+		setMap, err := valueutils.BuildValueOfSetPath(values, path)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 
 	for path, values := range t.Set {
