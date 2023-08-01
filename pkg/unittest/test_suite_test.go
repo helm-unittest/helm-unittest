@@ -75,6 +75,38 @@ func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 }
 
+func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
+
+	a.NotNil(err)
+	a.EqualError(err, "no tests found")
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+}
+
+func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
+
+	a.NotNil(err)
+	a.EqualError(err, "no asserts found")
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
+func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
+	a := assert.New(t)
+	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
+
+	a.NotNil(err)
+	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
+	a.Equal("test deployment", suite.Name)
+	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+}
+
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
@@ -94,6 +126,22 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 	a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+}
+
+func TestV3RunSuiteWithNoAssertsShouldFail(t *testing.T) {
+	suiteDoc := `
+suite: validate empty asserts
+tests:
+  - it: should fail with no asserts
+    asserts:
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
+	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, &results.TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, false, "validate empty asserts", 1, 0, 0, 0, 0)
 }
 
 func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {

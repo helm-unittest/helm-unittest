@@ -78,7 +78,7 @@ func (a *Assertion) Assert(
 		}
 
 		if idx == 0 {
-			assertionPassed = true
+			assertionPassed = validatePassed
 		}
 
 		assertionPassed = assertionPassed && validatePassed
