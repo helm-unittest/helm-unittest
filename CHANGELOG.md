@@ -1,5 +1,6 @@
-0.3.4 / 2023-07-26
+0.3.4 / 2023-08-01
 ===================
+- Fix only output JUnit error when tests are failed (resolves #154)
 - Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
 - Fix schema definition types (resolves #174)
 - Fix validation of required fields in suite (resolves #178)
