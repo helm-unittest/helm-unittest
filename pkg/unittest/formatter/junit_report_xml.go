@@ -86,15 +86,15 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		for _, test := range testSuiteResult.TestsResult {
 			testCase := j.createJUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
-			if test.ExecError != nil {
-				ts.Errors++
-				testCase.Error = j.createJUnitFailure("Error", "", test.ExecError.Error())
-			}
-
 			// Write when a test is failed
 			if !test.Passed && test.ExecError == nil {
 				ts.Failures++
 				testCase.Failure = j.createJUnitFailure("Failed", "", test.Stringify())
+			}
+
+			if !test.Passed && test.ExecError != nil {
+				ts.Errors++
+				testCase.Error = j.createJUnitFailure("Error", "", test.ExecError.Error())
 			}
 
 			ts.TestCases = append(ts.TestCases, testCase)
