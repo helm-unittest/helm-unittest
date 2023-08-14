@@ -118,6 +118,7 @@ defined in test suite files.
 ```
       --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
       --strict                 strict parse the testsuites (default false)
+  -d, --debug                  enable debug logging (default false)
   -v, --values stringArray     absolute or glob paths of values files location to override helmchart values
   -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
   -q, --failfast               direct quit testing, when a test is failed (default false)
@@ -133,7 +134,7 @@ Now JsonPath is supported for mappings and arrays.
 This makes it possible to find items in an array, based on JsonPath.
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
 
-Due to the change to JsonPath, the map keys in `path` containing periods (`.`) are now supported with the use of `""`:
+Due to the change to JsonPath, the map keys in `path` containing periods (`.`) or special characters (`/`) are now supported with the use of `""`:
 
 ```yaml
 - equal:

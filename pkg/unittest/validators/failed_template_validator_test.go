@@ -39,6 +39,35 @@ func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestFailedTemplateValidatorWhenEmptyFail(t *testing.T) {
+	validator := FailedTemplateValidator{"A field should not be required"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: false,
+		Index:    -1,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Expected to equal:",
+		"	A field should not be required",
+		"Actual:",
+		"	No failed document",
+	}, diff)
+}
+
+func TestFailedTemplateValidatorWhenEmptyNegativeAndOk(t *testing.T) {
+	validator := FailedTemplateValidator{"A field should not be required"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+		Index:    -1,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
 
