@@ -2,7 +2,7 @@
 ### Chart [ with-files ] ../../test/data/v3/with-files
 
 
- PASS  test loading of files	../../test/data/v3/with-files/tests/filestemplate_test.yaml
+ PASS  test loading of files	../../test/data/v3/with-files/tests/files-template_test.yaml
 
 
 Charts:      1 passed, 1 total

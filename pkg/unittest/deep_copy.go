@@ -79,8 +79,8 @@ func filterV3Templates(chartRoute string, templateToAssert []string, targetChart
 		selectedV3TemplateName := mergeFullPath(chartRoute, getTemplateFileName(fileName))
 
 		// Set selectedV3TemplateName as regular expression to search
-		selectedV3TemplateNamePattern := strings.ReplaceAll(selectedV3TemplateName, multiWildcard, "[a-zA-Z/\\.]+")
-		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, singleWildcard, "[a-zA-Z/\\.]*")
+		selectedV3TemplateNamePattern := strings.ReplaceAll(selectedV3TemplateName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
+		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, singleWildcard, "[0-9a-zA-Z_\\-_/\\.]*")
 		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, ".", "\\.")
 
 		for _, template := range targetChart.Templates {
