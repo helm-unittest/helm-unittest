@@ -8,7 +8,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.metadata.annotations
-          value: 
+          value:
             foo: bar
             localKey: localValue
 

@@ -285,9 +285,18 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		// Set all files
 		t.defaultTemplatesToAssert = []string{multiWildcard}
 	}
-
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
+	var filteredChart *v3chart.Chart
+	if t.chartRoute != "" {
+		var templatesToAssert []string
+		for _, template := range t.defaultTemplatesToAssert {
+			fp := mergeFullPath(t.chartRoute, template)[len(targetChart.Name())+1:]
+			templatesToAssert = append(templatesToAssert, fp)
+		}
+		filteredChart = CopyV3Chart(targetChart.Name(), templatesToAssert, targetChart)
+	} else {
+		filteredChart = CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
+	}
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 

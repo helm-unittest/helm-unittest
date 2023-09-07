@@ -35,7 +35,7 @@ func mergeFullPath(chartRoute, fileName string) string {
 
 	for i := len(chartRouteParts); i > 0; i-- {
 		chartRoutePart := chartRouteParts[i-1]
-		if !strings.Contains(fileName, chartRoutePart) {
+		if chartRoutePart == "charts" || !strings.Contains(fileName, chartRoutePart) {
 			fileName = filepath.ToSlash(filepath.Join(chartRoutePart, fileName))
 		}
 	}
@@ -50,16 +50,25 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 
 	// Clean all parts and rebuild the chart which is needed
 	copiedChart.Templates = nil
-
+	asserts := make([]string, len(templatesToAssert))
+	copy(asserts, templatesToAssert)
 	// Filter the templates based on the templates to Assert
-	copiedChart.Templates = filterV3Templates(chartRoute, templatesToAssert, targetChart)
+	copiedChart.Templates = filterV3Templates(chartRoute, asserts, targetChart)
 
 	// Recreate the dependencies
 	// Filter trough dependencies.
 	copiedChartDependencies := make([]*v3chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
 		copiedChartRoute := filepath.Join(chartRoute, subchartPrefix, dependency.Name())
-		copiedDependency := CopyV3Chart(copiedChartRoute, templatesToAssert, dependency)
+		asserts := make([]string, 0)
+		for _, template := range templatesToAssert {
+			if strings.HasPrefix(template, filepath.Join(subchartPrefix, dependency.Name())) {
+				asserts = append(asserts, template[len(filepath.Join(subchartPrefix, dependency.Name()))+1:])
+			} else if strings.HasPrefix(template, multiWildcard) {
+				asserts = append(asserts, template)
+			}
+		}
+		copiedDependency := CopyV3Chart(copiedChartRoute, asserts, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
 	copiedChart.SetDependencies(copiedChartDependencies...)
