@@ -127,6 +127,45 @@ tests:
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
+
+The test job can also specify a documentSelector rather than a documentIndex. Note that the documentSelector will always override a documentIndex if a match is found.  This field is particularly useful when helm produces multiple templates and the order is not always guaranteed.
+
+```yaml
+...
+tests:
+  - it: should pass
+    values:
+      - ./values/staging.yaml
+    set:
+      image.pullPolicy: Always
+      resources:
+        limits:
+          memory: 128Mi
+    template: deployment.yaml
+    documentSelector: 
+      path: metadata.name
+      value: my-service-name
+    release:
+      name: my-release
+      namespace:
+      revision: 9
+      upgrade: true
+    capabilities:
+      majorVersion: 1
+      minorVersion: 12
+      apiVersions:
+        - custom.api/v1
+    chart:
+      version: 1.0.0
+      appVersion: 1.0.0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-deploy
+```
+
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+
 ## Assertion
 
 Define assertions in the test job to validate the manifests rendered with values provided. The example below tests the instances' name with 2 `equal` assertion.

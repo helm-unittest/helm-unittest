@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -121,15 +122,21 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
+type DocumentSelector struct {
+	Path  string
+	Value string
+}
+
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
-	Name          string `yaml:"it"`
-	Values        []string
-	Set           map[string]interface{}
-	Template      string
-	Templates     []string
-	DocumentIndex *int `yaml:"documentIndex"`
-	Release       struct {
+	Name             string `yaml:"it"`
+	Values           []string
+	Set              map[string]interface{}
+	Template         string
+	Templates        []string
+	DocumentIndex    *int              `yaml:"documentIndex"`
+	DocumentSelector *DocumentSelector `yaml:"documentSelector"`
+	Release          struct {
 		Name      string
 		Namespace string
 		Revision  int
@@ -182,14 +189,14 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	// Setup Assertion Templates based on the chartname and outputOfFiles
-	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
+
+	// Setup Assertion Templates based on the chartname and outputOfFiles
+	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles, manifestsOfFiles)
 
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
@@ -202,6 +209,27 @@ func (t *TestJob) RunV3(
 
 	result.Duration = time.Since(startTestRun)
 	return result
+}
+
+func findDocumentIndex(manifests map[string][]common.K8sManifest, selector DocumentSelector) (int, error) {
+	for _, fileManifests := range manifests {
+		for idx, doc := range fileManifests {
+			manifestValues, err := valueutils.GetValueOfSetPath(doc, selector.Path)
+			if err != nil {
+				continue
+			}
+
+			for _, v := range manifestValues {
+				if valueStr, ok := v.(string); ok {
+					if valueStr == selector.Value {
+						return idx, nil
+					}
+				}
+			}
+		}
+	}
+
+	return -1, errors.New("document not found")
 }
 
 // liberally borrows from helm-template
@@ -447,9 +475,21 @@ func (t *TestJob) determineRenderSuccess() {
 }
 
 // add prefix to Assertion.Template
-func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles map[string]string) {
+func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles map[string]string, manifestOfFiles map[string][]common.K8sManifest) {
 	if t.chartRoute == "" {
 		t.chartRoute = targetChartName
+	}
+
+	if t.DocumentSelector != nil {
+		idx, err := findDocumentIndex(manifestOfFiles, *t.DocumentSelector)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			// Update the DocumentIndex if the found idx is not -1
+			if idx != -1 {
+				t.DocumentIndex = &idx
+			}
+		}
 	}
 
 	for _, assertion := range t.Assertions {
