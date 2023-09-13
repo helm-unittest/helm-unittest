@@ -1,7 +1,9 @@
 0.3.5 / 2023-09-01
 ==================
+- Fix  (resolves #)
 - Fix failed_template to also work when empty documents are found (resolves #191)
-- Fix Glob all valid filenames (resolves #200)
+- Fix failed_template multi colon handling (resolves #200)
+- Fix glob all valid filenames (resolves #201)
 - Update packages to latest patch versions
 - Update documenation
 

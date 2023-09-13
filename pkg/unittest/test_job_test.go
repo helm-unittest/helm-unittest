@@ -423,21 +423,21 @@ func TestV3RunJobWithFailingTemplate(t *testing.T) {
 	c, _ := loader.Load(testV3WithFailingTemplateChart)
 	manifest := `
 it: should load complete chart and validate configMap
-template: templates/configMap.yaml
 release:
   name: ab
 asserts:
   - failedTemplate:
-      errorMessage: no template "non-existing-named-template" associated with template "gotpl"
+      errorMessage:	"error calling include: template: no template \"non-existing-named-template\" associated with template \"gotpl\""
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	err := yaml.Unmarshal([]byte(manifest), &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a.Nil(err)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
