@@ -30,6 +30,7 @@ func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 		"v1",
 		"bar",
 		"foo",
+		true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -50,6 +51,7 @@ func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
 		"v1",
 		"bar",
 		"foo",
+		true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index:    -1,
@@ -67,6 +69,7 @@ func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 		"v1",
 		"bar",
 		"foo",
+		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -82,12 +85,31 @@ func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 	}, diff)
 }
 
-func TestContainsDocumentValidatorWhenNotAllDocumentsAreOkInverse(t *testing.T) {
+func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Service",
 		"v1",
 		"bar",
 		"foo",
+		true,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Index: -1,
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2)},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOkInverse(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"Service",
+		"v1",
+		"bar",
+		"foo",
+		true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -110,6 +132,7 @@ func TestContainsDocumentValidatorIndexWhenOk(t *testing.T) {
 		"v1",
 		"bar",
 		"foo",
+		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: 1,
@@ -127,6 +150,7 @@ func TestContainsDocumentValidatorNoNameWhenOk(t *testing.T) {
 		"v1",
 		"",
 		"foo",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -144,6 +168,7 @@ func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 		"v1",
 		"foo",
 		"",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -161,6 +186,7 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 		"v1",
 		"",
 		"",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -179,6 +205,7 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
 		"v1",
 		"",
 		"",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -205,6 +232,7 @@ func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 		"apps/v1",
 		"foo",
 		"bar",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -230,6 +258,7 @@ func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
 		"apps/v1",
 		"foo",
 		"bar",
+		false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{

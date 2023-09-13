@@ -13,6 +13,7 @@ type ContainsDocumentValidator struct {
 	APIVersion string
 	Name       string
 	Namespace  string
+	Any        bool
 }
 
 func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not bool) []string {
@@ -75,6 +76,11 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 
 	for idx, manifest := range manifests {
 		singleSuccess := v.validateManifest(manifest)
+
+		if v.Any && singleSuccess && !context.Negative {
+			return (singleSuccess && !context.Negative), []string{}
+		}
+
 		validateSuccess = determineSuccess(idx, validateSuccess, singleSuccess && !context.Negative)
 
 		if !singleSuccess && !context.Negative ||
