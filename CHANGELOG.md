@@ -1,3 +1,10 @@
+0.3.5 / 2023-09-01
+==================
+- Fix failed_template to also work when empty documents are found (resolves #191)
+- Fix Glob all valid filenames (resolves #200)
+- Update packages to latest patch versions
+- Update documenation
+
 0.3.4 / 2023-08-01
 ===================
 - Fix only output JUnit error when tests are failed (resolves #154)
