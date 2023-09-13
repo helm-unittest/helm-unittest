@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.20.6
+      - image: cimg/go:1.21
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.20.6
+      - image: golang:1.21
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: cimg/go:1.20.6
+      - image: cimg/go:1.21
     steps:
       - checkout
       - setup_remote_docker
@@ -54,7 +54,7 @@ jobs:
           command: make dockerdist
 
 orbs:
-  sonarcloud: sonarsource/sonarcloud@1.1.1
+  sonarcloud: sonarsource/sonarcloud@2.0.0
 
 workflows:
   test-and-build:
