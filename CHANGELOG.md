@@ -1,5 +1,6 @@
-0.3.5 / 2023-09-01
+0.3.5 / 2023-09-14
 ==================
+- Fix recursive subchart testing (credits @zidoshare, resolves #206)
 - Fix old containsDocument behaviour to ignore other documents in multidocument validation (resolves #205)
 - Fix failed_template to also work when empty documents are found (resolves #191)
 - Fix failed_template multi colon handling (resolves #200)
