@@ -686,6 +686,11 @@
                           "examples": [
                             "bar"
                           ]
+                        },
+                        "any": {
+                          "type": "boolean",
+                          "description": "Ignores any other documents.",
+                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other documents."
                         }
                       },
                       "additionalProperties": false

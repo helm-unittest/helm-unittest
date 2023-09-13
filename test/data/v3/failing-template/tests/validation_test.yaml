@@ -5,4 +5,4 @@ tests:
   - it: template should be failing based on validation
     asserts:
       - failedTemplate:
-          errorMessage: The `.Release.name` must be <= 3 characters!
+          errorMessage: "The `.Release.name`: must be <= 3 characters!"

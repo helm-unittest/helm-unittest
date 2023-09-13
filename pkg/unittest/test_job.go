@@ -23,8 +23,6 @@ import (
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
 
-const noValueContent string = "<no value>"
-
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
 	routes := make([]string, len(splited)/2+1)
@@ -46,27 +44,31 @@ func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[s
 	return values
 }
 
-func parseV3RenderError(errorMessage string) (string, string) {
+func parseV3RenderError(errorMessage string) (string, map[string]string) {
 	// Split the error into several groups.
 	// those groups are required to parse the correct value.
 	// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
-	const regexPattern string = "^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$"
+	// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
+	// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
+	const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
 
 	filePath, content := parseRenderError(regexPattern, errorMessage)
 
 	return filePath, content
 }
 
-func parseRenderError(regexPattern, errorMessage string) (string, string) {
+func parseRenderError(regexPattern, errorMessage string) (string, map[string]string) {
 	filePath := ""
-	content := noValueContent
+	content := map[string]string{
+		common.RAW: "",
+	}
 
 	r := regexp.MustCompile(regexPattern)
 	result := r.FindStringSubmatch(errorMessage)
 
 	if len(result) == 3 {
 		filePath = result[1]
-		content = fmt.Sprintf("%s: %s", common.RAW, result[2])
+		content[common.RAW] = result[2]
 	}
 
 	return filePath, content
@@ -123,8 +125,7 @@ type TestJob struct {
 	Set           map[string]interface{}
 	Template      string
 	Templates     []string
-	DocumentIndex *int         `yaml:"documentIndex"`
-	Assertions    []*Assertion `yaml:"asserts"`
+	DocumentIndex *int `yaml:"documentIndex"`
 	Release       struct {
 		Name      string
 		Namespace string
@@ -140,6 +141,8 @@ type TestJob struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
+	Assertions []*Assertion `yaml:"asserts"`
+
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -314,7 +317,7 @@ func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[strin
 		// Parse the error and create an outputFile
 		filePath, content := parseV3RenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
-		if filePath == "" && content != noValueContent {
+		if filePath == "" && len(content[common.RAW]) == 0 {
 			return nil, renderSucceed, err
 		}
 
@@ -322,10 +325,10 @@ func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[strin
 		if strings.HasPrefix(filepath.Base(filePath), "_") {
 			for _, fileName := range t.defaultTemplatesToAssert {
 				selectedTemplateName := filepath.ToSlash(filepath.Join(t.chartRoute, getTemplateFileName(fileName)))
-				outputOfFiles[selectedTemplateName] = content
+				outputOfFiles[selectedTemplateName] = common.TrustedMarshalYAML(content)
 			}
 		} else {
-			outputOfFiles[filePath] = content
+			outputOfFiles[filePath] = common.TrustedMarshalYAML(content)
 		}
 	}
 
