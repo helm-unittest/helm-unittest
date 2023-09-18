@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ template "parent-chart.fullname" . }}
+  namespace: {{ default .Release.Name .Values.global.namespace }}
   labels:
     app: {{ template "parent-chart.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}

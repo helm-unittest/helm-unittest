@@ -1,3 +1,5 @@
+global:
+  namespace: "region1"
 image:
   repository: apache
   tag: latest
