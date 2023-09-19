@@ -41,7 +41,7 @@ func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []stri
 		return false, splitInfof(errorFormat, -1, err.Error())
 	}
 
-	validateSuccess := false
+	validateSuccess := true
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
