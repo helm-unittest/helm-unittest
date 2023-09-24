@@ -113,6 +113,43 @@ $ helm unittest [flags] CHART [...]
 This renders your charts locally (without tiller) and runs tests
 defined in test suite files.
 
+## Templated Test Suites
+
+You may find yourself needing to set up a lots o tests that are a parameterization of a single test.  For instance, let's say that you deploy to 3 environments `env = dev | staging | prod`.
+
+In order to do this, you can actually write your tests as a helm chart as well.  If you go about this route, you
+must set the `--chart-tests-path` option.  Once you have done so, helm unittest will run a standard helm render
+against the values.yaml in your specified directory.
+
+```
+/my-chart
+  /tests-chart
+    /Chart.yaml
+    /values.yaml
+    /templates
+      /per_env_snapshots.yaml
+  
+  /Chart.yaml
+  /values.yaml
+  /.helmignore
+  /templates
+    /actual_template.yaml
+```
+
+In the above example file structure, you would maintain a helm chart that will render out against the Chart.yaml
+that as provided and the values.yaml.  With rendered charts, any test suite that is generated is automatically ran
+we do not look for a file postfix or glob.
+
+**Note:** since you can create multiple suites in a single template file, you must provide the suite name, since we can no longer use the test suite file name meaningfully.
+
+**Note 2:** since you can be running against subcharts and multiple charts, you need to make sure that you do not designate your `--chart-tests-path` to be the same folder as your other tests.  This is because we will try to render those non-helm test folders and fail during the unit test.
+
+The command for the above chart and test configuration would be:
+
+```shell
+helm unittest --chart-tests-path tests-chart my-chart
+```
+
 ### Flags
 
 ```
@@ -127,6 +164,7 @@ defined in test suite files.
   -o, --output-file string     the file where testresults are written in format specified, defaults no output is written to file
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
+      --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
 ```
 
 ### Yaml JsonPath Support

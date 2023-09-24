@@ -217,3 +217,14 @@ func TestV3RunnerOkWithFullsnapshot(t *testing.T) {
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
+
+func TestV3RunnerOkWithRenderedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		ChartTestsPath: "tests-chart",
+	}
+	passed := runner.RunV3([]string{testV3WithHelmTestsChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}

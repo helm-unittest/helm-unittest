@@ -1,0 +1,18 @@
+
+### Chart [ with-subchart ] ../../test/data/v3/with-helm-tests
+
+
+ PASS  multiple test suites dev	../../test/data/v3/with-helm-tests/tests-chart/templates/multiple_suites_test.yaml
+ PASS  multiple test suites prod	../../test/data/v3/with-helm-tests/tests-chart/templates/multiple_suites_test.yaml
+ PASS  multiple test suites snapshot dev	../../test/data/v3/with-helm-tests/tests-chart/templates/multiple_suites_snapshot.yaml
+ PASS  multiple test suites snapshot prod	../../test/data/v3/with-helm-tests/tests-chart/templates/multiple_suites_snapshot.yaml
+ PASS  multiple tests	../../test/data/v3/with-helm-tests/tests-chart/templates/multiple_tests_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 5 passed, 5 total
+Tests:       7 passed, 7 total
+Snapshot:    2 passed, 2 total
+Time:        XX.XXXms
+
+

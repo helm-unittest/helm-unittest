@@ -1,6 +1,7 @@
 package unittest_test
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -31,6 +32,7 @@ const testV3WithFilesChart string = "../../test/data/v3/with-files"
 const testV3WithFailingTemplateChart string = "../../test/data/v3/failing-template"
 const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
 const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
+const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
@@ -63,6 +65,134 @@ func validateTestResultAndSnapshots(
 	a.Equal(snapshotTotalCount, suiteResult.SnapshotCounting.Total)
 	a.Equal(snapshotFailedCount, suiteResult.SnapshotCounting.Failed)
 	a.Equal(snapshotVanishedCount, suiteResult.SnapshotCounting.Vanished)
+}
+
+// Helper metheod for the render process
+func getExpectedRenderedTestSuites(customSnapshotIds bool) map[string]*TestSuite {
+	// multiple_suites_snapshot.yaml assertions
+	createSnapshotTestYaml := func(env string)string {
+		return fmt.Sprintf(`
+it: manifest should match snapshot
+set: 
+    env: %s
+asserts:
+    - matchSnapshot: {}`, env)
+	}
+	snapshotDevTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("dev")), &snapshotDevTest)
+	snapshotProdTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("prod")), &snapshotProdTest)
+	// multiple_test_suites.yaml assertions
+	crateMultipleTestSuitesYaml := func(env string)string {
+		return fmt.Sprintf(`
+it: validate base64 encoded value
+set:
+    postgresql:
+      postgresPassword: %s
+    another-postgresql:
+      postgresPassword: password
+asserts:
+    - isKind:
+        of: Secret
+    - hasDocuments:
+        count: 1
+    - equal:
+        path: data.postgres-password
+        value: %s
+        decodeBase64: true`, env, env)
+	}
+	multipleTestSuitesDevTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("dev")), &multipleTestSuitesDevTest)
+	multipleTestSuitesProdTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("prod")), &multipleTestSuitesProdTest)
+	// multiple_tests_test.yaml assertions
+	var secretNameEqualsYaml = func(env string)string {
+		return fmt.Sprintf(`
+it: should set tls in for %s
+set:
+    ingress.enabled: true
+    ingress.tls:
+      - secretName: %s-my-tls-secret
+asserts:
+    - equal:
+        path: spec.tls
+        value:
+          - secretName: %s-my-tls-secret`, env, env, env)
+	}
+	multipleTestsDevTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("dev")), &multipleTestsDevTest)
+	multipleTestsProdTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("prod")), &multipleTestsProdTest)
+	const multipleTestsFirstTestYaml = `
+it: should render nothing if not enabled
+asserts:
+    - hasDocuments:
+        count: 0`
+	multipleTestsFirstTest := TestJob{}
+	_ = yaml.Unmarshal([]byte(multipleTestsFirstTestYaml), &multipleTestsFirstTest)
+
+	// Set up snapshotId values
+	// Note, this is completely based on the order of the yaml in a single suite template file
+	var (
+		multipleTestSuiteDevSnapshotId string
+		multipleTestSuiteProdSnapshotId string
+		multipleSuiteSnapshotsDevSnapshotId string
+		multipleSuiteSnapshotsProdSnapshotId string
+		multipleTestsSnapshotId string
+	)
+	if (customSnapshotIds) {
+		multipleTestSuiteDevSnapshotId = "dev"
+		multipleTestSuiteProdSnapshotId = "prod"
+		multipleSuiteSnapshotsDevSnapshotId = "dev"
+		multipleSuiteSnapshotsProdSnapshotId = "prod"
+		multipleTestsSnapshotId = "all"
+	} else {
+		multipleTestSuiteDevSnapshotId = "0"
+		multipleTestSuiteProdSnapshotId = "1"
+		multipleSuiteSnapshotsDevSnapshotId = "0"
+		multipleSuiteSnapshotsProdSnapshotId = "1"
+		multipleTestsSnapshotId = "0"
+	}
+
+	return map[string]*TestSuite {
+		"multiple test suites dev": {
+			Templates: []string{"charts/postgresql/templates/secrets.yaml"},
+			SnapshotId: multipleTestSuiteDevSnapshotId,
+			Tests: []*TestJob{
+				&multipleTestSuitesDevTest,
+			},
+		},
+		"multiple test suites prod": {
+			Templates: []string{"charts/postgresql/templates/secrets.yaml"},
+			SnapshotId: multipleTestSuiteProdSnapshotId,
+			Tests: []*TestJob {
+				&multipleTestSuitesProdTest,
+			},
+		},
+		"multiple test suites snapshot dev": {
+			Templates: []string{"templates/service.yaml"},
+			SnapshotId: multipleSuiteSnapshotsDevSnapshotId,
+			Tests: []*TestJob {
+				&snapshotDevTest,
+			},
+		},
+		"multiple test suites snapshot prod": {
+			Templates: []string{"templates/service.yaml"},
+			SnapshotId: multipleSuiteSnapshotsProdSnapshotId,
+			Tests: []*TestJob {
+				&snapshotProdTest,
+			},
+		},
+		"multiple tests": {
+			Templates: []string{"templates/ingress.yaml"},
+			SnapshotId: multipleTestsSnapshotId,
+			Tests: []*TestJob {
+				&multipleTestsFirstTest,
+				&multipleTestsDevTest,
+				&multipleTestsProdTest,
+			},
+		},
+	}
 }
 
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
@@ -126,6 +256,81 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
 	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
 	a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+}
+
+func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]interface{} {
+		"unexpectedField": false,
+	})
+
+	a.Nil(err)
+
+	expectedSuites := getExpectedRenderedTestSuites(false)
+
+	for _, suite := range suites {
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		expected := expectedSuites[suite.Name]
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+	}
+}
+
+func TestV3RenderSuitesStrictFileFail(t *testing.T) {
+	a := assert.New(t)
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+		"unexpectedField": true,
+	})
+
+	a.NotNil(err)
+	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
+}
+
+func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
+	a := assert.New(t)
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+		"includeSuite": false,
+	})
+
+	a.NotNil(err)
+	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
+}
+
+func TestV3RenderSuitesStrictFileOk(t *testing.T) {
+	a := assert.New(t)
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, nil)
+
+	a.Nil(err)
+
+	expectedSuites := getExpectedRenderedTestSuites(false)
+
+	for _, suite := range suites {
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		expected := expectedSuites[suite.Name]
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+	}
+}
+
+func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
+	a := assert.New(t)
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+		"customSnapshotIds": true,
+	})
+
+	a.Nil(err)
+
+	expectedSuites := getExpectedRenderedTestSuites(true)
+
+	for _, suite := range suites {
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		expected := expectedSuites[suite.Name]
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+	}
 }
 
 func TestV3RunSuiteWithNoAssertsShouldFail(t *testing.T) {
