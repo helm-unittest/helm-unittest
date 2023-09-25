@@ -1,0 +1,48 @@
+name: CI
+run-name: ${{ github.ref_name }} CI
+
+on:
+  workflow_call:
+    inputs:
+      from:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: [1.21]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Create temp directories for artifacts
+        run: |
+          mkdir -p /tmp/test-artifacts
+          mkdir -p /tmp/test-results
+      - name: Install JUnit plugin for uploading testresults
+        run: go install github.com/jstemmer/go-junit-report/v2@latest
+      - name: Test include Codecoverage
+        run: |
+          go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/test-results/go-test-report.xml
+      # TODO: no sonar cloud scan like in original for now
+      - name: Check formatted
+        run: "! gofmt -l . 2>&1 | read"
+      - name: Cleanup dependencies
+        run: go mod tidy
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: /tmp/test-results
+      - name: Archive test artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: /tmp/test-artifacts
+          path: /tmp/test-artifacts
