@@ -12,6 +12,11 @@
       "description": "The suite name to show on test result output.",
       "markdownDescription": "**suite** (string) _optional_\n\nThe suite name to show on test result output."
     },
+    "snapshotId": {
+      "type": "string",
+      "description": "A suffix to your snapshot file for the tests.  Ideal for helm tests.",
+      "markdownDescription": "**snapshotId** (string) _optional_\n\nA suffix to your snapshot file for the tests.  Ideal for helm tests."
+    },
     "values": {
       "$ref": "#/definitions/values"
     },
