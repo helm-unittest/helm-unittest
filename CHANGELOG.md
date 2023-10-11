@@ -1,3 +1,8 @@
+0.3.6 / 
+==================
+- Fix incorrect filtering template files (resolves #219)
+
+
 0.3.5 / 2023-09-14
 ==================
 - Fix recursive subchart testing (credits @zidoshare, resolves #206)
