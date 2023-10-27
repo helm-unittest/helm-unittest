@@ -17,6 +17,7 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 			"e.f": "false",
 			"g":   map[string]interface{}{"h": "\"quotes\""},
 			"i":   []interface{}{map[string]interface{}{"i1": "1"}, map[string]interface{}{"i2": "2"}},
+			"j":   []interface{}{map[string]interface{}{"k": "1"}, map[string]interface{}{"k": "2"}},
 		},
 	}
 
@@ -29,6 +30,7 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 		"a.g.h":                 "\"quotes\"",
 		"":                      data,
 		"a.i[?(@.i1 == \"1\")]": map[string]interface{}(map[string]interface{}{"i1": "1"}),
+		"a.j[*].k":              []interface{}{"1", "2"},
 	}
 
 	for path, expect := range expectionsMapping {
