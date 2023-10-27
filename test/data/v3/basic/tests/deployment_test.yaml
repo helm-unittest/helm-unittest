@@ -39,6 +39,9 @@ tests:
           path: spec.template.spec.containers[?(@.name == "basic")].ports
           content:
             containerPort: 8080
+      - contains:
+          path: spec.template.spec.containers[*].ports.containerPort
+          content: 8080
       - notContains:
           path: spec.template.spec.containers[?(@.name == "basic")].ports
           content:
