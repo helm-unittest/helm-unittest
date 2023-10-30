@@ -99,7 +99,12 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 			continue
 		}
 
-		singleActual := actual[0]
+        // A naive way to handle flat actual arrays
+        singleActual := actual[0]
+		if _, ok := actual[0].(string); ok {
+		    singleActual = actual
+		}
+
 		if singleActual, ok := singleActual.([]interface{}); ok {
 			found, validateFoundCount := v.validateContent(singleActual)
 

@@ -43,6 +43,23 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestContainsValidatorWhenJsonpathArrayOk(t *testing.T) {
+	manifest := makeManifest(docToTestContains)
+
+	validator := ContainsValidator{
+		"a.b[*].e",
+		"bar",
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
 	manifest1 := makeManifest(docToTestContains)
 	manifest2 := makeManifest(docToTestContains2)
