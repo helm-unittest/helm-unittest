@@ -81,6 +81,7 @@ func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
 	s.polishTestJobsPathInfo()
@@ -92,6 +93,7 @@ func (s *TestSuite) RunV3(
 		chartPath,
 		snapshotCache,
 		failfast,
+		renderPath,
 	)
 
 	result.CountSnapshot(snapshotCache)
@@ -175,6 +177,7 @@ func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 ) (bool, []*results.TestJobResult) {
 	suitePass := false
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -185,7 +188,7 @@ func (s *TestSuite) runV3TestJobs(
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 
-		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failfast, renderPath, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
 		if idx == 0 {

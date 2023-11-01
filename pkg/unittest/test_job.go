@@ -161,6 +161,7 @@ func (t *TestJob) RunV3(
 	targetChart *v3chart.Chart,
 	cache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
@@ -174,6 +175,24 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
+
+	if renderPath != "" {
+		for file, rendered := range outputOfFiles {
+			filePath := filepath.Join(renderPath, file)
+			directory := filepath.Dir(filePath)
+			if _, err := os.Stat(directory); os.IsNotExist(err) {
+				if err := os.MkdirAll(directory, 0755); err != nil {
+					result.ExecError = err
+					return result
+				}
+			}
+			if err := os.WriteFile(filePath, []byte(rendered), 0644); err != nil {
+				result.ExecError = err
+				return result
+			}
+		}
+	}
+
 	if renderError != nil {
 		result.ExecError = renderError
 		// Continue to enable matching error via failedTemplate assert

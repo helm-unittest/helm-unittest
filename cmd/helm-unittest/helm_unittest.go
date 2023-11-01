@@ -25,6 +25,7 @@ type testOptions struct {
 	valuesFiles    []string
 	outputFile     string
 	outputType     string
+	renderPath     string
 }
 
 var testConfig = testOptions{}
@@ -82,6 +83,7 @@ details about how to write tests.
 			TestFiles:      testConfig.testFiles,
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
+			RenderPath:     testConfig.renderPath,
 		}
 
 		log.SetFormatter(&log.TextFormatter{
@@ -159,5 +161,10 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.debugLogging, "debug", "d", false,
 		"enable debug logging",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.renderPath, "render-path", "r", "",
+		"render-path render the templates to this directory, for debugging purposes",
 	)
 }

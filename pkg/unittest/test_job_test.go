@@ -79,7 +79,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -106,7 +106,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -138,7 +138,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -163,7 +163,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -192,7 +192,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, false, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{})
 	// Write Buffer
 
 	a := assert.New(t)
@@ -222,7 +222,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 	// Write Buffer
 
 	a := assert.New(t)
@@ -249,7 +249,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -278,7 +278,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -305,7 +305,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -327,7 +327,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -351,7 +351,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -377,7 +377,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -409,7 +409,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -432,7 +432,7 @@ asserts:
 	var tj TestJob
 	err := yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -455,7 +455,7 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))

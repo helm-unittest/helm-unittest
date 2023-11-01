@@ -87,6 +87,7 @@ type TestRunner struct {
 	TestFiles        []string
 	ValuesFiles      []string
 	OutputFile       string
+	RenderPath       string
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
 	chartCounting    testUnitCounting
@@ -201,7 +202,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			continue
 		}
 
-		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
+		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)
