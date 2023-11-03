@@ -1,7 +1,7 @@
-FROM fedora:39
+FROM fedora:40
 
 # variable "HELM_VERSION" must be passed as docker environment variables during the image build
-# docker build --no-cache --build-arg HELM_VERSION=3.3.0 -t centos/helm-unittest:test -f CentOSTest.Dockerfile .
+# docker build --no-cache --build-arg HELM_VERSION=3.13.0 -t fedora/helm-unittest:test -f Fedora.Dockerfile .
 
 ADD ./plugin.yaml ~/plugin.yaml
 ADD ./plugin-dbg.yaml ~/plugin-dbg.yaml
