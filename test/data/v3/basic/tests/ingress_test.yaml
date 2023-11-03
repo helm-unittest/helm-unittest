@@ -94,4 +94,5 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+      - matchSnapshot: {}
 
