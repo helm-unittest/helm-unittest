@@ -44,10 +44,11 @@ type testUnitCounting struct {
 	passed  uint
 	failed  uint
 	errored uint
+	skipped uint
 }
 
 // sprint returns string of counting result
-func (counting testUnitCounting) sprint(printer *printer.Printer) string {
+func (counting testUnitCounting) sprint(printer *printer.Printer, includeSkipped bool) string {
 	var failedLabel string
 	if counting.failed > 0 {
 		failedLabel = printer.Danger("%d failed, ", counting.failed)
@@ -55,6 +56,17 @@ func (counting testUnitCounting) sprint(printer *printer.Printer) string {
 	var erroredLabel string
 	if counting.errored > 0 {
 		erroredLabel = fmt.Sprintf("%d errored, ", counting.errored)
+	}
+	if includeSkipped {
+		var skippedLabel string
+		if counting.skipped > 0 {
+			skippedLabel = fmt.Sprintf("%d skipped, ", counting.skipped)
+		}
+		return failedLabel + skippedLabel + erroredLabel + fmt.Sprintf(
+			"%d passed, %d total",
+			counting.passed,
+			counting.passed+counting.failed+counting.skipped,
+		)
 	}
 	return failedLabel + erroredLabel + fmt.Sprintf(
 		"%d passed, %d total",
@@ -87,6 +99,7 @@ type TestRunner struct {
 	TestFiles        []string
 	ValuesFiles      []string
 	OutputFile       string
+	ExcludedCharts   []string
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
 	chartCounting    testUnitCounting
@@ -98,8 +111,15 @@ type TestRunner struct {
 func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	allPassed := true
 	start := time.Now()
+outer:
 	for _, chartPath := range ChartPaths {
 		chart, err := v3loader.Load(chartPath)
+		for _, excludedChart := range tr.ExcludedCharts {
+			if excludedChart == chart.Name() {
+				tr.chartCounting.skipped++
+				continue outer
+			}
+		}
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
@@ -237,10 +257,10 @@ Time:        %s
 	tr.Printer.Println(
 		fmt.Sprintf(
 			summaryFormat,
-			tr.chartCounting.sprint(tr.Printer),
-			tr.suiteCounting.sprint(tr.Printer),
-			tr.testCounting.sprint(tr.Printer),
-			tr.snapshotCounting.sprint(tr.Printer),
+			tr.chartCounting.sprint(tr.Printer, true),
+			tr.suiteCounting.sprint(tr.Printer, false),
+			tr.testCounting.sprint(tr.Printer, false),
+			tr.snapshotCounting.sprint(tr.Printer, false),
 			elapsed.String(),
 		),
 		0,
