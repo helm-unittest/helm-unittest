@@ -25,6 +25,7 @@ type testOptions struct {
 	valuesFiles    []string
 	outputFile     string
 	outputType     string
+	chartTestsPath string
 }
 
 var testConfig = testOptions{}
@@ -82,6 +83,7 @@ details about how to write tests.
 			TestFiles:      testConfig.testFiles,
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
+			ChartTestsPath: testConfig.chartTestsPath,
 		}
 
 		log.SetFormatter(&log.TextFormatter{
@@ -149,6 +151,11 @@ func init() {
 	cmd.PersistentFlags().StringVarP(
 		&testConfig.outputType, "output-type", "t", "XUnit",
 		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit, Sonar)",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.chartTestsPath, "chart-tests-path", "", "",
+		"chart-tests-path the folder location relative to the chart where a helm chart to render test suites is located",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

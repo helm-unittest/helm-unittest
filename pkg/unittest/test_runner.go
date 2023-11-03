@@ -1,8 +1,10 @@
 package unittest
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -85,6 +87,7 @@ type TestRunner struct {
 	Strict           bool
 	Failfast         bool
 	TestFiles        []string
+	ChartTestsPath   string
 	ValuesFiles      []string
 	OutputFile       string
 	suiteCounting    testUnitCountingWithSnapshotFailed
@@ -147,7 +150,20 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		return nil, verr
 	}
 
-	resultSuites := make([]*TestSuite, 0, len(testFilesSet))
+	var renderedTestSuites []*TestSuite
+	if len(tr.ChartTestsPath) > 0 {
+		helmTestsPath := path.Join(chartPath, tr.ChartTestsPath)
+		// Verify that there is a tests path - in the event of mixed testing environments
+		if _, err := os.Stat(helmTestsPath); errors.Is(err, nil) {
+			var renderErr error
+			renderedTestSuites, renderErr = RenderTestSuiteFiles(helmTestsPath, chartRoute, tr.Strict, valuesFilesSet, nil)
+			if renderErr != nil {
+				return nil, renderErr
+			}
+		} 
+	}
+
+	resultSuites := make([]*TestSuite, 0, len(testFilesSet) + len(renderedTestSuites))
 	for _, file := range testFilesSet {
 		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
 		if err != nil {
@@ -159,6 +175,9 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		}
 		resultSuites = append(resultSuites, suite)
 	}
+	resultSuites = append(resultSuites, renderedTestSuites...)
+
+	
 
 	return resultSuites, nil
 }
@@ -191,7 +210,7 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) bool {
 	chartPassed := true
 	for _, suite := range suites {
-		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.definitionFile, tr.UpdateSnapshot)
+		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)
 		if err != nil {
 			tr.handleSuiteResult(&results.TestSuiteResult{
 				FilePath:  suite.definitionFile,

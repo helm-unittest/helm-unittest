@@ -1,0 +1,20 @@
+{{- range $idx, $env := $.Values.envs }}
+---
+{{- if $.Values.includeSuite }}
+suite: multiple test suites snapshot {{ $env }}
+{{- end }}
+{{- if $.Values.customSnapshotIds }}
+snapshotId: {{ $env }}
+{{- end }}
+templates:
+  - templates/service.yaml
+{{- if $.Values.unexpectedField }}
+something: here
+{{- end}}
+tests:
+  - it: manifest should match snapshot
+    set:
+      env: {{ $env }}
+    asserts:
+      - matchSnapshot: {}
+{{- end }}

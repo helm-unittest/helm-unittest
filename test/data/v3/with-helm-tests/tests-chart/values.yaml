@@ -1,0 +1,7 @@
+envs:
+  - dev
+  - prod
+
+includeSuite: true
+
+customSnapshotIds: false

@@ -1,0 +1,23 @@
+suite: multiple tests
+templates:
+  - templates/ingress.yaml
+{{- if $.Values.customSnapshotIds }}
+snapshotId: all
+{{- end }}
+tests:
+  - it: should render nothing if not enabled
+    asserts:
+      - hasDocuments:
+          count: 0
+{{- range $idx, $env := .Values.envs }}
+  - it: should set tls in for {{ $env }}
+    set:
+      ingress.enabled: true
+      ingress.tls:
+        - secretName: {{ $env }}-my-tls-secret
+    asserts:
+      - equal:
+          path: spec.tls
+          value:
+            - secretName: {{ $env }}-my-tls-secret
+{{- end }}

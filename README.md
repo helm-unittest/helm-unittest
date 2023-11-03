@@ -4,16 +4,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
 
-Unit test for *helm chart* in YAML to keep your chart consistent and robust!
+Unit test for _helm chart_ in YAML to keep your chart consistent and robust!
 
 Feature:
-  - write test file in pure YAML
-  - render locally
-  - create **nothing** on your cluster
-  - [wildcard selection for templates](./DOCUMENT.md#test-suite)
-  - [define values and release options](./DOCUMENT.md#test-job)
-  - [snapshot testing](#snapshot-testing)
-  - [test suite code completion and validation](#test-suite-code-completion-and-validation)
+
+- write test file in pure YAML
+- render locally
+- create **nothing** on your cluster
+- [wildcard selection for templates](./DOCUMENT.md#test-suite)
+- [define values and release options](./DOCUMENT.md#test-job)
+- [snapshot testing](#snapshot-testing)
+- [test suite code completion and validation](#test-suite-code-completion-and-validation)
 
 ## Documentation
 
@@ -35,7 +36,6 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Related Projects / Commands](#related-projects--commands)
 - [Contributing](#contributing)
 
-
 ## Install
 
 ```
@@ -46,7 +46,7 @@ It will install the latest version of binary into helm plugin directory.
 
 ## Docker Usage
 
-``` 
+```
 # run help of latest helm with latest helm unittest plugin
 docker run -ti --rm -v $(pwd):/apps helmunittest/helm-unittest
 
@@ -87,13 +87,14 @@ tests:
           path: spec.template.spec.containers[0].image
           value: nginx:latest
 ```
+
 and run:
 
 ```
 $ helm unittest $YOUR_CHART
 ```
 
-Now there is your first test! ;)  
+Now there is your first test! ;)
 
 ## Test Suite File
 
@@ -102,6 +103,7 @@ The test suite file is written in pure YAML, and default placed under the `tests
 ```bash
 $ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
 ```
+
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
 
 ## Usage
@@ -112,6 +114,45 @@ $ helm unittest [flags] CHART [...]
 
 This renders your charts locally (without tiller) and runs tests
 defined in test suite files.
+
+## Templated Test Suites
+
+You may find yourself needing to set up a lots o tests that are a parameterization of a single test. For instance, let's say that you deploy to 3 environments `env = dev | staging | prod`.
+
+In order to do this, you can actually write your tests as a helm chart as well. If you go about this route, you
+must set the `--chart-tests-path` option. Once you have done so, helm unittest will run a standard helm render
+against the values.yaml in your specified directory.
+
+```
+/my-chart
+  /tests-chart
+    /Chart.yaml
+    /values.yaml
+    /templates
+      /per_env_snapshots.yaml
+
+  /Chart.yaml
+  /values.yaml
+  /.helmignore
+  /templates
+    /actual_template.yaml
+```
+
+In the above example file structure, you would maintain a helm chart that will render out against the Chart.yaml
+that as provided and the values.yaml. With rendered charts, any test suite that is generated is automatically ran
+we do not look for a file postfix or glob.
+
+**Note:** since you can create multiple suites in a single template file, you must provide the suite name, since we can no longer use the test suite file name meaningfully.
+
+**Note 2:** since you can be running against subcharts and multiple charts, you need to make sure that you do not designate your `--chart-tests-path` to be the same folder as your other tests. This is because we will try to render those non-helm test folders and fail during the unit test.
+
+**Note 3:** for snapshot tests, you will need to provide a helm ignore that ignores `*/__snapshot__/*`. Otherwise, subsequent runs will try to render those snapshots.
+
+The command for the above chart and test configuration would be:
+
+```shell
+helm unittest --chart-tests-path tests-chart my-chart
+```
 
 ### Flags
 
@@ -127,9 +168,11 @@ defined in test suite files.
   -o, --output-file string     the file where testresults are written in format specified, defaults no output is written to file
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
+      --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
 ```
 
 ### Yaml JsonPath Support
+
 Now JsonPath is supported for mappings and arrays.
 This makes it possible to find items in an array, based on JsonPath.
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
@@ -142,7 +185,7 @@ Due to the change to JsonPath, the map keys in `path` containing periods (`.`) o
     value: nginx
 ```
 
-The next releases it will be possible to validate multiple paths when JsonPath result into multiple results. 
+The next releases it will be possible to validate multiple paths when JsonPath result into multiple results.
 
 ## Example
 
@@ -171,6 +214,7 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 ```
 $ helm unittest -u my-chart
 ```
+
 The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
 ## Dependent subchart Testing
@@ -189,6 +233,7 @@ tests:
     asserts:
       - ...
 ```
+
 Note 1: if dependent subcharts uses an alias, use the alias name in the templates.
 Note 2: using the folder structure in templates can also be used to unittest templates which are placed in subfolders or unittest subcharts from the rootchart.
 
@@ -210,6 +255,7 @@ tests:
     asserts:
       - ...
 ```
+
 Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Test Suite code completion and validation
@@ -223,9 +269,10 @@ In addition, test-suite files can be validated while editing so wrongfully added
 ![Code Validation](./.images/testsuite-yaml-codevalidation.png)
 
 ### Visual Studio Code
+
 When developing with VSCode, the very popular YAML plug-in (created by RedHat) allows adding references to schemas by adding a comment line on top of the file:
 
-``` yaml
+```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
 suite: http-service.configmap_test.yaml
 templates: [configmap.yaml]
@@ -236,13 +283,14 @@ release:
 
 Alternatively, you can add the schema globally to the IDE, using a well defined pattern:
 
-``` json
+```json
 "yaml.schemas": {
   "https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json": ["charts/*/tests/*_test.yaml"]
 }
 ```
 
 ### IntelliJ
+
 Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferences: Languages & Frameworks -> Schemas and DTDs -> JSON Schema Mappings
 
 ![Add Json Schema](./.images/testsuite-yaml-addschema-intellij.png)
@@ -256,7 +304,6 @@ If you are missing an anwer to a question feel free to raise a ticket.
 ## Related Projects / Commands
 
 This plugin is inspired by [helm-template](https://github.com/technosophos/helm-template), and the idea of snapshot testing and some printing format comes from [jest](https://github.com/facebook/jest).
-
 
 And there are some other helm commands you might want to use:
 
