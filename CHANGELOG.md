@@ -1,6 +1,9 @@
 0.3.6 / 
 ==================
 - Fix incorrect filtering template files (resolves #219)
+- Optimize installation (resolves #176, resolves #214, resolves #225)
+- Update packages to latest patch versions
+- Update documenation
 
 
 0.3.5 / 2023-09-14
