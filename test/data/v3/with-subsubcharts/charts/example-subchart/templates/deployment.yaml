@@ -1,9 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-subchart
-spec:
-  template:
-    metadata:
-      annotations:
-        foo: sub

@@ -4,7 +4,7 @@ version: 0.1.0
 type: application
 
 dependencies:
-  - name: example-subchart
+  - name: with-subsubchartssub
     version: 0.2.0
     import-values:
       - child: local.annotations
