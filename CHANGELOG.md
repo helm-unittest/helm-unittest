@@ -1,7 +1,10 @@
 0.3.6 / 
 ==================
 - Fix incorrect filtering template files (resolves #219)
+- Fix snapshot validator with Empty documents (credits @matthyx)
+- Fix inconsistent results lengthEqual validator (credits @hanseltime)
 - Optimize installation (resolves #176, resolves #214, resolves #225)
+- Added templated Test Suites, to make re-usable tests possible (credits @hanseltime, resolves #57, resolves #186)
 - Update packages to latest patch versions
 - Update documenation
 

@@ -2,6 +2,7 @@ package validators
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -40,13 +41,23 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 
 func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string]int, idx int) (bool, []string, int) {
 	arrayCount := -1
-	for k, pathCountValue := range pathCount {
+
+	// Sort alphabetically to get a standardized result
+	pathSlice := make([]string, 0)
+	for path, _ := range pathCount {
+		pathSlice = append(pathSlice, path)
+	}
+
+	sort.Strings(pathSlice)
+
+	for _, path := range pathSlice {
+		pathCountValue := pathCount[path]
 		if arrayCount == -1 {
 			arrayCount = pathCountValue
 		} else if arrayCount != pathCountValue {
 			arrayCount = -1
 			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
-				"%s count doesn't match as expected. actual: %d", k, pathCountValue)), arrayCount
+				"%s count doesn't match as expected. actual: %d", path, pathCountValue)), arrayCount
 		}
 	}
 
