@@ -160,10 +160,10 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 			if renderErr != nil {
 				return nil, renderErr
 			}
-		} 
+		}
 	}
 
-	resultSuites := make([]*TestSuite, 0, len(testFilesSet) + len(renderedTestSuites))
+	resultSuites := make([]*TestSuite, 0, len(testFilesSet)+len(renderedTestSuites))
 	for _, file := range testFilesSet {
 		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
 		if err != nil {
@@ -176,8 +176,6 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		resultSuites = append(resultSuites, suite)
 	}
 	resultSuites = append(resultSuites, renderedTestSuites...)
-
-	
 
 	return resultSuites, nil
 }

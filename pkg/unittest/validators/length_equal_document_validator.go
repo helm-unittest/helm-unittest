@@ -44,7 +44,7 @@ func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string
 
 	// Sort alphabetically to get a standardized result
 	pathSlice := make([]string, 0)
-	for path, _ := range pathCount {
+	for path := range pathCount {
 		pathSlice = append(pathSlice, path)
 	}
 

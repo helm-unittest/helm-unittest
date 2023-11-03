@@ -69,7 +69,7 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 	if _, err := os.Stat(testChartPath); err != nil {
 		return nil, err
 	}
-	
+
 	chart, err := v3loader.Load(helmTestSuiteDir)
 	if err != nil {
 		// TODO: throw errors here
@@ -104,7 +104,7 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 
 		templateFilePath := strings.Replace(templateName, chart.Name(), "", 1)
 		absPath := path.Join(helmTestSuiteDir, templateFilePath)
-		
+
 		// Split any multiple suites
 		var subYamlErrs []error
 		templates := strings.Split(template, "---")
@@ -118,12 +118,12 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 
 			// Filter any empty templates
 			suite, err := createTestSuite(absPath, chartRoute, subYaml, strict, valueFilesSet, true)
-			if (err != nil) {
+			if err != nil {
 				subYamlErrs = append(subYamlErrs, fmt.Errorf("chart %d error: %w", idx, err))
 				continue
 			}
 			// Set up a numerical snapshot idx if none provided
-			if ( len(suite.SnapshotId) == 0 ) {
+			if len(suite.SnapshotId) == 0 {
 				suite.SnapshotId = fmt.Sprintf("%d", realIdx)
 			}
 			suites = append(suites, suite)
@@ -136,7 +136,7 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		if previousSuitesLen == len(suites) {
 			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
 		}
-    }
+	}
 
 	if len(renderErrs) > 0 {
 		return nil, errors.Join(renderErrs...)
