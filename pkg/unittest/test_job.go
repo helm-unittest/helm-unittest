@@ -34,11 +34,14 @@ func spliteChartRoutes(routePath string) []string {
 
 func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[string]interface{} {
 	if len(routes) > 1 {
+		newvalues := make(map[string]interface{})
+		if v, ok := values["global"]; ok {
+			newvalues["global"] = v
+		}
+		newvalues[routes[len(routes)-1]] = values
 		return scopeValuesWithRoutes(
 			routes[:len(routes)-1],
-			map[string]interface{}{
-				routes[len(routes)-1]: values,
-			},
+			newvalues,
 		)
 	}
 	return values

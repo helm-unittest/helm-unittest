@@ -9,6 +9,9 @@ tests:
       service.internalPort: 8080
     asserts:
       - equal:
+          path: metadata.namespace
+          value: "region1"
+      - equal:
           path: spec.template.spec.containers[0].image
           value: apache:latest
       - notEqual:

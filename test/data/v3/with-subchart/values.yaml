@@ -1,6 +1,8 @@
 # Default values for basic.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+global:
+  namespace: ""
 replicaCount: 1
 image:
   repository: nginx
