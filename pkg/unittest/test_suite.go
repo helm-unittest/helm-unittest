@@ -72,7 +72,6 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 
 	chart, err := v3loader.Load(helmTestSuiteDir)
 	if err != nil {
-		// TODO: throw errors here
 		return nil, err
 	}
 
