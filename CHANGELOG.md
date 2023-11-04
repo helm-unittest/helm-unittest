@@ -1,10 +1,13 @@
-0.3.6 / 
+0.3.6 / 2023-11-04
 ==================
 - Fix incorrect filtering template files (resolves #219)
+- Fix snapshot validator with Empty documents (credits @matthyx)
+- Fix inconsistent results lengthEqual validator (credits @hanseltime)
+- Fix global values (credit @zidoshare, resolves #215)
 - Optimize installation (resolves #176, resolves #214, resolves #225)
+- Added templated Test Suites, to make re-usable tests possible (credits @hanseltime, resolves #57, resolves #186)
 - Update packages to latest patch versions
 - Update documenation
-
 
 0.3.5 / 2023-09-14
 ==================

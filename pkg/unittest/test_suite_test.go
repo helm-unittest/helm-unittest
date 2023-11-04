@@ -70,7 +70,7 @@ func validateTestResultAndSnapshots(
 // Helper metheod for the render process
 func getExpectedRenderedTestSuites(customSnapshotIds bool) map[string]*TestSuite {
 	// multiple_suites_snapshot.yaml assertions
-	createSnapshotTestYaml := func(env string)string {
+	createSnapshotTestYaml := func(env string) string {
 		return fmt.Sprintf(`
 it: manifest should match snapshot
 set: 
@@ -83,7 +83,7 @@ asserts:
 	snapshotProdTest := TestJob{}
 	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("prod")), &snapshotProdTest)
 	// multiple_test_suites.yaml assertions
-	crateMultipleTestSuitesYaml := func(env string)string {
+	crateMultipleTestSuitesYaml := func(env string) string {
 		return fmt.Sprintf(`
 it: validate base64 encoded value
 set:
@@ -106,7 +106,7 @@ asserts:
 	multipleTestSuitesProdTest := TestJob{}
 	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("prod")), &multipleTestSuitesProdTest)
 	// multiple_tests_test.yaml assertions
-	var secretNameEqualsYaml = func(env string)string {
+	var secretNameEqualsYaml = func(env string) string {
 		return fmt.Sprintf(`
 it: should set tls in for %s
 set:
@@ -134,13 +134,13 @@ asserts:
 	// Set up snapshotId values
 	// Note, this is completely based on the order of the yaml in a single suite template file
 	var (
-		multipleTestSuiteDevSnapshotId string
-		multipleTestSuiteProdSnapshotId string
-		multipleSuiteSnapshotsDevSnapshotId string
+		multipleTestSuiteDevSnapshotId       string
+		multipleTestSuiteProdSnapshotId      string
+		multipleSuiteSnapshotsDevSnapshotId  string
 		multipleSuiteSnapshotsProdSnapshotId string
-		multipleTestsSnapshotId string
+		multipleTestsSnapshotId              string
 	)
-	if (customSnapshotIds) {
+	if customSnapshotIds {
 		multipleTestSuiteDevSnapshotId = "dev"
 		multipleTestSuiteProdSnapshotId = "prod"
 		multipleSuiteSnapshotsDevSnapshotId = "dev"
@@ -154,39 +154,39 @@ asserts:
 		multipleTestsSnapshotId = "0"
 	}
 
-	return map[string]*TestSuite {
+	return map[string]*TestSuite{
 		"multiple test suites dev": {
-			Templates: []string{"charts/postgresql/templates/secrets.yaml"},
+			Templates:  []string{"charts/postgresql/templates/secrets.yaml"},
 			SnapshotId: multipleTestSuiteDevSnapshotId,
 			Tests: []*TestJob{
 				&multipleTestSuitesDevTest,
 			},
 		},
 		"multiple test suites prod": {
-			Templates: []string{"charts/postgresql/templates/secrets.yaml"},
+			Templates:  []string{"charts/postgresql/templates/secrets.yaml"},
 			SnapshotId: multipleTestSuiteProdSnapshotId,
-			Tests: []*TestJob {
+			Tests: []*TestJob{
 				&multipleTestSuitesProdTest,
 			},
 		},
 		"multiple test suites snapshot dev": {
-			Templates: []string{"templates/service.yaml"},
+			Templates:  []string{"templates/service.yaml"},
 			SnapshotId: multipleSuiteSnapshotsDevSnapshotId,
-			Tests: []*TestJob {
+			Tests: []*TestJob{
 				&snapshotDevTest,
 			},
 		},
 		"multiple test suites snapshot prod": {
-			Templates: []string{"templates/service.yaml"},
+			Templates:  []string{"templates/service.yaml"},
 			SnapshotId: multipleSuiteSnapshotsProdSnapshotId,
-			Tests: []*TestJob {
+			Tests: []*TestJob{
 				&snapshotProdTest,
 			},
 		},
 		"multiple tests": {
-			Templates: []string{"templates/ingress.yaml"},
+			Templates:  []string{"templates/ingress.yaml"},
 			SnapshotId: multipleTestsSnapshotId,
-			Tests: []*TestJob {
+			Tests: []*TestJob{
 				&multipleTestsFirstTest,
 				&multipleTestsDevTest,
 				&multipleTestsProdTest,
@@ -260,7 +260,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 
 func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]interface{} {
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]interface{}{
 		"unexpectedField": false,
 	})
 
@@ -269,17 +269,17 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 	expectedSuites := getExpectedRenderedTestSuites(false)
 
 	for _, suite := range suites {
-		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
 		expected := expectedSuites[suite.Name]
-		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
-		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
-		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name ("+suite.Name+") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name ("+suite.Name+") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name ("+suite.Name+") mismatched tests")
 	}
 }
 
 func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a := assert.New(t)
-	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"unexpectedField": true,
 	})
 
@@ -289,7 +289,7 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
-	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"includeSuite": false,
 	})
 
@@ -306,17 +306,17 @@ func TestV3RenderSuitesStrictFileOk(t *testing.T) {
 	expectedSuites := getExpectedRenderedTestSuites(false)
 
 	for _, suite := range suites {
-		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
 		expected := expectedSuites[suite.Name]
-		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
-		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
-		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name ("+suite.Name+") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name ("+suite.Name+") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name ("+suite.Name+") mismatched tests")
 	}
 }
 
 func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 	a := assert.New(t)
-	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{} {
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"customSnapshotIds": true,
 	})
 
@@ -325,11 +325,11 @@ func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 	expectedSuites := getExpectedRenderedTestSuites(true)
 
 	for _, suite := range suites {
-		a.Contains(expectedSuites, suite.Name, "Unexpected test suite" + suite.Name)
+		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
 		expected := expectedSuites[suite.Name]
-		a.EqualValues(expected.Templates, suite.Templates, "Suite Name (" + suite.Name + ") mismatched templates")
-		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name (" + suite.Name + ") unexpected Snapshot Id")
-		a.EqualValues(expected.Tests, suite.Tests, "Suite Name (" + suite.Name + ") mismatched tests")
+		a.EqualValues(expected.Templates, suite.Templates, "Suite Name ("+suite.Name+") mismatched templates")
+		a.Equal(expected.SnapshotId, suite.SnapshotId, "Suite Name ("+suite.Name+") unexpected Snapshot Id")
+		a.EqualValues(expected.Tests, suite.Tests, "Suite Name ("+suite.Name+") mismatched tests")
 	}
 }
 
