@@ -1,4 +1,4 @@
-0.3.6 / 
+0.3.6 / 2023-11-04
 ==================
 - Fix incorrect filtering template files (resolves #219)
 - Fix snapshot validator with Empty documents (credits @matthyx)
