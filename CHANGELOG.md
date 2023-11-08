@@ -1,3 +1,7 @@
+0.4.0 / 
+==================
+- Added DocumentSelecter
+
 0.3.6 / 2023-11-04
 ==================
 - Fix incorrect filtering template files (resolves #219)

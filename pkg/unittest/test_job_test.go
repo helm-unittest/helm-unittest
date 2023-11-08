@@ -68,12 +68,13 @@ asserts:
   - equal:
       path: kind
       value: Deployment
-    documentIndex: 0
     template: templates/deployment.yaml
   - matchRegex:
       path: metadata.name
       pattern: -basic$
-    documentIndex: 0
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-basic
     template: templates/deployment.yaml
 `
 	var tj TestJob
@@ -102,6 +103,35 @@ asserts:
   - matchRegex:
       path: metadata.name
       pattern: -basic$
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithTestJobDocumentSelectorOk(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+template: templates/deployment.yaml
+documentSelector:
+  path: metadata.name
+  value: RELEASE-NAME-basic-db
+asserts:
+  - equal:
+      path: kind
+      value: Deployment   
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic
 `
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)

@@ -8,6 +8,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -16,6 +17,7 @@ import (
 type Assertion struct {
 	Template             string
 	DocumentIndex        int
+	DocumentSelector     *valueutils.DocumentSelector
 	Not                  bool
 	AssertType           string
 	validator            validators.Validatable
@@ -34,6 +36,20 @@ func (a *Assertion) Assert(
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
+
+	if a.DocumentSelector != nil {
+		idx, err := valueutils.FindDocumentIndex(templatesResult, *a.DocumentSelector)
+		if err != nil {
+			result.Passed = false
+			result.FailInfo = []string{"Error:", err.Error()}
+			return result
+		} else {
+			// Update the DocumentIndex if the found idx is not -1
+			if idx != -1 {
+				a.DocumentIndex = idx
+			}
+		}
+	}
 
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
@@ -121,6 +137,16 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if template, ok := assertDef["template"].(string); ok {
 		a.Template = template
+	}
+
+	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
+		documentSelectorPath := documentSelector["path"].(string)
+		documentSelectorValue := documentSelector["value"]
+
+		a.DocumentSelector = &valueutils.DocumentSelector{
+			Path:  documentSelectorPath,
+			Value: documentSelectorValue,
+		}
 	}
 
 	if err := a.constructValidator(assertDef); err != nil {
