@@ -444,6 +444,11 @@
                         "content": {
                           "description": "The content NOT to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        },
+                        "any": {
+                          "type": "boolean",
+                          "description": "Ignores any other values within the found content.",
+                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other values within the found content."
                         }
                       },
                       "additionalProperties": false
