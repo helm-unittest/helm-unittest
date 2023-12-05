@@ -190,14 +190,14 @@ func (t *TestJob) RunV3(
 	}
 
 	// determine documentIndex
-	t.determineDocumentIndex(manifestsOfFiles)
-	if err != nil {
-		result.ExecError = err
+	indexError := t.determineDocumentIndex(manifestsOfFiles)
+	if indexError != nil {
+		result.ExecError = indexError
 		return result
 	}
 
-	// Setup Assertion Templates based on the chartname and outputOfFiles
-	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles, manifestsOfFiles)
+	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
+	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
@@ -456,7 +456,7 @@ func (t *TestJob) determineRenderSuccess() {
 
 func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
 	if t.DocumentSelector != nil {
-		idx, err := valueutils.FindDocumentIndex(manifestOfFiles, *t.DocumentSelector)
+		idx, err := t.DocumentSelector.FindDocumentsIndex(manifestOfFiles)
 		if err != nil {
 			return err
 		} else {
@@ -471,7 +471,7 @@ func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8s
 }
 
 // add prefix to Assertion.Template
-func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles map[string]string, manifestOfFiles map[string][]common.K8sManifest) {
+func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles map[string]string) {
 	if t.chartRoute == "" {
 		t.chartRoute = targetChartName
 	}

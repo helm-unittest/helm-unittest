@@ -6,7 +6,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var docToTestIndex0 = `
@@ -39,7 +39,7 @@ func createMultiManifest() map[string][]common.K8sManifest {
 	return multiManifest
 }
 
-func TestFindDocumentIndexSinglePathOk(t *testing.T) {
+func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 	a := assert.New(t)
 	expectedIndex := 0
 
@@ -48,7 +48,7 @@ func TestFindDocumentIndexSinglePathOk(t *testing.T) {
 		Value: "internal",
 	}
 
-	actualIndex, err := FindDocumentIndex(createMultiManifest(), selector)
+	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
 
 	a.Nil(err)
 	a.Equal(expectedIndex, actualIndex)
@@ -66,8 +66,40 @@ func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 		},
 	}
 
-	actualIndex, err := FindDocumentIndex(createMultiManifest(), selector)
+	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
 
 	a.Nil(err)
+	a.Equal(expectedIndex, actualIndex)
+}
+
+func TestFindDocumentIndexMultiIndexNOk(t *testing.T) {
+	a := assert.New(t)
+	expectedIndex := 0
+
+	selector := DocumentSelector{
+		Path:  "metadata.name",
+		Value: "foo",
+	}
+
+	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+
+	a.NotNil(err)
+	a.EqualError(err, "multiple indexes found")
+	a.Equal(expectedIndex, actualIndex)
+}
+
+func TestFindDocumentIndexNoDocumentNOk(t *testing.T) {
+	a := assert.New(t)
+	expectedIndex := -1
+
+	selector := DocumentSelector{
+		Path:  "meta.data",
+		Value: "bar",
+	}
+
+	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+
+	a.NotNil(err)
+	a.EqualError(err, "document not found")
 	a.Equal(expectedIndex, actualIndex)
 }

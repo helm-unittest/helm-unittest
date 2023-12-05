@@ -37,20 +37,6 @@ func (a *Assertion) Assert(
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
-	if a.DocumentSelector != nil {
-		idx, err := valueutils.FindDocumentIndex(templatesResult, *a.DocumentSelector)
-		if err != nil {
-			result.Passed = false
-			result.FailInfo = []string{"Error:", err.Error()}
-			return result
-		} else {
-			// Update the DocumentIndex if the found idx is not -1
-			if idx != -1 {
-				a.DocumentIndex = idx
-			}
-		}
-	}
-
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
 	failInfo := make([]string, 0)
@@ -80,6 +66,17 @@ func (a *Assertion) Assert(
 			break
 		}
 
+		singleTemplateResult := make(map[string][]common.K8sManifest)
+		singleTemplateResult[template] = rendered
+
+		// Update the DocumentIndex if the found idx is not -1
+		indexError := a.determineDocumentIndex(singleTemplateResult)
+		if indexError != nil {
+			invalidDocumentIndex := []string{"Error:", indexError.Error()}
+			failInfo = append(failInfo, invalidDocumentIndex...)
+			break
+		}
+
 		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
 			Docs:             rendered,
 			Index:            a.DocumentIndex,
@@ -105,6 +102,20 @@ func (a *Assertion) Assert(
 	result.FailInfo = failInfo
 
 	return result
+}
+
+func (a *Assertion) determineDocumentIndex(templatesResult map[string][]common.K8sManifest) error {
+	if a.DocumentSelector != nil {
+		idx, err := a.DocumentSelector.FindDocumentsIndex(templatesResult)
+		if err != nil {
+			return err
+		} else {
+			if idx != -1 {
+				a.DocumentIndex = idx
+			}
+		}
+	}
+	return nil
 }
 
 func (a *Assertion) noFileErrMessage(template string) string {
