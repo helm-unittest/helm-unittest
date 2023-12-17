@@ -325,8 +325,8 @@ MIT
 
 ## Contributing
 
-Issues and PRs are welcome!  
-Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.21 installed, and run:
+Issues and PRs are welcome!
+Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.21 installed, and run:
 
 ```
 git clone git@github.com:helm-unittest/helm-unittest.git
