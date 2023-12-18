@@ -8,6 +8,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -16,6 +17,7 @@ import (
 type Assertion struct {
 	Template             string
 	DocumentIndex        int
+	DocumentSelector     *valueutils.DocumentSelector
 	Not                  bool
 	AssertType           string
 	validator            validators.Validatable
@@ -64,6 +66,17 @@ func (a *Assertion) Assert(
 			break
 		}
 
+		singleTemplateResult := make(map[string][]common.K8sManifest)
+		singleTemplateResult[template] = rendered
+
+		// Update the DocumentIndex if the found idx is not -1
+		indexError := a.determineDocumentIndex(singleTemplateResult)
+		if indexError != nil {
+			invalidDocumentIndex := []string{"Error:", indexError.Error()}
+			failInfo = append(failInfo, invalidDocumentIndex...)
+			break
+		}
+
 		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
 			Docs:             rendered,
 			Index:            a.DocumentIndex,
@@ -89,6 +102,20 @@ func (a *Assertion) Assert(
 	result.FailInfo = failInfo
 
 	return result
+}
+
+func (a *Assertion) determineDocumentIndex(templatesResult map[string][]common.K8sManifest) error {
+	if a.DocumentSelector != nil {
+		idx, err := a.DocumentSelector.FindDocumentsIndex(templatesResult)
+		if err != nil {
+			return err
+		} else {
+			if idx != -1 {
+				a.DocumentIndex = idx
+			}
+		}
+	}
+	return nil
 }
 
 func (a *Assertion) noFileErrMessage(template string) string {
@@ -121,6 +148,16 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if template, ok := assertDef["template"].(string); ok {
 		a.Template = template
+	}
+
+	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
+		documentSelectorPath := documentSelector["path"].(string)
+		documentSelectorValue := documentSelector["value"]
+
+		a.DocumentSelector = &valueutils.DocumentSelector{
+			Path:  documentSelectorPath,
+			Value: documentSelectorValue,
+		}
 	}
 
 	if err := a.constructValidator(assertDef); err != nil {

@@ -81,6 +81,9 @@ tests:
           memory: 128Mi
     template: deployment.yaml
     documentIndex: 0
+    documentSelector: 
+      path: metadata.name
+      value: my-service-name    
     release:
       name: my-release
       namespace:
@@ -109,6 +112,8 @@ tests:
 - **template**: *string, optional*. **templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
+
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -141,6 +146,9 @@ tests:
       - equal:
           path: metadata.name
           value: my-deploy
+        documentSelector: 
+          path: metadata.name
+          value: my-service-name    
       - equal:
           path: metadata.name
           value: your-service
@@ -156,6 +164,8 @@ The assertion is defined with the assertion type as the key and its parameters a
 - **template**: *string, optional*. The template file which render the manifest to be asserted, default to the list of template file defined in `templates` of suite file, unless the template is in the testjob (see TestJob). For example the first assertion above with no `template` specified asserts for both `deployment.yaml` and `service.yaml` by default. If no template file specified in neither suite, testjob and assertion, the assertion returns an error and fail the test.
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
+
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
 
 Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath` syntax:
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.

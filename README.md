@@ -24,9 +24,11 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Docker Usage](#docker-usage)
 - [Get Started](#get-started)
 - [Test Suite File](#test-suite-file)
+  - [Templated Test Suites](#templated-test-suites)
 - [Usage](#usage)
   - [Flags](#flags)
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
+  - [DocumentSelector]()
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
@@ -106,16 +108,7 @@ $ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
 
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
 
-## Usage
-
-```
-$ helm unittest [flags] CHART [...]
-```
-
-This renders your charts locally (without tiller) and runs tests
-defined in test suite files.
-
-## Templated Test Suites
+### Templated Test Suites
 
 You may find yourself needing to set up a lots o tests that are a parameterization of a single test. For instance, let's say that you deploy to 3 environments `env = dev | staging | prod`.
 
@@ -154,6 +147,15 @@ The command for the above chart and test configuration would be:
 helm unittest --chart-tests-path tests-chart my-chart
 ```
 
+## Usage
+
+```
+$ helm unittest [flags] CHART [...]
+```
+
+This renders your charts locally (without tiller) and runs tests
+defined in test suite files.
+
 ### Flags
 
 ```
@@ -186,6 +188,31 @@ Due to the change to JsonPath, the map keys in `path` containing periods (`.`) o
 ```
 
 The next releases it will be possible to validate multiple paths when JsonPath result into multiple results.
+
+### DocumentSelector
+
+The test job or assertion can also specify a documentSelector rather than a documentIndex. Note that the documentSelector will always override a documentIndex if a match is found. This field is particularly useful when helm produces multiple templates and the order is not always guaranteed.
+
+```yaml
+...
+tests:
+  - it: should pass
+    values:
+      - ./values/staging.yaml
+    set:
+      image.pullPolicy: Always
+      resources:
+        limits:
+          memory: 128Mi
+    template: deployment.yaml
+    documentSelector: 
+      path: metadata.name
+      value: my-service-name    
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-deploy
+```
 
 ## Example
 

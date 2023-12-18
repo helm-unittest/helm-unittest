@@ -124,13 +124,14 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
-	Name          string `yaml:"it"`
-	Values        []string
-	Set           map[string]interface{}
-	Template      string
-	Templates     []string
-	DocumentIndex *int `yaml:"documentIndex"`
-	Release       struct {
+	Name             string `yaml:"it"`
+	Values           []string
+	Set              map[string]interface{}
+	Template         string
+	Templates        []string
+	DocumentIndex    *int                         `yaml:"documentIndex"`
+	DocumentSelector *valueutils.DocumentSelector `yaml:"documentSelector"`
+	Release          struct {
 		Name      string
 		Namespace string
 		Revision  int
@@ -183,14 +184,21 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	// Setup Assertion Templates based on the chartname and outputOfFiles
-	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
+
+	// determine documentIndex
+	indexError := t.determineDocumentIndex(manifestsOfFiles)
+	if indexError != nil {
+		result.ExecError = indexError
+		return result
+	}
+
+	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
+	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
@@ -447,6 +455,22 @@ func (t *TestJob) determineRenderSuccess() {
 	for _, assertion := range t.Assertions {
 		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
 	}
+}
+
+func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
+	if t.DocumentSelector != nil {
+		idx, err := t.DocumentSelector.FindDocumentsIndex(manifestOfFiles)
+		if err != nil {
+			return err
+		} else {
+			// Update the DocumentIndex if the found idx is not -1
+			if idx != -1 {
+				t.DocumentIndex = &idx
+			}
+		}
+	}
+
+	return nil
 }
 
 // add prefix to Assertion.Template
