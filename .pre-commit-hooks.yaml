@@ -1,0 +1,8 @@
+- id: "helm-unittest"
+  name: "helm unittest"
+  description: "Runs Helm unit tests."
+  language: "script"
+  entry: "/usr/bin/env helm"
+  args: ["unittest", "."]
+  files: "^Chart.yaml$"
+  pass_filenames: false
