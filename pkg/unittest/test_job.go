@@ -3,7 +3,6 @@ package unittest
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -285,9 +284,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		targetChart.Metadata.AppVersion = t.Chart.AppVersion
 	}
 
-	log.SetOutput(io.Discard)
 	err = v3util.ProcessDependencies(targetChart, values)
-	log.SetOutput(os.Stdout)
 	if err != nil {
 		return nil, false, err
 	}
