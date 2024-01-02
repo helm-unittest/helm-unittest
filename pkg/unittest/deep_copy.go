@@ -32,10 +32,11 @@ func getTemplateFileName(fileName string) string {
 
 func mergeFullPath(chartRoute, fileName string) string {
 	chartRouteParts := strings.Split(chartRoute, pathSeparator)
+	fileNamePaths := filepath.Dir(fileName)
 
 	for i := len(chartRouteParts); i > 0; i-- {
 		chartRoutePart := chartRouteParts[i-1]
-		if strings.Count(fileName, chartRoutePart) < strings.Count(chartRoute, chartRoutePart) {
+		if strings.Count(fileNamePaths, chartRoutePart) < strings.Count(chartRoute, chartRoutePart) {
 			fileName = filepath.ToSlash(filepath.Join(chartRoutePart, fileName))
 		}
 	}
