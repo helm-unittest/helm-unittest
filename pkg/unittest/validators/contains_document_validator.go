@@ -77,17 +77,20 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	for idx, manifest := range manifests {
 		singleSuccess := v.validateManifest(manifest)
 
-		if v.Any && singleSuccess && !context.Negative {
-			return (singleSuccess && !context.Negative), []string{}
-		}
-
-		validateSuccess = determineSuccess(idx, validateSuccess, singleSuccess && !context.Negative)
-
-		if !singleSuccess && !context.Negative ||
-			singleSuccess && context.Negative {
+		if singleSuccess == context.Negative {
+			singleSuccess = false
 			errorMessage := v.failInfo(v.Kind, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+		} else {
+			singleSuccess = true
+			if v.Any {
+				validateSuccess = true
+				validateErrors = []string{}
+				continue
+			}
 		}
+
+		validateSuccess = determineSuccess(idx, validateSuccess, singleSuccess)
 	}
 
 	if len(manifests) == 0 && !context.Negative {
