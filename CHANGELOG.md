@@ -1,4 +1,4 @@
-0.4.0 / 
+0.4.0 / 2024-01-03
 ==================
 - Added DocumentSelecter (credits @jonathon-mcnabb, resolve #179)
 - Remove trim copying logging (resolves #237, resolves #260)
