@@ -114,6 +114,8 @@ tests:
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
 - **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+  - **path**: *string*. The `documentSelector` path to assert.
+  - **value**: *any*. The expected value.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -166,6 +168,8 @@ The assertion is defined with the assertion type as the key and its parameters a
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
 
 - **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+  - **path**: *string*. The `documentSelector` path to assert.
+  - **value**: *any*. The expected value.
 
 Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath` syntax:
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
