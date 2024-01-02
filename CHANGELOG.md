@@ -1,6 +1,11 @@
 0.4.0 / 
 ==================
-- Added DocumentSelecter
+- Added DocumentSelecter (credits @jonathon-mcnabb, resolve #179)
+- Remove trim copying logging (resolves #237)
+- Correct containsDocument validation (resolves #)
+- Update packages to latest patch versions
+- Update json schema (credits @justusbunsi)
+- Update documentation (credits @atombrella)
 
 0.3.6 / 2023-11-04
 ==================
@@ -11,7 +16,7 @@
 - Optimize installation (resolves #176, resolves #214, resolves #225)
 - Added templated Test Suites, to make re-usable tests possible (credits @hanseltime, resolves #57, resolves #186)
 - Update packages to latest patch versions
-- Update documenation
+- Update documentation
 
 0.3.5 / 2023-09-14
 ==================

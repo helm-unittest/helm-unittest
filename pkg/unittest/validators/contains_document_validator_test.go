@@ -180,6 +180,25 @@ func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestContainsDocumentValidatorNoNamespaceWhenNegativeOk(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		"InvalidService",
+		"v1",
+		"foo",
+		"",
+		true,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Index:    -1,
+		Docs:     []common.K8sManifest{makeManifest(docToTestContainsDocument1)},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		"Service",
