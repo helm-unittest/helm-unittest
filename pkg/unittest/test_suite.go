@@ -209,7 +209,16 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishCapabilitiesSettings(test)
 		s.polishChartSettings(test)
 
-		test.globalSet = s.Set
+		// Make deep clone of global set
+		tmp, err := yaml.Marshal(s.Set)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = yaml.Unmarshal(tmp, &test.globalSet)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)
