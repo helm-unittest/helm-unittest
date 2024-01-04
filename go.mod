@@ -15,6 +15,8 @@ require (
 	helm.sh/helm/v3 v3.13.3
 )
 
+require github.com/yargevad/filepathx v1.0.0
+
 require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect

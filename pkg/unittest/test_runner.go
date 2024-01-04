@@ -13,6 +13,8 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 
+	"github.com/yargevad/filepathx"
+
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
@@ -21,7 +23,7 @@ func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 	filesSet := make([]string, 0)
 	for _, pattern := range filePatterns {
 		if !filepath.IsAbs(pattern) {
-			files, err := filepath.Glob(filepath.Join(chartPath, pattern))
+			files, err := filepathx.Glob(filepath.Join(chartPath, pattern))
 			if err != nil {
 				return nil, err
 			}
