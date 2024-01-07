@@ -24,7 +24,6 @@ tests:
           value:
             app: basic
             release: my-release
-
   - it: should render right if values given
     set:
       service:
