@@ -42,12 +42,12 @@ hookInstall: bootstrap build
 unittest: ## Run unit tests
 	go test ./... -v -cover
 
-.PHONY: build
-
-build-debug:
+.PHONY: build-debug
+build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
-build: unittest
+.PHONY: build
+build: unittest ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
@@ -75,7 +75,7 @@ dockerdist:
 	./docker-build.sh
 
 .PHONY: dockerimage
-dockerimage:
+dockerimage: ## Build docker image
 	docker build -t $(DOCKER):$(VERSION) .
 
 .PHONY: test-docker
