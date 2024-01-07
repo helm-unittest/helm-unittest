@@ -16,7 +16,7 @@ TEST_NAMES ?=basic \
 	with-helm-tests \
 	with-schema \
 	with-subchart \
-    with-subfolder \
+	with-subfolder \
 	with-subsubcharts
 
 .PHONY: help
@@ -47,7 +47,7 @@ unittest: ## Run unit tests
 build-debug:
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
-build: # unittest
+build: unittest
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
@@ -79,7 +79,7 @@ dockerimage:
 	docker build -t $(DOCKER):$(VERSION) .
 
 .PHONY: test-docker
-test-docker: ## Execute Unit tests in container
+test-docker: ## Execute 'helm unit tests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$${f}'"; \
 		docker run \
