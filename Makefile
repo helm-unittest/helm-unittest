@@ -7,6 +7,21 @@ VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
 DOCKER ?= "helmunittest/helm-unittest"
+PROJECT_DIR := $(shell pwd)
+TEST_NAMES ?=basic \
+	failing-template \
+	full-snapshot \
+	global-double-setting \
+	with-files \
+	with-helm-tests \
+	with-schema \
+	with-subchart \
+    with-subfolder \
+	with-subsubcharts
+
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: install
 install: bootstrap build
@@ -24,7 +39,7 @@ install-dbg: bootstrap build-debug
 hookInstall: bootstrap build
 
 .PHONY: unittest
-unittest:
+unittest: ## Run unit tests
 	go test ./... -v -cover
 
 .PHONY: build
@@ -32,7 +47,7 @@ unittest:
 build-debug:
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
-build: unittest
+build: # unittest
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
@@ -62,3 +77,12 @@ dockerdist:
 .PHONY: dockerimage
 dockerimage:
 	docker build -t $(DOCKER):$(VERSION) .
+
+.PHONY: test-docker
+test-docker: ## Execute Unit tests in container
+	@for f in $(TEST_NAMES); do \
+		echo "running helm unit tests in folder '$${f}'"; \
+		docker run \
+			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps/\
+			-it --rm  $(DOCKER) -f tests/*.yaml .;\
+	done
