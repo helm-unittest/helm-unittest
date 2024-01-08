@@ -1,0 +1,8 @@
+suite: test values
+templates:
+  - configmap.yaml
+tests:
+  - it: should find the config map
+    asserts:
+      - exists:
+          path: data.bar

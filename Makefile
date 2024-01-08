@@ -12,6 +12,8 @@ TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
 	global-double-setting \
+	invalidbasic \
+	nested_glob \
 	with-files \
 	with-helm-tests \
 	with-schema \
