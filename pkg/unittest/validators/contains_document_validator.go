@@ -3,20 +3,26 @@ package validators
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/helm-unittest/helm-unittest/internal/common"
+
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
-// IsSubsetValidator validate whether value of Path contains Content
+// ContainsDocumentValidator validate whether value of Path contains Content
 type ContainsDocumentValidator struct {
 	Kind       string
 	APIVersion string
-	Name       string
-	Namespace  string
-	Any        bool
+	Name       string // optional
+	Namespace  string // optional
+	Any        bool   // optional
 }
 
 func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not bool) []string {
+
+	log.WithField("validator", "contains_document").Debugln("index content:", index)
+	log.WithField("validator", "contains_document").Debugln("actual content:", actual)
 
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
@@ -44,7 +50,7 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest)
 			return false
 		}
 
-		if actual[0] != v.Name {
+		if len(actual) == 0 || actual[0] != v.Name {
 			return false
 		}
 	}
@@ -53,10 +59,12 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest)
 		actual, err := valueutils.GetValueOfSetPath(manifest, "metadata.namespace")
 		if err != nil {
 			// fail on not found match
+			log.WithField("validator", "contains_document").Debugln("error:", err)
 			return false
 		}
 
-		if actual[0] != v.Namespace {
+		log.WithField("validator", "contains_document").Debugln("namespace path:", actual)
+		if len(actual) == 0 || actual[0] != v.Namespace {
 			return false
 		}
 	}
@@ -83,10 +91,11 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 			validateErrors = append(validateErrors, errorMessage...)
 		} else {
 			singleSuccess = true
-			if v.Any {
+			if v.Any != context.Negative {
 				validateSuccess = true
 				validateErrors = []string{}
-				continue
+				// Stop searching as we already found a succesful match.
+				break
 			}
 		}
 

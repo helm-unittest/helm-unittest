@@ -24,13 +24,27 @@ metadata:
   namespace: foo
 `
 
+var docToTestContainsDocument3 = `
+apiVersion: v1
+kind: Service
+metadata:
+    name: bar	
+`
+
+var docToTestContainsDocument4 = `
+apiVersion: v1
+kind: Service
+metadata:
+    namespace: foo
+`
+
 func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		true,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "bar",
+		Namespace:  "foo",
+		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -47,11 +61,11 @@ func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		true,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "bar",
+		Namespace:  "foo",
+		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index:    -1,
@@ -65,11 +79,10 @@ func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
 
 func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "bar",
+		Namespace:  "foo",
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -87,11 +100,11 @@ func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 
 func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		true,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "foo",
+		Namespace:  "bar",
+		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -105,11 +118,11 @@ func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOk(t *testing.T) {
 
 func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOkInverse(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		true,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "bar",
+		Namespace:  "foo",
+		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: -1,
@@ -128,11 +141,11 @@ func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOkInverse(t *testing.
 
 func TestContainsDocumentValidatorIndexWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"bar",
-		"foo",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "bar",
+		Namespace:  "foo",
+		Any:        false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Index: 1,
@@ -146,11 +159,10 @@ func TestContainsDocumentValidatorIndexWhenOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNoNameWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"",
-		"foo",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Namespace:  "foo",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -164,11 +176,11 @@ func TestContainsDocumentValidatorNoNameWhenOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"foo",
-		"",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "foo",
+		Namespace:  "",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -182,11 +194,11 @@ func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNoNamespaceWhenNegativeOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"InvalidService",
-		"v1",
-		"foo",
-		"",
-		true,
+		Kind:       "InvalidService",
+		APIVersion: "v1",
+		Name:       "foo",
+		Namespace:  "",
+		Any:        true,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -201,11 +213,11 @@ func TestContainsDocumentValidatorNoNamespaceWhenNegativeOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"",
-		"",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "",
+		Namespace:  "",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -220,11 +232,11 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 
 func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"v1",
-		"",
-		"",
-		false,
+		Kind:       "Service",
+		APIVersion: "v1",
+		Name:       "",
+		Namespace:  "",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -247,11 +259,11 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
 
 func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Deployment",
-		"apps/v1",
-		"foo",
-		"bar",
-		false,
+		Kind:       "Deployment",
+		APIVersion: "apps/v1",
+		Name:       "foo",
+		Namespace:  "bar",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -273,11 +285,11 @@ func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 
 func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
 	validator := ContainsDocumentValidator{
-		"Service",
-		"apps/v1",
-		"foo",
-		"bar",
-		false,
+		Kind:       "Service",
+		APIVersion: "apps/v1",
+		Name:       "foo",
+		Namespace:  "bar",
+		Any:        false,
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
@@ -295,4 +307,54 @@ func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
 		"Expected to contain document:",
 		"\tKind = Service, apiVersion = apps/v1, Name = foo, Namespace = bar",
 	}, diff)
+}
+
+func TestContainsDocumentValidatorFail(t *testing.T) {
+	tests := []struct {
+		name           string
+		validator      ContainsDocumentValidator
+		fixtureContext ValidateContext
+		expected       []string
+	}{
+		{
+			name: "it should not fail when namespace is not specified....",
+			validator: ContainsDocumentValidator{
+				Kind:       "Service",
+				APIVersion: "apps/v1",
+				Name:       "foo",
+			},
+			fixtureContext: ValidateContext{
+				Index: 0,
+				Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument3)},
+			},
+			expected: []string{
+				"DocumentIndex:\t0",
+				"Expected to contain document:",
+				"\tKind = Service, apiVersion = apps/v1, Name = foo, Namespace =",
+			},
+		},
+		{
+			name: "it should not fail when name is not specified....",
+			validator: ContainsDocumentValidator{
+				Kind:       "Service",
+				APIVersion: "apps/v1",
+				Namespace:  "bar",
+			},
+			fixtureContext: ValidateContext{
+				Index: 0,
+				Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument4)},
+			},
+			expected: []string{
+				"DocumentIndex:\t0",
+				"Expected to contain document:",
+				"\tKind = Service, apiVersion = apps/v1, Name = , Namespace = bar",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		pass, diff := test.validator.Validate(&test.fixtureContext)
+		assert.False(t, pass)
+		assert.Equal(t, test.expected, diff)
+	}
 }

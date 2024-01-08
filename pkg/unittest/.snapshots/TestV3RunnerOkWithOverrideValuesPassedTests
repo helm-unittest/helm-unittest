@@ -4,6 +4,7 @@
 
  PASS  Configmap multiline Test	../../test/data/v3/basic/tests/configmap_test.yaml
  PASS  Custom Resource Definition Test	../../test/data/v3/basic/tests/crd_test.yaml
+ PASS  spark-operator	../../test/data/v3/basic/tests/rbac_test.yaml
  PASS  test deployment	../../test/data/v3/basic/tests/deployment_test.yaml
  PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
@@ -12,8 +13,8 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 7 passed, 7 total
-Tests:       17 passed, 17 total
+Test Suites: 8 passed, 8 total
+Tests:       19 passed, 19 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 
