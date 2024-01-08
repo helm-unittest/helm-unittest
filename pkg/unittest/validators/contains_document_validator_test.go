@@ -102,8 +102,8 @@ func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		Kind:       "Service",
 		APIVersion: "v1",
-		Name:       "bar",
-		Namespace:  "foo",
+		Name:       "foo",
+		Namespace:  "bar",
 		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{

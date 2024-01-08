@@ -79,7 +79,7 @@ dockerimage: ## Build docker image
 	docker build -t $(DOCKER):$(VERSION) .
 
 .PHONY: test-docker
-test-docker: ## Execute 'helm unit tests' in container
+test-docker: ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$${f}'"; \
 		docker run \

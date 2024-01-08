@@ -42,3 +42,12 @@ tests:
       - equal:
           path: spec.type
           value: NodePort
+  - it: should contain document
+    release:
+      name: my-release
+      namespace: default
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+        documentIndex: 0
