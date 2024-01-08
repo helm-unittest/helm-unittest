@@ -2,6 +2,7 @@
 ### Chart [ with-subchart ] ../../test/data/v3/with-subchart
 
 
+ PASS  test child_chart name	../../test/data/v3/with-subchart/charts/child-chart/tests/child_chart_test.yaml
  PASS  test deployment	../../test/data/v3/with-subchart/charts/child-chart/tests/deployment_test.yaml
  PASS  test deployment	../../test/data/v3/with-subchart/tests/deployment_test.yaml
  PASS  test ingress	../../test/data/v3/with-subchart/charts/child-chart/tests/ingress_test.yaml
@@ -15,9 +16,9 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 10 passed, 10 total
-Tests:       22 passed, 22 total
-Snapshot:    9 passed, 9 total
+Test Suites: 11 passed, 11 total
+Tests:       23 passed, 23 total
+Snapshot:    10 passed, 10 total
 Time:        XX.XXXms
 
 

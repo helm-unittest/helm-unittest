@@ -1,0 +1,4 @@
+should succeed even with the same names:
+  1: |
+    apiVersion: example
+    kind: ChildChart
