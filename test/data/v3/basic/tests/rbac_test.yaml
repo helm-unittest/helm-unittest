@@ -1,0 +1,12 @@
+suite: spark-operator
+templates:
+  - rbac.yaml
+tests:
+  - it: Should contain both ClusterRole and ClusterRoleBinding documents
+    asserts:
+      - containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          any: true
+      - hasDocuments:
+          count: 2
