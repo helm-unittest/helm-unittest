@@ -1,6 +1,14 @@
+0.4.1 / 2024-01-09
+==================
+- Fix global values leak (credits @kdhtrifork, neo2k, resolves #235, resolves #271)
+- Fix contains document validator (credits @ivankatliarchuk, resolves #227, resolves #268)
+- Enhancing testfile globbing (credits @kdhtrifork, resolves #248)
+- Update packages to latest patch versions
+- Update documentation
+
 0.4.0 / 2024-01-03
 ==================
-- Added DocumentSelecter (credits @jonathon-mcnabb, resolve #179)
+- Added DocumentSelecter (credits @jonathon-mcnabb, resolves #179)
 - Remove trim copying logging (resolves #237, resolves #260)
 - Correct find subchart template files if filename includes chart name (resolves #238)
 - Correct containsDocument validation (resolves #239)
