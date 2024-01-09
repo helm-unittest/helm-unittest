@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"gopkg.in/yaml.v3"
@@ -210,15 +211,9 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
-		tmp, err := yaml.Marshal(s.Set)
-		if err != nil {
-			log.Fatal(err)
-		}
+		tmp := common.TrustedMarshalYAML(s.Set)
 
-		err = yaml.Unmarshal(tmp, &test.globalSet)
-		if err != nil {
-			log.Fatal(err)
-		}
+		test.globalSet = common.TrustedUnmarshalYAML(tmp)
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)
