@@ -103,7 +103,7 @@ Now there is your first test! ;)
 The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files related to chart directory, like:
 
 ```bash
-$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/*.yaml' my-chart
+$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
 ```
 
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
