@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"gopkg.in/yaml.v3"
@@ -20,14 +19,20 @@ import (
 )
 
 // ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) (*TestSuite, error) {
-	suite := TestSuite{chartRoute: chartRoute}
+func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
 	content, err := os.ReadFile(suiteFilePath)
 	if err != nil {
-		return &suite, err
+		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
 
-	return createTestSuite(suiteFilePath, chartRoute, string(content), strict, valueFilesSet, false)
+	parts := strings.Split(string(content), "---")
+	var testSuites []*TestSuite
+	for _, part := range parts {
+		testSuite, _ := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
+		testSuites = append(testSuites, testSuite)
+	}
+
+	return testSuites, nil
 }
 
 func createTestSuite(suiteFilePath string, chartRoute string, content string, strict bool, valueFilesSet []string, fromRender bool) (*TestSuite, error) {
@@ -210,10 +215,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishCapabilitiesSettings(test)
 		s.polishChartSettings(test)
 
-		// Make deep clone of global set
-		tmp := common.TrustedMarshalYAML(s.Set)
-
-		test.globalSet = common.TrustedUnmarshalYAML(tmp)
+		test.globalSet = s.Set
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)
