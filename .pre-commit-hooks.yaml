@@ -4,5 +4,5 @@
   language: "script"
   entry: "/usr/bin/env helm"
   args: ["unittest", "."]
-  files: "^Chart.yaml$"
+  types: ["file", "yaml"]
   pass_filenames: false
