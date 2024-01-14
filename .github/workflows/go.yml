@@ -12,11 +12,12 @@ jobs:
 
   full-test:
     name: full sdk and tools test
-    # Tests for actively maintained Go versions.
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        # tests for target OS
         os: [ubuntu-latest, macos-latest]
+        # tests for actively maintained Go versions.
         go-version:
           - 1.21.x
     steps:
