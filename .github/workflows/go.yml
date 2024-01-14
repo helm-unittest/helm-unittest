@@ -33,6 +33,6 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: test
+    - name: unit-tests
       shell: bash
       run: make unittest
