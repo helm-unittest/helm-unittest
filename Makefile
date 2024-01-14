@@ -81,7 +81,6 @@ dockerdist:
 dependency: ## Dependency maintanance
 	@$(GO) get -u ./...
 	@$(GO) mod tidy
-	@$(GO) get -d ./...
 
 .PHONY: dockerimage
 dockerimage: ## Build docker image
