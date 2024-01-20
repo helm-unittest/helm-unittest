@@ -246,7 +246,7 @@ The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory yo
 
 ## Dependent subchart Testing
 
-If you have dependent subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpfull to validate if good default values are accidently overwritten within your default helm chart.
+If you have dependent subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
 
 ```yaml
 # $YOUR_CHART/tests/xxx_test.yaml
@@ -326,7 +326,7 @@ Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferen
 
 As more people use the unittest plugin, more questions will come. Therefore a [Frequently Asked Question page](./FAQ.md) is created to answer the most common questions.
 
-If you are missing an anwer to a question feel free to raise a ticket.
+If you are missing an answer to a question, feel free to raise a ticket.
 
 ## Related Projects / Commands
 
@@ -365,7 +365,7 @@ And please make CI passed when request a PR which would check following things:
 - `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
 - `go test ./pkg/unittest/...` passed.
 
-In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
+In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed, you need to run:
 
 ```
 UPDATE_SNAPSHOTS=true go test ./...
