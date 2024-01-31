@@ -3,7 +3,7 @@ templates:
   - templates/cat_deployment.yaml
 set:
   env:
-    key: value
+    testvalue: value
 
 tests:
   - it: test sets value
@@ -17,8 +17,11 @@ tests:
             testvalue: testvalue1
 
   - it: test does not set testvalue, should be empty in deployment
+    set:
+      env:
+        testvalue2: testvalue2
     asserts:
-      - notContains:
+      - contains:
           path: spec.template.metadata.labels
           content:
-            testvalue: testvalue1
+            testvalue: value

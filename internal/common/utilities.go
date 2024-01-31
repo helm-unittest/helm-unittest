@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/mitchellh/copystructure"
+
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -27,4 +29,19 @@ func TrustedUnmarshalYAML(d string) map[string]interface{} {
 		panic(err)
 	}
 	return parsedYaml
+}
+
+func CopySet(setValues map[string]interface{}) map[string]interface{} {
+	copiedSet, err := copystructure.Copy(setValues)
+	if err != nil {
+		panic(err)
+	}
+
+	valsCopy := copiedSet.(map[string]interface{})
+	// if we have an empty map, make sure it is initialized
+	if valsCopy == nil {
+		valsCopy = make(map[string]interface{})
+	}
+
+	return valsCopy
 }

@@ -211,9 +211,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
-		tmp := common.TrustedMarshalYAML(s.Set)
-
-		test.globalSet = common.TrustedUnmarshalYAML(tmp)
+		test.globalSet = common.CopySet(s.Set)
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)

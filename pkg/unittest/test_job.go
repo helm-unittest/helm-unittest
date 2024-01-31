@@ -217,6 +217,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
+	// Load and merge values files.
 	for _, specifiedPath := range t.Values {
 		value := map[string]interface{}{}
 		var valueFilePath string
@@ -255,6 +256,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
+
 	return yaml.Marshal(base)
 }
 
