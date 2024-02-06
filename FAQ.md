@@ -11,8 +11,8 @@ After the plugin removal, make sure the plugin cache is also cleaned (or at leas
 
 ## Debugging
 Q: **My test is failing but the expected and actual results are the same, what is happening?** <br/>
-A: The error output is formatted for better readabillity. The result of the formatting is that it removes spaces and line endings, which can result in the same values between the expected and actual results.
-With the debug option it is possible to see the the expected and actual content before the formatting is done.
+A: The error output is formatted for better readability. The result of the formatting is that it removes spaces and line endings, which can result in the same values between the expected and actual results.
+With the debug option it is possible to see the expected and actual content before the formatting is done.
 ```
 $ helm helm-unittest ... -d
 ```
