@@ -24,7 +24,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
-	github.com/emicklei/go-restful/v3 v3.11.1 // indirect
+	github.com/emicklei/go-restful/v3 v3.11.2 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
@@ -73,7 +73,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.29.0 // indirect
 	k8s.io/apimachinery v0.29.0 // indirect
 	k8s.io/client-go v0.29.0 // indirect
-	k8s.io/klog/v2 v2.110.1 // indirect
+	k8s.io/klog/v2 v2.120.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240105020646-a37d4de58910 // indirect
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
