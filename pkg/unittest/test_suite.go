@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	"github.com/mitchellh/copystructure"
 	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
@@ -60,6 +60,21 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	suite.Values = append(suite.Values, valueFilesSet...)
 
 	return &suite, nil
+}
+
+func copySet(setValues map[string]interface{}) map[string]interface{} {
+	copiedSet, err := copystructure.Copy(setValues)
+	if err != nil {
+		panic(err)
+	}
+
+	copiedSetValues := copiedSet.(map[string]interface{})
+	// if we have an empty map, make sure it is initialized
+	if copiedSetValues == nil {
+		copiedSetValues = make(map[string]interface{})
+	}
+
+	return copiedSetValues
 }
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
@@ -211,9 +226,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
-		tmp := common.TrustedMarshalYAML(s.Set)
-
-		test.globalSet = common.TrustedUnmarshalYAML(tmp)
+		test.globalSet = copySet(s.Set)
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)

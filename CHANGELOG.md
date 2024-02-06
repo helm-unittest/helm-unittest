@@ -1,3 +1,9 @@
+0.4.2 / 2014-02-..
+==================
+- Fix global set and set override (resolves #210, resolves #276)
+- Update packages to latest patch versions
+- Update documentation
+
 0.4.1 / 2024-01-09
 ==================
 - Fix global values leak (credits @kdhtrifork, neo2k, resolves #235, resolves #271)
