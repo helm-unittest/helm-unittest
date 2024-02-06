@@ -1,0 +1,26 @@
+{{- range $idx, $env := .Values.envs }}
+---
+suite: multiple test suites {{ $env }}
+templates:
+  - charts/postgresql/templates/secrets.yaml 
+{{- if $.Values.customSnapshotIds }}
+snapshotId: {{ $env }}
+{{- end }}
+tests:
+  - it: validate base64 encoded value
+    set:
+      postgresql:
+        postgresPassword: {{ $env }}
+      another-postgresql:
+        postgresPassword: password
+    asserts:
+      - isKind:
+          of: Secret
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: data.postgres-password
+          value: {{ $env }}
+          decodeBase64: true
+{{- end }}
+

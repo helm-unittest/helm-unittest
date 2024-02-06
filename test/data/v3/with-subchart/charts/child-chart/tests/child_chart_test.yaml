@@ -1,0 +1,7 @@
+suite: test child_chart name
+templates:
+  - templates/child-chart.yaml
+tests:
+  - it: should succeed even with the same names
+    asserts:
+      - matchSnapshot: {}

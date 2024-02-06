@@ -1,3 +1,38 @@
+0.4.2 / 2014-02-..
+==================
+- Fix global set and set override (resolves #210, resolves #276)
+- Update packages to latest patch versions
+- Update documentation
+
+0.4.1 / 2024-01-09
+==================
+- Fix global values leak (credits @kdhtrifork, neo2k, resolves #235, resolves #271)
+- Fix contains document validator (credits @ivankatliarchuk, resolves #227, resolves #268)
+- Enhancing testfile globbing (credits @kdhtrifork, resolves #248)
+- Update packages to latest patch versions
+- Update documentation
+
+0.4.0 / 2024-01-03
+==================
+- Added DocumentSelecter (credits @jonathon-mcnabb, resolves #179)
+- Remove trim copying logging (resolves #237, resolves #260)
+- Correct find subchart template files if filename includes chart name (resolves #238)
+- Correct containsDocument validation (resolves #239)
+- Update packages to latest patch versions (resolves #260)
+- Update json schema (credits @justusbunsi)
+- Update documentation (credits @atombrella)
+
+0.3.6 / 2023-11-04
+==================
+- Fix incorrect filtering template files (resolves #219)
+- Fix snapshot validator with Empty documents (credits @matthyx)
+- Fix inconsistent results lengthEqual validator (credits @hanseltime)
+- Fix global values (credit @zidoshare, resolves #215)
+- Optimize installation (resolves #176, resolves #214, resolves #225)
+- Added templated Test Suites, to make re-usable tests possible (credits @hanseltime, resolves #57, resolves #186)
+- Update packages to latest patch versions
+- Update documentation
+
 0.3.5 / 2023-09-14
 ==================
 - Fix recursive subchart testing (credits @zidoshare, resolves #206)

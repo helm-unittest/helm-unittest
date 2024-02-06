@@ -12,6 +12,11 @@
       "description": "The suite name to show on test result output.",
       "markdownDescription": "**suite** (string) _optional_\n\nThe suite name to show on test result output."
     },
+    "snapshotId": {
+      "type": "string",
+      "description": "A suffix to your snapshot file for the tests.  Ideal for helm tests.",
+      "markdownDescription": "**snapshotId** (string) _optional_\n\nA suffix to your snapshot file for the tests.  Ideal for helm tests."
+    },
     "values": {
       "$ref": "#/definitions/values"
     },
@@ -61,6 +66,9 @@
           },
           "documentIndex": {
             "$ref": "#/definitions/documentIndex"
+          },
+          "documentSelector": {
+            "$ref": "#/definitions/documentSelector"
           },
           "release": {
             "$ref": "#/definitions/release"
@@ -116,6 +124,9 @@
                 },
                 "documentIndex": {
                   "$ref": "#/definitions/documentIndex"
+                },
+                "documentSelector": {
+                  "$ref": "#/definitions/documentSelector"
                 }
               },
               "additionalProperties": false,
@@ -439,6 +450,11 @@
                         "content": {
                           "description": "The content NOT to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        },
+                        "any": {
+                          "type": "boolean",
+                          "description": "Ignores any other values within the found content.",
+                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other values within the found content."
                         }
                       },
                       "additionalProperties": false
@@ -839,6 +855,28 @@
       "type": "integer",
       "description": "The index of rendered documents (divided by ---) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.",
       "markdownDescription": "**documentIndex** (integer) _optional_\n\nThe index of rendered documents (divided by ---) to be tested, default to -1, which results in asserting all documents (see Assertion).\n\nGenerally you can ignored this field if the template file render only one document."
+    },
+    "documentSelector": {
+      "type": "object",
+      "description": "The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.",
+      "markdownDescription": "**documentSelector** (object) _optional_\n\nThe path of the key to be match and the match value to assert.\n\nUsing this information, helm-unittest will automatically discover the documentIndex.\n\nGenerally you can ignored this field if the template file render only one document.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The `documentSelector` path to assert.",
+          "markdownDescription": "**path** (string)\n\nThe `documentSelector` path to assert."
+        },
+        "value": {
+          "type": "string",
+          "description": "The expected value.",
+          "markdownDescription": "**value** (any)\n\nThe expected value."
+        }
+      },
+      "required": [
+        "path",
+        "value"
+      ],
+      "additionalProperties": false
     },
     "release": {
       "type": "object",

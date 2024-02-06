@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      labels:
+        - cat: dog
+        {{- if (.Values.env).testvalue }}
+        - testvalue: {{ .Values.env.testvalue }}
+        {{- end }}
+    

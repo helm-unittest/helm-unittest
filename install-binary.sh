@@ -52,7 +52,7 @@ initOS() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="linux-arm64\nlinux-amd64\nmacos-amd64\nwindows-amd64\nmacos-arm64"
+  local supported="linux-arm64\nlinux-amd64\nmacos-amd64\nwindows-amd64\nwindows_nt-amd64\nmacos-arm64"
   if ! echo "$supported" | grep -q "$OS-$ARCH"; then
     echo "No prebuild binary for $OS-$ARCH."
     exit 1
@@ -98,8 +98,9 @@ downloadFile() {
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
-  cd "/tmp"
+  cd /tmp
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
+  echo "found: $DOWNLOAD_FILE"
   if [ -n "$PROJECT_CHECKSUM" ]; then
     echo Validating Checksum.
     if type "curl" >/dev/null 2>&1; then
@@ -107,7 +108,7 @@ installFile() {
         curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
-          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
           curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
@@ -119,7 +120,7 @@ installFile() {
         wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
-          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c -s
+          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
@@ -130,15 +131,9 @@ installFile() {
   else
     echo No Checksum validated.
   fi
-  HELM_TMP="/tmp/$PROJECT_NAME"
-  mkdir -p "$HELM_TMP"
-  tar xf "$DOWNLOAD_FILE" -C "$HELM_TMP"
-  HELM_TMP_BIN="$HELM_TMP/untt"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
-  # Use * to also copy the file with the exe suffix on Windows
-  cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
-  rm -r "$HELM_TMP"
-  rm -r "$PLUGIN_TMP_FOLDER"
+  tar xzf "$DOWNLOAD_FILE" -C "$HELM_PLUGIN_PATH"
+  rm -rf "/tmp/_dist"
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }
 

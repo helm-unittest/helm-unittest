@@ -34,11 +34,14 @@ func spliteChartRoutes(routePath string) []string {
 
 func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[string]interface{} {
 	if len(routes) > 1 {
+		newvalues := make(map[string]interface{})
+		if v, ok := values["global"]; ok {
+			newvalues["global"] = v
+		}
+		newvalues[routes[len(routes)-1]] = values
 		return scopeValuesWithRoutes(
 			routes[:len(routes)-1],
-			map[string]interface{}{
-				routes[len(routes)-1]: values,
-			},
+			newvalues,
 		)
 	}
 	return values
@@ -120,13 +123,14 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
-	Name          string `yaml:"it"`
-	Values        []string
-	Set           map[string]interface{}
-	Template      string
-	Templates     []string
-	DocumentIndex *int `yaml:"documentIndex"`
-	Release       struct {
+	Name             string `yaml:"it"`
+	Values           []string
+	Set              map[string]interface{}
+	Template         string
+	Templates        []string
+	DocumentIndex    *int                         `yaml:"documentIndex"`
+	DocumentSelector *valueutils.DocumentSelector `yaml:"documentSelector"`
+	Release          struct {
 		Name      string
 		Namespace string
 		Revision  int
@@ -198,14 +202,21 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	// Setup Assertion Templates based on the chartname and outputOfFiles
-	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
+
+	// determine documentIndex
+	indexError := t.determineDocumentIndex(manifestsOfFiles)
+	if indexError != nil {
+		result.ExecError = indexError
+		return result
+	}
+
+	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
+	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
@@ -225,6 +236,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
+	// Load and merge values files.
 	for _, specifiedPath := range t.Values {
 		value := map[string]interface{}{}
 		var valueFilePath string
@@ -263,6 +275,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
+
 	return yaml.Marshal(base)
 }
 
@@ -307,18 +320,9 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		// Set all files
 		t.defaultTemplatesToAssert = []string{multiWildcard}
 	}
+
 	// Filter the files that needs to be validated
-	var filteredChart *v3chart.Chart
-	if t.chartRoute != "" {
-		var templatesToAssert []string
-		for _, template := range t.defaultTemplatesToAssert {
-			fp := mergeFullPath(t.chartRoute, template)[len(targetChart.Name())+1:]
-			templatesToAssert = append(templatesToAssert, fp)
-		}
-		filteredChart = CopyV3Chart(targetChart.Name(), templatesToAssert, targetChart)
-	} else {
-		filteredChart = CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
-	}
+	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 
@@ -469,6 +473,22 @@ func (t *TestJob) determineRenderSuccess() {
 	for _, assertion := range t.Assertions {
 		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
 	}
+}
+
+func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
+	if t.DocumentSelector != nil {
+		idx, err := t.DocumentSelector.FindDocumentsIndex(manifestOfFiles)
+		if err != nil {
+			return err
+		} else {
+			// Update the DocumentIndex if the found idx is not -1
+			if idx != -1 {
+				t.DocumentIndex = &idx
+			}
+		}
+	}
+
+	return nil
 }
 
 // add prefix to Assertion.Template

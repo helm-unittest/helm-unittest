@@ -2,8 +2,8 @@
 ### Chart [ with-subsubcharts ] ../../test/data/v3/with-subsubcharts
 
 
- PASS  	../../test/data/v3/with-subsubcharts/charts/example-subchart/charts/example-sub-subchart/tests/deployment_test.yaml
- PASS  	../../test/data/v3/with-subsubcharts/charts/example-subchart/tests/deployment_test.yaml
+ PASS  	../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/charts/with-subsubchartssubsub/tests/deployment_test.yaml
+ PASS  	../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/tests/deployment_test.yaml
  PASS  	../../test/data/v3/with-subsubcharts/tests/deployment_test.yaml
 
 

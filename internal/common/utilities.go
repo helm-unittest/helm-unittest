@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -16,4 +17,14 @@ func TrustedMarshalYAML(d interface{}) string {
 		panic(err)
 	}
 	return byteBuffer.String()
+}
+
+// TrustedUnmarshalYAML unmarshal yaml without error returned, if an error happens it panics
+func TrustedUnmarshalYAML(d string) map[string]interface{} {
+	parsedYaml := K8sManifest{}
+	yamlDecoder := yaml.NewDecoder(strings.NewReader(d))
+	if err := yamlDecoder.Decode(&parsedYaml); err != nil {
+		panic(err)
+	}
+	return parsedYaml
 }

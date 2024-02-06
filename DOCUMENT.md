@@ -81,6 +81,9 @@ tests:
           memory: 128Mi
     template: deployment.yaml
     documentIndex: 0
+    documentSelector: 
+      path: metadata.name
+      value: my-service-name    
     release:
       name: my-release
       namespace:
@@ -109,6 +112,10 @@ tests:
 - **template**: *string, optional*. **templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
+
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+  - **path**: *string*. The `documentSelector` path to assert.
+  - **value**: *any*. The expected value.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -141,6 +148,9 @@ tests:
       - equal:
           path: metadata.name
           value: my-deploy
+        documentSelector: 
+          path: metadata.name
+          value: my-service-name    
       - equal:
           path: metadata.name
           value: your-service
@@ -156,6 +166,10 @@ The assertion is defined with the assertion type as the key and its parameters a
 - **template**: *string, optional*. The template file which render the manifest to be asserted, default to the list of template file defined in `templates` of suite file, unless the template is in the testjob (see TestJob). For example the first assertion above with no `template` specified asserts for both `deployment.yaml` and `service.yaml` by default. If no template file specified in neither suite, testjob and assertion, the assertion returns an error and fail the test.
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
+
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+  - **path**: *string*. The `documentSelector` path to assert.
+  - **value**: *any*. The expected value.
 
 Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath` syntax:
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.
@@ -174,7 +188,7 @@ Available assertion types are listed below:
 |----------------|------------|-------------|---------|
 | `containsDocument` | **kind**: *string*. Expected `kind` of manifest.<br/> **apiVersion**: *string*. Expected `apiVersion` of manifest.<br/>**name**: *string, optional*. The value of the `metadata.name`.<br/>**namespace**: *string, optional*. The value of the `metadata.namespace`.<br/>**any**: *bool, optional*. ignores any other documents. | Asserts the documents rendered by the `kind` and `apiVersion` specified. | <pre>containsDocument:<br/>  kind: Deployment<br/>  apiVersion: apps/v1<br/>  name: foo<br/>  namespace: bar</pre> |
 | `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocol:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
-| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocol: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
+| `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocol: TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
 | `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
 | `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
 | `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |

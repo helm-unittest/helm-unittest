@@ -24,7 +24,6 @@ tests:
           value:
             app: basic
             release: my-release
-      
   - it: should render right if values given
     set:
       service:
@@ -43,3 +42,12 @@ tests:
       - equal:
           path: spec.type
           value: NodePort
+  - it: should contain document
+    release:
+      name: my-release
+      namespace: default
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+        documentIndex: 0

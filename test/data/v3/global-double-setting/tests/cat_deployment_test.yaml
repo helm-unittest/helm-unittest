@@ -1,0 +1,27 @@
+suite: cat deployment testSuite
+templates:
+  - templates/cat_deployment.yaml
+set:
+  env:
+    testvalue: value
+
+tests:
+  - it: test sets value
+    set:
+      env:
+        testvalue: testvalue1
+    asserts:
+      - contains:
+          path: spec.template.metadata.labels
+          content:
+            testvalue: testvalue1
+
+  - it: test does not set testvalue, should be empty in deployment
+    set:
+      env:
+        testvalue2: testvalue2
+    asserts:
+      - contains:
+          path: spec.template.metadata.labels
+          content:
+            testvalue: value

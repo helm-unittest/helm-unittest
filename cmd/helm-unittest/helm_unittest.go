@@ -25,7 +25,7 @@ type testOptions struct {
 	valuesFiles    []string
 	outputFile     string
 	outputType     string
-	renderPath     string
+	chartTestsPath string
 }
 
 var testConfig = testOptions{}
@@ -71,6 +71,12 @@ details about how to write tests.
 			colored = &testConfig.colored
 		}
 
+		renderPath := ""
+		if testConfig.debugLogging {
+			renderPath = ".debug"
+			log.SetLevel(log.DebugLevel)
+		}
+
 		formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 		printer := printer.NewPrinter(os.Stdout, colored)
 		runner := unittest.TestRunner{
@@ -83,17 +89,14 @@ details about how to write tests.
 			TestFiles:      testConfig.testFiles,
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
-			RenderPath:     testConfig.renderPath,
+			ChartTestsPath: testConfig.chartTestsPath,
+			RenderPath:     renderPath,
 		}
 
 		log.SetFormatter(&log.TextFormatter{
 			DisableColors: !testConfig.colored,
 			FullTimestamp: true,
 		})
-
-		if testConfig.debugLogging {
-			log.SetLevel(log.DebugLevel)
-		}
 
 		passed := runner.RunV3(chartPaths)
 
@@ -153,18 +156,18 @@ func init() {
 		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit, Sonar)",
 	)
 
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.chartTestsPath, "chart-tests-path", "", "",
+		"chart-tests-path the folder location relative to the chart where a helm chart to render test suites is located",
+	)
+
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useFailfast, "failfast", "q", false,
 		"direct quit testing, when a test is failed",
 	)
 
-	cmd.PersistentFlags().BoolVarP(
-		&testConfig.debugLogging, "debug", "d", false,
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.debugLogging, "debug", false,
 		"enable debug logging",
-	)
-
-	cmd.PersistentFlags().StringVarP(
-		&testConfig.renderPath, "render-path", "r", "",
-		"render-path render the templates to this directory, for debugging purposes",
 	)
 }
