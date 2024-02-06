@@ -71,6 +71,12 @@ details about how to write tests.
 			colored = &testConfig.colored
 		}
 
+		renderPath := ""
+		if testConfig.debugLogging {
+			renderPath = ".debug"
+			log.SetLevel(log.DebugLevel)
+		}
+
 		formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 		printer := printer.NewPrinter(os.Stdout, colored)
 		runner := unittest.TestRunner{
@@ -84,16 +90,13 @@ details about how to write tests.
 			ValuesFiles:    testConfig.valuesFiles,
 			OutputFile:     testConfig.outputFile,
 			ChartTestsPath: testConfig.chartTestsPath,
+			RenderPath:     renderPath,
 		}
 
 		log.SetFormatter(&log.TextFormatter{
 			DisableColors: !testConfig.colored,
 			FullTimestamp: true,
 		})
-
-		if testConfig.debugLogging {
-			log.SetLevel(log.DebugLevel)
-		}
 
 		passed := runner.RunV3(chartPaths)
 
@@ -163,8 +166,8 @@ func init() {
 		"direct quit testing, when a test is failed",
 	)
 
-	cmd.PersistentFlags().BoolVarP(
-		&testConfig.debugLogging, "debug", "d", false,
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.debugLogging, "debug", false,
 		"enable debug logging",
 	)
 }
