@@ -28,6 +28,8 @@ type testOptions struct {
 	chartTestsPath string
 }
 
+var defaultFilePattern = filepath.Join("tests", "*_test.yaml")
+
 var testConfig = testOptions{}
 
 var cmd = &cobra.Command{
@@ -65,45 +67,51 @@ Check https://github.com/helm-unittest/helm-unittest for more
 details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, chartPaths []string) {
-		var colored *bool
-		if cmd.PersistentFlags().Changed("color") {
-			colored = &testConfig.colored
-		}
+	Run:  runPluginE,
+}
 
-		renderPath := ""
-		if testConfig.debugLogging {
-			renderPath = ".debug"
-			log.SetLevel(log.DebugLevel)
-		}
+func runPluginE(cmd *cobra.Command, chartPaths []string) {
+	var colored *bool
+	if cmd.PersistentFlags().Changed("color") {
+		colored = &testConfig.colored
+	}
 
-		formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
-		printer := printer.NewPrinter(os.Stdout, colored)
-		runner := unittest.TestRunner{
-			Printer:        printer,
-			Formatter:      formatter,
-			UpdateSnapshot: testConfig.updateSnapshot,
-			WithSubChart:   testConfig.withSubChart,
-			Strict:         testConfig.useStrict,
-			Failfast:       testConfig.useFailfast,
-			TestFiles:      testConfig.testFiles,
-			ValuesFiles:    testConfig.valuesFiles,
-			OutputFile:     testConfig.outputFile,
-			ChartTestsPath: testConfig.chartTestsPath,
-			RenderPath:     renderPath,
-		}
+	renderPath := ""
+	if testConfig.debugLogging {
+		renderPath = ".debug"
+		log.SetLevel(log.DebugLevel)
+	}
 
-		log.SetFormatter(&log.TextFormatter{
-			DisableColors: !testConfig.colored,
-			FullTimestamp: true,
-		})
+	if len(testConfig.testFiles) == 0 {
+		testConfig.testFiles = []string{defaultFilePattern}
+	}
 
-		passed := runner.RunV3(chartPaths)
+	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
+	printer := printer.NewPrinter(os.Stdout, colored)
+	runner := unittest.TestRunner{
+		Printer:        printer,
+		Formatter:      formatter,
+		UpdateSnapshot: testConfig.updateSnapshot,
+		WithSubChart:   testConfig.withSubChart,
+		Strict:         testConfig.useStrict,
+		Failfast:       testConfig.useFailfast,
+		TestFiles:      testConfig.testFiles,
+		ValuesFiles:    testConfig.valuesFiles,
+		OutputFile:     testConfig.outputFile,
+		ChartTestsPath: testConfig.chartTestsPath,
+		RenderPath:     renderPath,
+	}
 
-		if !passed {
-			os.Exit(1)
-		}
-	},
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: !testConfig.colored,
+		FullTimestamp: true,
+	})
+
+	passed := runner.RunV3(chartPaths)
+
+	if !passed {
+		os.Exit(1)
+	}
 }
 
 // main to execute execute unittest command
@@ -115,6 +123,10 @@ func main() {
 }
 
 func init() {
+	InitPluginFlags(cmd)
+}
+
+func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.colored, "color", false,
 		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
@@ -125,9 +137,8 @@ func init() {
 		"strict parse the testsuites",
 	)
 
-	defaultFilePattern := filepath.Join("tests", "*_test.yaml")
 	cmd.PersistentFlags().StringArrayVarP(
-		&testConfig.testFiles, "file", "f", []string{defaultFilePattern},
+		&testConfig.testFiles, "file", "f", []string{},
 		"glob paths of test files location, default to "+defaultFilePattern,
 	)
 
@@ -156,8 +167,8 @@ func init() {
 		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit, Sonar)",
 	)
 
-	cmd.PersistentFlags().StringVarP(
-		&testConfig.chartTestsPath, "chart-tests-path", "", "",
+	cmd.PersistentFlags().StringVar(
+		&testConfig.chartTestsPath, "chart-tests-path", "",
 		"chart-tests-path the folder location relative to the chart where a helm chart to render test suites is located",
 	)
 
@@ -166,8 +177,15 @@ func init() {
 		"direct quit testing, when a test is failed",
 	)
 
-	cmd.PersistentFlags().BoolVar(
-		&testConfig.debugLogging, "debug", false,
-		"enable debug logging",
-	)
+	if cmd.HasInheritedFlags() {
+		cmd.InheritedFlags().BoolVarP(
+			&testConfig.debugLogging, "debug", "d", false,
+			"enable verbose output",
+		)
+	} else {
+		cmd.PersistentFlags().BoolVarP(
+			&testConfig.debugLogging, "debug", "d", false,
+			"enable verbose output",
+		)
+	}
 }
