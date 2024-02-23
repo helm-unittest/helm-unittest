@@ -32,6 +32,8 @@ var defaultFilePattern = filepath.Join("tests", "*_test.yaml")
 
 var testConfig = testOptions{}
 
+var testRunner = unittest.TestRunner{}
+
 var cmd = &cobra.Command{
 	Use:   "unittest [flags] CHART [...]",
 	Short: "unittest for helm charts",
@@ -67,10 +69,10 @@ Check https://github.com/helm-unittest/helm-unittest for more
 details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
-	Run:  runPluginE,
+	Run:  RunPlugin,
 }
 
-func runPluginE(cmd *cobra.Command, chartPaths []string) {
+func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	var colored *bool
 	if cmd.PersistentFlags().Changed("color") {
 		colored = &testConfig.colored
@@ -88,7 +90,7 @@ func runPluginE(cmd *cobra.Command, chartPaths []string) {
 
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 	printer := printer.NewPrinter(os.Stdout, colored)
-	runner := unittest.TestRunner{
+	testRunner = unittest.TestRunner{
 		Printer:        printer,
 		Formatter:      formatter,
 		UpdateSnapshot: testConfig.updateSnapshot,
@@ -107,7 +109,7 @@ func runPluginE(cmd *cobra.Command, chartPaths []string) {
 		FullTimestamp: true,
 	})
 
-	passed := runner.RunV3(chartPaths)
+	passed := testRunner.RunV3(chartPaths)
 
 	if !passed {
 		os.Exit(1)
@@ -177,15 +179,16 @@ func InitPluginFlags(cmd *cobra.Command) {
 		"direct quit testing, when a test is failed",
 	)
 
-	if cmd.HasInheritedFlags() {
-		cmd.InheritedFlags().BoolVarP(
-			&testConfig.debugLogging, "debug", "d", false,
-			"enable verbose output",
-		)
-	} else {
-		cmd.PersistentFlags().BoolVarP(
-			&testConfig.debugLogging, "debug", "d", false,
-			"enable verbose output",
-		)
-	}
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.debugLogging, "debugPlugin", "d", false,
+		"enable verbose output",
+	)
+}
+
+func GetTestRunner() unittest.TestRunner {
+	return testRunner
+}
+
+func DebugEnabled() bool {
+	return testConfig.debugLogging
 }

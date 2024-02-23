@@ -1,6 +1,7 @@
-0.4.2 / 2014-02-..
+0.4.2 / 2024-02-24
 ==================
 - Fix global set and set override (resolves #210, resolves #276)
+- Fix debug flag by changing name to debugPlugin flag (resolves #241)
 - Update packages to latest patch versions
 - Update documentation
 
