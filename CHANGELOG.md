@@ -2,8 +2,11 @@
 ==================
 - Fix global set and set override (resolves #210, resolves #276)
 - Fix debug flag by changing name to debugPlugin flag (resolves #241)
-- Update packages to latest patch versions
-- Update documentation
+- Fix empty documentSelector (credits @michaelruigrok)
+- Improve storing generated template when debug flag enabled (credits @thepeak99)
+- Improve development (credits @ivankatliarchuk)
+- Update packages to latest patch versions (credits @ivankatliarchuk, credits @stavros-k, resolves #295)
+- Update documentation (credits @tochev)
 
 0.4.1 / 2024-01-09
 ==================
