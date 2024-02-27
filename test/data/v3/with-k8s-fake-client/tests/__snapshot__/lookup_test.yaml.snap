@@ -1,0 +1,9 @@
+manifest should match snapshot:
+  1: |
+    lookup_exists:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: exists
+        namespace: default
+    lookup_not_exists: {}

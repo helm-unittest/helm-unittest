@@ -1,0 +1,20 @@
+templates:
+  - templates/lookup.yaml
+tests:
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+    kubernetes_provider:
+      scheme:
+        "v1/Pod":
+          gvr:
+            version:  "v1"
+            resource: "pods"
+          namespaced: true
+      objects:
+        - kind: Pod
+          apiVersion: v1
+          metadata:
+            name: exists
+            namespace: default
+

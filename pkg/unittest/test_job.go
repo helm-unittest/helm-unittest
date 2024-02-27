@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -15,6 +16,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/fake"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -22,6 +28,36 @@ import (
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
+
+type KubernetesFakeKindProps struct {
+	ShouldErr  error                       `yaml:"should_err"`
+	Gvr        schema.GroupVersionResource `yaml:"gvr"`
+	Namespaced bool                        `yaml:"namespaced"`
+}
+
+type KubernetesFakeClientProvider struct {
+	Scheme  map[string]KubernetesFakeKindProps `yaml:"scheme"`
+	Objects []map[string]interface{}           `yaml:"objects"`
+}
+
+func (p *KubernetesFakeClientProvider) GetClientFor(apiVersion, kind string) (dynamic.NamespaceableResourceInterface, bool, error) {
+	props := p.Scheme[path.Join(apiVersion, kind)]
+	if props.ShouldErr != nil {
+		return nil, false, props.ShouldErr
+	}
+
+	return fake.NewSimpleDynamicClient(runtime.NewScheme(), convertRuntimeObject(p.Objects)...).Resource(props.Gvr), props.Namespaced, nil
+}
+
+func convertRuntimeObject(input []map[string]interface{}) []runtime.Object {
+	result := make([]runtime.Object, len(input))
+
+	for k, v := range input {
+		result[k] = &unstructured.Unstructured{Object: v}
+	}
+
+	return result
+}
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -163,8 +199,8 @@ type TestJob struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
-	Assertions []*Assertion `yaml:"asserts"`
-
+	Assertions         []*Assertion                 `yaml:"asserts"`
+	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetes_provider"`
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -331,7 +367,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
-	outputOfFiles, err := v3engine.Render(filteredChart, vals)
+	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)

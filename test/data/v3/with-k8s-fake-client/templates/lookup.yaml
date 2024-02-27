@@ -1,0 +1,3 @@
+---
+lookup_exists: {{ (lookup "v1" "Pod" "default" "exists") | toYaml | nindent 2 }}
+lookup_not_exists: {{ (lookup "v1" "Pod" "default" "not-exists") | toYaml | nindent 2 }}
