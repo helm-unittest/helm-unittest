@@ -174,3 +174,21 @@ func TestCopyHelmChartWithSubSubChartsRootchartConfigMapFilter(t *testing.T) {
 	assert.NotNil(t, sut)
 	assert.Equal(t, 2, templatesCount)
 }
+
+func TestCopyHelmChartWithSamenameSubSubChartsConfigMapFilter(t *testing.T) {
+	templateAsserts := []string{"charts/with-samenamesubsubcharts/charts/with-samenamesubsubcharts/templates/deployment.yaml"}
+
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3WitSamenameSubSubChart)
+	log.SetOutput(os.Stdout)
+
+	// Copy
+	sut := CopyV3Chart(initialChart.Name(), templateAsserts, initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 1, templatesCount)
+}

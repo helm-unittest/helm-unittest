@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/mitchellh/copystructure"
 	log "github.com/sirupsen/logrus"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
@@ -36,7 +37,7 @@ func mergeFullPath(chartRoute, fileName string) string {
 
 	for i := len(chartRouteParts); i > 0; i-- {
 		chartRoutePart := chartRouteParts[i-1]
-		if strings.Count(fileNamePaths, chartRoutePart) < strings.Count(chartRoute, chartRoutePart) {
+		if strings.Count(chartRoute, chartRoutePart) < strings.Count(fileNamePaths, chartRoutePart) {
 			fileName = filepath.ToSlash(filepath.Join(chartRoutePart, fileName))
 		}
 	}
@@ -44,10 +45,31 @@ func mergeFullPath(chartRoute, fileName string) string {
 	return fileName
 }
 
+func copySet(setValues map[string]interface{}) map[string]interface{} {
+	copiedSet, err := copystructure.Copy(setValues)
+	if err != nil {
+		panic(err)
+	}
+
+	copiedSetValues := copiedSet.(map[string]interface{})
+	// if we have an empty map, make sure it is initialized
+	if copiedSetValues == nil {
+		copiedSetValues = make(map[string]interface{})
+	}
+
+	return copiedSetValues
+}
+
 // Copy the V3Chart and its dependencies with partials and optional selected test files.
 func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3chart.Chart) *v3chart.Chart {
 	copiedChart := new(v3chart.Chart)
 	*copiedChart = *targetChart
+
+	// Clean values and copy the values
+	copiedChart.Values = nil
+
+	// Copy the values file
+	copiedChart.Values = copySet(targetChart.Values)
 
 	// Clean all parts and rebuild the chart which is needed
 	copiedChart.Templates = nil
@@ -59,7 +81,7 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 	// Filter trough dependencies.
 	copiedChartDependencies := make([]*v3chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
-		copiedChartRoute := filepath.Join(chartRoute, subchartPrefix, dependency.Name())
+		copiedChartRoute := filepath.ToSlash(filepath.Join(chartRoute, subchartPrefix, dependency.Name()))
 		copiedDependency := CopyV3Chart(copiedChartRoute, templatesToAssert, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
