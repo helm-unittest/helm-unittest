@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	log "github.com/sirupsen/logrus"
 )
 
 // IsNullOrEmptyValidator validate value of Path is empty
@@ -63,7 +64,7 @@ func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []stri
 			isEmpty = actualValue.Len() == 0
 		default:
 			zero := reflect.Zero(actualValue.Type())
-			isEmpty = reflect.DeepEqual(actual, zero.Interface())
+			isEmpty = reflect.DeepEqual(singleValue, zero.Interface())
 		}
 
 		if isEmpty == context.Negative {

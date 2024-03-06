@@ -3,14 +3,17 @@ package validators_test
 import (
 	"testing"
 
-	"github.com/helm-unittest/helm-unittest/internal/common"
-	. "github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 )
 
 var docWithEmptyElements = `
 a:
+b: ""
+c: 0
 d: null
 e: []
 f: {}
