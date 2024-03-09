@@ -495,7 +495,9 @@ func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8s
 	return nil
 }
 
-// evaluate documents produced by the file in test manifest
+// manifestsUnderTest is a method of the TestJob type that filters a map of Kubernetes manifests
+// based on the user specified template or templates. It returns a new map containing only the manifests
+// that match the specified criteria.
 func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
 	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests))
 	result := make(map[string][]common.K8sManifest)
