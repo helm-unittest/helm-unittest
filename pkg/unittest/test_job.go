@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
@@ -476,8 +478,10 @@ func (t *TestJob) determineRenderSuccess() {
 }
 
 func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
+	filteredManifests := t.manifestsUnderTest(manifestOfFiles)
+	log.WithField("assertion", "determine-document-index").Debugln("manifests", filteredManifests)
 	if t.DocumentSelector != nil {
-		idx, err := t.DocumentSelector.FindDocumentsIndex(manifestOfFiles)
+		idx, err := t.DocumentSelector.FindDocumentsIndex(filteredManifests)
 		if err != nil {
 			return err
 		} else {
@@ -489,6 +493,30 @@ func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8s
 	}
 
 	return nil
+}
+
+// evaluate documents produced by the file in test manifest
+func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
+	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests))
+	result := make(map[string][]common.K8sManifest)
+	if t.Template != "" {
+		for key, value := range manifests {
+			if strings.Contains(key, t.Template) {
+				result[key] = value
+			}
+		}
+	}
+	if t.Templates != nil && len(t.Templates) > 0 {
+		for _, template := range t.Templates {
+			for key, value := range manifests {
+				if strings.Contains(key, template) {
+					result[key] = value
+				}
+			}
+		}
+	}
+	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
+	return result
 }
 
 // add prefix to Assertion.Template
