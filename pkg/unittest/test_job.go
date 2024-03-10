@@ -479,7 +479,6 @@ func (t *TestJob) determineRenderSuccess() {
 
 func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
 	filteredManifests := t.manifestsUnderTest(manifestOfFiles)
-	log.WithField("assertion", "determine-document-index").Debugln("manifests", filteredManifests)
 	if t.DocumentSelector != nil {
 		idx, err := t.DocumentSelector.FindDocumentsIndex(filteredManifests)
 		if err != nil {
