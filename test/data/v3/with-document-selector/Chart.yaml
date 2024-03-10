@@ -1,0 +1,4 @@
+apiVersion: v2
+description: A chart with document selector
+name: with-document-selector
+version: 0.1.0
