@@ -1,8 +1,8 @@
 
-### Chart [ with-document-selector ] ../../test/data/v3/with-document-selector
+### Chart [ with-document-select ] ../../test/data/v3/with-document-select
 
 
- PASS  Document Selector test	../../test/data/v3/with-document-selector/tests/initial_test.yaml
+ PASS  Document Selector test	../../test/data/v3/with-document-select/tests/initial_test.yaml
 
 
 Charts:      1 passed, 1 total

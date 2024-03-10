@@ -21,7 +21,7 @@ TEST_NAMES ?=basic \
 	with-subchart \
 	with-subfolder \
 	with-subsubcharts \
-	with-document-selector
+	with-document-select
 
 .PHONY: help
 help:
