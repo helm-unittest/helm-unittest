@@ -110,6 +110,24 @@ func parseTextFile(rendered string) []common.K8sManifest {
 	return manifests
 }
 
+func writeRenderedOutput(renderPath string, outputOfFiles map[string]string) error {
+	if renderPath != "" {
+		for file, rendered := range outputOfFiles {
+			filePath := filepath.Join(renderPath, file)
+			directory := filepath.Dir(filePath)
+			if _, dirErr := os.Stat(directory); os.IsNotExist(dirErr) {
+				if createDirErr := os.MkdirAll(directory, 0755); createDirErr != nil {
+					return createDirErr
+				}
+			}
+			if createFileErr := os.WriteFile(filePath, []byte(rendered), 0644); createFileErr != nil {
+				return createFileErr
+			}
+		}
+	}
+	return nil
+}
+
 type orderedSnapshotComparer struct {
 	cache   *snapshot.Cache
 	test    string
@@ -180,21 +198,10 @@ func (t *TestJob) RunV3(
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
 
-	if renderPath != "" {
-		for file, rendered := range outputOfFiles {
-			filePath := filepath.Join(renderPath, file)
-			directory := filepath.Dir(filePath)
-			if _, err := os.Stat(directory); os.IsNotExist(err) {
-				if err := os.MkdirAll(directory, 0755); err != nil {
-					result.ExecError = err
-					return result
-				}
-			}
-			if err := os.WriteFile(filePath, []byte(rendered), 0644); err != nil {
-				result.ExecError = err
-				return result
-			}
-		}
+	writeError := writeRenderedOutput(renderPath, outputOfFiles)
+	if writeError != nil {
+		result.ExecError = writeError
+		return result
 	}
 
 	if renderError != nil {
