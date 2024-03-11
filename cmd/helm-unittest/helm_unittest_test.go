@@ -201,9 +201,9 @@ func TestValidateUnittestTestFilesFlags(t *testing.T) {
 	testFileFlags := []string{"--file", "-f"}
 
 	testFiles := map[string][]string{
-		"":             []string{filepath.Join("tests", "*_test.yaml")},
-		"*.yaml":       []string{"*.yaml"},
-		"*_tests.yaml": []string{"*_tests.yaml"},
+		"":             {filepath.Join("tests", "*_test.yaml")},
+		"*.yaml":       {"*.yaml"},
+		"*_tests.yaml": {"*_tests.yaml"},
 	}
 
 	for _, testFileFlag := range testFileFlags {
@@ -231,9 +231,9 @@ func TestValidateUnittestValuesFlags(t *testing.T) {
 	valuesFilesFlags := []string{"--values", "-v"}
 
 	valuesFiles := map[string][]string{
-		"":              []string{},
-		"*_values.yaml": []string{"*_values.yaml"},
-		"values.yaml":   []string{"values.yaml"},
+		"":              {},
+		"*_values.yaml": {"*_values.yaml"},
+		"values.yaml":   {"values.yaml"},
 	}
 
 	for _, valuesFilesFlag := range valuesFilesFlags {
