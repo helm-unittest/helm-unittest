@@ -30,20 +30,6 @@ func getTemplateFileName(fileName string) string {
 	return fileName
 }
 
-func mergeFullPath(chartRoute, fileName string) string {
-	chartRouteParts := strings.Split(chartRoute, string(filepath.Separator))
-	fileNamePaths := filepath.Dir(fileName)
-
-	for i := len(chartRouteParts); i > 0; i-- {
-		chartRoutePart := chartRouteParts[i-1]
-		if strings.Count(chartRoute, chartRoutePart) < strings.Count(fileNamePaths, chartRoutePart) {
-			fileName = filepath.ToSlash(filepath.Join(chartRoutePart, fileName))
-		}
-	}
-
-	return fileName
-}
-
 func copySet(setValues map[string]interface{}) map[string]interface{} {
 	copiedSet, err := copystructure.Copy(setValues)
 	if err != nil {
@@ -60,7 +46,7 @@ func copySet(setValues map[string]interface{}) map[string]interface{} {
 }
 
 // Copy the V3Chart and its dependencies with partials and optional selected test files.
-func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3chart.Chart) *v3chart.Chart {
+func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, targetChart *v3chart.Chart) *v3chart.Chart {
 	copiedChart := new(v3chart.Chart)
 	*copiedChart = *targetChart
 
@@ -68,14 +54,15 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 	copiedChart.Templates = nil
 
 	// Filter the templates based on the templates to Assert
-	copiedChart.Templates = filterV3Templates(chartRoute, templatesToAssert, targetChart)
+	// To filter templates ensure only the original chartname is used.
+	copiedChart.Templates = filterV3Templates(chartRoute, currentRoute, templatesToAssert, targetChart)
 
 	// Recreate the dependencies
 	// Filter trough dependencies.
 	copiedChartDependencies := make([]*v3chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
-		copiedChartRoute := filepath.Join(chartRoute, subchartPrefix, dependency.Name())
-		copiedDependency := CopyV3Chart(copiedChartRoute, templatesToAssert, dependency)
+		copiedChartRoute := filepath.Join(currentRoute, subchartPrefix, dependency.Name())
+		copiedDependency := CopyV3Chart(chartRoute, copiedChartRoute, templatesToAssert, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
 	copiedChart.SetDependencies(copiedChartDependencies...)
@@ -84,15 +71,16 @@ func CopyV3Chart(chartRoute string, templatesToAssert []string, targetChart *v3c
 }
 
 // filterV3Templates, Filter the V3Templates with only the partials and selected test files.
-func filterV3Templates(chartRoute string, templateToAssert []string, targetChart *v3chart.Chart) []*v3chart.File {
+func filterV3Templates(chartRoute, currentRoute string, templateToAssert []string, targetChart *v3chart.Chart) []*v3chart.File {
 	filteredV3Template := make([]*v3chart.File, 0)
 
 	log.WithField("filterV3Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
+	log.WithField("filterV3Templates", "currentRoute").Debugln("expected currentRoute:", currentRoute)
 	log.WithField("filterV3Templates", "templateToAssert").Debugln("expected templateToAssert:", templateToAssert)
 
 	// check templates in chart
 	for _, fileName := range templateToAssert {
-		selectedV3TemplateName := mergeFullPath(chartRoute, getTemplateFileName(fileName))
+		selectedV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
 
 		// Set selectedV3TemplateName as regular expression to search
 		selectedV3TemplateNamePattern := strings.ReplaceAll(selectedV3TemplateName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
@@ -100,7 +88,7 @@ func filterV3Templates(chartRoute string, templateToAssert []string, targetChart
 		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, ".", "\\.")
 
 		for _, template := range targetChart.Templates {
-			foundV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, template.Name))
+			foundV3TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
 
 			if ok, _ := regexp.MatchString(selectedV3TemplateNamePattern, foundV3TemplateName); ok {
 				filteredV3Template = append(filteredV3Template, template)
