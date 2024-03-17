@@ -90,6 +90,40 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
+func TestV3RunJobWithRenderPathOk(t *testing.T) {
+	renderPath := "testdebug"
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: templates/deployment.yaml
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic$
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-basic
+    template: templates/deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{})
+	defer os.RemoveAll(renderPath)
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+	// Check folder contains files
+	a.DirExists(renderPath)
+}
+
 func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `

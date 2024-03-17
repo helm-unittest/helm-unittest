@@ -33,6 +33,7 @@ const testV3WithFailingTemplateChart string = "../../test/data/v3/failing-templa
 const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
 const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
 const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
+const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
