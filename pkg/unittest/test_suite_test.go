@@ -34,6 +34,7 @@ const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
 const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
 const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
+const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
@@ -74,7 +75,7 @@ func getExpectedRenderedTestSuites(customSnapshotIds bool) map[string]*TestSuite
 	createSnapshotTestYaml := func(env string) string {
 		return fmt.Sprintf(`
 it: manifest should match snapshot
-set: 
+set:
     env: %s
 asserts:
     - matchSnapshot: {}`, env)
@@ -521,7 +522,7 @@ func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart
 templates:
-  - charts/postgresql/templates/pvc.yaml 
+  - charts/postgresql/templates/pvc.yaml
   - charts/another-postgresql/templates/pvc.yaml
 tests:
   - it: should both pass

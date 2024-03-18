@@ -15,6 +15,7 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	invalidbasic \
 	nested_glob \
+	with-document-select \
 	with-files \
 	with-helm-tests \
 	with-samenamesubsubcharts \

@@ -205,9 +205,9 @@ tests:
         limits:
           memory: 128Mi
     template: deployment.yaml
-    documentSelector: 
+    documentSelector:
       path: metadata.name
-      value: my-service-name    
+      value: my-service-name
     asserts:
       - equal:
           path: metadata.name

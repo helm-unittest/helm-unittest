@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         # tests for target OS
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         # tests for actively maintained Go versions.
         go-version:
           - 1.21.x

@@ -1,0 +1,14 @@
+
+### Chart [ with-document-select ] ../../test/data/v3/with-document-select
+
+
+ PASS  Document Selector test	../../test/data/v3/with-document-select/tests/initial_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshot:    0 passed, 0 total
+Time:        XX.XXXms
+
+
