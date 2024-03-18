@@ -1,0 +1,6 @@
+# Ensure lf on all machines to ensure identical snapshot outputs
+* text eol=lf
+
+# Ensure tgz files are binary handled
+*.tgz binary
+*.png binary

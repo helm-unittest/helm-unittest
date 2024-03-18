@@ -28,7 +28,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Usage](#usage)
   - [Flags](#flags)
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
-  - [DocumentSelector]()
+  - [DocumentSelector](#documentselector)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)

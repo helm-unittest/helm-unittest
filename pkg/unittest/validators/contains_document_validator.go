@@ -94,7 +94,7 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 			if v.Any != context.Negative {
 				validateSuccess = true
 				validateErrors = []string{}
-				// Stop searching as we already found a succesful match.
+				// Stop searching as we already found a successful match.
 				break
 			}
 		}

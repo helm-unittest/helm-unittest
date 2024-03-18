@@ -6,13 +6,11 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	"github.com/mitchellh/copystructure"
 	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
@@ -62,24 +60,9 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	return &suite, nil
 }
 
-func copySet(setValues map[string]interface{}) map[string]interface{} {
-	copiedSet, err := copystructure.Copy(setValues)
-	if err != nil {
-		panic(err)
-	}
-
-	copiedSetValues := copiedSet.(map[string]interface{})
-	// if we have an empty map, make sure it is initialized
-	if copiedSetValues == nil {
-		copiedSetValues = make(map[string]interface{})
-	}
-
-	return copiedSetValues
-}
-
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
 func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
-	testChartPath := path.Join(helmTestSuiteDir, "Chart.yaml")
+	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
 
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
@@ -108,56 +91,70 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		return nil, err
 	}
 
-	renderErrs := make([]error, 0)
-	suites := make([]*TestSuite, 0)
 	// Iterate over all keys
-	for templateName, template := range renderedFiles {
-		if len(strings.TrimSpace(template)) == 0 {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
-			continue
-		}
-
-		templateFilePath := strings.Replace(templateName, chart.Name(), "", 1)
-		absPath := path.Join(helmTestSuiteDir, templateFilePath)
-
-		// Split any multiple suites
-		var subYamlErrs []error
-		templates := strings.Split(template, "---")
-		previousSuitesLen := len(suites)
-		realIdx := -1
-		for idx, subYaml := range templates {
-			if len(strings.TrimSpace(subYaml)) == 0 {
-				continue
-			}
-			realIdx++
-
-			// Filter any empty templates
-			suite, err := createTestSuite(absPath, chartRoute, subYaml, strict, valueFilesSet, true)
-			if err != nil {
-				subYamlErrs = append(subYamlErrs, fmt.Errorf("chart %d error: %w", idx, err))
-				continue
-			}
-			// Set up a numerical snapshot idx if none provided
-			if len(suite.SnapshotId) == 0 {
-				suite.SnapshotId = fmt.Sprintf("%d", realIdx)
-			}
-			suites = append(suites, suite)
-		}
-		if len(subYamlErrs) > 0 {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) error: %w", templateName, errors.Join(subYamlErrs...)))
-		}
-
-		// Check that we didn't make a bunch of empty yamls
-		if previousSuitesLen == len(suites) {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
-		}
-	}
+	// Split any multiple suites
+	// Filter any empty templates
+	// Set up a numerical snapshot idx if none provided
+	// Check that we didn't make a bunch of empty yamls
+	renderErrs, suites := iterateAllKeys(renderedFiles, chart.Name(), helmTestSuiteDir, chartRoute, strict, valueFilesSet)
 
 	if len(renderErrs) > 0 {
 		return nil, errors.Join(renderErrs...)
 	}
 
 	return suites, nil
+}
+
+func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir, chartRoute string, strict bool, valueFilesSet []string) ([]error, []*TestSuite) {
+	renderErrs := make([]error, 0)
+	suites := make([]*TestSuite, 0)
+
+	for templateName, template := range renderedFiles {
+		if len(strings.TrimSpace(template)) == 0 {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
+			continue
+		}
+
+		templateFilePath := strings.Replace(templateName, chartName, "", 1)
+		absPath := filepath.Join(helmTestSuiteDir, templateFilePath)
+
+		var subYamlErrs []error
+		var previousSuitesLen int
+		subYamlErrs, previousSuitesLen, suites = iterateTemplates(template, suites, absPath, chartRoute, strict, valueFilesSet)
+		if len(subYamlErrs) > 0 {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) error: %w", templateName, errors.Join(subYamlErrs...)))
+		}
+
+		if previousSuitesLen == len(suites) {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
+		}
+	}
+	return renderErrs, suites
+}
+
+func iterateTemplates(template string, suites []*TestSuite, absPath string, chartRoute string, strict bool, valueFilesSet []string) ([]error, int, []*TestSuite) {
+	var subYamlErrs []error
+	templates := strings.Split(template, "---")
+	previousSuitesLen := len(suites)
+	realIdx := -1
+	for idx, subYaml := range templates {
+		if len(strings.TrimSpace(subYaml)) == 0 {
+			continue
+		}
+		realIdx++
+
+		suite, err := createTestSuite(absPath, chartRoute, subYaml, strict, valueFilesSet, true)
+		if err != nil {
+			subYamlErrs = append(subYamlErrs, fmt.Errorf("chart %d error: %w", idx, err))
+			continue
+		}
+
+		if len(suite.SnapshotId) == 0 {
+			suite.SnapshotId = fmt.Sprintf("%d", realIdx)
+		}
+		suites = append(suites, suite)
+	}
+	return subYamlErrs, previousSuitesLen, suites
 }
 
 // TestSuite defines scope and templates to render and tests to run
