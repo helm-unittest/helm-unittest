@@ -336,8 +336,10 @@ asserts:
     documentIndex: 0
     template: templates/deployment.yaml
 `
-	file, _ := os.CreateTemp("", "testjob_test_TestRunJobWithValuesFile.yaml")
+
+	file, _ := os.Create("testjob_test_TestRunJobWithValuesFile.yaml")
 	file.WriteString("nameOverride: mary-jane")
+	file.Close()
 
 	var tj TestJob
 	yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
@@ -347,9 +349,12 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a.FileExists(file.Name())
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
+
+	os.Remove(file.Name())
 }
 
 func TestV3RunJobWithReleaseSettings(t *testing.T) {

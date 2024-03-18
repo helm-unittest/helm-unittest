@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -247,7 +246,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	for _, specifiedPath := range t.Values {
 		value := map[string]interface{}{}
 		var valueFilePath string
-		if path.IsAbs(specifiedPath) {
+		if filepath.IsAbs(specifiedPath) {
 			valueFilePath = specifiedPath
 		} else {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
