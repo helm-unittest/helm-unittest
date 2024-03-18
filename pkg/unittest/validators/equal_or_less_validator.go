@@ -16,7 +16,7 @@ type EqualOrLessValidator struct {
 
 func (a EqualOrLessValidator) failInfo(msg string, index int, not bool) []string {
 	return splitInfof(
-		setFailFormat(not, true, false, false, " to be greater or equal, got"),
+		setFailFormat(not, true, false, false, " to be less than or equal to, got"),
 		index,
 		a.Path,
 		msg,

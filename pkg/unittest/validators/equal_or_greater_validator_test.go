@@ -31,6 +31,13 @@ func TestEqualOrGreaterValidatorOk(t *testing.T) {
 			value:    0.75,
 			expected: true,
 		},
+		{
+			name:     "Test case 3: string ok",
+			doc:      "cpu: 600m",
+			path:     "cpu",
+			value:    "600m",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -65,7 +72,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tvalue",
-				"Expected to be greater or equal, got:",
+				"Expected to be greater then or equal to, got:",
 				"\tthe expected '5' is not greater or equal to the actual '25'",
 			},
 		},
@@ -77,7 +84,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be greater or equal, got:",
+				"Expected to be greater then or equal to, got:",
 				"\tthe expected '1.31' is not greater or equal to the actual '1.7'",
 			},
 		},
@@ -89,8 +96,20 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be greater or equal, got:",
+				"Expected to be greater then or equal to, got:",
 				"\tthe expected '1.338' is not greater or equal to the actual '1.341'",
+			},
+		},
+		{
+			name:  "Test case 4: string fail",
+			doc:   "cpu: 600m",
+			path:  "cpu",
+			value: "590m",
+			errorMsg: []string{
+				"DocumentIndex:\t0",
+				"Path:\tcpu",
+				"Expected to be greater then or equal to, got:",
+				"\tthe expected '590m' is not greater or equal to the actual '600m'",
 			},
 		},
 	}

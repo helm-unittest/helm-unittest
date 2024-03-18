@@ -32,7 +32,7 @@ func TestEqualOrLessValidatorOk(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Test case 2: float64 ok",
+			name:     "Test case 3: string ok",
 			doc:      "cpu: 600m",
 			path:     "cpu",
 			value:    "580m",
@@ -72,7 +72,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tvalue",
-				"Expected to be greater or equal, got:",
+				"Expected to be less than or equal to, got:",
 				"\tthe expected '7' is not less or equal to the actual '6'",
 			},
 		},
@@ -84,7 +84,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be greater or equal, got:",
+				"Expected to be less than or equal to, got:",
 				"\tthe expected '1.71' is not less or equal to the actual '1.7'",
 			},
 		},
@@ -96,7 +96,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be greater or equal, got:",
+				"Expected to be less than or equal to, got:",
 				"\tthe expected '1.342' is not less or equal to the actual '1.341'",
 			},
 		},
