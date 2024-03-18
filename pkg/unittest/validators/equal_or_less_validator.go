@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// EqualOrLessValidator validate whether the value of Path is greater or equal to Value
+// EqualOrLessValidator validate whether the value of Path is less or equal to Value
 type EqualOrLessValidator struct {
 	Path  string
 	Value interface{}
@@ -45,7 +45,7 @@ func (a EqualOrLessValidator) generateFormatStrFloat(value float64) string {
 
 // validate performs a validation of a Kubernetes manifest against an expected value.
 // It compares the actual value retrieved from the manifest with the expected value,
-// ensuring that they are of compatible types and that the actual value is greater than or equal to the expected value.
+// ensuring that they are of compatible types and that the actual value is less than or equal to the expected value.
 // If successful, it returns true along with a nil error slice. If unsuccessful, it returns false
 // along with an error slice containing information about the validation failure.
 func (a EqualOrLessValidator) validate(expected, actual interface{}) (bool, []string) {
