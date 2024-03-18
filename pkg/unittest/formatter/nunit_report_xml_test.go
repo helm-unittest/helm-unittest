@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
@@ -97,7 +97,7 @@ func validatNUnitTestCase(assert *assert.Assertions, expected, actual []NUnitTes
 
 func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 
@@ -152,7 +152,7 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -224,7 +224,7 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 
 func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Failure_And_Errors_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Failure_And_Errors_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -306,7 +306,7 @@ func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 
 func TestWriteTestOutputAsNUnitWithErrors(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "NUnit_Test_Errors_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Errors_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	errorMessage := "Throw an error."
 

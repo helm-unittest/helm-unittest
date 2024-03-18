@@ -1,3 +1,13 @@
+0.4.3 / 2024-03-19
+==================
+- Fix unittest fails when chart name has same name as one of its dependencies (resolves #283)
+- Fix documentSelector matches resources outside of selected templates (credits @ivankatliarchuk, resolves #286)
+- Fix IsNullOrEmptyValidator for single values (credits @arkbriar)
+- Fix validation on Windows target platform
+- Improve development (credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update documentation (credits @gionn, credits @mgnisia)
+
 0.4.2 / 2024-02-24
 ==================
 - Fix global set and set override (resolves #210, resolves #276)

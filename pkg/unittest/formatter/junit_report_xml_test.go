@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
@@ -117,7 +117,7 @@ func assertJUnitProperty(assert *assert.Assertions, expected, actual []JUnitProp
 
 func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
+	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 
@@ -159,7 +159,7 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
+	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -212,7 +212,7 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 
 func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpJUnitTestDir, "JUnit_Test_FailureError_Output.xml")
+	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_FailureError_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"

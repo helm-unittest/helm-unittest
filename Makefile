@@ -17,6 +17,7 @@ TEST_NAMES ?=basic \
 	nested_glob \
 	with-files \
 	with-helm-tests \
+	with-samenamesubsubcharts \
 	with-schema \
 	with-subchart \
 	with-subfolder \

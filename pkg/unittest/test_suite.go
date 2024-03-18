@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -63,7 +62,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
 func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
-	testChartPath := path.Join(helmTestSuiteDir, "Chart.yaml")
+	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
 
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
@@ -117,7 +116,7 @@ func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir
 		}
 
 		templateFilePath := strings.Replace(templateName, chartName, "", 1)
-		absPath := path.Join(helmTestSuiteDir, templateFilePath)
+		absPath := filepath.Join(helmTestSuiteDir, templateFilePath)
 
 		var subYamlErrs []error
 		var previousSuitesLen int
