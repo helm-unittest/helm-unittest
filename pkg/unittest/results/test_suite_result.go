@@ -34,7 +34,7 @@ func (tsr TestSuiteResult) printTitle(printer *printer.Printer) {
 	}
 	var pathToPrint string
 	if tsr.FilePath != "" {
-		pathToPrint = printer.Faint(filepath.Dir(tsr.FilePath)+string(os.PathSeparator)) +
+		pathToPrint = printer.Faint(filepath.ToSlash(filepath.Dir(tsr.FilePath)+string(os.PathSeparator))) +
 			filepath.Base(tsr.FilePath)
 	}
 	name := printer.Highlight(tsr.DisplayName)
