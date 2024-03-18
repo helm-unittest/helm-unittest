@@ -3,7 +3,6 @@ package validators
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
@@ -22,25 +21,6 @@ func (a EqualOrGreaterValidator) failInfo(msg string, index int, not bool) []str
 		a.Path,
 		msg,
 	)
-}
-
-func (a EqualOrGreaterValidator) generateFormatStrFloat(value float64) string {
-	// Convert float64 to string
-	strValue := fmt.Sprintf("%f", value)
-
-	// Find the index of the dot
-	dotIndex := strings.Index(strValue, ".")
-
-	// If dot not found or dot is at the end, return default format
-	if dotIndex == -1 || dotIndex == len(strValue)-1 {
-		return "%f"
-	}
-
-	// Calculate number of digits after dot
-	digitsAfterDot := len(strValue) - dotIndex - 1
-
-	// Generate format string with decimal places
-	return fmt.Sprintf("%%0.%df", digitsAfterDot)
 }
 
 // validate performs a validation of a Kubernetes manifest against an expected value.
