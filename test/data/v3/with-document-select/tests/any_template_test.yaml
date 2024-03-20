@@ -2,7 +2,7 @@ suite: Document Selector to match any template
 templates:
 - "*.yaml"
 tests:
-  - it: should match the correct kind when local templates configured
+  - it: should match the correct kind when top templates have greedy pattern matching.
     templates:
       - templates/foo-deployment.yaml
     documentSelector:
