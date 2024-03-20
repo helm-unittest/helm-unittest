@@ -1,8 +1,8 @@
-suite: Document Selector test
+suite: Document Selector tests
 tests:
   - it: selects the correct kind when templates provided
     templates:
-      - templates/deployment.yaml
+      - templates/foo-deployment.yaml
     documentSelector:
       path: kind
       value: Deployment
@@ -13,7 +13,7 @@ tests:
       - hasDocuments:
           count: 1
   - it: selects the correct kind when single template provided
-    template: templates/another-deployment.yaml
+    template: templates/bar-deployment.yaml
     documentSelector:
       path: kind
       value: Deployment

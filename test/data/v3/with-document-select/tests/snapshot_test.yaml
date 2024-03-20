@@ -1,0 +1,11 @@
+suite: Document Selector snapshot tests
+templates:
+  - templates/foo-deployment.yaml
+  - templates/foo-service.yaml
+tests:
+  - it: should create find document
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - matchSnapshot: {}
