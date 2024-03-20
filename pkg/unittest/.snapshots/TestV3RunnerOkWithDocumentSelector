@@ -3,11 +3,12 @@
 
 
  PASS  Document Selector test	../../test/data/v3/with-document-select/tests/initial_test.yaml
+ PASS  Document Selector test, templates outside the tets block	../../test/data/v3/with-document-select/tests/outside_test.yaml
 
 
 Charts:      1 passed, 1 total
-Test Suites: 1 passed, 1 total
-Tests:       2 passed, 2 total
+Test Suites: 2 passed, 2 total
+Tests:       3 passed, 3 total
 Snapshot:    0 passed, 0 total
 Time:        XX.XXXms
 
