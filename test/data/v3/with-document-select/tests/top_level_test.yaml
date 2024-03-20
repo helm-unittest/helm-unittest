@@ -2,7 +2,7 @@ suite: Document Selector and templates are at top level
 templates:
   - templates/foo-deployment.yaml
 tests:
-  - it: should match the correct kind when global templates configured
+  - it: should match the correct kind when global templates provided
     documentSelector:
       path: kind
       value: Deployment
@@ -14,7 +14,7 @@ tests:
           path: metadata.name
           value: foo-deployment
 
-  - it: should match the correct kind when top level and local templates configured
+  - it: should match the correct kind when top level and local templates provided
     template: templates/foo-deployment.yaml
     documentSelector:
       path: kind
