@@ -1,6 +1,6 @@
 suite: Document Selector and templates are local to the test block
 tests:
-  - it: should selects the correct kind when local templates configured
+  - it: should match the correct kind when local templates configured
     templates:
       - templates/foo-deployment.yaml
     documentSelector:
@@ -12,7 +12,7 @@ tests:
           value: Deployment
       - hasDocuments:
           count: 1
-  - it: should selects the correct kind when local template is configured
+  - it: should match the correct kind when local template is configured
     template: templates/bar-deployment.yaml
     documentSelector:
       path: kind
