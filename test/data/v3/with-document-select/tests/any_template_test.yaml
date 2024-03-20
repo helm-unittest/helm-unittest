@@ -1,0 +1,16 @@
+suite: Document Selector to match any template
+templates:
+- "*.yaml"
+tests:
+  - it: should match the correct kind when local templates configured
+    templates:
+      - templates/foo-deployment.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+      - hasDocuments:
+          count: 1
