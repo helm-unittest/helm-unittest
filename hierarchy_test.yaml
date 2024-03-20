@@ -1,0 +1,14 @@
+# suite: Document Selector tests
+# templates:
+#   - templates/foo-deployment.yaml
+# tests:
+#   - it: should find a template
+#     templates:
+#       - templates/foo-deployment.yaml
+#     documentSelector:
+#       path: kind
+#       value: Deployment
+#     asserts:
+#       - equal:
+#           path: kind
+#           value: Deployment

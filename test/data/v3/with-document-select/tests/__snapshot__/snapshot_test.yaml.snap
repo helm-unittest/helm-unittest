@@ -1,4 +1,4 @@
-should create find document:
+should match snapshot and find document:
   1: |
     apiVersion: apps/v1
     kind: Deployment
