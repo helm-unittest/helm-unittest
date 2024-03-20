@@ -26,3 +26,5 @@ tests:
       - equal:
           path: metadata.name
           value: foo-deployment
+      - hasDocuments:
+          count: 1

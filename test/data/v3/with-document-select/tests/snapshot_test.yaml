@@ -9,3 +9,5 @@ tests:
       value: Deployment
     asserts:
       - matchSnapshot: {}
+      - hasDocuments:
+          count: 1
