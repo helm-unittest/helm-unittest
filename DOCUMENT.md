@@ -81,9 +81,9 @@ tests:
           memory: 128Mi
     template: deployment.yaml
     documentIndex: 0
-    documentSelector: 
+    documentSelector:
       path: metadata.name
-      value: my-service-name    
+      value: my-service-name
     release:
       name: my-release
       namespace:
@@ -148,9 +148,9 @@ tests:
       - equal:
           path: metadata.name
           value: my-deploy
-        documentSelector: 
+        documentSelector:
           path: metadata.name
-          value: my-service-name    
+          value: my-service-name
       - equal:
           path: metadata.name
           value: your-service
@@ -195,7 +195,7 @@ Available assertion types are listed below:
 | `notEqualRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file not to be. | Assert equal NOT to the **value**. | <pre>notEqualRaw:<br/>  value: my-deploy</pre> |
 | `exists`<br/>(deprecates `isNotNull`) | **path**: *string*. The `set` path to assert. | Assert if the specified **path** `exists`. |<pre>exists:<br/>  path: spec.strategy</pre> |
 | `notExists`<br/>(deprecates `isNull`) | **path**: *string*. The `set` path to assert. | Assert if the specified **path** NOT `exists`. |<pre>notExists:<br/>  path: spec.strategy</pre> |
-| `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template rendering error. Also allows to match an error that would happen before template execution (ex: validation of values against schema) | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> |
+| `failedTemplate` | **errorMessage**: *string*. The (human readable) `errorMessage` that should occur. | Assert the value of **errorMessage** is the same as the human readable template rendering error. Also allows to match an error that would happen before template execution (ex: validation of values against schema) | <pre>failedTemplate:<br/>  errorMessage: Required value<br/></pre> `or` <pre>failedTemplate: {}</pre> |
 | `notFailedTemplate` | | Assert that no failure occurs while templating. | <pre>notFailedTemplate: {}<br/></pre> |
 | `hasDocuments` | **count**: *int*. Expected count of documents rendered. | Assert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here. | <pre>hasDocuments:<br/>  count: 2</pre> |
 | `isAPIVersion` | **of**: *string*. Expected `apiVersion` of manifest. | Assert the `apiVersion` value **of** manifest, is equilevant to:<br/><pre>equal:<br/>  path: apiVersion<br/>  value: ...<br/> | <pre>isAPIVersion:<br/>  of: v2</pre> |
