@@ -1,5 +1,42 @@
 templates:
   - templates/lookup.yaml
+kubernetesProvider:
+  scheme:
+    "v1/Namespace":
+      gvr:
+        version: "v1"
+        resource: "namespaces"
+      namespaced: false
+    "v1/Pod":
+      gvr:
+        version: "v1"
+        resource: "pods"
+      namespaced: true
+    "networking.k8s.io/v1/Ingress":
+      gvr:
+        group: "networking.k8s.io"
+        version: "v1"
+        resource: "ingresses"
+      namespaced: true
+  objects:
+    - kind: Pod
+      apiVersion: v1
+      metadata:
+        name: exists
+        namespace: default
+    - kind: Ingress
+      apiVersion: networking.k8s.io/v1
+      metadata:
+        name: exists
+        namespace: default
+    - kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: exists
+    - kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: exists2
 tests:
   - it: manifest should match snapshot
     asserts:
@@ -31,40 +68,3 @@ tests:
       - lengthEqual:
           path: namespaces.items
           count: 2
-    kubernetesProvider:
-      scheme:
-        "v1/Namespace":
-          gvr:
-            version: "v1"
-            resource: "namespaces"
-          namespaced: false
-        "v1/Pod":
-          gvr:
-            version: "v1"
-            resource: "pods"
-          namespaced: true
-        "networking.k8s.io/v1/Ingress":
-          gvr:
-            group: "networking.k8s.io"
-            version: "v1"
-            resource: "ingresses"
-          namespaced: true
-      objects:
-        - kind: Pod
-          apiVersion: v1
-          metadata:
-            name: exists
-            namespace: default
-        - kind: Ingress
-          apiVersion: networking.k8s.io/v1
-          metadata:
-            name: exists
-            namespace: default
-        - kind: Namespace
-          apiVersion: v1
-          metadata:
-            name: exists
-        - kind: Namespace
-          apiVersion: v1
-          metadata:
-            name: exists2

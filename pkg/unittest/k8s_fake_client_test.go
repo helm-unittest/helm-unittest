@@ -20,7 +20,7 @@ func newMap(apiVersion, kind, namespace, name string) map[string]interface{} {
 	}
 }
 
-func TestKubernetesFakeClient(t *testing.T) {
+func TestKubernetesFakeClientProvider(t *testing.T) {
 	k := kubernetesFakeClientProvider{
 		Scheme:  map[string]kubernetesFakeKindProps{"v1/Pod": {ShouldErr: nil, Gvr: schema.GroupVersionResource{Resource: "pods", Version: "v1"}, Namespaced: true}},
 		Objects: []map[string]interface{}{newMap("v1", "Pod", "default", "unittest")},

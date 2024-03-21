@@ -178,7 +178,8 @@ type TestSuite struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
-	Tests []*TestJob
+	KubernetesProvider kubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	Tests              []*TestJob
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
@@ -222,6 +223,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
+		s.polishKubernetesProviderSettings(test)
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
@@ -275,6 +277,20 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 
 	if len(s.Capabilities.APIVersions) > 0 {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
+	}
+}
+
+func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
+	if len(s.KubernetesProvider.Objects) > 0 {
+		test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
+	}
+	if len(s.KubernetesProvider.Scheme) > 0 {
+		if test.KubernetesProvider.Scheme == nil {
+			test.KubernetesProvider.Scheme = map[string]kubernetesFakeKindProps{}
+		}
+		for k, v := range s.KubernetesProvider.Scheme {
+			test.KubernetesProvider.Scheme[k] = v
+		}
 	}
 }
 
