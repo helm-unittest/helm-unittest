@@ -4,26 +4,50 @@ tests:
   - it: manifest should match snapshot
     asserts:
       - matchSnapshot: {}
+      - isNotEmpty:
+          path: pod_exists
+      - isNotEmpty:
+          path: ingress_exists
+      - isNotEmpty:
+          path: namespace_exists
       - isNullOrEmpty:
-          path: lookup_not_exists
+          path: pod_not_exists
+      - isNullOrEmpty:
+          path: ingress_not_exists
+      - isNullOrEmpty:
+          path: namespace_not_exists
       - equal:
-          path: lookup_exists.kind
+          path: pod_exists.kind
           value: Pod
       - equal:
-          path: lookup_exists.apiVersion
+          path: pod_exists.apiVersion
           value: v1
       - equal:
-          path: lookup_exists.metadata.name
+          path: pod_exists.metadata.name
           value: exists
       - equal:
-          path: lookup_exists.metadata.namespace
+          path: pod_exists.metadata.namespace
           value: default
+      - lengthEqual:
+          path: namespaces.items
+          count: 2
     kubernetesProvider:
       scheme:
+        "v1/Namespace":
+          gvr:
+            version: "v1"
+            resource: "namespaces"
+          namespaced: false
         "v1/Pod":
           gvr:
-            version:  "v1"
+            version: "v1"
             resource: "pods"
+          namespaced: true
+        "networking.k8s.io/v1/Ingress":
+          gvr:
+            group: "networking.k8s.io"
+            version: "v1"
+            resource: "ingresses"
           namespaced: true
       objects:
         - kind: Pod
@@ -31,4 +55,16 @@ tests:
           metadata:
             name: exists
             namespace: default
-
+        - kind: Ingress
+          apiVersion: networking.k8s.io/v1
+          metadata:
+            name: exists
+            namespace: default
+        - kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: exists
+        - kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: exists2
