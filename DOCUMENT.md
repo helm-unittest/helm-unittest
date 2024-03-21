@@ -31,6 +31,19 @@ capabilities:
   minorVersion: 10
   apiVersions:
     - br.dev.local/v2
+kubernetes_provider:
+  scheme:
+    "v1/Pod":
+      gvr:
+        version:  "v1"
+        resource: "pods"
+      namespaced: true
+  objects:
+    - kind: Pod
+      apiVersion: v1
+      metadata:
+        name: unittest
+        namespace: default
 chart:
   version: 1.0.0
   appVersion: 1.0.0
@@ -58,6 +71,9 @@ tests:
   - **minorVersion**: *int, optional*. The kubernetes minor version, default to the minor version which is set by helm.
   - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
 
+- **kubernetes_provider**: *object, optional*. Define Kubernetes resources to mock.
+  - **scheme**: *object. Define the Kubernetes schema to mock
+  - **objects**: *array of objects. Define the Kubernetes objects to mock
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
   - **appVersion**: *string, optional*. The app-version of the chart, default to the app-version set in the Chart.
