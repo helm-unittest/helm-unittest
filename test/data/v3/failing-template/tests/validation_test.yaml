@@ -4,5 +4,12 @@ templates:
 tests:
   - it: template should be failing based on validation
     asserts:
+      - failedTemplate: {}
       - failedTemplate:
           errorMessage: "The `.Release.name`: must be <= 3 characters!"
+
+  - it: should not fail when value is provide
+    release:
+      name: xyz
+    asserts:
+    - notFailedTemplate: {}
