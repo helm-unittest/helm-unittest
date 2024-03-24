@@ -211,19 +211,4 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 			assert.Equal(t, tt.errorMsg, diff)
 		})
 	}
-
-	// v := EqualOrGreaterValidator{
-	// 	Path:  "value",
-	// 	Value: 1,
-	// }
-	// pass, diff := v.Validate(&ValidateContext{
-	// 	Docs: []common.K8sManifest{manifest},
-	// })
-
-	// assert.False(t, pass)
-	// assert.Equal(t, []string{
-	// 	"DocumentIndex:	0",
-	// 	"Error:",
-	// 	"	actual 'float64' and expected 'int' types do not match",
-	// }, diff)
 }
