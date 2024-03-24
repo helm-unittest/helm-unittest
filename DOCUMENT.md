@@ -81,9 +81,9 @@ tests:
           memory: 128Mi
     template: deployment.yaml
     documentIndex: 0
-    documentSelector: 
+    documentSelector:
       path: metadata.name
-      value: my-service-name    
+      value: my-service-name
     release:
       name: my-release
       namespace:
@@ -148,9 +148,9 @@ tests:
       - equal:
           path: metadata.name
           value: my-deploy
-        documentSelector: 
+        documentSelector:
           path: metadata.name
-          value: my-service-name    
+          value: my-service-name
       - equal:
           path: metadata.name
           value: your-service
@@ -190,6 +190,8 @@ Available assertion types are listed below:
 | `contains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content to be contained.<br/>**count**: *int, optional*. The count of content to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** contains the **content**. |<pre>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>    port: 80<br/>    targetPort: 80<br/>    protocol:TCP<br/><br/>contains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  count: 1<br/>  any: true<br/></pre> |
 | `notContains` | **path**: *string*. The `set` path to assert, the value must be an *array*. <br/>**content**: *any*. The content NOT to be contained.<br/>**any**: *bool, optional*. ignores any other values within the found content. | Assert the array as the value of specified **path** NOT contains the **content**. |<pre>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: server<br/>    port: 80<br/>    targetPort: 80<br/>    protocol: TCP<br/><br/>notContains:<br/>  path: spec.ports<br/>  content:<br/>    name: web<br/>  any: true<br/></pre> |
 | `equal` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The expected value.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | Assert the value of specified **path** equal to the **value**. | <pre>equal:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
+| `greaterOrEqual`<br/>(or `ge`) | **path**: *string*. The `set` path to assert.<br/>**value**: *int, float, string*. | Assert the value of specified **path** is greater or equal to the **value**. | <pre>greaterOrEqual:<br/>  path: resources.requests.cpu<br/>  value: 2</pre> |
+| `lessOrEqual`<br/>(or `le`) | **path**: *string*. The `set` path to assert.<br/>**value**: *int, float, string*. | Assert the value of specified **path** is less or equal to the **value**. | <pre>lessOrEqual:<br/>  path: spec.runAsUser<br/>  value: 2000</pre> |
 | `notEqual` | **path**: *string*. The `set` path to assert.<br/>**value**: *any*. The value expected not to be. | Assert the value of specified **path** NOT equal to the **value**.<br/>**decodeBase64**: *bool, optional*. Decode the base64 before checking | <pre>notEqual:<br/>  path: metadata.name<br/>  value: my-deploy</pre> |
 | `equalRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file. | Assert equal to the **value**. | <pre>equalRaw:<br/>  value: my-deploy</pre> |
 | `notEqualRaw` | <br/>**value**: *string*. Assert the expected value in a NOTES.txt file not to be. | Assert equal NOT to the **value**. | <pre>notEqualRaw:<br/>  value: my-deploy</pre> |
