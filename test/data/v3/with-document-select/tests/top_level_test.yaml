@@ -1,0 +1,33 @@
+suite: Document Selector validation with object validation
+templates:
+  - templates/deployments.yaml
+tests:
+  - it: should match the correct kind when global templates provided
+    documentSelector:
+      path: metadata
+      value:
+        name: foo-deployment
+        namespace: default
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+      - equal:
+          path: metadata.name
+          value: foo-deployment
+
+  - it: should match the correct kind when top level and local templates provided and ignore selector in document count.
+    documentSelector:
+      path: metadata
+      value:
+        name: bar-deployment
+        namespace: default
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+      - equal:
+          path: metadata.name
+          value: bar-deployment
+      - hasDocuments:
+          count: 2
