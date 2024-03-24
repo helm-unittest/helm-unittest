@@ -18,21 +18,21 @@ func TestEqualOrGreaterValidatorOk(t *testing.T) {
 		expectedErr []string
 	}{
 		{
-			name:     "Test case 1: int ok",
+			name:     "test case 1: int values",
 			doc:      "spec: 4",
 			path:     "spec",
 			value:    5,
 			expected: true,
 		},
 		{
-			name:     "Test case 2: float64 ok",
+			name:     "test case 2: float64 values",
 			doc:      "cpu: 0.6",
 			path:     "cpu",
 			value:    0.75,
 			expected: true,
 		},
 		{
-			name:     "Test case 3: string ok",
+			name:     "test case 3: string values",
 			doc:      "cpu: 600m",
 			path:     "cpu",
 			value:    "600m",
@@ -65,7 +65,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 		errorMsg        []string
 	}{
 		{
-			name:  "Test case 1: int fail",
+			name:  "test case 1: int values",
 			doc:   "value: 25",
 			path:  "value",
 			value: 5,
@@ -77,7 +77,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			},
 		},
 		{
-			name:  "Test case 2: float64 fail",
+			name:  "test case 2: float64 values",
 			doc:   "cpu: 1.7",
 			path:  "cpu",
 			value: 1.31,
@@ -89,7 +89,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			},
 		},
 		{
-			name:  "Test case 3: float64 fail",
+			name:  "test case 3: float64 values",
 			doc:   "cpu: 1.341",
 			path:  "cpu",
 			value: 1.338,
@@ -101,7 +101,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			},
 		},
 		{
-			name:  "Test case 4: string fail",
+			name:  "test case 4: string values",
 			doc:   "cpu: 600m",
 			path:  "cpu",
 			value: "590m",
@@ -164,21 +164,66 @@ spec:
 }
 
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
-	var actual = "value: 0.3"
-	manifest := makeManifest(actual)
+	// var actual = "value: 0.3"
+	// manifest := makeManifest(actual)
 
-	v := EqualOrGreaterValidator{
-		Path:  "value",
-		Value: 1,
+	tests := []struct {
+		name, doc, path string
+		value           interface{}
+		errorMsg        []string
+	}{
+		{
+			name:     "test case 1: compare int and string types",
+			doc:      "value: 500m",
+			path:     "value",
+			value:    5,
+			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
+		},
+		{
+			name:     "test case 1: compare string and int types",
+			doc:      "value: 50",
+			path:     "value",
+			value:    "50m",
+			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
+		},
+		{
+			name:     "test case 1: compare string and string(int) types",
+			doc:      "value: 50",
+			path:     "value",
+			value:    "50",
+			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
+		},
 	}
-	pass, diff := v.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
-	})
 
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"DocumentIndex:	0",
-		"Error:",
-		"	actual 'float64' and expected 'int' types do not match",
-	}, diff)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manifest := makeManifest(tt.doc)
+
+			v := EqualOrGreaterValidator{
+				Path:  tt.path,
+				Value: tt.value,
+			}
+			pass, diff := v.Validate(&ValidateContext{
+				Docs: []common.K8sManifest{manifest},
+			})
+
+			assert.False(t, pass)
+			assert.Equal(t, tt.errorMsg, diff)
+		})
+	}
+
+	// v := EqualOrGreaterValidator{
+	// 	Path:  "value",
+	// 	Value: 1,
+	// }
+	// pass, diff := v.Validate(&ValidateContext{
+	// 	Docs: []common.K8sManifest{manifest},
+	// })
+
+	// assert.False(t, pass)
+	// assert.Equal(t, []string{
+	// 	"DocumentIndex:	0",
+	// 	"Error:",
+	// 	"	actual 'float64' and expected 'int' types do not match",
+	// }, diff)
 }
