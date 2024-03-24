@@ -1,0 +1,11 @@
+apiVersion: v2
+name: with-samenamesubsubcharts
+version: 0.1.0
+type: application
+
+dependencies:
+  - name: with-samenamesubsubcharts
+    version: 0.2.0
+    import-values:
+      - child: local.annotations
+        parent: annotations

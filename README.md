@@ -28,7 +28,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Usage](#usage)
   - [Flags](#flags)
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
-  - [DocumentSelector]()
+  - [DocumentSelector](#documentselector)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
@@ -193,6 +193,10 @@ The next releases it will be possible to validate multiple paths when JsonPath r
 
 The test job or assertion can also specify a documentSelector rather than a documentIndex. Note that the documentSelector will always override a documentIndex if a match is found. This field is particularly useful when helm produces multiple templates and the order is not always guaranteed.
 
+The `path` in the documentSelector has Yaml JsonPath Support, using JsonPath expressions it is possible to filter on multiple fields.
+
+The `value` in the documentSelector can validate complete yaml objects.
+
 ```yaml
 ...
 tests:
@@ -205,9 +209,9 @@ tests:
         limits:
           memory: 128Mi
     template: deployment.yaml
-    documentSelector: 
+    documentSelector:
       path: metadata.name
-      value: my-service-name    
+      value: my-service-name
     asserts:
       - equal:
           path: metadata.name

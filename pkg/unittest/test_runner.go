@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -155,7 +154,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 
 	var renderedTestSuites []*TestSuite
 	if len(tr.ChartTestsPath) > 0 {
-		helmTestsPath := path.Join(chartPath, tr.ChartTestsPath)
+		helmTestsPath := filepath.Join(chartPath, tr.ChartTestsPath)
 		// Verify that there is a tests path - in the event of mixed testing environments
 		if _, err := os.Stat(helmTestsPath); errors.Is(err, nil) {
 			var renderErr error

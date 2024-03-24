@@ -1,0 +1,35 @@
+templates:
+  - deployment.yaml
+tests:
+  - it: should only add annotation `foo` with value `bar` and base localKey
+    set:
+      global.app.annotations:
+        foo: bar
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations
+          value:
+            foo: bar
+            localKey: localValue
+
+  - it: should only add annotation `hello` with value `world`
+    set:
+      global.app.annotations:
+        hello: world
+      annotations:
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations
+          value:
+            hello: world
+
+  - it: should only add annotation `hello` with value `world` and base localKey
+    set:
+      global.app.annotations:
+        hello: world
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations
+          value:
+            hello: world
+            localKey: localValue

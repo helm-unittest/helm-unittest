@@ -1,0 +1,38 @@
+name: go tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  full-test:
+    name: full sdk and tools test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # tests for target OS
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # tests for actively maintained Go versions.
+        go-version:
+          - 1.21.x
+    steps:
+    - name: checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: setup go
+      # https://github.com/actions/setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: unit-tests
+      shell: bash
+      run: make unittest

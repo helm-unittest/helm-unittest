@@ -1,0 +1,7 @@
+apiVersion: v2
+name: with-samenamesubsubcharts
+version: 0.2.0
+
+dependencies:
+- name: with-samenamesubsubcharts
+  version: 0.3.0
