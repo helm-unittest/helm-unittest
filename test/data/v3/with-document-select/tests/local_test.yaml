@@ -1,25 +1,25 @@
 suite: Document Selector and templates are local to the test block
 tests:
-  - it: should match the correct kind when local templates configured
+  - it: should match the correct kind when local templates configured and ignore index in documents count
     templates:
-      - templates/foo-deployment.yaml
+      - templates/deployments.yaml
     documentSelector:
-      path: kind
-      value: Deployment
+      path: metadata.name
+      value: foo-deployment
     asserts:
       - equal:
           path: kind
           value: Deployment
       - hasDocuments:
-          count: 1
-  - it: should match the correct kind when local template is configured
-    template: templates/bar-deployment.yaml
+          count: 2
+  - it: should match the correct kind when local template is configured and ignore index in documents count
+    template: templates/deployments.yaml
     documentSelector:
-      path: kind
-      value: Deployment
+      path: metadata.name
+      value: bar-deployment
     asserts:
       - equal:
           path: kind
           value: Deployment
       - hasDocuments:
-          count: 1
+          count: 2

@@ -504,9 +504,6 @@ func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8s
 // that match the specified criteria.
 func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
 	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests), " and ", manifests)
-	if t.Template == "" && t.Templates == nil && len(t.Templates) == 0 {
-		return manifests
-	}
 	result := make(map[string][]common.K8sManifest)
 	if t.Template != "" {
 		for key, value := range manifests {
@@ -525,6 +522,9 @@ func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) 
 		}
 	}
 	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
+	if len(result) == 0 {
+		return manifests
+	}
 	return result
 }
 

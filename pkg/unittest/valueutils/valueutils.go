@@ -185,7 +185,7 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	case expectIndex:
 		nextState, err = handleExpectIndex(k, last, traverser)
 	case expectDenotation:
-		nextState, err = handleExpectDenotation(k, last)
+		nextState, err = handleExpectDenotation(last)
 	case expectKey:
 		nextState, err = handleExpectKey(k, last, traverser)
 	case expectEscaping:
@@ -216,7 +216,7 @@ func handleExpectIndex(k []rune, last rune, traverser parseTraverser) (int, erro
 	return expectDenotation, nil
 }
 
-func handleExpectDenotation(k []rune, last rune) (int, error) {
+func handleExpectDenotation(last rune) (int, error) {
 	switch last {
 	case '.':
 		return expectKey, nil

@@ -1,0 +1,15 @@
+suite: Document Selector using expression
+templates:
+  - templates/foo-rbac.yaml
+tests:
+  - it: should match ClusterRole using Document Selector
+    documentSelector:
+      path: $[?(@.kind == "ClusterRole")].metadata.name
+      value: foo-operator
+    asserts:
+      - equal:
+          path: kind
+          value: ClusterRole
+      - equal:
+          path: metadata.name
+          value: foo-operator

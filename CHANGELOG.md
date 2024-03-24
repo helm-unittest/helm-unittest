@@ -1,3 +1,9 @@
+0.4.4 / 2024-03-24
+==================
+- Fix documentSelector not matches resources when no templates in testjob are defined (credits @ivankatliarchuk, resolves #312)
+- Updated examples on documentSelector (resolves #285, resolves #302)
+- Updated documentation
+
 0.4.3 / 2024-03-19
 ==================
 - Fix unittest fails when chart name has same name as one of its dependencies (resolves #283)
