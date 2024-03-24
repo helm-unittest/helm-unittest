@@ -2,7 +2,14 @@ suite: Test failing template validation
 templates:
   - templates/validation.tpl
 tests:
-  - it: template should be failing based on validation
+  - it: should be failing based on validation
     asserts:
+      - failedTemplate: {}
       - failedTemplate:
           errorMessage: "The `.Release.name`: must be <= 3 characters!"
+
+  - it: should not fail when value is provided
+    release:
+      name: xyz
+    asserts:
+    - notFailedTemplate: {}
