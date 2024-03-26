@@ -38,7 +38,7 @@ metadata:
     namespace: foo
 `
 
-func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
+func TestContainsDocumentValidatorWhenEmptyOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		Kind:       "Service",
 		APIVersion: "v1",
@@ -59,7 +59,7 @@ func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 	}, diff)
 }
 
-func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
+func TestContainsDocumentValidatorNegativeOk(t *testing.T) {
 	tests := []struct {
 		name      string
 		validator ContainsDocumentValidator
