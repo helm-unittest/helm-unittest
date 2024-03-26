@@ -30,6 +30,9 @@ tests:
               servicePort: 12345
       - notExists:
           path: spec.tls
+      - containsDocument:
+          kind: Ingress
+          apiVersion: extensions/v1beta1
 
   - it: should set annotations if given
     set:
@@ -92,7 +95,10 @@ tests:
 
   - it: should render nothing if not enabled
     asserts:
+      - containsDocument:
+          kind: Ingress
+          apiVersion: extensions/v1beta1
+        not: true
       - hasDocuments:
           count: 0
       - matchSnapshot: {}
-

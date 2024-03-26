@@ -2,6 +2,7 @@ package validators
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -27,9 +28,23 @@ func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not b
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
 		index,
-		fmt.Sprintf("Kind = %s, apiVersion = %s, Name = %s, Namespace = %s",
-			v.Kind, v.APIVersion, v.Name, v.Namespace),
+		v.joinOutput(),
 	)
+}
+
+// joinOutput constructs a string representation of the ContainsDocumentValidator
+// object with the provided fields: Kind, apiVersion, Name, and Namespace.
+func (v ContainsDocumentValidator) joinOutput() string {
+	parts := []string{
+		fmt.Sprintf("Kind = %s, apiVersion = %s", v.Kind, v.APIVersion),
+	}
+	if v.Name != "" {
+		parts = append(parts, fmt.Sprintf("Name = %s", v.Name))
+	}
+	if v.Namespace != "" {
+		parts = append(parts, fmt.Sprintf("Namespace = %s", v.Namespace))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest) bool {
@@ -105,6 +120,8 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	if len(manifests) == 0 && !context.Negative {
 		errorMessage := v.failInfo(v.Kind, 0, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors
