@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -69,7 +68,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
 func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
-	testChartPath := path.Join(helmTestSuiteDir, "Chart.yaml")
+	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
 
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
@@ -98,56 +97,70 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		return nil, err
 	}
 
-	renderErrs := make([]error, 0)
-	suites := make([]*TestSuite, 0)
 	// Iterate over all keys
-	for templateName, template := range renderedFiles {
-		if len(strings.TrimSpace(template)) == 0 {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
-			continue
-		}
-
-		templateFilePath := strings.Replace(templateName, chart.Name(), "", 1)
-		absPath := path.Join(helmTestSuiteDir, templateFilePath)
-
-		// Split any multiple suites
-		var subYamlErrs []error
-		templates := strings.Split(template, "---")
-		previousSuitesLen := len(suites)
-		realIdx := -1
-		for idx, subYaml := range templates {
-			if len(strings.TrimSpace(subYaml)) == 0 {
-				continue
-			}
-			realIdx++
-
-			// Filter any empty templates
-			suite, err := createTestSuite(absPath, chartRoute, subYaml, strict, valueFilesSet, true)
-			if err != nil {
-				subYamlErrs = append(subYamlErrs, fmt.Errorf("chart %d error: %w", idx, err))
-				continue
-			}
-			// Set up a numerical snapshot idx if none provided
-			if len(suite.SnapshotId) == 0 {
-				suite.SnapshotId = fmt.Sprintf("%d", realIdx)
-			}
-			suites = append(suites, suite)
-		}
-		if len(subYamlErrs) > 0 {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) error: %w", templateName, errors.Join(subYamlErrs...)))
-		}
-
-		// Check that we didn't make a bunch of empty yamls
-		if previousSuitesLen == len(suites) {
-			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
-		}
-	}
+	// Split any multiple suites
+	// Filter any empty templates
+	// Set up a numerical snapshot idx if none provided
+	// Check that we didn't make a bunch of empty yamls
+	renderErrs, suites := iterateAllKeys(renderedFiles, chart.Name(), helmTestSuiteDir, chartRoute, strict, valueFilesSet)
 
 	if len(renderErrs) > 0 {
 		return nil, errors.Join(renderErrs...)
 	}
 
 	return suites, nil
+}
+
+func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir, chartRoute string, strict bool, valueFilesSet []string) ([]error, []*TestSuite) {
+	renderErrs := make([]error, 0)
+	suites := make([]*TestSuite, 0)
+
+	for templateName, template := range renderedFiles {
+		if len(strings.TrimSpace(template)) == 0 {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
+			continue
+		}
+
+		templateFilePath := strings.Replace(templateName, chartName, "", 1)
+		absPath := filepath.Join(helmTestSuiteDir, templateFilePath)
+
+		var subYamlErrs []error
+		var previousSuitesLen int
+		subYamlErrs, previousSuitesLen, suites = iterateTemplates(template, suites, absPath, chartRoute, strict, valueFilesSet)
+		if len(subYamlErrs) > 0 {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) error: %w", templateName, errors.Join(subYamlErrs...)))
+		}
+
+		if previousSuitesLen == len(suites) {
+			renderErrs = append(renderErrs, fmt.Errorf("test suite template (%s) file did not render a manifest", templateName))
+		}
+	}
+	return renderErrs, suites
+}
+
+func iterateTemplates(template string, suites []*TestSuite, absPath string, chartRoute string, strict bool, valueFilesSet []string) ([]error, int, []*TestSuite) {
+	var subYamlErrs []error
+	templates := strings.Split(template, "---")
+	previousSuitesLen := len(suites)
+	realIdx := -1
+	for idx, subYaml := range templates {
+		if len(strings.TrimSpace(subYaml)) == 0 {
+			continue
+		}
+		realIdx++
+
+		suite, err := createTestSuite(absPath, chartRoute, subYaml, strict, valueFilesSet, true)
+		if err != nil {
+			subYamlErrs = append(subYamlErrs, fmt.Errorf("chart %d error: %w", idx, err))
+			continue
+		}
+
+		if len(suite.SnapshotId) == 0 {
+			suite.SnapshotId = fmt.Sprintf("%d", realIdx)
+		}
+		suites = append(suites, suite)
+	}
+	return subYamlErrs, previousSuitesLen, suites
 }
 
 // TestSuite defines scope and templates to render and tests to run
@@ -188,6 +201,7 @@ func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
 	s.polishTestJobsPathInfo()
@@ -199,6 +213,7 @@ func (s *TestSuite) RunV3(
 		chartPath,
 		snapshotCache,
 		failfast,
+		renderPath,
 	)
 
 	result.CountSnapshot(snapshotCache)
@@ -215,7 +230,8 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		s.polishCapabilitiesSettings(test)
 		s.polishChartSettings(test)
 
-		test.globalSet = s.Set
+		// Make deep clone of global set
+		test.globalSet = copySet(s.Set)
 
 		if len(s.Values) > 0 {
 			test.Values = append(test.Values, s.Values...)
@@ -282,6 +298,7 @@ func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 ) (bool, []*results.TestJobResult) {
 	suitePass := false
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -292,7 +309,7 @@ func (s *TestSuite) runV3TestJobs(
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 
-		jobResult := testJob.RunV3(chart, cache, failfast, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failfast, renderPath, &results.TestJobResult{Index: idx})
 		jobResults[idx] = jobResult
 
 		if idx == 0 {

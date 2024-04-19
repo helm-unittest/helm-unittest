@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -110,6 +110,24 @@ func parseTextFile(rendered string) []common.K8sManifest {
 	return manifests
 }
 
+func writeRenderedOutput(renderPath string, outputOfFiles map[string]string) error {
+	if renderPath != "" {
+		for file, rendered := range outputOfFiles {
+			filePath := filepath.Join(renderPath, file)
+			directory := filepath.Dir(filePath)
+			if _, dirErr := os.Stat(directory); os.IsNotExist(dirErr) {
+				if createDirErr := os.MkdirAll(directory, 0755); createDirErr != nil {
+					return createDirErr
+				}
+			}
+			if createFileErr := os.WriteFile(filePath, []byte(rendered), 0644); createFileErr != nil {
+				return createFileErr
+			}
+		}
+	}
+	return nil
+}
+
 type orderedSnapshotComparer struct {
 	cache   *snapshot.Cache
 	test    string
@@ -165,6 +183,7 @@ func (t *TestJob) RunV3(
 	targetChart *v3chart.Chart,
 	cache *snapshot.Cache,
 	failfast bool,
+	renderPath string,
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
@@ -178,6 +197,13 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
+
+	writeError := writeRenderedOutput(renderPath, outputOfFiles)
+	if writeError != nil {
+		result.ExecError = writeError
+		return result
+	}
+
 	if renderError != nil {
 		result.ExecError = renderError
 		// Continue to enable matching error via failedTemplate assert
@@ -217,10 +243,11 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
+	// Load and merge values files.
 	for _, specifiedPath := range t.Values {
 		value := map[string]interface{}{}
 		var valueFilePath string
-		if path.IsAbs(specifiedPath) {
+		if filepath.IsAbs(specifiedPath) {
 			valueFilePath = specifiedPath
 		} else {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
@@ -255,6 +282,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
+
 	return yaml.Marshal(base)
 }
 
@@ -301,7 +329,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
+	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
 	outputOfFiles, err := v3engine.Render(filteredChart, vals)
 
@@ -455,8 +483,9 @@ func (t *TestJob) determineRenderSuccess() {
 }
 
 func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
+	filteredManifests := t.manifestsUnderTest(manifestOfFiles)
 	if t.DocumentSelector != nil {
-		idx, err := t.DocumentSelector.FindDocumentsIndex(manifestOfFiles)
+		idx, err := t.DocumentSelector.FindDocumentsIndex(filteredManifests)
 		if err != nil {
 			return err
 		} else {
@@ -468,6 +497,35 @@ func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8s
 	}
 
 	return nil
+}
+
+// manifestsUnderTest is a method of the TestJob type that filters a map of Kubernetes manifests
+// based on the user specified template or templates. It returns a new map containing only the manifests
+// that match the specified criteria.
+func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
+	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests), " and ", manifests)
+	result := make(map[string][]common.K8sManifest)
+	if t.Template != "" {
+		for key, value := range manifests {
+			if strings.Contains(key, t.Template) {
+				result[key] = value
+			}
+		}
+	}
+	if t.Templates != nil && len(t.Templates) > 0 {
+		for _, template := range t.Templates {
+			for key, value := range manifests {
+				if strings.Contains(key, template) {
+					result[key] = value
+				}
+			}
+		}
+	}
+	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
+	if len(result) == 0 {
+		return manifests
+	}
+	return result
 }
 
 // add prefix to Assertion.Template

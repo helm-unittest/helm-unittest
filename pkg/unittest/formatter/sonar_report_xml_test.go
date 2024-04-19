@@ -2,12 +2,13 @@ package formatter_test
 
 import (
 	"encoding/xml"
+	"path/filepath"
+	"testing"
+	"time"
+
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/stretchr/testify/assert"
-	"path"
-	"testing"
-	"time"
 )
 
 func createSonarTestCase(name string, duration string, isError bool, isFailed bool) SonarTestCase {
@@ -48,7 +49,7 @@ func validateSonarTestCases(assert *assert.Assertions, expected, actual []SonarT
 
 func TestWriteTestOutputAsSonarNoTests(t *testing.T) {
 	_assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 
 	expected := SonarTestExecutions{
 		Version: 1,
@@ -72,7 +73,7 @@ func TestWriteTestOutputAsSonarNoTests(t *testing.T) {
 
 func TestWriteTestOutputAsSonarMinimalSuccess(t *testing.T) {
 	_assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuiteSuccess"
 	testCaseDisplayName := "TestCaseSuccessSuccess"
 
@@ -120,7 +121,7 @@ func TestWriteTestOutputAsSonarMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsSonarWithErrorsAndFailures(t *testing.T) {
 	_assert := assert.New(t)
-	outputFile := path.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
+	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuiteFailuresAndErrors"
 	testCaseDisplayNameError := "TestCaseError"
 	testCaseDisplayNameFailure := "TestCaseFailure"

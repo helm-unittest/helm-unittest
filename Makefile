@@ -1,6 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
+GO ?= go
 HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
 HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
@@ -14,8 +15,10 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	invalidbasic \
 	nested_glob \
+	with-document-select \
 	with-files \
 	with-helm-tests \
+	with-samenamesubsubcharts \
 	with-schema \
 	with-subchart \
 	with-subfolder \
@@ -75,6 +78,11 @@ bootstrap:
 .PHONY: dockerdist
 dockerdist:
 	./docker-build.sh
+
+.PHONY: go-dependency
+dependency: ## Dependency maintanance
+	@$(GO) get -u ./...
+	@$(GO) mod tidy
 
 .PHONY: dockerimage
 dockerimage: ## Build docker image

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -92,6 +91,7 @@ type TestRunner struct {
 	ChartTestsPath   string
 	ValuesFiles      []string
 	OutputFile       string
+	RenderPath       string
 	suiteCounting    testUnitCountingWithSnapshotFailed
 	testCounting     testUnitCounting
 	chartCounting    testUnitCounting
@@ -154,7 +154,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 
 	var renderedTestSuites []*TestSuite
 	if len(tr.ChartTestsPath) > 0 {
-		helmTestsPath := path.Join(chartPath, tr.ChartTestsPath)
+		helmTestsPath := filepath.Join(chartPath, tr.ChartTestsPath)
 		// Verify that there is a tests path - in the event of mixed testing environments
 		if _, err := os.Stat(helmTestsPath); errors.Is(err, nil) {
 			var renderErr error
@@ -220,7 +220,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			continue
 		}
 
-		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, &results.TestSuiteResult{})
+		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)

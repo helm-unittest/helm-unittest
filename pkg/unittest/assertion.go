@@ -105,7 +105,7 @@ func (a *Assertion) Assert(
 }
 
 func (a *Assertion) determineDocumentIndex(templatesResult map[string][]common.K8sManifest) error {
-	if a.DocumentSelector != nil {
+	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
 		idx, err := a.DocumentSelector.FindDocumentsIndex(templatesResult)
 		if err != nil {
 			return err

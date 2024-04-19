@@ -28,7 +28,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Usage](#usage)
   - [Flags](#flags)
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
-  - [DocumentSelector]()
+  - [DocumentSelector](#documentselector)
 - [Example](#example)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
@@ -161,7 +161,7 @@ defined in test suite files.
 ```
       --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
       --strict                 strict parse the testsuites (default false)
-  -d, --debug                  enable debug logging (default false)
+  -d  --debugPlugin            enable debug logging (default false)
   -v, --values stringArray     absolute or glob paths of values files location to override helmchart values
   -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
   -q, --failfast               direct quit testing, when a test is failed (default false)
@@ -193,6 +193,10 @@ The next releases it will be possible to validate multiple paths when JsonPath r
 
 The test job or assertion can also specify a documentSelector rather than a documentIndex. Note that the documentSelector will always override a documentIndex if a match is found. This field is particularly useful when helm produces multiple templates and the order is not always guaranteed.
 
+The `path` in the documentSelector has Yaml JsonPath Support, using JsonPath expressions it is possible to filter on multiple fields.
+
+The `value` in the documentSelector can validate complete yaml objects.
+
 ```yaml
 ...
 tests:
@@ -205,9 +209,9 @@ tests:
         limits:
           memory: 128Mi
     template: deployment.yaml
-    documentSelector: 
+    documentSelector:
       path: metadata.name
-      value: my-service-name    
+      value: my-service-name
     asserts:
       - equal:
           path: metadata.name
@@ -246,7 +250,7 @@ The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory yo
 
 ## Dependent subchart Testing
 
-If you have dependent subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpfull to validate if good default values are accidently overwritten within your default helm chart.
+If you have dependent subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
 
 ```yaml
 # $YOUR_CHART/tests/xxx_test.yaml
@@ -326,7 +330,7 @@ Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferen
 
 As more people use the unittest plugin, more questions will come. Therefore a [Frequently Asked Question page](./FAQ.md) is created to answer the most common questions.
 
-If you are missing an anwer to a question feel free to raise a ticket.
+If you are missing an answer to a question, feel free to raise a ticket.
 
 ## Related Projects / Commands
 
@@ -365,7 +369,7 @@ And please make CI passed when request a PR which would check following things:
 - `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
 - `go test ./pkg/unittest/...` passed.
 
-In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
+In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed, you need to run:
 
 ```
 UPDATE_SNAPSHOTS=true go test ./...

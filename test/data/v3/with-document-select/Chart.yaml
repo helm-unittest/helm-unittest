@@ -1,0 +1,4 @@
+apiVersion: v2
+description: A chart with document selectors and document index
+name: with-document-select
+version: 0.1.0

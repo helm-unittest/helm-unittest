@@ -1,3 +1,29 @@
+0.4.4 / 2024-03-24
+==================
+- Fix documentSelector not matches resources when no templates in testjob are defined (credits @ivankatliarchuk, resolves #312)
+- Updated examples on documentSelector (resolves #285, resolves #302)
+- Updated documentation
+
+0.4.3 / 2024-03-19
+==================
+- Fix unittest fails when chart name has same name as one of its dependencies (resolves #283)
+- Fix documentSelector matches resources outside of selected templates (credits @ivankatliarchuk, resolves #286)
+- Fix IsNullOrEmptyValidator for single values (credits @arkbriar)
+- Fix validation on Windows target platform
+- Improve development (credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update documentation (credits @gionn, credits @mgnisia)
+
+0.4.2 / 2024-02-24
+==================
+- Fix global set and set override (resolves #210, resolves #276)
+- Fix debug flag by changing name to debugPlugin flag (resolves #241)
+- Fix empty documentSelector (credits @michaelruigrok)
+- Improve storing generated template when debug flag enabled (credits @thepeak99)
+- Improve development (credits @ivankatliarchuk)
+- Update packages to latest patch versions (credits @ivankatliarchuk, credits @stavros-k, resolves #295)
+- Update documentation (credits @tochev)
+
 0.4.1 / 2024-01-09
 ==================
 - Fix global values leak (credits @kdhtrifork, neo2k, resolves #235, resolves #271)

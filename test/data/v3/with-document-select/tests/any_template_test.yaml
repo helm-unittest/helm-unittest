@@ -1,0 +1,16 @@
+suite: Document Selector to match any template
+templates:
+  - "*.yaml"
+tests:
+  - it: should match the correct kind when top templates have greedy pattern matching and ignore selector in document count.
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+        template: templates/deployments.yaml
+        documentSelector:
+          path: metadata.name
+          value: bar-deployment
+      - hasDocuments:
+          count: 2
+        template: templates/deployments.yaml

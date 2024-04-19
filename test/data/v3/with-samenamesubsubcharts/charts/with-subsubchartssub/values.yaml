@@ -1,0 +1,4 @@
+
+local:
+  annotations:
+    localKey: "localValue"

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
@@ -117,7 +117,7 @@ func assertXUnitTestCase(assert *assert.Assertions, expected, actual []XUnitTest
 
 func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSucces"
 	totalTests := 1
@@ -174,7 +174,7 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 
 func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_Output.xml")
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -242,7 +242,7 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 
 func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Failure_And_Error_Output.xml")
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Failure_And_Error_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
@@ -315,7 +315,7 @@ func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 
 func TestWriteTestOutputAsXUnitWithErrors(t *testing.T) {
 	assert := assert.New(t)
-	outputFile := path.Join(tmpXunitTestDir, "XUnit_Test_Error_Output.xml")
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Error_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
 	errorMessage := "An Error Occurred."
 	totalTests := 1
