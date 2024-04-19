@@ -199,65 +199,81 @@ asserts:
 
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
 	a.Nil(err)
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Len(suites, 2)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
 
 	a.NotNil(err)
 	a.EqualError(err, "no tests found")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	a.Len(suites, 1)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	}
 }
 
 func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
 
 	a.NotNil(err)
 	a.EqualError(err, "no asserts found")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Len(suites, 1)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.NotNil(err)
-	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.EqualError(err, "yaml: unmarshal errors:\n  line 7: field documents not found in type unittest.TestJob")
+	a.Len(suites, 2)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.Nil(err)
-	a.Equal(suite.Name, "test deployment")
-	a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
-	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
+	for _, suite := range suites {
+		a.Equal(suite.Name, "test deployment")
+		a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
+		a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
+	}
 }
 
 func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
 
 	a.Nil(err)
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
-	a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+		a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+	}
 }
 
 func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
