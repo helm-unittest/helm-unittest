@@ -17,15 +17,27 @@ import (
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
 
-// ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) (*TestSuite, error) {
-	suite := TestSuite{chartRoute: chartRoute}
+// ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
+func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
 	content, err := os.ReadFile(suiteFilePath)
 	if err != nil {
-		return &suite, err
+		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
 
-	return createTestSuite(suiteFilePath, chartRoute, string(content), strict, valueFilesSet, false)
+	parts := strings.Split(string(content), "---")
+	var testSuites []*TestSuite
+	for _, part := range parts {
+		// Ensure the part has data, otherwise we can ignore the split
+		if len(part) > 0 {
+			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
+			testSuites = append(testSuites, testSuite)
+			if suiteErr != nil {
+				return testSuites, suiteErr
+			}
+		}
+	}
+
+	return testSuites, nil
 }
 
 func createTestSuite(suiteFilePath string, chartRoute string, content string, strict bool, valueFilesSet []string, fromRender bool) (*TestSuite, error) {
