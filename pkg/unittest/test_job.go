@@ -164,7 +164,7 @@ type TestJob struct {
 		APIVersions  []string `yaml:"apiVersions"`
 	}
 	Assertions         []*Assertion                 `yaml:"asserts"`
-	KubernetesProvider kubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy

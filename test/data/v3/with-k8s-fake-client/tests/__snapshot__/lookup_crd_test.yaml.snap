@@ -1,0 +1,9 @@
+manifest should match snapshot:
+  1: |
+    backup_exists:
+      apiVersion: br.dev.local/v1
+      kind: BrPolicy
+      metadata:
+        name: exists
+        namespace: default
+    backup_not_exists: {}

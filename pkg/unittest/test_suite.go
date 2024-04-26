@@ -190,7 +190,7 @@ type TestSuite struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
-	KubernetesProvider kubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	Tests              []*TestJob
 	// where the test suite file located
 	definitionFile string
@@ -298,7 +298,7 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 	}
 	if len(s.KubernetesProvider.Scheme) > 0 {
 		if test.KubernetesProvider.Scheme == nil {
-			test.KubernetesProvider.Scheme = map[string]kubernetesFakeKindProps{}
+			test.KubernetesProvider.Scheme = map[string]KubernetesFakeKindProps{}
 		}
 		for k, v := range s.KubernetesProvider.Scheme {
 			test.KubernetesProvider.Scheme[k] = v

@@ -1,4 +1,4 @@
-package unittest
+package unittest_test
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 )
 
 func newMap(apiVersion, kind, namespace, name string) map[string]interface{} {
@@ -21,8 +23,8 @@ func newMap(apiVersion, kind, namespace, name string) map[string]interface{} {
 }
 
 func TestKubernetesFakeClientProvider(t *testing.T) {
-	k := kubernetesFakeClientProvider{
-		Scheme:  map[string]kubernetesFakeKindProps{"v1/Pod": {ShouldErr: nil, Gvr: schema.GroupVersionResource{Resource: "pods", Version: "v1"}, Namespaced: true}},
+	k := KubernetesFakeClientProvider{
+		Scheme:  map[string]KubernetesFakeKindProps{"v1/Pod": {ShouldErr: nil, Gvr: schema.GroupVersionResource{Resource: "pods", Version: "v1"}, Namespaced: true}},
 		Objects: []map[string]interface{}{newMap("v1", "Pod", "default", "unittest")},
 	}
 

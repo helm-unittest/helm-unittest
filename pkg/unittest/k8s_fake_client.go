@@ -10,18 +10,18 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 )
 
-type kubernetesFakeKindProps struct {
+type KubernetesFakeKindProps struct {
 	ShouldErr  error                       `yaml:"should_err"`
 	Gvr        schema.GroupVersionResource `yaml:"gvr"`
 	Namespaced bool                        `yaml:"namespaced"`
 }
 
-type kubernetesFakeClientProvider struct {
-	Scheme  map[string]kubernetesFakeKindProps `yaml:"scheme"`
+type KubernetesFakeClientProvider struct {
+	Scheme  map[string]KubernetesFakeKindProps `yaml:"scheme"`
 	Objects []map[string]interface{}           `yaml:"objects"`
 }
 
-func (p *kubernetesFakeClientProvider) GetClientFor(apiVersion, kind string) (dynamic.NamespaceableResourceInterface, bool, error) {
+func (p *KubernetesFakeClientProvider) GetClientFor(apiVersion, kind string) (dynamic.NamespaceableResourceInterface, bool, error) {
 	props := p.Scheme[path.Join(apiVersion, kind)]
 	if props.ShouldErr != nil {
 		return nil, false, props.ShouldErr
