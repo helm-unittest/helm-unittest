@@ -1,0 +1,13 @@
+global:
+  namespace: "region1"
+image:
+  repository: apache
+  tag: latest
+  pullPolicy: Always
+
+seccompProfile:
+  type: "Localhost"
+  localhostProfile: "RuntimeDefault"
+  nginx:
+    type: "Localhost"
+    localhostProfile: "nginxProfileCustomized"
