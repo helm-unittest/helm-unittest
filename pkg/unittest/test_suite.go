@@ -242,7 +242,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		test.globalSet = copySet(s.Set)
 
 		if len(s.Values) > 0 {
-			test.Values = append(test.Values, s.Values...)
+			test.Values = append(s.Values, test.Values...)
 		}
 
 		if len(s.Templates) > 0 {
