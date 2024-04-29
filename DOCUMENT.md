@@ -34,6 +34,19 @@ capabilities:
 chart:
   version: 1.0.0
   appVersion: 1.0.0
+kubernetesProvider:
+  scheme:
+    "v1/Pod":
+      gvr:
+        version:  "v1"
+        resource: "pods"
+      namespaced: true
+  objects:
+    - kind: Pod
+      apiVersion: v1
+      metadata:
+        name: unittest
+        namespace: default
 tests:
   - it: should test something
     ...
@@ -61,6 +74,10 @@ tests:
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
   - **appVersion**: *string, optional*. The app-version of the chart, default to the app-version set in the Chart.
+
+- **kubernetesProvider**: *object, optional*. Define Kubernetes resources to fake.
+  - **scheme**: *object*. Define the Kubernetes schema to fake
+  - **objects**: *array of objects*. Define the Kubernetes objects to fake
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 

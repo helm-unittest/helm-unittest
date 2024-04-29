@@ -1,0 +1,30 @@
+templates:
+  - templates/lookup_crd.yaml
+kubernetesProvider:
+  scheme:
+    "br.dev.local/v1/BrPolicy":
+      gvr:
+        group: "br.dev.local"
+        version: "v1"
+        resource: "brpolicies"
+      namespaced: true
+  objects:
+    - kind: BrPolicy
+      apiVersion: br.dev.local/v1
+      metadata:
+        name: exists
+        namespace: default
+tests:
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+      - isNotEmpty:
+          path: backup_exists
+      - isNullOrEmpty:
+          path: backup_not_exists
+      - equal:
+          path: backup_exists.kind
+          value: BrPolicy
+      - equal:
+          path: backup_exists.apiVersion
+          value: br.dev.local/v1

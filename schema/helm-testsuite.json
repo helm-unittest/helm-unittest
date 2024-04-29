@@ -35,6 +35,9 @@
     "chart": {
       "$ref": "#/definitions/chart"
     },
+    "kubernetesProvider": {
+      "$ref": "#/definitions/kubernetesProvider"
+    },
     "tests": {
       "type": "array",
       "description": "Where you define your test jobs to run",
@@ -877,6 +880,31 @@
         "value"
       ],
       "additionalProperties": false
+    },
+    "kubernetesProvider": {
+      "type": "object",
+      "description": "Define Kubernetes resources to fake.",
+      "markdownDescription": "**kubernetesProvider**: (object) _optional_\n\nDefine Kubernetes resources to fake.",
+      "properties": {
+        "scheme": {
+          "type": "object",
+          "description": "Define the Kubernetes schema to fake",
+          "markdownDescription": "**scheme**: (object)\n\nDefine the Kubernetes schema to fake"
+        },
+        "objects": {
+          "type": "array",
+          "description": "Define the Kubernetes objects to fake",
+          "markdownDescription": "**objects**: (array of objects)\n\nDefine the Kubernetes objects to fake",
+          "minItems": 1,
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "scheme",
+        "objects"
+      ]
     },
     "release": {
       "type": "object",

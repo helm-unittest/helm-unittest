@@ -1,0 +1,8 @@
+---
+pod_exists: {{ (lookup "v1" "Pod" "default" "exists") | toYaml | nindent 2 }}
+pod_not_exists: {{ (lookup "v1" "Pod" "default" "not-exists") | toYaml | nindent 2 }}
+ingress_exists: {{ (lookup "networking.k8s.io/v1" "Ingress" "default" "exists") | toYaml | nindent 2 }}
+ingress_not_exists: {{ (lookup "networking.k8s.io/v1" "Ingress" "default" "not-exists") | toYaml | nindent 2 }}
+namespace_exists: {{ (lookup "v1" "Namespace" "" "exists") | toYaml | nindent 2 }}
+namespace_not_exists: {{ (lookup "v1" "Namespace" "" "not-exists") | toYaml | nindent 2 }}
+namespaces: {{ (lookup "v1" "Namespace" "" "") | toYaml | nindent 2 }}

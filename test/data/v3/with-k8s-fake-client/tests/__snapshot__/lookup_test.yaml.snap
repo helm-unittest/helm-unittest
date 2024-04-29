@@ -1,0 +1,37 @@
+manifest should match snapshot:
+  1: |
+    ingress_exists:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: exists
+        namespace: default
+    ingress_not_exists: {}
+    namespace_exists:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: exists
+    namespace_not_exists: {}
+    namespaces:
+      apiVersion: v1
+      items:
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: exists
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: exists2
+      kind: NamespaceList
+      metadata:
+        continue: ""
+        resourceVersion: ""
+    pod_exists:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: exists
+        namespace: default
+    pod_not_exists: {}
