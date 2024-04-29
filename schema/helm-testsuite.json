@@ -82,9 +82,6 @@
           "chart": {
             "$ref": "#/definitions/chart"
           },
-          "kubernetesProvider": {
-            "$ref": "#/definitions/kubernetesProvider"
-          },
           "asserts": {
             "type": "array",
             "description": "The assertions to validate the rendered chart.",
