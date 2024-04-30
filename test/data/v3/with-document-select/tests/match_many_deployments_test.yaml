@@ -1,0 +1,14 @@
+suite: Document Selector is matching many documents
+templates:
+  - "templates/deployments*.yaml"
+  - "templates/mixed-resource-types.yaml"
+tests:
+  - it: deployment names should end with -deployment suffix
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: -deployment$

@@ -10,7 +10,7 @@ import (
 )
 
 var docToTestMatchRegexRaw = `
-raw: | 
+raw: |
   This is a NOTES.txt document.
 `
 
@@ -100,21 +100,5 @@ func TestMatchRegexRawValidatorWhenNoPattern(t *testing.T) {
 	assert.Equal(t, []string{
 		"Error:",
 		"	expected field 'pattern' to be filled",
-	}, diff)
-}
-
-func TestMatchRegexRawValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestMatchRegexRaw)
-
-	validator := MatchRegexRawValidator{"^This"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }

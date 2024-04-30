@@ -16,8 +16,8 @@ import (
 // Assertion defines target and metrics to validate rendered result
 type Assertion struct {
 	Template             string
-	DocumentIndex        int
 	DocumentSelector     *valueutils.DocumentSelector
+	DocumentIndex        int
 	Not                  bool
 	AssertType           string
 	validator            validators.Validatable
@@ -70,7 +70,8 @@ func (a *Assertion) Assert(
 		singleTemplateResult[template] = rendered
 
 		// Update the DocumentIndex if the found idx is not -1
-		indexError := a.determineDocumentIndex(singleTemplateResult)
+		selectedDocs, indexError := a.selectDocuments(rendered)
+
 		if indexError != nil {
 			invalidDocumentIndex := []string{"Error:", indexError.Error()}
 			failInfo = append(failInfo, invalidDocumentIndex...)
@@ -79,7 +80,7 @@ func (a *Assertion) Assert(
 
 		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
 			Docs:             rendered,
-			Index:            a.DocumentIndex,
+			SelectedDocs:     &selectedDocs,
 			Negative:         a.Not != a.antonym,
 			SnapshotComparer: snapshotComparer,
 			RenderError:      renderError,
@@ -104,18 +105,20 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) determineDocumentIndex(templatesResult map[string][]common.K8sManifest) error {
+func (a *Assertion) selectDocuments(docs []common.K8sManifest) ([]common.K8sManifest, error) {
 	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
-		idx, err := a.DocumentSelector.FindDocumentsIndex(templatesResult)
-		if err != nil {
-			return err
+		return a.DocumentSelector.FilterDocuments(docs)
+	}
+
+	if a.DocumentIndex != -1 {
+		if a.DocumentIndex >= len(docs) {
+			return nil, fmt.Errorf("Document index %d is out of rage", a.DocumentIndex)
 		} else {
-			if idx != -1 {
-				a.DocumentIndex = idx
-			}
+			return []common.K8sManifest{docs[a.DocumentIndex]}, nil
 		}
 	}
-	return nil
+
+	return docs, nil
 }
 
 func (a *Assertion) noFileErrMessage(template string) string {
@@ -153,10 +156,12 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
 		documentSelectorPath := documentSelector["path"].(string)
 		documentSelectorValue := documentSelector["value"]
+		documentSelectorMatchMany := documentSelector["matchMany"] == true
 
 		a.DocumentSelector = &valueutils.DocumentSelector{
-			Path:  documentSelectorPath,
-			Value: documentSelectorValue,
+			Path:      documentSelectorPath,
+			Value:     documentSelectorValue,
+			MatchMany: documentSelectorMatchMany,
 		}
 	}
 
