@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -17,6 +18,8 @@ import (
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
 
+var splitterPattern = regexp.MustCompile("(?m:^---$)")
+
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
 	content, err := os.ReadFile(suiteFilePath)
@@ -24,7 +27,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
 
-	parts := strings.Split(string(content), "---")
+	parts := splitterPattern.Split(string(content), -1)
 	var testSuites []*TestSuite
 	for _, part := range parts {
 		// Ensure the part has data, otherwise we can ignore the split
@@ -146,7 +149,8 @@ func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir
 
 func iterateTemplates(template string, suites []*TestSuite, absPath string, chartRoute string, strict bool, valueFilesSet []string) ([]error, int, []*TestSuite) {
 	var subYamlErrs []error
-	templates := strings.Split(template, "---")
+
+	templates := splitterPattern.Split(template, -1)
 	previousSuitesLen := len(suites)
 	realIdx := -1
 	for idx, subYaml := range templates {
