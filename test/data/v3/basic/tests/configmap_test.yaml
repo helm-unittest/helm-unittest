@@ -16,10 +16,14 @@ tests:
           content: phony-service.phony:graphql
           count: 1
 
-  - it: should use root values file
+  - it: should use root values file with set few attributes in test
     values:
       - ../values.yaml
+    documentIndex: 0
     asserts:
       - containsDocument:
           kind: ConfigMap
           apiVersion: v1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-basic
