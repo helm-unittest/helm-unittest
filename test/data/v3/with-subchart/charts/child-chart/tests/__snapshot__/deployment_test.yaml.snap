@@ -14,7 +14,7 @@ should pass all kinds of assertion:
               httpGet:
                 path: /
                 port: 8080
-            name: child-chart
+            name: child-chart-nginx
             ports:
               - containerPort: 8080
             readinessProbe:
@@ -22,3 +22,11 @@ should pass all kinds of assertion:
                 path: /
                 port: 8080
             resources: {}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - all
+              privileged: false
+              readOnlyRootFilesystem: false
+              runAsNonRoot: true

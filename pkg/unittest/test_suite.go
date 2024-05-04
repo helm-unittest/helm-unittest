@@ -17,15 +17,27 @@ import (
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
 
-// ParseTestSuiteFile parse a suite file at path and returns TestSuite
-func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) (*TestSuite, error) {
-	suite := TestSuite{chartRoute: chartRoute}
+// ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
+func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
 	content, err := os.ReadFile(suiteFilePath)
 	if err != nil {
-		return &suite, err
+		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
 
-	return createTestSuite(suiteFilePath, chartRoute, string(content), strict, valueFilesSet, false)
+	parts := strings.Split(string(content), "---")
+	var testSuites []*TestSuite
+	for _, part := range parts {
+		// Ensure the part has data, otherwise we can ignore the split
+		if len(part) > 0 {
+			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
+			testSuites = append(testSuites, testSuite)
+			if suiteErr != nil {
+				return testSuites, suiteErr
+			}
+		}
+	}
+
+	return testSuites, nil
 }
 
 func createTestSuite(suiteFilePath string, chartRoute string, content string, strict bool, valueFilesSet []string, fromRender bool) (*TestSuite, error) {
@@ -178,7 +190,8 @@ type TestSuite struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
-	Tests []*TestJob
+	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	Tests              []*TestJob
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
@@ -222,13 +235,14 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
+		s.polishKubernetesProviderSettings(test)
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
 		test.globalSet = copySet(s.Set)
 
 		if len(s.Values) > 0 {
-			test.Values = append(test.Values, s.Values...)
+			test.Values = append(s.Values, test.Values...)
 		}
 
 		if len(s.Templates) > 0 {
@@ -275,6 +289,20 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 
 	if len(s.Capabilities.APIVersions) > 0 {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
+	}
+}
+
+func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
+	if len(s.KubernetesProvider.Objects) > 0 {
+		test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
+	}
+	if len(s.KubernetesProvider.Scheme) > 0 {
+		if test.KubernetesProvider.Scheme == nil {
+			test.KubernetesProvider.Scheme = map[string]KubernetesFakeKindProps{}
+		}
+		for k, v := range s.KubernetesProvider.Scheme {
+			test.KubernetesProvider.Scheme[k] = v
+		}
 	}
 }
 

@@ -1,10 +1,10 @@
 suite: test deployment
 templates:
   - templates/deployment.yaml
+values:
+  - ./values/image.yaml
 tests:
   - it: should pass all kinds of assertion
-    values:
-      - ./values/image.yaml
     set:
       service.internalPort: 8080
     asserts:
@@ -47,3 +47,14 @@ tests:
           count: 1
       - matchSnapshot:
           path: spec
+  - it: should have seccompProfile configured for container
+    values:
+      - ./values/seccomp.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[?(@.name=='child-chart-nginx')].securityContext.seccompProfile
+      - exists:
+          path: spec.template.spec.containers[?(@.name=='child-chart-nginx')].securityContext.capabilities.drop
+      - equal:
+          path: spec.template.spec.containers[?(@.name=='child-chart-nginx')].securityContext.seccompProfile.localhostProfile
+          value: nginxProfileCustomized

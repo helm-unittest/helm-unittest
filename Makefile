@@ -19,6 +19,7 @@ TEST_NAMES ?=basic \
 	with-files \
 	with-helm-tests \
 	with-samenamesubsubcharts \
+	with-k8s-fake-client \
 	with-schema \
 	with-subchart \
 	with-subfolder \

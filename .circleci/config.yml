@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.22
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
 
   distribute:
     docker:
-      - image: golang:1.21
+      - image: golang:1.22
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.22
     steps:
       - checkout
       - setup_remote_docker

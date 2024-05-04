@@ -28,7 +28,7 @@ var docToTestContainsDocument3 = `
 apiVersion: v1
 kind: Service
 metadata:
-    name: bar	
+    name: bar
 `
 
 var docToTestContainsDocument4 = `
@@ -38,7 +38,7 @@ metadata:
     namespace: foo
 `
 
-func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
+func TestContainsDocumentValidatorWhenEmptyOk(t *testing.T) {
 	validator := ContainsDocumentValidator{
 		Kind:       "Service",
 		APIVersion: "v1",
@@ -59,22 +59,50 @@ func TestContainsDocumentValidatorWhenEmptyNOk(t *testing.T) {
 	}, diff)
 }
 
-func TestContainsDocumentValidatorNegativeWhenEmptyOk(t *testing.T) {
-	validator := ContainsDocumentValidator{
-		Kind:       "Service",
-		APIVersion: "v1",
-		Name:       "bar",
-		Namespace:  "foo",
-		Any:        true,
+func TestContainsDocumentValidatorNegativeOk(t *testing.T) {
+	tests := []struct {
+		name      string
+		validator ContainsDocumentValidator
+		docs      []common.K8sManifest
+		expected  []string
+	}{
+		{
+			name: "should not fail with empty manifest and negative context",
+			validator: ContainsDocumentValidator{
+				Kind:       "Deployment",
+				APIVersion: "v1",
+				Name:       "bar",
+				Namespace:  "foo",
+				Any:        true,
+			},
+			docs:     []common.K8sManifest{},
+			expected: []string{},
+		},
+		{
+			name: "should not fail with multiple manifest and negative context",
+			validator: ContainsDocumentValidator{
+				Kind:       "Deployment",
+				APIVersion: "v1",
+				Name:       "bar",
+				Namespace:  "foo",
+				Any:        true,
+			},
+			docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+				makeManifest(docToTestContainsDocument2)},
+			expected: []string{},
+		},
 	}
-	pass, diff := validator.Validate(&ValidateContext{
-		Index:    -1,
-		Docs:     []common.K8sManifest{},
-		Negative: true,
-	})
 
-	assert.False(t, pass)
-	assert.Equal(t, []string{}, diff)
+	for _, test := range tests {
+		pass, diff := test.validator.Validate(&ValidateContext{
+			Index:    -1,
+			Docs:     test.docs,
+			Negative: true,
+		})
+
+		assert.True(t, pass)
+		assert.Equal(t, test.expected, diff)
+	}
 }
 
 func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
@@ -250,10 +278,10 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
 	assert.Equal(t, []string{
 		"DocumentIndex:\t0",
 		"Expected NOT to contain document:",
-		"\tKind = Service, apiVersion = v1, Name = , Namespace =",
+		"\tKind = Service, apiVersion = v1",
 		"DocumentIndex:\t1",
 		"Expected NOT to contain document:",
-		"\tKind = Service, apiVersion = v1, Name = , Namespace =",
+		"\tKind = Service, apiVersion = v1",
 	}, diff)
 }
 
@@ -330,7 +358,7 @@ func TestContainsDocumentValidatorFail(t *testing.T) {
 			expected: []string{
 				"DocumentIndex:\t0",
 				"Expected to contain document:",
-				"\tKind = Service, apiVersion = apps/v1, Name = foo, Namespace =",
+				"\tKind = Service, apiVersion = apps/v1, Name = foo",
 			},
 		},
 		{
@@ -347,7 +375,7 @@ func TestContainsDocumentValidatorFail(t *testing.T) {
 			expected: []string{
 				"DocumentIndex:\t0",
 				"Expected to contain document:",
-				"\tKind = Service, apiVersion = apps/v1, Name = , Namespace = bar",
+				"\tKind = Service, apiVersion = apps/v1, Namespace = bar",
 			},
 		},
 	}

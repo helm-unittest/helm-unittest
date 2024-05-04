@@ -17,9 +17,18 @@ spec:
         release: {{ .Release.Name }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Chart.Name }}-nginx
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - all
+    {{- include "sec.containerSeccompProfile" .Values.seccompProfile.nginx | nindent 12 }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:

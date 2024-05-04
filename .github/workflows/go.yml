@@ -19,7 +19,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         # tests for actively maintained Go versions.
         go-version:
-          - 1.21.x
+          - 1.22.x
     steps:
     - name: checkout
       # https://github.com/actions/checkout

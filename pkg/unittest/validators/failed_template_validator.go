@@ -48,7 +48,7 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 
 	if context.RenderError != nil {
 
-		if reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative {
+		if reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
 			validateSuccess = false
 			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
@@ -59,13 +59,17 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		for idx, manifest := range manifests {
 			actual := manifest[common.RAW]
 
+			if a == (FailedTemplateValidator{}) && !context.Negative {
+				// If the validator is empty and the context is not negative,
+				// continue to the next iteration without throwing an error.
+				continue
+			}
 			if reflect.DeepEqual(a.ErrorMessage, actual) == context.Negative {
 				validateSuccess = false
 				errorMessage := a.failInfo(actual, idx, context.Negative)
 				validateErrors = append(validateErrors, errorMessage...)
 				continue
 			}
-
 			validateSuccess = determineSuccess(idx, validateSuccess, true)
 		}
 

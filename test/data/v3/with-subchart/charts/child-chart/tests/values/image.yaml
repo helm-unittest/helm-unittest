@@ -4,3 +4,10 @@ image:
   repository: apache
   tag: latest
   pullPolicy: Always
+
+seccompProfile:
+  type: ""
+  localhostProfile: ""
+  nginx:
+    type: ""
+    localhostProfile: ""

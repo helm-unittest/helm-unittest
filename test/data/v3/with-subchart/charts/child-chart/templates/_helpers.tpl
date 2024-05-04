@@ -24,3 +24,19 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
   {{- end -}}
   {{- printf "%s" $ingressClass -}}
 {{- end -}}
+
+{{- define "sec.containerSeccompProfile" -}}
+{{- $profile := . -}}
+{{/*- fail (printf "%s-%s" "my-error: " ($profile.type)) -*/}}
+{{- if and $profile $profile.type -}}
+seccompProfile:
+  type: {{ $profile.type }}
+{{- if eq $profile.type "Localhost" }}
+{{- if (empty $profile.localhostProfile) }}
+  {{- fail "The 'Localhost' seccomp profile requires a profile name to be provided in localhostProfile parameter." -}}
+{{- else }}
+  localhostProfile: {{ $profile.localhostProfile }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
