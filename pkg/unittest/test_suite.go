@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,8 @@ import (
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
@@ -229,6 +230,7 @@ func (s *TestSuite) RunV3(
 
 // fill file path related info of TestJob
 func (s *TestSuite) polishTestJobsPathInfo() {
+	log.WithField("test-suite", "polish-test-jobs-path-info").Debugln("total tests", len(s.Tests))
 	for _, test := range s.Tests {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
@@ -244,6 +246,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		if len(s.Values) > 0 {
 			test.Values = append(s.Values, test.Values...)
 		}
+		log.WithField("test-suite", "polish-test-jobs-path-info").Debugln("total values", len(test.Values), "and", test.Values)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates

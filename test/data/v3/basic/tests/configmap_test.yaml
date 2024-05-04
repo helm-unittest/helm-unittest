@@ -15,3 +15,11 @@ tests:
           path: data["special.array"]
           content: phony-service.phony:graphql
           count: 1
+
+  - it: should use root values file
+    values:
+      - ../values.yaml
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
