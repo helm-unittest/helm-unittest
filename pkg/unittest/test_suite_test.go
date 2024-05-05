@@ -51,7 +51,6 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 
 // writeToFile writes the provided string data to a file with the given filename.
 // It returns an error if the file cannot be created or if there is an error during writing.
-// Works in Windows, Mac and Linux OS
 func writeToFile(data string, filename string) error {
 	err := os.MkdirAll(filepath.Dir(filename), 0755)
 	if err != nil {
