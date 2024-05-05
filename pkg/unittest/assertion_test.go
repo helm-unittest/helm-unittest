@@ -1,7 +1,6 @@
 package unittest_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"

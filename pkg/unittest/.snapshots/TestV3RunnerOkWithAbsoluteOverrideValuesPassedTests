@@ -2,6 +2,7 @@
 ### Chart [ basic ] ../../test/data/v3/basic
 
 
+ PASS  	../../test/data/v3/basic/tests/secret_test.yaml
  PASS  Configmap multiline Test	../../test/data/v3/basic/tests/configmap_test.yaml
  PASS  Custom Resource Definition Test	../../test/data/v3/basic/tests/crd_test.yaml
  PASS  Secret Test	../../test/data/v3/basic/tests/secret_test.yaml
@@ -14,7 +15,7 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 9 passed, 9 total
+Test Suites: 10 passed, 10 total
 Tests:       22 passed, 22 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms

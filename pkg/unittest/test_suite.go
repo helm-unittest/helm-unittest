@@ -29,7 +29,9 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	// delimiter used in various file formats (e.g., YAML, Markdown) to separate sections.
 	// The -1 passed as the third argument to Split tells it to return all parts,
 	// including the parts matched by the regular expression pattern.
-	parts := regexp.MustCompile("^---$").Split(string(content), -1)
+	// m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
+	parts := regexp.MustCompile(`(?m)^---$`).Split(string(content), -1)
+	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
 		// Ensure the part has data, otherwise we can ignore the split
