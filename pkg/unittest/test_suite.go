@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"regexp"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
@@ -24,8 +25,11 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	if err != nil {
 		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
-
-	parts := strings.Split(string(content), "---")
+	// The pattern matches lines that contain only three hyphens (---), which is a common
+	// delimiter used in various file formats (e.g., YAML, Markdown) to separate sections.
+	// The -1 passed as the third argument to Split tells it to return all parts,
+	// including the parts matched by the regular expression pattern.
+	parts := regexp.MustCompile("^---$").Split(string(content), -1)
 	var testSuites []*TestSuite
 	for _, part := range parts {
 		// Ensure the part has data, otherwise we can ignore the split
@@ -46,7 +50,6 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		chartRoute: chartRoute,
 		fromRender: fromRender,
 	}
-	fmt.Println("---createTestSuite--- 49")
 
 	var err error
 	cwd, _ := os.Getwd()
@@ -77,9 +80,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		return &suite, err
 	}
 
-	fmt.Println("---createTestSuite--- 70")
-
-	// Append the valuesfiles from command to the testsuites.
+	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
 
 	return &suite, nil
@@ -249,7 +250,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
-		// s.polishKubernetesProviderSettings(test)
+		s.polishKubernetesProviderSettings(test)
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
@@ -373,9 +374,8 @@ func (s *TestSuite) validateTestSuite() error {
 	}
 
 	for _, testJob := range s.Tests {
-		fmt.Println("--- validatetestsuite ---")
-		fmt.Println(testJob)
 		if len(testJob.Assertions) == 0 {
+			log.WithField("test-suite", "validate-test-suite").Debugln("no asserts found", testJob)
 			return fmt.Errorf("no asserts found")
 		}
 	}
