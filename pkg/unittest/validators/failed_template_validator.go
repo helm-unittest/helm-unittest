@@ -11,11 +11,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
-const errorFormatV1 = `
-Error:
-%s
-`
-
 // FailedTemplateValidator validate whether the errorMessage equal to errorMessage
 type FailedTemplateValidator struct {
 	ErrorMessage string
