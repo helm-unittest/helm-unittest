@@ -1,6 +1,7 @@
 package unittest_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -16,6 +17,8 @@ func validateSucceededTestAssertions(
 	assertionsYAML string,
 	assertionCount int,
 	renderedMap map[string][]common.K8sManifest) {
+
+	fmt.Println("---validateSucceededTestAssertions---")
 
 	assertions := make([]Assertion, assertionCount)
 	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
@@ -256,7 +259,7 @@ x:
 - template: t.yaml
   isSubset:
     path: e
-    content: 
+    content:
       f: g
 - template: t.yaml
   lengthEqual:

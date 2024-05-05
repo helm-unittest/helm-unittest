@@ -46,6 +46,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		chartRoute: chartRoute,
 		fromRender: fromRender,
 	}
+	fmt.Println("---createTestSuite--- 49")
 
 	var err error
 	cwd, _ := os.Getwd()
@@ -62,10 +63,21 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		return &suite, err
 	}
 
+	fmt.Println(suite)
+	for _, test := range suite.Tests {
+		fmt.Println(test)
+		fmt.Println(test.Values)
+		fmt.Println(test.Set)
+	}
+	fmt.Println(suite.Values)
+	fmt.Println(valueFilesSet)
+
 	err = suite.validateTestSuite()
 	if err != nil {
 		return &suite, err
 	}
+
+	fmt.Println("---createTestSuite--- 70")
 
 	// Append the valuesfiles from command to the testsuites.
 	suite.Values = append(suite.Values, valueFilesSet...)
@@ -237,12 +249,13 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		s.polishReleaseSettings(test)
 		s.polishCapabilitiesSettings(test)
-		s.polishKubernetesProviderSettings(test)
+		// s.polishKubernetesProviderSettings(test)
 		s.polishChartSettings(test)
 
 		// Make deep clone of global set
 		test.globalSet = copySet(s.Set)
-
+        fmt.Println("----")
+		fmt.Println(s.Values)
 		if len(s.Values) > 0 {
 			test.Values = append(s.Values, test.Values...)
 		}
@@ -360,6 +373,8 @@ func (s *TestSuite) validateTestSuite() error {
 	}
 
 	for _, testJob := range s.Tests {
+		fmt.Println("--- validatetestsuite ---")
+		fmt.Println(testJob)
 		if len(testJob.Assertions) == 0 {
 			return fmt.Errorf("no asserts found")
 		}
