@@ -44,59 +44,59 @@ func (a *Assertion) Assert(
 	// Sort or defaultTemplates to ensure a consistent output
 	sort.Strings(a.defaultTemplates)
 
-	for idx, template := range a.defaultTemplates {
-		rendered, ok := templatesResult[template]
-		var validatePassed bool
-		var singleFailInfo []string
-		if !ok && a.requireRenderSuccess {
-			noFile := []string{"Error:", a.noFileErrMessage(template)}
-			failInfo = append(failInfo, noFile...)
-			assertionPassed = false
-			break
-		}
+	selectedDocsByTemplate, indexError := a.selectDocuments(a.getDocumentsByDefaultTemplates(templatesResult))
 
-		if a.requireRenderSuccess != renderSucceed {
-			invalidRender := ""
-			if len(rendered) > 0 {
-				invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
-			} else {
-				invalidRender = "Error: rendered manifest is empty"
+	if indexError != nil {
+		invalidDocumentIndex := []string{"Error:", indexError.Error()}
+		failInfo = append(failInfo, invalidDocumentIndex...)
+	} else {
+		for idx, template := range a.defaultTemplates {
+			rendered, ok := templatesResult[template]
+			var validatePassed bool
+			var singleFailInfo []string
+			if !ok && a.requireRenderSuccess {
+				noFile := []string{"Error:", a.noFileErrMessage(template)}
+				failInfo = append(failInfo, noFile...)
+				assertionPassed = false
+				break
 			}
-			failInfo = append(failInfo, invalidRender)
-			break
+
+			if a.requireRenderSuccess != renderSucceed {
+				invalidRender := ""
+				if len(rendered) > 0 {
+					invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
+				} else {
+					invalidRender = "Error: rendered manifest is empty"
+				}
+				failInfo = append(failInfo, invalidRender)
+				break
+			}
+
+			singleTemplateResult := make(map[string][]common.K8sManifest)
+			singleTemplateResult[template] = rendered
+
+			selectedDocs := selectedDocsByTemplate[template]
+
+			validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
+				Docs:             rendered,
+				SelectedDocs:     &selectedDocs,
+				Negative:         a.Not != a.antonym,
+				SnapshotComparer: snapshotComparer,
+				RenderError:      renderError,
+			})
+
+			if !validatePassed {
+				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
+				singleFailInfo = append(failInfoTemplate, singleFailInfo...)
+			}
+
+			if idx == 0 {
+				assertionPassed = validatePassed
+			}
+
+			assertionPassed = assertionPassed && validatePassed
+			failInfo = append(failInfo, singleFailInfo...)
 		}
-
-		singleTemplateResult := make(map[string][]common.K8sManifest)
-		singleTemplateResult[template] = rendered
-
-		// Update the DocumentIndex if the found idx is not -1
-		selectedDocs, indexError := a.selectDocuments(rendered)
-
-		if indexError != nil {
-			invalidDocumentIndex := []string{"Error:", indexError.Error()}
-			failInfo = append(failInfo, invalidDocumentIndex...)
-			break
-		}
-
-		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
-			Docs:             rendered,
-			SelectedDocs:     &selectedDocs,
-			Negative:         a.Not != a.antonym,
-			SnapshotComparer: snapshotComparer,
-			RenderError:      renderError,
-		})
-
-		if !validatePassed {
-			failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
-			singleFailInfo = append(failInfoTemplate, singleFailInfo...)
-		}
-
-		if idx == 0 {
-			assertionPassed = validatePassed
-		}
-
-		assertionPassed = assertionPassed && validatePassed
-		failInfo = append(failInfo, singleFailInfo...)
 	}
 
 	result.Passed = assertionPassed
@@ -105,20 +105,40 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) selectDocuments(docs []common.K8sManifest) ([]common.K8sManifest, error) {
+func (a *Assertion) getDocumentsByDefaultTemplates(templatesResult map[string][]common.K8sManifest) map[string][]common.K8sManifest {
+	documentsByDefaultTemplates := map[string][]common.K8sManifest{}
+
+	for _, template := range a.defaultTemplates {
+		documentsByDefaultTemplates[template] = templatesResult[template]
+	}
+
+	return documentsByDefaultTemplates
+}
+
+func (a *Assertion) selectDocuments(docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
 	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
-		return a.DocumentSelector.FilterDocuments(docs)
+		return a.DocumentSelector.SelectDocuments(docs)
 	}
 
 	if a.DocumentIndex != -1 {
-		if a.DocumentIndex >= len(docs) {
-			return nil, fmt.Errorf("Document index %d is out of rage", a.DocumentIndex)
-		} else {
-			return []common.K8sManifest{docs[a.DocumentIndex]}, nil
-		}
+		return a.selectDocumentsByIndex(a.DocumentIndex, docs)
 	}
 
 	return docs, nil
+}
+
+func (a *Assertion) selectDocumentsByIndex(index int, docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+	selectedDocs := map[string][]common.K8sManifest{}
+
+	for template, manifests := range docs {
+		if index >= len(manifests) {
+			return map[string][]common.K8sManifest{}, fmt.Errorf("Document index %d is out of rage", a.DocumentIndex)
+		}
+
+		selectedDocs[template] = []common.K8sManifest{manifests[index]}
+	}
+
+	return selectedDocs, nil
 }
 
 func (a *Assertion) noFileErrMessage(template string) string {

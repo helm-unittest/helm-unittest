@@ -43,12 +43,24 @@
 		- asserts[0] `equal` fail
 			Error:
 			multiple indexes found
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select-failing/tests/falling_match_single_deployment_in_each_template_test.yaml
+	- deployment is in the default namespace (matchMany=false explicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
+
+	- deployment is in the default namespace (matchMany=false implicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
 
 
 
 Charts:      1 failed, 0 passed, 1 total
-Test Suites: 2 failed, 0 passed, 2 total
-Tests:       3 failed, 0 passed, 3 total
+Test Suites: 3 failed, 0 passed, 3 total
+Tests:       5 failed, 0 passed, 5 total
 Snapshot:    0 passed, 0 total
 Time:        XX.XXXms
 

@@ -12,29 +12,50 @@ type DocumentSelector struct {
 	Value     interface{}
 }
 
-func (ds DocumentSelector) FilterDocuments(fileManifests []common.K8sManifest) ([]common.K8sManifest, error) {
-	filteredManifests := []common.K8sManifest{}
+func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+	matchingDocuments := map[string][]common.K8sManifest{}
+	matchingDocumentsCount := 0
 
-	for _, doc := range fileManifests {
+	for template, manifests := range documentsByTemplate {
+		filteredManifests, err := ds.selectDocuments(manifests)
+		matchingDocumentsCount += len(filteredManifests)
+		matchingDocuments[template] = filteredManifests
+
+		if err != nil {
+			return map[string][]common.K8sManifest{}, err
+		}
+
+		if !ds.MatchMany && matchingDocumentsCount > 1 {
+			return map[string][]common.K8sManifest{}, errors.New("multiple indexes found")
+		}
+	}
+
+	return matchingDocuments, nil
+}
+
+func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.K8sManifest, error) {
+	selectedDocs := []common.K8sManifest{}
+
+	for _, doc := range docs {
 		var indexError error
 		isMatchingSelector, indexError := ds.isMatchingSelector(doc)
 
 		if indexError != nil {
-			return filteredManifests, indexError
+			return selectedDocs, indexError
 		} else if isMatchingSelector {
-			if (!ds.MatchMany) && (len(filteredManifests) > 0) {
-				return filteredManifests, errors.New("multiple indexes found")
+			if (!ds.MatchMany) && (len(selectedDocs) > 0) {
+				return selectedDocs, errors.New("multiple indexes found")
 			} else {
-				filteredManifests = append(filteredManifests, doc)
+				selectedDocs = append(selectedDocs, doc)
 			}
 		}
 	}
 
-	if len(filteredManifests) > 0 {
-		return filteredManifests, nil
+	if len(selectedDocs) > 0 {
+		return selectedDocs, nil
 	}
 
-	return filteredManifests, errors.New("document not found")
+	return selectedDocs, errors.New("document not found")
 }
 
 func (ds DocumentSelector) isMatchingSelector(doc common.K8sManifest) (bool, error) {

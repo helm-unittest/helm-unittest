@@ -24,25 +24,28 @@ metadata:
   namespace: bar
 `
 
-func createMultiManifest() []common.K8sManifest {
+func createMultiManifest() map[string][]common.K8sManifest {
+	return map[string][]common.K8sManifest{"template": createTestManifests()}
+}
+
+func createTestManifests() []common.K8sManifest {
 	manifest1 := common.K8sManifest{}
 	yaml.Unmarshal([]byte(docToTestIndex0), &manifest1)
 	manifest2 := common.K8sManifest{}
 	yaml.Unmarshal([]byte(docToTestIndex1), &manifest2)
-
 	return []common.K8sManifest{manifest1, manifest2}
 }
 
 func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := []common.K8sManifest{createMultiManifest()[0]}
+	expectedManifests := map[string][]common.K8sManifest{"template": []common.K8sManifest{createTestManifests()[0]}}
 
 	selector := DocumentSelector{
 		Path:  "metadata.service",
 		Value: "internal",
 	}
 
-	actualManifests, err := selector.FilterDocuments(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createMultiManifest())
 
 	a.Nil(err)
 	a.Equal(expectedManifests, actualManifests)
@@ -50,7 +53,7 @@ func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 
 func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := []common.K8sManifest{createMultiManifest()[1]}
+	expectedManifests := map[string][]common.K8sManifest{"template": []common.K8sManifest{createTestManifests()[1]}}
 
 	selector := DocumentSelector{
 		Path: "metadata",
@@ -60,7 +63,7 @@ func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 		},
 	}
 
-	actualManifests, err := selector.FilterDocuments(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createMultiManifest())
 
 	a.Nil(err)
 	a.Equal(expectedManifests, actualManifests)
@@ -68,14 +71,14 @@ func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 
 func TestFindDocumentIndexMultiIndexNOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := []common.K8sManifest{createMultiManifest()[0]}
+	expectedManifests := map[string][]common.K8sManifest{}
 
 	selector := DocumentSelector{
 		Path:  "metadata.name",
 		Value: "foo",
 	}
 
-	actualManifests, err := selector.FilterDocuments(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createMultiManifest())
 
 	a.NotNil(err)
 	a.EqualError(err, "multiple indexes found")
@@ -92,7 +95,7 @@ func TestFindDocumentIndicesMultiAllowedIndexOk(t *testing.T) {
 		MatchMany: true,
 	}
 
-	actualManifests, err := selector.FilterDocuments(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createMultiManifest())
 
 	a.Nil(err)
 	a.Equal(expectedManifests, actualManifests)
@@ -100,14 +103,14 @@ func TestFindDocumentIndicesMultiAllowedIndexOk(t *testing.T) {
 
 func TestFindDocumentIndexNoDocumentNOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := []common.K8sManifest{}
+	expectedManifests := map[string][]common.K8sManifest{}
 
 	selector := DocumentSelector{
 		Path:  "meta.data",
 		Value: "bar",
 	}
 
-	actualManifests, err := selector.FilterDocuments(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createMultiManifest())
 
 	a.NotNil(err)
 	a.EqualError(err, "document not found")
