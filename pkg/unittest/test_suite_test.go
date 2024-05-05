@@ -6,7 +6,7 @@ import (
 	"path"
 	"testing"
 	"time"
-	"runtime"
+	"path/filepath"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -53,15 +53,13 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 // It returns an error if the file cannot be created or if there is an error during writing.
 // Works in Windows, Mac and Linux OS
 func writeToFile(data string, filename string) error {
-    var file *os.File
-    var err error
-
-    if runtime.GOOS == "windows" {
-        file, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-    } else {
-        file, err = os.Create(filename)
+    err := os.MkdirAll(filepath.Dir(filename), 0755)
+    if err != nil {
+        return err
     }
 
+    // Create the file with an absolute path
+    file, err := os.Create(filename)
     if err != nil {
         return err
     }
@@ -637,9 +635,13 @@ tests:
     asserts:
       - failedTemplate: {}
 `
-	file := path.Join(tmpdir, "test-multiple-suites-withsingle-separator.yaml")
-	writeToFile(suiteDoc, file)
 	a := assert.New(t)
+	file := path.Join(tmpdir, "test-multiple-suites-withsingle-separator.yaml")
+	err := writeToFile(suiteDoc, file)
+	if err != nil {
+        fmt.Println("Error writing to file:", err)
+        a.Nil(err)
+    }
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
 	a.Nil(err)
@@ -691,9 +693,13 @@ tests:
           kind: Secret
           apiVersion: v1
 `
+    a := assert.New(t)
 	file := path.Join(tmpdir, "test-multiple-suites-withseparators-and-setmultiline-value.yaml")
-	writeToFile(suiteDoc, file)
-	a := assert.New(t)
+	err := writeToFile(suiteDoc, file)
+	if err != nil {
+        fmt.Println("Error writing to file:", err)
+        a.Nil(err)
+    }
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
 	a.Nil(err)
