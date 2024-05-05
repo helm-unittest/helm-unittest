@@ -300,6 +300,6 @@ func TestFailedTemplateValidatorWhenErrorAndContainsSet(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
-		"	'errorMessage' or 'contains' could be set",
+		"	'errorMessage' and 'contains' not supported at the same time",
 	}, diff)
 }

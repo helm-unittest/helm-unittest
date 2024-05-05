@@ -56,7 +56,7 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 
 	if a.ErrorMessage != "" && a.Contains != "" {
 		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, -1, "'errorMessage' or 'contains' could be set")
+		errorMessage := splitInfof(errorFormat, -1, "'errorMessage' and 'contains' not supported at the same time")
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if context.RenderError != nil {
 		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
