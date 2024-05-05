@@ -6,6 +6,7 @@ import (
 	"path"
 	"testing"
 	"time"
+	"runtime"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -50,18 +51,28 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 
 // writeToFile writes the provided string data to a file with the given filename.
 // It returns an error if the file cannot be created or if there is an error during writing.
+// Works in Windows, Mac and Linux OS
 func writeToFile(data string, filename string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+    var file *os.File
+    var err error
 
-	_, err = file.WriteString(data)
-	if err != nil {
-		return err
-	}
-	return nil
+    if runtime.GOOS == "windows" {
+        file, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+    } else {
+        file, err = os.Create(filename)
+    }
+
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+
+    _, err = file.WriteString(data)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func validateTestResultAndSnapshots(
