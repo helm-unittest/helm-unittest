@@ -18,8 +18,6 @@ func validateSucceededTestAssertions(
 	assertionCount int,
 	renderedMap map[string][]common.K8sManifest) {
 
-	fmt.Println("---validateSucceededTestAssertions---")
-
 	assertions := make([]Assertion, assertionCount)
 	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 

@@ -66,15 +66,6 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		return &suite, err
 	}
 
-	fmt.Println(suite)
-	for _, test := range suite.Tests {
-		fmt.Println(test)
-		fmt.Println(test.Values)
-		fmt.Println(test.Set)
-	}
-	fmt.Println(suite.Values)
-	fmt.Println(valueFilesSet)
-
 	err = suite.validateTestSuite()
 	if err != nil {
 		return &suite, err
@@ -243,7 +234,7 @@ func (s *TestSuite) RunV3(
 
 // fill file path related info of TestJob
 func (s *TestSuite) polishTestJobsPathInfo() {
-	log.WithField("test-suite", "polish-test-jobs-path-info").Debugln("total tests", len(s.Tests))
+	log.WithField("test-suite", "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
@@ -255,12 +246,10 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		// Make deep clone of global set
 		test.globalSet = copySet(s.Set)
-        fmt.Println("----")
-		fmt.Println(s.Values)
 		if len(s.Values) > 0 {
 			test.Values = append(s.Values, test.Values...)
 		}
-		log.WithField("test-suite", "polish-test-jobs-path-info").Debugln("total values", len(test.Values), "and", test.Values)
+		log.WithField("test-suite", "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
