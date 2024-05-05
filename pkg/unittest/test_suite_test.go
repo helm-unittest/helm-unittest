@@ -664,6 +664,21 @@ tests:
       - containsDocument:
           kind: Deployment
           apiVersion: v1
+---
+suite: third suite in same file
+templates:
+  - secret.yaml
+tests:
+  - it: should render second deployment in second suite
+    set:
+      signing.privateKey: |-
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+        {placeholder}
+        -----END PGP PRIVATE KEY BLOCK-----
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
 `
 	file := path.Join(tmpdir, "test-multiple-suites-withseparators-and-setmultiline-value.yaml")
 	writeToFile(suiteDoc, file)
@@ -671,5 +686,5 @@ tests:
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
 	a.Nil(err)
-	a.Len(suites, 2)
+	a.Len(suites, 3)
 }
