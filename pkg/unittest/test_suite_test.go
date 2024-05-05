@@ -53,27 +53,27 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 // It returns an error if the file cannot be created or if there is an error during writing.
 // Works in Windows, Mac and Linux OS
 func writeToFile(data string, filename string) error {
-    err := os.MkdirAll(filepath.Dir(filename), 0755)
-    if err != nil {
+	err := os.MkdirAll(filepath.Dir(filename), 0755)
+	if err != nil {
 		fmt.Println("Error creating folders for file:", err)
-        return err
-    }
+		return err
+	}
 
-    // Create the file with an absolute path
-    file, err := os.Create(filename)
-    if err != nil {
+	// Create the file with an absolute path
+	file, err := os.Create(filename)
+	if err != nil {
 		fmt.Println("Error creating file:", err)
-        return err
-    }
-    defer file.Close()
+		return err
+	}
+	defer file.Close()
 
-    _, err = file.WriteString(data)
-    if err != nil {
+	_, err = file.WriteString(data)
+	if err != nil {
 		fmt.Println("Error writing to file:", err)
-        return err
-    }
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func validateTestResultAndSnapshots(
