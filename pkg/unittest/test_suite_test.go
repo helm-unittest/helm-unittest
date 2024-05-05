@@ -53,6 +53,7 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 // It returns an error if the file cannot be created or if there is an error during writing.
 // Works in Windows, Mac and Linux OS
 func writeToFile(data string, filename string) error {
+	fmt.Println(filename)
     err := os.MkdirAll(filepath.Dir(filename), 0755)
     if err != nil {
         return err
@@ -636,7 +637,7 @@ tests:
       - failedTemplate: {}
 `
 	a := assert.New(t)
-	file := path.Join(tmpdir, "test-multiple-suites-withsingle-separator.yaml")
+	file := path.Join("..","_dist","multiple-suites-withsingle-separator.yaml")
 	err := writeToFile(suiteDoc, file)
 	if err != nil {
         fmt.Println("Error writing to file:", err)
@@ -694,7 +695,7 @@ tests:
           apiVersion: v1
 `
     a := assert.New(t)
-	file := path.Join(tmpdir, "test-multiple-suites-withseparators-and-setmultiline-value.yaml")
+	file := path.Join("..","_dist", "multiple-suites-with-multiline-value.yaml")
 	err := writeToFile(suiteDoc, file)
 	if err != nil {
         fmt.Println("Error writing to file:", err)
