@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"regexp"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
