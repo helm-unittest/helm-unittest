@@ -666,7 +666,6 @@ tests:
           apiVersion: v1
 `
 	file := path.Join(tmpdir, "test-multiple-suites-withseparators-and-setmultiline-value.yaml")
-	fmt.Println(file)
 	writeToFile(suiteDoc, file)
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
