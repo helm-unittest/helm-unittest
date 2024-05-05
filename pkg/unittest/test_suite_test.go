@@ -692,9 +692,9 @@ tests:
           kind: Secret
           apiVersion: v1
 `
-    a := assert.New(t)
+	a := assert.New(t)
 	file := path.Join("..","_dist", "multiple-suites-with-multiline-value.yaml")
-    a.Nil(writeToFile(suiteDoc, file))
+	a.Nil(writeToFile(suiteDoc, file))
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
