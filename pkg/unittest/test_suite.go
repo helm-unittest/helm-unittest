@@ -34,8 +34,8 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
-		// Ensure the part has data, otherwise we can ignore the split
-		if len(part) > 0 {
+		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
+		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
