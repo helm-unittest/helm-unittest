@@ -11,6 +11,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
+const errorFormatV1 = `
+Error:
+%s
+`
+
 // FailedTemplateValidator validate whether the errorMessage equal to errorMessage
 type FailedTemplateValidator struct {
 	ErrorMessage string
@@ -54,8 +59,11 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 	validateSuccess := true
 	validateErrors := make([]string, 0)
 
-	if context.RenderError != nil {
-        fmt.Println("line 58")
+	if a.ErrorMessage != "" && a.Contains != "" {
+		validateSuccess = false
+		errorMessage := splitInfof(errorFormat, -1, "'errorMessage' or 'contains' could be set")
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if context.RenderError != nil {
 		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
 			validateSuccess = false
 			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)

@@ -288,3 +288,18 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 		})
 	}
 }
+
+func TestFailedTemplateValidatorWhenErrorAndContainsSet(t *testing.T) {
+	manifest := makeManifest(failedTemplate)
+	v := FailedTemplateValidator{ErrorMessage: "A field should be required", Contains: "contains is set"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: false,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	'errorMessage' or 'contains' could be set",
+	}, diff)
+}
