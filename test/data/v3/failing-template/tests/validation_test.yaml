@@ -15,3 +15,5 @@ tests:
       name: xyz
     asserts:
     - notFailedTemplate: {}
+    - notFailedTemplate:
+        contains: "not failed"
