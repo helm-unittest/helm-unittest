@@ -28,6 +28,10 @@ func TestFailedTemplateValidatorWhenOk(t *testing.T) {
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
 		},
+		{
+			name:      "test case 3: with error message that contain substring",
+			validator: FailedTemplateValidator{Contains: "should not be"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -56,6 +60,10 @@ func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 		{
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message that contain substring",
+			validator: FailedTemplateValidator{Contains: "should not be"},
 		},
 	}
 
@@ -88,6 +96,11 @@ func TestFailedTemplateValidatorWhenEmptyFail(t *testing.T) {
 			validator: FailedTemplateValidator{},
 			expected:  []string{"Expected to equal:", "\t", "Actual:", "\tNo failed document"},
 		},
+		{
+			name:      "test case 3: with error message that contain substring",
+			validator: FailedTemplateValidator{Contains: "should not be"},
+			expected:  []string{"Expected to contain:", "\tshould not be", "Actual:", "\tNo failed document"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -116,6 +129,10 @@ func TestFailedTemplateValidatorWhenEmptyNegativeAndOk(t *testing.T) {
 		{
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message that contain substring",
+			validator: FailedTemplateValidator{Contains: "should not be"},
 		},
 	}
 
@@ -158,6 +175,17 @@ func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
 			expected:  []string{},
+		},
+		{
+			name:      "test case 3: incorrect error message",
+			validator: FailedTemplateValidator{Contains: "should not be required"},
+			expected: []string{
+				"DocumentIndex:	0",
+				"Expected to contain:",
+				"	should not be required",
+				"Actual:",
+				"	A field should be required",
+			},
 		},
 	}
 
@@ -208,6 +236,10 @@ func TestFailedTemplateValidatorWhenInvalidIndex(t *testing.T) {
 		{
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message",
+			validator: FailedTemplateValidator{Contains: "should be required"},
 		},
 	}
 

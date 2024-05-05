@@ -55,7 +55,7 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 	validateErrors := make([]string, 0)
 
 	if context.RenderError != nil {
-
+        fmt.Println("line 58")
 		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
 			validateSuccess = false
 			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)
