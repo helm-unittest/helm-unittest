@@ -287,7 +287,7 @@ tests:
       - ...
 ```
 
-* Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
+Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an example.
 
 ## Test Suite code completion and validation
 
