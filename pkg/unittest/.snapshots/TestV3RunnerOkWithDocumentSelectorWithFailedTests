@@ -1,12 +1,12 @@
 
-### Chart [ with-document-select-failing ] ../../test/data/v3/with-document-select-failing
+### Chart [ with-document-select ] ../../test/data/v3/with-document-select
 
 
- FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select-failing/tests/failing_match_many_deployments_test.yaml
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/failing_match_many_deployments_test.yaml
 	- every deployment should be in the default namespace
 
 		- asserts[0] `equal` fail
-			Template:	with-document-select-failing/templates/deployments-secondary-namespace.yaml
+			Template:	with-document-select/templates/deployments-secondary-namespace.yaml
 			DocumentIndex:	0
 			Path:	metadata.namespace
 			Expected to equal:
@@ -31,7 +31,7 @@
 				@@ -1,2 +1,2 @@
 				-default
 				+secondary
- FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select-failing/tests/failing_match_single_deployment_test.yaml
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/failing_match_single_deployment_test.yaml
 	- deployment is in the default namespace (matchMany=false explicitly)
 
 		- asserts[0] `equal` fail
@@ -43,7 +43,7 @@
 		- asserts[0] `equal` fail
 			Error:
 			multiple indexes found
- FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select-failing/tests/falling_match_single_deployment_in_each_template_test.yaml
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/falling_match_single_deployment_in_each_template_test.yaml
 	- deployment is in the default namespace (matchMany=false explicitly)
 
 		- asserts[0] `equal` fail

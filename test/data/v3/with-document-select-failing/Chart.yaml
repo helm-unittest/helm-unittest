@@ -1,4 +1,0 @@
-apiVersion: v2
-description: A chart with document selectors that fails the tests
-name: with-document-select-failing
-version: 0.1.0
