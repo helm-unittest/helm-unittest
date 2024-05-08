@@ -1,5 +1,5 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: single-deployment-2
+  name: single-app-2-deployment
   namespace: default

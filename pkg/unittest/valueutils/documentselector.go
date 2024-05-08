@@ -8,19 +8,22 @@ import (
 )
 
 type DocumentSelector struct {
+	SkipEmpty bool `yaml:"skipEmpty"`
 	MatchMany bool `yaml:"matchMany"`
 	Path      string
 	Value     interface{}
 }
 
 func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+
 	matchingDocuments := map[string][]common.K8sManifest{}
 	matchingDocumentsCount := 0
 
 	for template, manifests := range documentsByTemplate {
 		filteredManifests, err := ds.selectDocuments(manifests)
-		matchingDocumentsCount += len(filteredManifests)
-		matchingDocuments[template] = filteredManifests
+
+		filteredManifestsCount := len(filteredManifests)
+		matchingDocumentsCount += filteredManifestsCount
 
 		if err != nil {
 			return map[string][]common.K8sManifest{}, err
@@ -28,6 +31,10 @@ func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]comm
 
 		if !ds.MatchMany && matchingDocumentsCount > 1 {
 			return map[string][]common.K8sManifest{}, errors.New("multiple indexes found")
+		}
+
+		if filteredManifestsCount > 0 || !ds.SkipEmpty {
+			matchingDocuments[template] = filteredManifests
 		}
 	}
 
@@ -52,7 +59,7 @@ func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.
 		}
 	}
 
-	if len(selectedDocs) > 0 {
+	if ds.SkipEmpty || len(selectedDocs) > 0 {
 		return selectedDocs, nil
 	}
 

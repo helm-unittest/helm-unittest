@@ -134,6 +134,7 @@ tests:
   - **path**: *string*. The `documentSelector` path to assert.
   - **value**: *any*. The expected value.
   - **matchMany**: *bool, optional*. Set to `true` to allow matching multiple documents. Defaults to `false` which means selector has to match single document.
+  - **skipEmpty**: *bool, optional*. Set to `true` to skip asserting templates which didn't render any matching documents. Defaults to `false` which means selector have to find at least one document in every template.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.

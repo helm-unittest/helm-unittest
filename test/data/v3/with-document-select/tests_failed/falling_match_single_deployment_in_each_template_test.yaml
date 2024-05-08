@@ -1,6 +1,6 @@
 suite: Document Selector is matching many documents
 templates:
-  - "templates/single-deployment*.yaml"
+  - "templates/single-*"
 tests:
   - it: deployment is in the default namespace (matchMany=false explicitly)
     documentSelector:

@@ -41,16 +41,17 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	// Sort or defaultTemplates to ensure a consistent output
-	sort.Strings(a.defaultTemplates)
+	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
+	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
-	selectedDocsByTemplate, indexError := a.selectDocuments(a.getDocumentsByDefaultTemplates(templatesResult))
+	// Sort templates to ensure a consistent output
+	sort.Strings(selectedTemplates)
 
 	if indexError != nil {
 		invalidDocumentIndex := []string{"Error:", indexError.Error()}
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
-		for idx, template := range a.defaultTemplates {
+		for idx, template := range selectedTemplates {
 			rendered, ok := templatesResult[template]
 			var validatePassed bool
 			var singleFailInfo []string
@@ -115,7 +116,17 @@ func (a *Assertion) getDocumentsByDefaultTemplates(templatesResult map[string][]
 	return documentsByDefaultTemplates
 }
 
-func (a *Assertion) selectDocuments(docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+func (a *Assertion) getKeys(docs map[string][]common.K8sManifest) []string {
+	keys := []string{}
+
+	for key := range docs {
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
+func (a *Assertion) selectDocumentsForAssertion(docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
 	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
 		return a.DocumentSelector.SelectDocuments(docs)
 	}
@@ -177,11 +188,13 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		documentSelectorPath := documentSelector["path"].(string)
 		documentSelectorValue := documentSelector["value"]
 		documentSelectorMatchMany := documentSelector["matchMany"] == true
+		documentSelectorSkipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
 
 		a.DocumentSelector = &valueutils.DocumentSelector{
 			Path:      documentSelectorPath,
 			Value:     documentSelectorValue,
 			MatchMany: documentSelectorMatchMany,
+			SkipEmpty: documentSelectorSkipEmptyTemplates,
 		}
 	}
 
