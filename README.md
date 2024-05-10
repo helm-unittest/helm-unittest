@@ -250,7 +250,7 @@ The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory yo
 
 ## Dependent subchart Testing
 
-If you have dependent subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
+If you have hard dependency subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
 
 ```yaml
 # $YOUR_CHART/tests/xxx_test.yaml
@@ -272,7 +272,7 @@ Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an exampl
 
 ## Tests within subchart
 
-If you have customized subchart (not installed via `helm dependency`) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
+If you have customized hard dependency subchart (not installed via `helm dependency`, but added manually) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
 
 ```yaml
 # with-subchart/charts/child-chart/tests/xxx_test.yaml
