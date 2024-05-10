@@ -250,7 +250,7 @@ The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory yo
 
 ## Dependent subchart Testing
 
-If you have hard subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
+If you have hard dependency subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
 
 ```yaml
 # $YOUR_CHART/tests/xxx_test.yaml
