@@ -45,7 +45,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/base:2024.05
     steps:
       - checkout
       - setup_remote_docker
