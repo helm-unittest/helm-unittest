@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
-	"path/filepath"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -638,8 +638,9 @@ tests:
       - failedTemplate: {}
 `
 	a := assert.New(t)
-	file := path.Join("_scratch","multiple-suites-withsingle-separator.yaml")
+	file := path.Join("_scratch", "multiple-suites-withsingle-separator.yaml")
 	a.Nil(writeToFile(suiteDoc, file))
+	defer os.Remove(file)
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
@@ -695,6 +696,7 @@ tests:
 	a := assert.New(t)
 	file := path.Join("_scratch", "multiple-suites-with-multiline-value.yaml")
 	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 

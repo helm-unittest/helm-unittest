@@ -19,18 +19,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
+var splitterPattern = regexp.MustCompile("(?m:^---$)")
+
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
 	content, err := os.ReadFile(suiteFilePath)
 	if err != nil {
 		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
+
 	// The pattern matches lines that contain only three hyphens (---), which is a common
 	// delimiter used in various file formats (e.g., YAML, Markdown) to separate sections.
 	// The -1 passed as the third argument to Split tells it to return all parts,
 	// including the parts matched by the regular expression pattern.
-	// m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
-	parts := regexp.MustCompile(`(?m)^---$`).Split(string(content), -1)
+	parts := splitterPattern.Split(string(content), -1)
 	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
@@ -153,7 +156,7 @@ func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir
 
 func iterateTemplates(template string, suites []*TestSuite, absPath string, chartRoute string, strict bool, valueFilesSet []string) ([]error, int, []*TestSuite) {
 	var subYamlErrs []error
-	templates := strings.Split(template, "---")
+	templates := splitterPattern.Split(template, -1)
 	previousSuitesLen := len(suites)
 	realIdx := -1
 	for idx, subYaml := range templates {
