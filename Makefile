@@ -4,10 +4,11 @@
 GO ?= go
 HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
 HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+HELM_VERSION := 3.14.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
-DOCKER ?= "helmunittest/helm-unittest"
+DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
 TEST_NAMES ?=basic \
 	failing-template \
@@ -86,14 +87,14 @@ dependency: ## Dependency maintanance
 	@$(GO) mod tidy
 
 .PHONY: dockerimage
-dockerimage: ## Build docker image
-	docker build -t $(DOCKER):$(VERSION) .
+dockerimage: build ## Build docker image
+	docker buildx build --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: ## Execute 'helm unittests' in container
+test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$${f}'"; \
 		docker run \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps/\
-			-it --rm  $(DOCKER) -f tests/*.yaml .;\
+			-it --rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done

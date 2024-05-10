@@ -29,6 +29,16 @@ jobs:
       - store_artifacts:
           path: /tmp/test-artifacts
 
+  validate_docker:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and test docker images
+          command: make test-docker
+
   distribute:
     docker:
       - image: golang:1.22
@@ -60,10 +70,13 @@ workflows:
   test-and-build:
     jobs:
       - test:
+          context: SonarCloud
+      - validate_docker:
+          requires:
+            - test
           filters:
             tags:
               only: /.*/
-          context: SonarCloud
       - distribute:
           requires:
             - test
