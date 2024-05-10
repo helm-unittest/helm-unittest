@@ -272,7 +272,7 @@ Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an exampl
 
 ## Tests within subchart
 
-If you have customized soft subchart (not installed via `helm dependency`) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
+If you have customized hard dependency subchart (not installed via `helm dependency`, but added manually) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
 
 ```yaml
 # with-subchart/charts/child-chart/tests/xxx_test.yaml
