@@ -1,7 +1,6 @@
 0.5.1 / 2024-05-11
 ==================
 - Fix parse multidocument testsuites (credits @ivankatliarchuk, resolves #329, resolves #336)
-- Improve docker containers (resolves #321)
 - Update packages to latest patch versions
 - Update documentation (credits @dancer1325)
 
