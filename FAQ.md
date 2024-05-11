@@ -2,7 +2,7 @@
 
 ## Installation
 
-Q: **Is is possible to completely remove the plugin installation?** <br/>
+Q: **Is it possible to completely remove the plugin installation?** <br/>
 A: Yes. Using the below command you can uninstall the plugin from usage
 ```
 $ helm plugin uninstall helm-unittest
@@ -18,8 +18,12 @@ $ helm helm-unittest ... -d
 ```
 
 ## DevOps
-Q: **How can I setup the helm-unittest plugin in a build environment**
+Q: **How can I setup the helm-unittest plugin in a build environment** <br/>
 A: The helm-unittest plugin has the options _-t, --output-type_ and _-o, --output-file_ which can be use to generate testresults in a file. Most of the Buildservers have a task that can upload the testresult into the server and generate a buildreport, or determine the success or failure of the tests.
 ```
 $ helm helm-unittest ... -t JUnit -o junit-results.xml
 ```
+
+Q: **Can I integrate helm-unittest plugin with the Helm Chart-Testing tool?** <br/>
+A: Yes. The Helm Chart-Testing tool as the option to add [additional-commands](https://github.com/helm/chart-testing/blob/main/doc/ct_lint.md#options) when linting is used. This makes it possible to run helm unittest as part of the ct command. <br/>
+_Be aware! the required tools like helm and the unittest plugin need to be available on the system_
