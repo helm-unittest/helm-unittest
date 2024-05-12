@@ -220,7 +220,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 //
 // chartPath is the file system path to the chart directory.
 // chartRoute is the route/path to the chart within the chart repository.
-// chart_ is the chart object representing the chart being processed.
+// chart is the chart object representing the chart being processed.
 //
 // It returns a slice of TestSuite pointers and an error if any occurred during processing.
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
