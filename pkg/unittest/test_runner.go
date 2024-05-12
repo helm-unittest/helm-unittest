@@ -18,24 +18,42 @@ import (
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
+// getFiles retrieves a list of files matching the given file patterns.
+// If chartPath is provided, the patterns are treated as relative to the chartPath.
+// If setAbsolute is true, the returned file paths are converted to absolute paths.
+//
+// chartPath is the base directory to search for files (can be empty).
+// filePatterns is a slice of file patterns to match (e.g., "tests/*".yaml).
+// setAbsolute indicates whether to return absolute file paths or relative paths.
+//
+// It returns a slice of file paths and an error if any occurred during processing.
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
 	filesSet := make([]string, 0)
+	basePath := chartPath + "/" // Prepend chartPath with slash
+
 	for _, pattern := range filePatterns {
 		if !filepath.IsAbs(pattern) {
-			files, err := filepathx.Glob(filepath.Join(chartPath, pattern))
+			fullPath := basePath + pattern // Combine with prepended path
+			files, err := filepathx.Glob(fullPath)
 			if err != nil {
 				return nil, err
 			}
-			if setAbsolute {
-				for _, file := range files {
-					file, _ = filepath.Abs(file)
-					filesSet = append(filesSet, file)
-				}
-			} else {
-				filesSet = append(filesSet, files...)
-			}
+			filesSet = append(filesSet, files...) // Append all files (relative or absolute)
 		} else {
-			filesSet = append(filesSet, pattern)
+			filesSet = append(filesSet, pattern) // Append absolute paths directly
+		}
+	}
+
+	if setAbsolute {
+		for i, filePath := range filesSet {
+			if !filepath.IsAbs(filePath) {
+				absPath, err := filepath.Abs(filePath)
+				if err != nil {
+					// Handle error (log, return error, etc.)
+					continue
+				}
+				filesSet[i] = absPath
+			}
 		}
 	}
 
@@ -141,6 +159,13 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	return allPassed
 }
 
+// getTestSuites retrieves the list of test suites for the given chart.
+// It parses test suite files and renders test suite files from the chart's tests path (if specified).
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+//
+// It returns a slice of _TestSuite structs and an error if any occurred during processing.
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
 	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
 	if terr != nil {
@@ -165,6 +190,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		}
 	}
 
+	// Parse each test file and append the resulting test suites to the result slice
 	resultSuites := make([]*TestSuite, 0, len(testFilesSet)+len(renderedTestSuites))
 	for _, file := range testFilesSet {
 		suites, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
