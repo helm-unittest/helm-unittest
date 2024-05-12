@@ -28,18 +28,18 @@ import (
 //
 // It returns a slice of file paths and an error if any occurred during processing.
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	filesSet := make([]string, 0)
+	var filesSet []string
 	basePath := chartPath + "/" // Prepend chartPath with slash
 
 	for _, pattern := range filePatterns {
-		if !filepath.IsAbs(pattern) {
+		if filepath.IsAbs(pattern) {
+			filesSet = append(filesSet, pattern) // Append absolute paths directly
+		} else {
 			files, err := filepathx.Glob(filepath.Join(basePath, pattern))
 			if err != nil {
 				return nil, err
 			}
-			filesSet = append(filesSet, files...) // Append all files (relative or absolute)
-		} else {
-			filesSet = append(filesSet, pattern) // Append absolute paths directly
+			filesSet = append(filesSet, files...) // Append all files (relative)
 		}
 	}
 
