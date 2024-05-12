@@ -215,7 +215,14 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 	return resultSuites, nil
 }
 
-// getV3TestSuites return test files of the chart which matched patterns
+// getV3TestSuites retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
+// It recursively calls itself for each subchart dependency.
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+// chart_ is the chart object representing the chart being processed.
+//
+// It returns a slice of TestSuite pointers and an error if any occurred during processing.
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
@@ -224,6 +231,7 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 
 	if tr.WithSubChart {
 		for _, subchart := range chart.Dependencies() {
+			// Recursively get test suites for the subchart
 			subchartSuites, err := tr.getV3TestSuites(
 				filepath.Join(chartPath, "charts", subchart.Metadata.Name),
 				filepath.Join(chartRoute, "charts", subchart.Metadata.Name),
