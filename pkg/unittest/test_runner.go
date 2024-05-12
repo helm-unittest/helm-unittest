@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
@@ -28,6 +31,7 @@ import (
 //
 // It returns a slice of file paths and an error if any occurred during processing.
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
+	log.WithField("test-runner", "getFiles").Debugln("filepatterns:", filePatterns)
 	var filesSet []string
 	basePath := chartPath + "/" // Prepend chartPath with slash
 
@@ -35,7 +39,13 @@ func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 		if filepath.IsAbs(pattern) {
 			filesSet = append(filesSet, pattern) // Append absolute paths directly
 		} else {
-			files, err := filepathx.Glob(filepath.Join(basePath, pattern))
+			var filePath string
+			if strings.Contains(pattern, basePath) {
+				filePath = pattern
+			} else {
+				filePath = filepath.Join(basePath, pattern)
+			}
+			files, err := filepathx.Glob(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -53,6 +63,7 @@ func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 		}
 	}
 
+	log.WithField("test-runner", "getFiles").Debugln("chartpath:", chartPath, ". fileset:", filesSet)
 	return filesSet, nil
 }
 
