@@ -33,8 +33,7 @@ func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 
 	for _, pattern := range filePatterns {
 		if !filepath.IsAbs(pattern) {
-			fullPath := basePath + pattern // Combine with prepended path
-			files, err := filepathx.Glob(fullPath)
+			files, err := filepathx.Glob(filepath.Join(basePath, pattern))
 			if err != nil {
 				return nil, err
 			}
@@ -45,13 +44,10 @@ func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 	}
 
 	if setAbsolute {
+		// If setAbsolute is true, convert the file paths to absolute paths
 		for i, filePath := range filesSet {
 			if !filepath.IsAbs(filePath) {
-				absPath, err := filepath.Abs(filePath)
-				if err != nil {
-					// Handle error (log, return error, etc.)
-					continue
-				}
+				absPath, _ := filepath.Abs(filePath)
 				filesSet[i] = absPath
 			}
 		}
