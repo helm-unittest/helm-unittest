@@ -7,7 +7,7 @@ tests:
       path: kind
       value: Deployment
       matchMany: true
-      skipEmpty: true
+      skipEmptyTemplates: true
     asserts:
       - matchRegex:
           path: metadata.name

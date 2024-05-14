@@ -8,10 +8,10 @@ import (
 )
 
 type DocumentSelector struct {
-	SkipEmpty bool `yaml:"skipEmpty"`
-	MatchMany bool `yaml:"matchMany"`
-	Path      string
-	Value     interface{}
+	SkipEmptyTemplates bool `yaml:"skipEmptyTemplates"`
+	MatchMany          bool `yaml:"matchMany"`
+	Path               string
+	Value              interface{}
 }
 
 func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
@@ -33,7 +33,7 @@ func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]comm
 			return map[string][]common.K8sManifest{}, errors.New("multiple indexes found")
 		}
 
-		if filteredManifestsCount > 0 || !ds.SkipEmpty {
+		if filteredManifestsCount > 0 || !ds.SkipEmptyTemplates {
 			matchingDocuments[template] = filteredManifests
 		}
 	}
@@ -59,7 +59,7 @@ func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.
 		}
 	}
 
-	if ds.SkipEmpty || len(selectedDocs) > 0 {
+	if ds.SkipEmptyTemplates || len(selectedDocs) > 0 {
 		return selectedDocs, nil
 	}
 

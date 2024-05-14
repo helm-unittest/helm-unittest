@@ -191,10 +191,10 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		documentSelectorSkipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
 
 		a.DocumentSelector = &valueutils.DocumentSelector{
-			Path:      documentSelectorPath,
-			Value:     documentSelectorValue,
-			MatchMany: documentSelectorMatchMany,
-			SkipEmpty: documentSelectorSkipEmptyTemplates,
+			Path:               documentSelectorPath,
+			Value:              documentSelectorValue,
+			MatchMany:          documentSelectorMatchMany,
+			SkipEmptyTemplates: documentSelectorSkipEmptyTemplates,
 		}
 	}
 
