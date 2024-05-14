@@ -1,11 +1,12 @@
 package valueutils_test
 
 import (
+	"testing"
+
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
-	"testing"
 )
 
 var docToTestIndex0 = `

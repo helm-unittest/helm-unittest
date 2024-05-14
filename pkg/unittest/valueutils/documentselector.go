@@ -2,8 +2,9 @@ package valueutils
 
 import (
 	"errors"
-	"github.com/helm-unittest/helm-unittest/internal/common"
 	"reflect"
+
+	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
 type DocumentSelector struct {
