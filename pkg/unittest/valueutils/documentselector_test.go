@@ -43,7 +43,7 @@ metadata:
 
 func createSingleTemplateMultiManifest() map[string][]common.K8sManifest {
 	return map[string][]common.K8sManifest{
-		"firstTemplate": []common.K8sManifest{
+		"firstTemplate": {
 			parseManifest(firstTemplateDocToTestIndex0), parseManifest(firstTemplateDocToTestIndex1),
 		},
 	}
@@ -51,10 +51,10 @@ func createSingleTemplateMultiManifest() map[string][]common.K8sManifest {
 
 func createMultiTemplateMultiManifest() map[string][]common.K8sManifest {
 	return map[string][]common.K8sManifest{
-		"firstTemplate": []common.K8sManifest{
+		"firstTemplate": {
 			parseManifest(firstTemplateDocToTestIndex0), parseManifest(firstTemplateDocToTestIndex1),
 		},
-		"secondTemplate": []common.K8sManifest{
+		"secondTemplate": {
 			parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1),
 		},
 	}
@@ -69,7 +69,7 @@ func parseManifest(manifest string) common.K8sManifest {
 
 func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": []common.K8sManifest{parseManifest(firstTemplateDocToTestIndex0)}}
+	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": {parseManifest(firstTemplateDocToTestIndex0)}}
 
 	selector := DocumentSelector{
 		Path:  "metadata.service",
@@ -84,7 +84,7 @@ func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 
 func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 	a := assert.New(t)
-	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": []common.K8sManifest{parseManifest(firstTemplateDocToTestIndex1)}}
+	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": {parseManifest(firstTemplateDocToTestIndex1)}}
 
 	selector := DocumentSelector{
 		Path: "metadata",
@@ -151,7 +151,7 @@ func TestFindDocumentIndexNoDocumentNOk(t *testing.T) {
 func TestFindDocumentIndicesMatchManyAndSkipEmptyTemplatesOk(t *testing.T) {
 	a := assert.New(t)
 	expectedManifests := map[string][]common.K8sManifest{
-		"secondTemplate": []common.K8sManifest{parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
+		"secondTemplate": {parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
 	}
 
 	selector := DocumentSelector{
