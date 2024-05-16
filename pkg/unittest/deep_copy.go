@@ -3,6 +3,7 @@ package unittest
 import (
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/mitchellh/copystructure"
@@ -30,6 +31,15 @@ func getTemplateFileName(fileName string) string {
 	return fileName
 }
 
+// getTemplateFileNamePattern,
+// converts a template file name to a regular expression pattern
+func getTemplateFileNamePattern(fileName string) string {
+	pattern := strings.ReplaceAll(fileName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
+	pattern = strings.ReplaceAll(pattern, singleWildcard, "[0-9a-zA-Z_\\-_/\\.]*")
+	pattern = strings.ReplaceAll(pattern, ".", "\\.")
+	return pattern
+}
+
 func copySet(setValues map[string]interface{}) map[string]interface{} {
 	copiedSet, err := copystructure.Copy(setValues)
 	if err != nil {
@@ -46,7 +56,7 @@ func copySet(setValues map[string]interface{}) map[string]interface{} {
 }
 
 // Copy the V3Chart and its dependencies with partials and optional selected test files.
-func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, targetChart *v3chart.Chart) *v3chart.Chart {
+func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, templatesToSkip []string, targetChart *v3chart.Chart) *v3chart.Chart {
 	copiedChart := new(v3chart.Chart)
 	*copiedChart = *targetChart
 
@@ -55,14 +65,14 @@ func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, ta
 
 	// Filter the templates based on the templates to Assert
 	// To filter templates ensure only the original chartname is used.
-	copiedChart.Templates = filterV3Templates(chartRoute, currentRoute, templatesToAssert, targetChart)
+	copiedChart.Templates = filterV3Templates(chartRoute, currentRoute, templatesToAssert, templatesToSkip, targetChart)
 
 	// Recreate the dependencies
 	// Filter trough dependencies.
 	copiedChartDependencies := make([]*v3chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
 		copiedChartRoute := filepath.Join(currentRoute, subchartPrefix, dependency.Name())
-		copiedDependency := CopyV3Chart(chartRoute, copiedChartRoute, templatesToAssert, dependency)
+		copiedDependency := CopyV3Chart(chartRoute, copiedChartRoute, templatesToAssert, templatesToSkip, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
 	copiedChart.SetDependencies(copiedChartDependencies...)
@@ -71,7 +81,7 @@ func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, ta
 }
 
 // filterV3Templates, Filter the V3Templates with only the partials and selected test files.
-func filterV3Templates(chartRoute, currentRoute string, templateToAssert []string, targetChart *v3chart.Chart) []*v3chart.File {
+func filterV3Templates(chartRoute, currentRoute string, templateToAssert []string, templatesToSkip []string, targetChart *v3chart.Chart) []*v3chart.File {
 	filteredV3Template := make([]*v3chart.File, 0)
 
 	log.WithField("filterV3Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
@@ -80,12 +90,7 @@ func filterV3Templates(chartRoute, currentRoute string, templateToAssert []strin
 
 	// check templates in chart
 	for _, fileName := range templateToAssert {
-		selectedV3TemplateName := filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName)))
-
-		// Set selectedV3TemplateName as regular expression to search
-		selectedV3TemplateNamePattern := strings.ReplaceAll(selectedV3TemplateName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
-		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, singleWildcard, "[0-9a-zA-Z_\\-_/\\.]*")
-		selectedV3TemplateNamePattern = strings.ReplaceAll(selectedV3TemplateNamePattern, ".", "\\.")
+		selectedV3TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
 
 		for _, template := range targetChart.Templates {
 			foundV3TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
@@ -95,6 +100,18 @@ func filterV3Templates(chartRoute, currentRoute string, templateToAssert []strin
 			}
 		}
 	}
+
+	// remove excluded templates
+	filteredV3Template = slices.DeleteFunc(filteredV3Template, func(template *v3chart.File) bool {
+		foundV3TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
+
+		return slices.ContainsFunc(templatesToSkip, func(fileName string) bool {
+			selectedV3TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
+
+			ok, _ := regexp.MatchString(selectedV3TemplateNamePattern, foundV3TemplateName)
+			return ok
+		})
+	})
 
 	// add partial templates
 	for _, template := range targetChart.Templates {

@@ -1,0 +1,17 @@
+suite: test generate names in Kubernetes resources
+templates:
+  - "templates/*.yaml"
+excludeTemplates:
+  - crd_*
+  - empty_deployment.yaml
+  - ingress.yaml
+  - rbac.yaml
+  - secret.yaml
+tests:
+  - it: should generate metadata name based on release name and chart name
+    release:
+      name: test
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: ^test-basic
