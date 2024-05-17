@@ -26,6 +26,9 @@
     "templates": {
       "$ref": "#/definitions/templates"
     },
+    "excludeTemplates": {
+      "$ref": "#/definitions/excludeTemplates"
+    },
     "release": {
       "$ref": "#/definitions/release"
     },
@@ -938,6 +941,14 @@
       "type": "array",
       "description": "The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the templates/ can be omitted. Partial templates (which are prefixed with and _) are added automatically even if it is in a templates sub-folder, you don't need to add them again.",
       "markdownDescription": "**templates** (array<string>) _recommended_\n\nThe template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation.\n\n Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted.\n\nPartial templates (which are prefixed with and _) are added automatically even if it is in a templates sub-folder, you don't need to add them again.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludeTemplates": {
+      "type": "array",
+      "description": "The template files which should be excluded from the scope of this test suite. Using wildcards it is possible to exclude multiple templates without listing them one-by-one.",
+      "markdownDescription": "**excludeTemplates** (array<string>) _optional_\n\nThe template files which should be excluded from the scope of this test suite. Using wildcards it is possible to exclude multiple templates without listing them one-by-one.",
       "items": {
         "type": "string"
       }
