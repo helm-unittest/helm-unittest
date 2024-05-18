@@ -19,7 +19,7 @@ permissions:
 jobs:
 
   lint:
-    name: lint
+    name: golang-lint
     runs-on: ubuntu-latest
 
     steps:
