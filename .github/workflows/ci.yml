@@ -38,8 +38,7 @@ jobs:
       - name: lint
         # https://github.com/golangci/golangci-lint-action
         uses: golangci/golangci-lint-action@v6
-        # remove when all linter fixed
-        # continue-on-error: true
         with:
           version: ${{ env.GOLANGCI_VERSION }}
+          # remove when linter errors fixed
           args: --issues-exit-code=0
