@@ -240,6 +240,17 @@ func TestV3RunnerOkWithDocumentSelector(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV3RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFailedFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	assert.False(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
 func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{

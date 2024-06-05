@@ -142,8 +142,7 @@ a:
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
+		Docs: []common.K8sManifest{manifest1, manifest2},
 	})
 
 	assert.False(t, pass)
@@ -172,8 +171,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest, manifest},
-		Index: -1,
+		Docs: []common.K8sManifest{manifest, manifest},
 	})
 
 	assert.False(t, pass)
@@ -252,20 +250,5 @@ func TestEqualValidatorWhenUnkownPath(t *testing.T) {
 		"DocumentIndex:	0",
 		"Error:",
 		"	unknown path a.b[5]",
-	}, diff)
-}
-
-func TestEqualValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.b[0].c", 123, false}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }

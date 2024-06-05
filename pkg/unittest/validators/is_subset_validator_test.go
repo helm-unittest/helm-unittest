@@ -88,8 +88,7 @@ a:
 		map[string]interface{}{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
@@ -112,8 +111,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		map[string]interface{}{"e": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
@@ -159,22 +157,6 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 		"	c: hello world",
 		"	d: foo bar",
 		"	x: baz",
-	}, diff)
-}
-
-func TestIsSubsetValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestIsSubset)
-
-	validator := IsSubsetValidator{"a.b", common.K8sManifest{"d": "foo bar"}}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }
 

@@ -1,0 +1,22 @@
+suite: Document Selector is matching many documents
+templates:
+  - "templates/deployments*.yaml"
+tests:
+  - it: deployment is in the default namespace (matchMany=false explicitly)
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: false
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: default
+  - it: deployment is in the default namespace (matchMany=false implicitly)
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: default
+

@@ -47,8 +47,7 @@ func TestContainsDocumentValidatorWhenEmptyOk(t *testing.T) {
 		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
-		Docs:  []common.K8sManifest{},
+		Docs: []common.K8sManifest{},
 	})
 
 	assert.False(t, pass)
@@ -95,7 +94,6 @@ func TestContainsDocumentValidatorNegativeOk(t *testing.T) {
 
 	for _, test := range tests {
 		pass, diff := test.validator.Validate(&ValidateContext{
-			Index:    -1,
 			Docs:     test.docs,
 			Negative: true,
 		})
@@ -113,7 +111,6 @@ func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 		Namespace:  "foo",
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -135,7 +132,6 @@ func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOk(t *testing.T) {
 		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -153,7 +149,6 @@ func TestContainsDocumentValidatorWhenAtleastOneDocumentsIsOkInverse(t *testing.
 		Any:        true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 		Negative: true,
@@ -176,7 +171,7 @@ func TestContainsDocumentValidatorIndexWhenOk(t *testing.T) {
 		Any:        false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: 1,
+		SelectedDocs: &[]common.K8sManifest{makeManifest(docToTestContainsDocument2)},
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -194,8 +189,7 @@ func TestContainsDocumentValidatorNoNameWhenOk(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
-		Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument2)},
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument2)},
 	})
 
 	assert.True(t, pass)
@@ -212,8 +206,7 @@ func TestContainsDocumentValidatorNoNamespaceWhenOk(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
-		Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument1)},
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1)},
 	})
 
 	assert.True(t, pass)
@@ -230,7 +223,6 @@ func TestContainsDocumentValidatorNoNamespaceWhenNegativeOk(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index:    -1,
 		Docs:     []common.K8sManifest{makeManifest(docToTestContainsDocument1)},
 		Negative: true,
 	})
@@ -249,7 +241,6 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenOk(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -268,7 +259,6 @@ func TestContainsDocumentValidatorNoNameNamespaceWhenNegativeNOk(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 		Negative: true,
@@ -295,7 +285,6 @@ func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -321,7 +310,6 @@ func TestContainsDocumentValidatorWhenFailAPIVersion(t *testing.T) {
 	}
 
 	pass, diff := validator.Validate(&ValidateContext{
-		Index: -1,
 		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
 			makeManifest(docToTestContainsDocument2)},
 	})
@@ -352,8 +340,8 @@ func TestContainsDocumentValidatorFail(t *testing.T) {
 				Name:       "foo",
 			},
 			fixtureContext: ValidateContext{
-				Index: 0,
-				Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument3)},
+				SelectedDocs: &[]common.K8sManifest{makeManifest(docToTestContainsDocument3)},
+				Docs:         []common.K8sManifest{makeManifest(docToTestContainsDocument3)},
 			},
 			expected: []string{
 				"DocumentIndex:\t0",
@@ -369,8 +357,8 @@ func TestContainsDocumentValidatorFail(t *testing.T) {
 				Namespace:  "bar",
 			},
 			fixtureContext: ValidateContext{
-				Index: 0,
-				Docs:  []common.K8sManifest{makeManifest(docToTestContainsDocument4)},
+				SelectedDocs: &[]common.K8sManifest{makeManifest(docToTestContainsDocument4)},
+				Docs:         []common.K8sManifest{makeManifest(docToTestContainsDocument4)},
 			},
 			expected: []string{
 				"DocumentIndex:\t0",

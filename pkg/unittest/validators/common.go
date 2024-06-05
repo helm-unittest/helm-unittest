@@ -23,24 +23,23 @@ type SnapshotComparer interface {
 
 // ValidateContext the context passed to validators
 type ValidateContext struct {
-	Docs     []common.K8sManifest
-	Index    int
-	Negative bool
+	Docs         []common.K8sManifest
+	SelectedDocs *[]common.K8sManifest
+	Negative     bool
 	SnapshotComparer
 	RenderError error
 }
 
 func (c *ValidateContext) getManifests() ([]common.K8sManifest, error) {
 	manifests := make([]common.K8sManifest, 0)
-	if c.Index == -1 {
-		manifests = append(manifests, c.Docs...)
-		return manifests, nil
+
+	// This here is for making a default for unit tests
+	if c.SelectedDocs == nil {
+		manifests = c.Docs
+	} else {
+		manifests = *c.SelectedDocs
 	}
 
-	if len(c.Docs) <= c.Index {
-		return nil, fmt.Errorf("documentIndex %d out of range", c.Index)
-	}
-	manifests = append(manifests, c.Docs[c.Index])
 	return manifests, nil
 }
 
@@ -71,7 +70,7 @@ Expected` + notAnnotation + customize + `:
 	}
 	if diff {
 		result += `Diff:
-%s	
+%s
 `
 	}
 	return result

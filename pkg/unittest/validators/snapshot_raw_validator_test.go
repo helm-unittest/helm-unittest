@@ -111,19 +111,3 @@ func TestSnapshotRawValidatorWhenNegativeAndFail(t *testing.T) {
 
 	mockComparer.AssertExpectations(t)
 }
-
-func TestSnapshotRawValidatorWhenInvalidIndex(t *testing.T) {
-	data := common.K8sManifest{common.RAW: "b"}
-
-	validator := MatchSnapshotRawValidator{}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{data},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}
