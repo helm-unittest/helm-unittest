@@ -61,3 +61,6 @@ tests:
           count: 2
       - matchSnapshot:
           path: spec
+      - isType:
+          path: metadata.name
+          type: string
