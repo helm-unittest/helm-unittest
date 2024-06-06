@@ -7,10 +7,10 @@ tests:
       - equal:
           path: kind
           value: Deployment
-        template: templates/deployments.yaml
+        template: templates/deployments-default-namespace.yaml
         documentSelector:
           path: metadata.name
           value: bar-deployment
       - hasDocuments:
           count: 2
-        template: templates/deployments.yaml
+        template: templates/deployments-default-namespace.yaml
