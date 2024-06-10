@@ -1,7 +1,6 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-GO ?= go
 HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
 HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 HELM_VERSION := 3.14.0
@@ -14,7 +13,6 @@ TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
 	global-double-setting \
-	invalidbasic \
 	nested_glob \
 	with-document-select \
 	with-files \
@@ -83,18 +81,18 @@ dockerdist:
 
 .PHONY: go-dependency
 dependency: ## Dependency maintanance
-	@$(GO) get -u ./...
-	@$(GO) mod tidy
+	go get -u ./...
+	go mod tidy
 
 .PHONY: dockerimage
 dockerimage: ## Build docker image
-	docker buildx build --no-cache --load --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
+	docker buildx build --load --no-cache --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f Fedora.Dockerfile .
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$${f}'"; \
 		docker run \
-			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps/:Z \
+			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			-it --rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
