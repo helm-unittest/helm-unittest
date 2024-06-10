@@ -23,8 +23,8 @@ RUN apk add --update --no-cache curl ca-certificates git bash && \
     apk del curl git bash && \
     rm -f /var/cache/apk/*
 
-RUN addgroup -S helmgroup && \
-    adduser -S helmuser -G helmgroup
+RUN addgroup -g 1000 -S helmgroup && \
+    adduser -u 1000 -S helmuser -G helmgroup
 
 USER helmuser
 
