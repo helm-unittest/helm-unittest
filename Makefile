@@ -1,8 +1,6 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
-HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 HELM_VERSION := 3.14.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
@@ -28,14 +26,19 @@ TEST_NAMES ?=basic \
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: plugin-dir
+plugin-dir: 
+  HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+  HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+
 .PHONY: install
-install: bootstrap build
+install: bootstrap build plugin-dir
 	mkdir -p $(HELM_PLUGIN_DIR)
 	cp untt $(HELM_PLUGIN_DIR)
 	cp plugin.yaml $(HELM_PLUGIN_DIR)
 
 .PHONY: install-dbg
-install-dbg: bootstrap build-debug
+install-dbg: bootstrap build-debug plugin-dir
 	mkdir -p $(HELM_PLUGIN_DIR)
 	cp untt-dbg $(HELM_PLUGIN_DIR)
 	cp plugin-dbg.yaml $(HELM_PLUGIN_DIR)/plugin.yaml
@@ -90,6 +93,7 @@ dockerimage: build
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
+    echo "Projectdirectory used: '$(PROJECT_DIR)'";
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$${f}'"; \
 		docker run \
