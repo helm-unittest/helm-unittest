@@ -15,7 +15,7 @@ ENV PLUGIN_URL="https://github.com/helm-unittest/helm-unittest/"
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
 RUN apk add --update --no-cache curl ca-certificates git bash && \
-    curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} |tar xvz && \
+    curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} | tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
     helm plugin install ${PLUGIN_URL} --version ${PLUGIN_VERSION} && \
@@ -23,7 +23,7 @@ RUN apk add --update --no-cache curl ca-certificates git bash && \
     apk del curl git bash && \
     rm -f /var/cache/apk/*
 
-RUN addgroup -g 1000 -S helmgroup && \
+RUN addgroup -S helmgroup && \
     adduser -u 1000 -S helmuser -G helmgroup
 
 USER helmuser

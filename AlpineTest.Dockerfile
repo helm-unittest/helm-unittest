@@ -28,7 +28,7 @@ RUN apk add --update --no-cache curl ca-certificates git libc6-compat && \
     apk del curl git && \
     rm -f /var/cache/apk/* ;
 
-RUN addgroup -g 1000 -S helmgroup && \
+RUN addgroup -S helmgroup && \
     adduser -u 1000 -S helmuser -G helmgroup
 
 USER helmuser
