@@ -86,7 +86,7 @@ dependency: ## Dependency maintanance
 
 .PHONY: dockerimage
 dockerimage: ## Build docker image
-	docker buildx build --load --no-cache --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f Fedora.Dockerfile .
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
