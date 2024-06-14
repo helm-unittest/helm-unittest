@@ -33,6 +33,10 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: unit-tests
+    - name: setup docker
+      # https://github.com/docker-practice/actions-setup-docker
+      uses: docker-practice/actions-setup-docker@master
+
+    - name: build unit-tests docker
       shell: bash
-      run: make unittest
+      run: make test-docker

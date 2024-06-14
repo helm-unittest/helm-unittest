@@ -31,7 +31,7 @@ jobs:
 
   validate_docker:
     docker:
-      - image: cimg/base:2024.05
+      - image: cimg/go:1.22
     steps:
       - checkout
       - setup_remote_docker
