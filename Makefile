@@ -93,9 +93,8 @@ dockerimage: build
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
-    echo "Projectdirectory used: '$(PROJECT_DIR)'";
 	@for f in $(TEST_NAMES); do \
-		echo "running helm unit tests in folder '$${f}'"; \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			-it --rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
