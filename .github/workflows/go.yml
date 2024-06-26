@@ -34,8 +34,8 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: setup docker
-      # https://github.com/docker-practice/actions-setup-docker
-      uses: docker-practice/actions-setup-docker@master
+      # https://github.com/docker/setup-buildx-action
+      uses: docker/setup-buildx-action@v3
 
     - name: build unit-tests docker
       shell: bash
