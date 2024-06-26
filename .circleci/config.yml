@@ -30,11 +30,22 @@ jobs:
           path: /tmp/test-artifacts
 
   validate_docker:
-    docker:
-      - image: cimg/go:1.22
+    machine:
+      image: ubuntu-2204:current
     steps:
       - checkout
-      - setup_remote_docker
+      - run:
+          name: Install required tools
+          command: |
+            sudo apt-get update -y
+            cd /tmp
+            wget https://dl.google.com/go/go1.22.4.linux-amd64.tar.gz
+            sudo tar -xvf go1.22.4.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go
+            sudo mv go /usr/local
+            export GOPATH=/home/circleci/.go_workspace
+            export PATH=$PATH:$GOPATH/bin
+            go version
       - run:
           name: Build and test docker images
           command: make test-docker
