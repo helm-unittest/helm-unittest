@@ -3,13 +3,12 @@ name: go tests
 on:
   push:
     branches:
-      - main
+      - '**'
   pull_request:
     branches:
       - main
 
 jobs:
-
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
@@ -33,6 +32,6 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: unit-tests
+    - name: build unit-tests docker
       shell: bash
       run: make unittest

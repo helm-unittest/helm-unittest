@@ -29,6 +29,27 @@ jobs:
       - store_artifacts:
           path: /tmp/test-artifacts
 
+  validate_docker:
+    machine:
+      image: ubuntu-2204:current
+    steps:
+      - checkout
+      - run:
+          name: Install required tools
+          command: |
+            sudo apt-get update -y
+            cd /tmp
+            wget https://dl.google.com/go/go1.22.4.linux-amd64.tar.gz
+            sudo tar -xvf go1.22.4.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go
+            sudo mv go /usr/local
+            export GOPATH=/home/circleci/.go_workspace
+            export PATH=$PATH:$GOPATH/bin
+            go version
+      - run:
+          name: Build and test docker images
+          command: make test-docker
+
   distribute:
     docker:
       - image: golang:1.22
@@ -45,7 +66,7 @@ jobs:
 
   distribute_docker:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/base:2024.05
     steps:
       - checkout
       - setup_remote_docker
@@ -60,10 +81,13 @@ workflows:
   test-and-build:
     jobs:
       - test:
+          context: SonarCloud
+      - validate_docker:
+          requires:
+            - test
           filters:
             tags:
               only: /.*/
-          context: SonarCloud
       - distribute:
           requires:
             - test

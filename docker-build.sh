@@ -12,6 +12,7 @@ build() {
 
   echo "Found new version, building the image ${image}:${tag}"
   docker build --no-cache --build-arg HELM_VERSION=${helmVersion} --build-arg PLUGIN_VERSION=${pluginVersion} -t ${image}:${tag} .
+#  docker buildx build --load --no-cache --platform linux/amd64,linux/arm64 --build-arg HELM_VERSION=${helmVersion} --build-arg PLUGIN_VERSION=${pluginVersion} -t ${image}:${tag} .
 
   # run test
   version=$(docker run -ti --entrypoint "helm" --rm ${image}:${tag} version --client)

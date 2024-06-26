@@ -21,6 +21,15 @@ if [ "$SKIP_BIN_INSTALL" = "1" ]; then
   exit
 fi
 
+if [ "$SKIP_BIN_DOWNLOAD" = "1" ]; then
+  echo "Preparing to install into ${HELM_PLUGIN_PATH}"
+  cp -f plugin.yaml $HELM_PLUGIN_PATH/plugin.yaml
+  cp -f untt $HELM_PLUGIN_PATH/untt
+  chmod +x $HELM_PLUGIN_PATH/untt
+  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
+  exit 
+fi
+
 # initArch discovers the architecture for this system.
 initArch() {
   ARCH=$(uname -m)
