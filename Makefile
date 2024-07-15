@@ -97,5 +97,5 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
-			-it --rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
