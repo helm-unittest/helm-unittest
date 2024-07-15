@@ -3,7 +3,7 @@ name: go tests
 on:
   push:
     branches:
-      - '**'
+      - main
   pull_request:
     branches:
       - main
@@ -12,13 +12,11 @@ jobs:
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
+    environment: HELMUNITTEST-RELEASE
     strategy:
       matrix:
         # tests for target OS
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # tests for actively maintained Go versions.
-        go-version:
-          - 1.22.x
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -30,8 +28,52 @@ jobs:
       # https://github.com/actions/setup-go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: ${{ vars.GO_VERSION }}
 
-    - name: build unit-tests docker
-      shell: bash
-      run: make unittest
+    # Install using go install
+    - name: Install JUnit plugin for uploading testresults
+      run: go install github.com/jstemmer/go-junit-report/v2@latest
+
+    # Run tests with nice formatting. Save the original log in /tmp/gotest.log
+    - name: Run tests
+      run: |
+        set -euo pipefail
+        go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/test-results/go-test-report.xml
+
+    - name: SonarCloud Scan
+      # https://github.com/sonarsource/sonarcloud-github-action
+      uses: sonarsource/sonarcloud-github-action@v2.3.0
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    # Upload the original go test log as an artifact for later review.
+    - name: Upload test log
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: test-log
+        path: /tmp/test-results/go-test-report.xml
+        if-no-files-found: error
+
+  validate_docker:
+    name: build and test docker
+    runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
+    steps:
+    - name: checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: setup go
+      # https://github.com/actions/setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ vars.GO_VERSION }}
+
+    # Run tests with nice formatting. Save the original log in /tmp/gotest.log
+    - name: Build docker-test
+      run: make test-docker
+        
