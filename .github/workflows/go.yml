@@ -12,6 +12,7 @@ jobs:
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
+    environment: HELMUNITTEST-BUILD
     strategy:
       matrix:
         # tests for target OS
@@ -58,6 +59,7 @@ jobs:
   validate_docker:
     name: build and test docker
     runs-on: ubuntu-latest
+    environment: HELMUNITTEST-BUILD
     steps:
     - name: checkout
       # https://github.com/actions/checkout
