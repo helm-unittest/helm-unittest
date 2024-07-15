@@ -12,7 +12,6 @@ jobs:
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
-    environment: HELMUNITTEST-RELEASE
     strategy:
       matrix:
         # tests for target OS
@@ -38,7 +37,7 @@ jobs:
     - name: Run tests
       run: |
         set -euo pipefail
-        go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/test-results/go-test-report.xml
+        go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/go-test-report.xml
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
@@ -53,13 +52,12 @@ jobs:
       if: always()
       with:
         name: test-log
-        path: /tmp/test-results/go-test-report.xml
+        path: /tmp/go-test-report.xml
         if-no-files-found: error
 
   validate_docker:
     name: build and test docker
     runs-on: ubuntu-latest
-    environment: HELMUNITTEST-RELEASE
     steps:
     - name: checkout
       # https://github.com/actions/checkout
