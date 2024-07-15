@@ -60,6 +60,8 @@ jobs:
     name: build and test docker
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-BUILD
+    needs:
+      - full-test
     steps:
     - name: checkout
       # https://github.com/actions/checkout
