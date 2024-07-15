@@ -15,6 +15,7 @@ jobs:
   release:
     name: create distribution and upload to release
     runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -41,6 +42,7 @@ jobs:
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
     runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
     needs:
       - release
     strategy:
@@ -106,6 +108,7 @@ jobs:
 
   merge:
     runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
     needs:
       - release-docker
     steps:
