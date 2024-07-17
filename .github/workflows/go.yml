@@ -21,8 +21,6 @@ jobs:
     - name: checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
 
     - name: setup go
       # https://github.com/actions/setup-go
@@ -87,7 +85,7 @@ jobs:
     # Run trivy security
     - name: Run Trivy vulnerability scanner
       # https://github.com/aquasecurity/trivy-action
-      uses: aquasecurity/trivy-action@0.20.0
+      uses: aquasecurity/trivy-action@0.24.0
       with:
         scan-type: 'fs'
         scan-ref: '.'

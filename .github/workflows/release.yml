@@ -10,6 +10,8 @@ permissions:
 
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
+  HELM_REPO: helm/helm
+  PLUGIN_REPO: helm-unittest/helm-unittest
 
 jobs:
   release:
@@ -20,8 +22,6 @@ jobs:
     - name: checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
 
     - name: setup go
       # https://github.com/actions/setup-go
@@ -39,18 +39,37 @@ jobs:
       with:
         files: _dist/**
 
+
+  determine-versions:
+    name: determine latest version of helm and helm-unittest plugin
+    runs-on: ubuntu-latest
+    needs:
+      - release
+    outputs:
+      HELM_VERSIONS: ${{ steps.helm-versions.outputs.helmversions }}
+      HELM_PLUGIN_VERSIONS: ${{ steps.helm-plugin-versions.outputs.helmpluginversions }}
+    steps:
+      - id: helm-versions
+        run: |
+          helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          echo "helmversions=${helmLatest}" >> $GITHUB_OUTPUT
+      - id: helm-plugin-versions
+        run: |
+          pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          echo "helmpluginversions=${pluginLatest}" >> $GITHUB_OUTPUT
+
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-RELEASE
     needs:
-      - release
+      - determine-versions
     strategy:
       fail-fast: false
       matrix:
         platform: [linux/amd64, linux/arm64]
-        helmVersion: ${{ vars.HELM_VERSIONS }}
-        pluginVersion: ${{ vars.HELM_PLUGIN_VERSIONS }}
+        helmVersion: ${{ needs.determine-versions.outputs.HELM_VERSIONS }}
+        pluginVersion: ${{ needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS }}
     steps:
       - name: Prepare
         run: |
