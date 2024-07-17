@@ -52,11 +52,11 @@ jobs:
       - id: helm-versions
         run: |
           helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
-          echo "helmversions=${helmLatest}" >> $GITHUB_OUTPUT
+          echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -s . --compact-output)" >> $GITHUB_OUTPUT
       - id: helm-plugin-versions
         run: |
           pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
-          echo "helmpluginversions=${pluginLatest}" >> $GITHUB_OUTPUT
+          echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -s . --compact-output)" >> $GITHUB_OUTPUT
 
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
