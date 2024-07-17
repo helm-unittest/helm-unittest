@@ -17,7 +17,6 @@ jobs:
           name: Test include Codecoverage
           command: |
             go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/test-results/go-test-report.xml
-      - sonarcloud/scan
       - run:
           name: Check formated
           command: "! gofmt -l . 2>&1 | read"
@@ -74,9 +73,6 @@ jobs:
           name: Build and push docker images
           command: make dockerdist
 
-orbs:
-  sonarcloud: sonarsource/sonarcloud@2.0.0
-
 workflows:
   test-and-build:
     jobs:
@@ -88,20 +84,20 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - distribute:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)?/
-            branches:
-              ignore: /.*/
-      - distribute_docker:
-          requires:
-            - distribute
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)?/
-            branches:
-              ignore: /.*/
+      # - distribute:
+      #     requires:
+      #       - test
+      #     filters:
+      #       tags:
+      #         only: /v[0-9]+(\.[0-9]+)*(-.*)?/
+      #       branches:
+      #         ignore: /.*/
+      # - distribute_docker:
+      #     requires:
+      #       - distribute
+      #     filters:
+      #       tags:
+      #         only: /v[0-9]+(\.[0-9]+)*(-.*)?/
+      #       branches:
+      #         ignore: /.*/
 # VS Code Extension Version: 1.5.1
