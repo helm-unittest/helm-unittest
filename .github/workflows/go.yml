@@ -30,15 +30,20 @@ jobs:
       with:
         go-version: ${{ vars.GO_VERSION }}
 
+    # Make results directory
+    - name: Install JUnit plugin for uploading testresults
+      run: |
+        mkdir -p test-results
+
     # Install using go install
     - name: Install JUnit plugin for uploading testresults
-      run: go install github.com/jstemmer/go-junit-report/v2@latest
+      run: |
+        go install github.com/jstemmer/go-junit-report/v2@latest
 
-    # Run tests with nice formatting. Save the original log in /tmp/gotest.log
+    # Run tests with nice formatting. Save the coverage and junit test results in test-results
     - name: Run tests
       run: |
-        set -euo pipefail
-        go test ./... -coverprofile=/tmp/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > /tmp/go-test-report.xml
+        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
@@ -52,16 +57,14 @@ jobs:
       uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: test-log
-        path: /tmp/go-test-report.xml
+        name: test-results
+        path: test-results/go-test-report.xml
         if-no-files-found: error
 
   validate_docker:
     name: build and test docker
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-BUILD
-    needs:
-      - full-test
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -75,7 +78,22 @@ jobs:
       with:
         go-version: ${{ vars.GO_VERSION }}
 
-    # Run tests with nice formatting. Save the original log in /tmp/gotest.log
+    # Run docker-tests
     - name: Build docker-test
       run: make test-docker
-        
+
+    # Run trivy security
+    - name: Run Trivy vulnerability scanner
+      # https://github.com/aquasecurity/trivy-action
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        trivy-config: trivy.yaml
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+    
