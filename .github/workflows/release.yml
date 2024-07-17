@@ -68,8 +68,8 @@ jobs:
       fail-fast: false
       matrix:
         platform: [linux/amd64, linux/arm64]
-        helmVersion: ${{ needs.determine-versions.outputs.HELM_VERSIONS }}
-        pluginVersion: ${{ needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS }}
+        helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
+        pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
       - name: Prepare
         run: |
