@@ -54,17 +54,19 @@ jobs:
 
     # Upload the original go test log as an artifact for later review.
     - name: Upload test log
-      uses: actions/upload-artifact@v2
+      # https://github.com/EnricoMi/publish-unit-test-result-action
+      uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
-        name: test-results
-        path: test-results/go-test-report.xml
-        if-no-files-found: error
+        files: |
+          test-results/go-test-report.xml
 
   validate_docker:
     name: build and test docker
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-BUILD
+    needs:
+      - full-test
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -96,4 +98,4 @@ jobs:
       if: always()
       with:
         sarif_file: trivy-results.sarif
-    
+        
