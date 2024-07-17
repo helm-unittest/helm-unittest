@@ -82,6 +82,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: "${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}"
       
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
@@ -108,14 +109,13 @@ jobs:
             PLUGIN_VERSION=${{ matrix.pluginVersion }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: "${{ env.REGISTRY_IMAGE }}:${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}"
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"          
+          touch "/tmp/digests/${digest#sha256:}"
       
       - name: Upload digest
         uses: actions/upload-artifact@v4
