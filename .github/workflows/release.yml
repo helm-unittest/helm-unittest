@@ -39,7 +39,6 @@ jobs:
       with:
         files: _dist/**
 
-
   determine-versions:
     name: determine latest version of helm and helm-unittest plugin
     runs-on: ubuntu-latest
@@ -74,7 +73,8 @@ jobs:
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV          
+          version=${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
+          echo "PLATFORM_PAIR=${version}-${platform//\//-}" >> $GITHUB_ENV          
       
       - name: Docker meta
         id: meta
@@ -82,7 +82,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
-          tags: "${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}"
+          tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
       
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
@@ -124,18 +124,25 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+          overwrite: true
 
   merge:
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-RELEASE
     needs:
+      - determine-versions
       - release-docker
+    strategy:
+      fail-fast: false
+      matrix:
+        helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
+        pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-*
+          pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
           merge-multiple: true
       
       - name: Set up Docker Buildx
@@ -146,6 +153,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: "${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}"
       
       - name: Login to Docker Hub
         uses: docker/login-action@v3
