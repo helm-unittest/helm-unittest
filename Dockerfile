@@ -14,6 +14,8 @@ ENV PLUGIN_URL="https://github.com/helm-unittest/helm-unittest/"
 # Install the plugin for all users
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
+# Ensure to have latest packages
+RUN apk upgrade --no-cache
 RUN apk add --update --no-cache curl ca-certificates git bash && \
     curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} | tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
