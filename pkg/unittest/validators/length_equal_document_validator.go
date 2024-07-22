@@ -123,6 +123,9 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	if validateSuccess == context.Negative {
 		validateSuccess = false
 		validateErrors = append(validateErrors, "\texpected result does not match")
+	} else {
+		validateSuccess = true
+		validateErrors = make([]string, 0)
 	}
 
 	return validateSuccess, validateErrors
