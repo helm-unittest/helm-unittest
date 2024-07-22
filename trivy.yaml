@@ -1,8 +1,0 @@
-format: "sarif"
-output: "trivy-results.sarif"
-image-ref: helmunittest/helm-unittest:3.15.3-0.5.2
-exit-code: 1
-ignore-unfix: true
-severity:
-  - CRITICAL
-  - HIGH

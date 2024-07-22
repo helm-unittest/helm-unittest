@@ -8,11 +8,13 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY_IMAGE: helmunittest/helm-unittest
+      
 jobs:
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
-    environment: HELMUNITTEST-BUILD
     strategy:
       matrix:
         # tests for target OS
@@ -62,7 +64,6 @@ jobs:
   validate_docker:
     name: build and test docker
     runs-on: ubuntu-latest
-    environment: HELMUNITTEST-BUILD
     needs:
       - full-test
     steps:
@@ -80,17 +81,26 @@ jobs:
 
     # Run docker-tests
     - name: Build docker-test
-      run: make test-docker
+      run: |
+        make test-docker
+
+    - name: Retrieve versions
+      run: |
+        helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+        echo "HELM_PLUGIN_VERSION=${helmPluginVersion}" >> $GITHUB_ENV
 
     # Run trivy security
     - name: Run Trivy vulnerability scanner
       # https://github.com/aquasecurity/trivy-action
       uses: aquasecurity/trivy-action@0.24.0
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        trivy-config: trivy.yaml
-
+      with:        
+        image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
+        ignore-unfixed: true
+        exit-code: 1
+        format: sarif
+        output: trivy-results.sarif
+        severity: CRITICAL,HIGH
+        
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v2
       if: always()

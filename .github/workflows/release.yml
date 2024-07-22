@@ -47,16 +47,20 @@ jobs:
     outputs:
       HELM_VERSIONS: ${{ steps.helm-versions.outputs.helmversions }}
       HELM_PLUGIN_VERSIONS: ${{ steps.helm-plugin-versions.outputs.helmpluginversions }}
+      HELM_LATEST_VERSION: ${{ steps.helm-versions.outputs.helmlatestversion }}
+      HELM_PLUGIN_LATEST_VERSION: ${{ steps.helm-plugin-versions.outputs.helmpluginlatestversion }}
     steps:
       - id: helm-versions
         run: |
           helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
-          echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -s . --compact-output)" >> $GITHUB_OUTPUT
+          echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
+          echo "helmlatestversion=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
       - id: helm-plugin-versions
         run: |
-          pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
-          echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -s . --compact-output)" >> $GITHUB_OUTPUT
-
+          pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
+          echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
+          
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
     runs-on: ubuntu-latest
@@ -74,7 +78,7 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           version=${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
-          echo "PLATFORM_PAIR=${version}-${platform//\//-}" >> $GITHUB_ENV          
+          echo "PLATFORM_PAIR=${version}-${platform//\//-}" >> $GITHUB_ENV
       
       - name: Docker meta
         id: meta
@@ -107,8 +111,10 @@ jobs:
           build-args: |
             HELM_VERSION=${{ matrix.helmVersion }}
             PLUGIN_VERSION=${{ matrix.pluginVersion }}
-          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
+          provenance: mode=max
+          sbom: true
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       
       - name: Export digest
@@ -153,7 +159,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
-          tags: "${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}"
+          tags: |
+            ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
+            type=raw,value=latest,enable=${{ (matrix.helmVersion == needs.determine-versions.outputs.HELM_LATEST_VERSION) && (matrix.pluginVersion == needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
       
       - name: Login to Docker Hub
         uses: docker/login-action@v3
