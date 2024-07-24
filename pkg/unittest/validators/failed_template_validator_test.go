@@ -22,11 +22,15 @@ func TestFailedTemplateValidatorWhenOk(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{"A field should not be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
 		},
 		{
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message that match substring",
+			validator: FailedTemplateValidator{ErrorPattern: "should not be"},
 		},
 	}
 
@@ -51,11 +55,15 @@ func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{"A field should not be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
 		},
 		{
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message that match substring",
+			validator: FailedTemplateValidator{ErrorPattern: "should not be"},
 		},
 	}
 
@@ -80,13 +88,18 @@ func TestFailedTemplateValidatorWhenEmptyFail(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{"A field should not be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
 			expected:  []string{"Expected to equal:", "\tA field should not be required", "Actual:", "\tNo failed document"},
 		},
 		{
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
 			expected:  []string{"Expected to equal:", "\t", "Actual:", "\tNo failed document"},
+		},
+		{
+			name:      "test case 3: with error message that match substring",
+			validator: FailedTemplateValidator{ErrorPattern: "should not be"},
+			expected:  []string{"Expected to match:", "\tshould not be", "Actual:", "\tNo failed document"},
 		},
 	}
 
@@ -111,11 +124,15 @@ func TestFailedTemplateValidatorWhenEmptyNegativeAndOk(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{"A field should not be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
 		},
 		{
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message that match substring",
+			validator: FailedTemplateValidator{ErrorPattern: "should not be"},
 		},
 	}
 
@@ -145,7 +162,7 @@ func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: incorrect error message",
-			validator: FailedTemplateValidator{"A field should not be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
 			expected: []string{
 				"DocumentIndex:	0",
 				"Expected to equal:",
@@ -158,6 +175,22 @@ func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
 			expected:  []string{},
+		},
+		{
+			name:      "test case 3: incorrect error message",
+			validator: FailedTemplateValidator{ErrorPattern: "should not be required"},
+			expected: []string{
+				"DocumentIndex:	0",
+				"Expected to match:",
+				"	should not be required",
+				"Actual:",
+				"	A field should be required",
+			},
+		},
+		{
+			name:      "test case 4: with error message that give compile pattern error",
+			validator: FailedTemplateValidator{ErrorPattern: "+"},
+			expected:  []string{"Error:", "\terror parsing regexp: missing argument to repetition operator: `+`"},
 		},
 	}
 
@@ -180,7 +213,7 @@ func TestFailedTemplateValidatorWhenFail(t *testing.T) {
 
 func TestFailedTemplateValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
-	v := FailedTemplateValidator{"A field should be required"}
+	v := FailedTemplateValidator{ErrorMessage: "A field should be required"}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -203,11 +236,15 @@ func TestFailedTemplateValidatorWhenInvalidIndex(t *testing.T) {
 	}{
 		{
 			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{"A field should be required"},
+			validator: FailedTemplateValidator{ErrorMessage: "A field should be required"},
 		},
 		{
 			name:      "test case 2: empty error message",
 			validator: FailedTemplateValidator{},
+		},
+		{
+			name:      "test case 3: with error message",
+			validator: FailedTemplateValidator{ErrorPattern: "should be required"},
 		},
 	}
 
@@ -234,7 +271,7 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 	}{
 		{
 			name:      "Test case 1: with error message",
-			validator: FailedTemplateValidator{"values don't meet the specifications of the schema(s)"},
+			validator: FailedTemplateValidator{ErrorMessage: "values don't meet the specifications of the schema(s)"},
 		},
 		{
 			name:      "Test case 2: empty error message",
@@ -255,4 +292,19 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 			assert.Equal(t, []string{}, diff)
 		})
 	}
+}
+
+func TestFailedTemplateValidatorWhenErrorAndContainsSet(t *testing.T) {
+	manifest := makeManifest(failedTemplate)
+	v := FailedTemplateValidator{ErrorMessage: "A field should be required", ErrorPattern: "pattern is set"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: false,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Error:",
+		"	single attribute 'errorMessage' or 'errorPattern' supported at the same time",
+	}, diff)
 }

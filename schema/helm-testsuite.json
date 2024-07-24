@@ -756,17 +756,39 @@
                       "type": "object",
                       "description": "Assert the value of errorMessage is the same as the human readable template error.",
                       "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
-                      "properties": {
-                        "errorMessage": {
-                          "type": "string",
-                          "description": "The (human readable) errorMessage that should occur.",
-                          "markdownDescription": "**failedTemplate** (string) _required_\n\nThe (human readable) `errorMessage` that should occur.",
-                          "examples": [
-                            "Required value"
+                      "additionalProperties": false,
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "errorMessage": {
+                              "type": "string",
+                              "description": "The (human readable) errorMessage that should occur.",
+                              "markdownDescription": "**errorMessage** (string) _required_\n\nThe (human readable) `errorMessage` that should occur.",
+                              "examples": [
+                                "Required value"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "errorMessage"
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "errorPattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the error (without quoting /).",
+                              "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match the error (without quoting `/`).",
+                              "examples": [
+                                "Required Pattern"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "errorPattern"
                           ]
                         }
-                      },
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [

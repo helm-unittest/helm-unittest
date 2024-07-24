@@ -7,3 +7,5 @@ tests:
       - failedTemplate:
           errorMessage: "error calling include: template: no template \"non-existing-named-template\" associated with template \"gotpl\""
       - failedTemplate: {} # catch any error message
+      - failedTemplate:
+          contains: "calling include"
