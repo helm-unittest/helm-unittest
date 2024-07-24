@@ -61,3 +61,9 @@ tests:
           count: 2
       - matchSnapshot:
           path: spec
+      - lengthEqual:
+          path:  spec.template.spec.containers
+          count: 1
+      - notLengthEqual:
+          path: spec.template.spec.containers
+          count: 10
