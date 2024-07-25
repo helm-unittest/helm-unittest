@@ -756,9 +756,9 @@
                       "type": "object",
                       "description": "Assert the value of errorMessage is the same as the human readable template error.",
                       "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
-                      "additionalProperties": false,
                       "oneOf": [
                         {
+                          "additionalProperties": false,
                           "properties": {
                             "errorMessage": {
                               "type": "string",
@@ -774,6 +774,7 @@
                           ]
                         },
                         {
+                          "additionalProperties": false,
                           "properties": {
                             "errorPattern": {
                               "type": "string",
