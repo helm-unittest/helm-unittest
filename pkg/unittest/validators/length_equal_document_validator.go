@@ -12,10 +12,10 @@ import (
 type LengthEqualDocumentsValidator struct {
 	Paths []string // optional
 	Path  string   // optional
-	Count int      // optional if paths defined
+	Count *int     // optional if paths defined
 }
 
-func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, idx, count int) (bool, []string, int) {
+func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, idx int, count *int) (bool, []string, int) {
 	spec, err := valueutils.GetValueOfSetPath(manifest, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, idx, err.Error()), 0
@@ -26,15 +26,13 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	}
 
 	specArr, ok := spec[0].([]interface{})
-	if !ok {
+	if !ok && count == nil {
 		return false, splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", path)), 0
 	}
 	specLen := len(specArr)
-	if count > -1 {
-		if specLen != count {
-			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
-				"count doesn't match as expected. expected: %d actual: %d", count, specLen)), 0
-		}
+	if count != nil && *count > -1 && specLen != *count {
+		return false, splitInfof(errorFormat, idx, fmt.Sprintf(
+			"count doesn't match as expected. expected: %d actual: %d", *count, specLen)), 0
 	}
 	return true, []string{}, specLen
 }
@@ -65,7 +63,7 @@ func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string
 }
 
 func (v LengthEqualDocumentsValidator) validatePathCount(context *ValidateContext) bool {
-	return len(v.Path) > 0 && v.Count == 0
+	return len(v.Path) > 0 && v.Count == nil
 }
 
 func (v LengthEqualDocumentsValidator) validatePathPaths(context *ValidateContext) bool {
@@ -98,7 +96,8 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 			optimizeCheck := true
 			for _, path := range v.Paths {
 				var validateSingleErrors []string
-				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, -1)
+				negative := -1
+				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, &negative)
 				if !validateSuccess {
 					validateErrors = append(validateErrors, validateSingleErrors...)
 					optimizeCheck = false
