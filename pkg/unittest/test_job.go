@@ -163,8 +163,8 @@ type TestJob struct {
 		MinorVersion string   `yaml:"minorVersion"`
 		APIVersions  []string `yaml:"apiVersions"`
 	}
-	Assertions []*Assertion `yaml:"asserts"`
-
+	Assertions         []*Assertion                 `yaml:"asserts"`
+	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -331,7 +331,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
-	outputOfFiles, err := v3engine.Render(filteredChart, vals)
+	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)

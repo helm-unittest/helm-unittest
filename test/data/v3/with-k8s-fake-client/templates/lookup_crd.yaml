@@ -1,0 +1,3 @@
+---
+backup_exists: {{ (lookup "br.dev.local/v1" "BrPolicy" "default" "exists") | toYaml | nindent 2 }}
+backup_not_exists: {{ (lookup "br.dev.local/v1" "BrPolicy" "default" "not-exists") | toYaml | nindent 2 }}

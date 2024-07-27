@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -35,6 +36,7 @@ const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting
 const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
 const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
+const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
@@ -45,6 +47,32 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 	}
 
 	return result
+}
+
+// writeToFile writes the provided string data to a file with the given filename.
+// It returns an error if the file cannot be created or if there is an error during writing.
+func writeToFile(data string, filename string) error {
+	err := os.MkdirAll(filepath.Dir(filename), 0755)
+	if err != nil {
+		fmt.Println("Error creating folders for file:", err)
+		return err
+	}
+
+	// Create the file with an absolute path
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(data)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return err
+	}
+
+	return nil
 }
 
 func validateTestResultAndSnapshots(
@@ -199,65 +227,81 @@ asserts:
 
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
 	a.Nil(err)
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Len(suites, 2)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
 
 	a.NotNil(err)
 	a.EqualError(err, "no tests found")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	a.Len(suites, 1)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+	}
 }
 
 func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
 
 	a.NotNil(err)
 	a.EqualError(err, "no asserts found")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.Len(suites, 1)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.NotNil(err)
-	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	a.EqualError(err, "yaml: unmarshal errors:\n  line 7: field documents not found in type unittest.TestJob")
+	a.Len(suites, 2)
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+	}
 }
 
 func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.Nil(err)
-	a.Equal(suite.Name, "test deployment")
-	a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
-	a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
+	for _, suite := range suites {
+		a.Equal(suite.Name, "test deployment")
+		a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
+		a.Equal(suite.Tests[0].Name, "should pass all kinds of assertion")
+	}
 }
 
 func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a := assert.New(t)
-	suite, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
+	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
 
 	a.Nil(err)
-	a.Equal("test deployment", suite.Name)
-	a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
-	a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
-	a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+	for _, suite := range suites {
+		a.Equal("test deployment", suite.Name)
+		a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
+		a.Equal("should pass all kinds of assertion", suite.Tests[0].Name)
+		a.Equal(1, len(suite.Values)) // Expect services_values.yaml
+	}
 }
 
 func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
@@ -568,4 +612,94 @@ tests:
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
+}
+
+func TestV3ParseTestMultipleSuitesWithSingleSeparator(t *testing.T) {
+	suiteDoc := `
+suite: first suite without leading triple dashes
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail as nameOverride is too long
+    set:
+      nameOverride: too-long-of-a-name-override-that-should-fail-the-template-immediately
+    asserts:
+      - failedTemplate:
+          errorMessage: nameOverride cannot be longer than 20 characters
+---
+suite: second suite in same separated with triple dashes
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail due to paradox
+    set:
+      name: first-deployment
+    asserts:
+      - failedTemplate: {}
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-suites-withsingle-separator.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.Remove(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 2)
+}
+
+func TestV3ParseTestMultipleSuitesWithSeparatorsAndSetMultilineValue(t *testing.T) {
+	suiteDoc := `
+---
+suite: first test suite for deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should render deployment
+    set:
+      name: first-deployment
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+---
+suite: second suite in same file
+templates:
+  - deployment.yaml
+tests:
+  - it: should render second deployment in second suite
+    set:
+      signing.privateKey: |-
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+        {placeholder}
+        -----END PGP PRIVATE KEY BLOCK-----
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: v1
+---
+suite: third suite in same file
+templates:
+  - secret.yaml
+tests:
+  - it: should render second deployment in second suite
+    set:
+      signing.privateKey: |-
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+        {placeholder}
+        -----END PGP PRIVATE KEY BLOCK-----
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-suites-with-multiline-value.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 3)
 }

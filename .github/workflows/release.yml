@@ -1,0 +1,180 @@
+name: go release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write # to publish assets to the release
+
+env:
+  REGISTRY_IMAGE: helmunittest/helm-unittest
+  HELM_REPO: helm/helm
+  PLUGIN_REPO: helm-unittest/helm-unittest
+
+jobs:
+  release:
+    name: create distribution and upload to release
+    runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
+    steps:
+    - name: checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@v4
+
+    - name: setup go
+      # https://github.com/actions/setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ vars.GO_VERSION }}
+
+    - name: make distribution
+      shell: bash
+      run: make dist
+
+    - name: publish artifacts
+      # https://github.com/softprops/action-gh-release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: _dist/**
+
+  determine-versions:
+    name: determine latest version of helm and helm-unittest plugin
+    runs-on: ubuntu-latest
+    needs:
+      - release
+    outputs:
+      HELM_VERSIONS: ${{ steps.helm-versions.outputs.helmversions }}
+      HELM_PLUGIN_VERSIONS: ${{ steps.helm-plugin-versions.outputs.helmpluginversions }}
+      HELM_LATEST_VERSION: ${{ steps.helm-versions.outputs.helmlatestversion }}
+      HELM_PLUGIN_LATEST_VERSION: ${{ steps.helm-plugin-versions.outputs.helmpluginlatestversion }}
+    steps:
+      - id: helm-versions
+        run: |
+          helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
+          echo "helmlatestversion=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
+      - id: helm-plugin-versions
+        run: |
+          pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
+          echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
+          
+  release-docker:
+    name: create multi-arch docker images and upload to dockerhub
+    runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
+    needs:
+      - determine-versions
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+        helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
+        pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          version=${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
+          echo "PLATFORM_PAIR=${version}-${platform//\//-}" >> $GITHUB_ENV
+      
+      - name: Docker meta
+        id: meta
+        # https://github.com/docker/metadata-action
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
+      
+      - name: Set up QEMU
+        # https://github.com/docker/setup-qemu-action
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        # https://github.com/docker/setup-buildx-action
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        # https://github.com/docker/login-action
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push by digest
+        id: build
+        # https://github.com/docker/build-push-action
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            HELM_VERSION=${{ matrix.helmVersion }}
+            PLUGIN_VERSION=${{ matrix.pluginVersion }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
+          provenance: mode=max
+          sbom: true
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+
+  merge:
+    runs-on: ubuntu-latest
+    environment: HELMUNITTEST-RELEASE
+    needs:
+      - determine-versions
+      - release-docker
+    strategy:
+      fail-fast: false
+      matrix:
+        helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
+        pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
+          merge-multiple: true
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
+            type=raw,value=latest,enable=${{ (matrix.helmVersion == needs.determine-versions.outputs.HELM_LATEST_VERSION) && (matrix.pluginVersion == needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+      
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}          

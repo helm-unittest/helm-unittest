@@ -1,3 +1,27 @@
+0.5.2 / 2024-07-23
+==================
+- Fix notLengthEqual assertion is never satisfied (credits @snorwin)
+- Improvement move build and release workflows to github actions
+- Improvement multi-architecture docker images (resolves #321)
+- Update packages to latest patch versions (resolves #353)
+- Update documentation (credits @dancer1325, @yurrriq)
+
+0.5.1 / 2024-05-11
+==================
+- Fix parse multidocument testsuites (credits @ivankatliarchuk, resolves #329, resolves #336)
+- Update packages to latest patch versions
+- Update documentation (credits @dancer1325)
+
+0.5.0 / 2024-04-29
+==================
+- Add feature to support assert 'failedTemplate' to catch a generic error message (credits @ivankatliarchuk, resolves #218)
+- Add feature to allow multiple suites same test file (credits @jdiegosierra, resolves #272)
+- Add feature to mock k8s apis, which can help to test lookup function scenarios (credits @cgroschupp, resolves #249)
+- Fix containsDocument fix negative context support (credits @ivankatliarchuk, resolves #316)
+- Fix test-level values takes precedence over the suite-level (resolves #291)
+- Update packages to latest patch versions
+- Update documentation
+
 0.4.4 / 2024-03-24
 ==================
 - Fix documentSelector not matches resources when no templates in testjob are defined (credits @ivankatliarchuk, resolves #312)

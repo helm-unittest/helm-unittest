@@ -8,8 +8,11 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY_IMAGE: helmunittest/helm-unittest
+  GO_VERSION: 1.22.x
+      
 jobs:
-
   full-test:
     name: full sdk and tools test
     runs-on: ${{ matrix.os }}
@@ -17,9 +20,53 @@ jobs:
       matrix:
         # tests for target OS
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # tests for actively maintained Go versions.
-        go-version:
-          - 1.21.x
+    steps:
+    - name: checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@v4
+
+    - name: setup go
+      # https://github.com/actions/setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    # Make results directory
+    - name: Install JUnit plugin for uploading testresults
+      run: |
+        mkdir -p test-results
+
+    # Install using go install
+    - name: Install JUnit plugin for uploading testresults
+      run: |
+        go install github.com/jstemmer/go-junit-report/v2@latest
+
+    # Run tests with nice formatting. Save the coverage and junit test results in test-results
+    - name: Run tests
+      run: |
+        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+
+    - name: SonarCloud Scan
+      # https://github.com/sonarsource/sonarcloud-github-action
+      uses: sonarsource/sonarcloud-github-action@v2.3.0
+      if: matrix.os == 'ubuntu-latest' && env.SONAR_TOKEN != ''
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    # Upload the original go test log as an artifact for later review.
+    - name: Upload test log
+      # https://github.com/EnricoMi/publish-unit-test-result-action
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always() && matrix.os == 'ubuntu-latest'
+      with:
+        files: |
+          test-results/go-test-report.xml
+
+  validate_docker:
+    name: build and test docker
+    runs-on: ubuntu-latest
+    needs:
+      - full-test
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -31,8 +78,33 @@ jobs:
       # https://github.com/actions/setup-go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: ${{ env.GO_VERSION }}
 
-    - name: unit-tests
-      shell: bash
-      run: make unittest
+    # Run docker-tests
+    - name: Build docker-test
+      run: |
+        make test-docker
+
+    - name: Retrieve versions
+      run: |
+        helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+        echo "HELM_PLUGIN_VERSION=${helmPluginVersion}" >> $GITHUB_ENV
+
+    # Run trivy security
+    - name: Run Trivy vulnerability scanner
+      # https://github.com/aquasecurity/trivy-action
+      uses: aquasecurity/trivy-action@0.24.0
+      with:        
+        image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
+        ignore-unfixed: true
+        exit-code: 1
+        format: sarif
+        output: trivy-results.sarif
+        severity: CRITICAL,HIGH
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+        

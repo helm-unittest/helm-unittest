@@ -1,24 +1,22 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-GO ?= go
-HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
-HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+HELM_VERSION := 3.15.3
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
-DOCKER ?= "helmunittest/helm-unittest"
+DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
 TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
 	global-double-setting \
-	invalidbasic \
 	nested_glob \
 	with-document-select \
 	with-files \
 	with-helm-tests \
 	with-samenamesubsubcharts \
+	with-k8s-fake-client \
 	with-schema \
 	with-subchart \
 	with-subfolder \
@@ -28,14 +26,19 @@ TEST_NAMES ?=basic \
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: plugin-dir
+plugin-dir: 
+  HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+  HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+
 .PHONY: install
-install: bootstrap build
+install: bootstrap build plugin-dir
 	mkdir -p $(HELM_PLUGIN_DIR)
 	cp untt $(HELM_PLUGIN_DIR)
 	cp plugin.yaml $(HELM_PLUGIN_DIR)
 
 .PHONY: install-dbg
-install-dbg: bootstrap build-debug
+install-dbg: bootstrap build-debug plugin-dir
 	mkdir -p $(HELM_PLUGIN_DIR)
 	cp untt-dbg $(HELM_PLUGIN_DIR)
 	cp plugin-dbg.yaml $(HELM_PLUGIN_DIR)/plugin.yaml
@@ -81,18 +84,18 @@ dockerdist:
 
 .PHONY: go-dependency
 dependency: ## Dependency maintanance
-	@$(GO) get -u ./...
-	@$(GO) mod tidy
+	go get -u ./...
+	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: ## Build docker image
-	docker build -t $(DOCKER):$(VERSION) .
+dockerimage: build
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: ## Execute 'helm unittests' in container
+test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
-		echo "running helm unit tests in folder '$${f}'"; \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
-			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps/\
-			-it --rm  $(DOCKER) -f tests/*.yaml .;\
+			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
+			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done

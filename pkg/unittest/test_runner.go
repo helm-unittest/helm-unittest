@@ -167,7 +167,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 
 	resultSuites := make([]*TestSuite, 0, len(testFilesSet)+len(renderedTestSuites))
 	for _, file := range testFilesSet {
-		suite, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
+		suites, err := ParseTestSuiteFile(file, chartRoute, tr.Strict, valuesFilesSet)
 		if err != nil {
 			tr.handleSuiteResult(&results.TestSuiteResult{
 				FilePath:  file,
@@ -175,7 +175,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 			})
 			return nil, err
 		}
-		resultSuites = append(resultSuites, suite)
+		resultSuites = append(resultSuites, suites...)
 	}
 	resultSuites = append(resultSuites, renderedTestSuites...)
 
