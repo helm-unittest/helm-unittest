@@ -61,59 +61,65 @@ tests:
           count: 2
       - matchSnapshot:
           path: spec
+      - lengthEqual:
+          path:  spec.template.spec.containers
+          count: 1
+      - notLengthEqual:
+          path: spec.template.spec.containers
+          count: 10
 
+  - it: should pass greater or equal assertions
+    set:
+      runAsUser: 1284
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: 1.1
+        limits:
+          memory: "128Mi"
+          cpu: "1500m"
+    template: templates/deployment.yaml
+    documentIndex: 0
+    asserts:
+      - greaterOrEqual:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1286
+      - greaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
+          value: "1540m"
+      - ge:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.11
+      - ge:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.1
 
-#   - it: should pass greater or equal assertions
-#     set:
-#       runAsUser: 1284
-#       resources:
-#         requests:
-#           memory: "64Mi"
-#           cpu: 1.1
-#         limits:
-#           memory: "128Mi"
-#           cpu: "1500m"
-#     template: templates/deployment.yaml
-#     documentIndex: 0
-#     asserts:
-#       - greaterOrEqual:
-#           path: spec.template.spec.securityContext.runAsUser
-#           value: 1286
-#       - greaterOrEqual:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
-#           value: "1540m"
-#       - ge:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-#           value: 1.11
-#       - ge:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-#           value: 1.1
+  - it: should pass less or equal assertions
+    set:
+      runAsUser: 1284
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: 1.1
+        limits:
+          memory: "128Mi"
+          cpu: "1500m"
+    template: templates/deployment.yaml
+    documentIndex: 0
+    asserts:
+      - lessOrEqual:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1281
+      - lessOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
+          value: "1280m"
+      - le:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.09
+      - le:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.1
 
-#   - it: should pass less or equal assertions
-#     set:
-#       runAsUser: 1284
-#       resources:
-#         requests:
-#           memory: "64Mi"
-#           cpu: 1.1
-#         limits:
-#           memory: "128Mi"
-#           cpu: "1500m"
-#     template: templates/deployment.yaml
-#     documentIndex: 0
-#     asserts:
-#       - lessOrEqual:
-#           path: spec.template.spec.securityContext.runAsUser
-#           value: 1281
-#       - lessOrEqual:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
-#           value: "1280m"
-#       - le:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-#           value: 1.09
-#       - le:
-#           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-#           value: 1.1
 # =======
 #       - lengthEqual:
 #           path:  spec.template.spec.containers
