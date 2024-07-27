@@ -26,7 +26,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	}
 
 	specArr, ok := spec[0].([]interface{})
-	if !ok && v.Count == nil {
+	if !ok && count == nil {
 		return false, splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", path)), 0
 	}
 	specLen := len(specArr)
@@ -36,7 +36,6 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 				"count doesn't match as expected. expected: %d actual: %d", *count, specLen)), 0
 		}
 	}
-	fmt.Println("39", specLen)
 	return true, []string{}, specLen
 }
 
