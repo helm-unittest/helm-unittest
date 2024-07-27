@@ -36,7 +36,7 @@ spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
     {{- end }}
-{{- if .Values.volumesEmpty }}
+{{- if .Values.volumesEnabled }}
       volumes:
 {{ toYaml .Values.volumes | indent 8 }}
 {{- end }}

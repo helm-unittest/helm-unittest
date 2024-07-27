@@ -80,7 +80,7 @@ tests:
   - it: should have non empty volumes
     template: webserver/deployment.yaml
     set:
-      volumesEmpty: true
+      volumesEnabled: true
       volumes:
         - name: config-vol
         - name: config-vol-v2
