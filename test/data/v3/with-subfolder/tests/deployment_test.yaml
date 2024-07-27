@@ -65,3 +65,12 @@ tests:
           path: spec.template.spec.containers[0].ports
           content:
             containerPort: 80
+
+  - it: should have no volumes
+    template: webserver/deployment.yaml
+    set:
+      volumesEmpty: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 0
