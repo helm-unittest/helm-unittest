@@ -38,4 +38,5 @@ spec:
     {{- end }}
 {{- if .Values.volumesEmpty }}
       volumes:
+{{ toYaml .Values.volumes | indent 8 }}
 {{- end }}

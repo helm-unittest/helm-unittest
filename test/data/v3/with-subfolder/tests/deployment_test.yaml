@@ -66,7 +66,7 @@ tests:
           content:
             containerPort: 80
 
-  - it: should have no volumes
+  - it: should have empty volumes
     template: webserver/deployment.yaml
     set:
       volumesEmpty: true
@@ -77,8 +77,31 @@ tests:
           path: spec.template.spec.volumes
           count: 0
 
+  - it: should have non empty volumes
+    template: webserver/deployment.yaml
+    set:
+      volumesEmpty: true
+      volumes:
+        - name: config-vol
+        - name: config-vol-v2
+    asserts:
+      - exists:
+          path: spec.template.spec.volumes
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 2
+      - notLengthEqual:
+          path: spec.template.spec.volumes
+          count: 0
+      - notLengthEqual:
+          path: spec.template.spec.volumes
+          count: 3
+
   - it: should have no path spec.template.spec.volumes
     template: webserver/deployment.yaml
     asserts:
       - notExists:
           path: spec.template.spec.volumes
+      - notLengthEqual:
+          path: spec.template.spec.volumes
+          count: 1

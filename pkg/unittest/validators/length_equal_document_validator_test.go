@@ -52,6 +52,10 @@ spec:
   rules:
    - host: a.example.com
 `
+	testDocLengthEqual0_Success = `
+spec:
+  volumes:
+`
 )
 
 func TestLengthEqualDocumentsValidatorOk_Single(t *testing.T) {
@@ -205,4 +209,35 @@ func TestLengthEqualDocumentsValidatorWhenBadConfig(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{"Error:", "\t'paths' couldn't be used with 'path'"}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorOk_Empty(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual0_Success)
+    count := 0
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.volumes",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorOk_WhenNegative(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual0_Success)
+    count := 1
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.volumes",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }
