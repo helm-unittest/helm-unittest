@@ -69,7 +69,7 @@ tests:
   - it: should have empty volumes
     template: webserver/deployment.yaml
     set:
-      volumesEmpty: true
+      volumesEnabled: true
     asserts:
       - exists:
           path: spec.template.spec.volumes
