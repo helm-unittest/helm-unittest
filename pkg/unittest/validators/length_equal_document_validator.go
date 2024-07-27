@@ -96,7 +96,7 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 			optimizeCheck := true
 			for _, path := range v.Paths {
 				var validateSingleErrors []string
-				negative := int(-1)
+				negative := -1
 				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, &negative)
 				if !validateSuccess {
 					validateErrors = append(validateErrors, validateSingleErrors...)
