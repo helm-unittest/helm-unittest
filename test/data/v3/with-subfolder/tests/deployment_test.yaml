@@ -71,6 +71,14 @@ tests:
     set:
       volumesEmpty: true
     asserts:
+      - exists:
+          path: spec.template.spec.volumes
       - lengthEqual:
           path: spec.template.spec.volumes
           count: 0
+
+  - it: should have no path spec.template.spec.volumes
+    template: webserver/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
