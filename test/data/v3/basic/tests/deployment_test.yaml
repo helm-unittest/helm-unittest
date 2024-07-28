@@ -119,12 +119,3 @@ tests:
       - le:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
-
-# =======
-#       - lengthEqual:
-#           path:  spec.template.spec.containers
-#           count: 1
-#       - notLengthEqual:
-#           path: spec.template.spec.containers
-#           count: 10
-# >>>>>>> main
