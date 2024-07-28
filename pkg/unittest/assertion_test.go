@@ -41,6 +41,10 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 	assertionsYAML := `
 - equal:
 - notEqual:
+- greaterOrEqual:
+- ge:
+- lessOrEqual:
+- le:
 - equalRaw:
 - notEqualRaw:
 - matchRegex:
