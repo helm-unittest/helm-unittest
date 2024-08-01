@@ -8,6 +8,7 @@
  PASS  Secret Test	../../test/data/v3/basic/tests/secret_test.yaml
  PASS  spark-operator	../../test/data/v3/basic/tests/rbac_test.yaml
  PASS  test deployment	../../test/data/v3/basic/tests/deployment_test.yaml
+ PASS  test generate names in Kubernetes resources	../../test/data/v3/basic/tests/generateNames_test.yaml
  PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
  PASS  test override names and fullNames in Kubernetes resources	../../test/data/v3/basic/tests/namesOverride_test.yaml
@@ -15,8 +16,8 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 10 passed, 10 total
-Tests:       23 passed, 23 total
+Test Suites: 11 passed, 11 total
+Tests:       24 passed, 24 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 

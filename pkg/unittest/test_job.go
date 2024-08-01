@@ -174,6 +174,8 @@ type TestJob struct {
 	definitionFile string
 	// list of templates assertion should assert if not specified
 	defaultTemplatesToAssert []string
+	// list of templates assertion should skip assert
+	defaultTemplatesToSkip []string
 	// requireSuccess
 	requireRenderSuccess bool
 }
@@ -329,7 +331,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
+	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, targetChart)
 
 	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 
