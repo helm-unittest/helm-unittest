@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -15,7 +15,12 @@ import (
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
+
+	log "github.com/sirupsen/logrus"
 )
+
+// m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
+var splitterPattern = regexp.MustCompile("(?m:^---$)")
 
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
@@ -24,11 +29,16 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 		return []*TestSuite{{chartRoute: chartRoute}}, err
 	}
 
-	parts := strings.Split(string(content), "---")
+	// The pattern matches lines that contain only three hyphens (---), which is a common
+	// delimiter used in various file formats (e.g., YAML, Markdown) to separate sections.
+	// The -1 passed as the third argument to Split tells it to return all parts,
+	// including the parts matched by the regular expression pattern.
+	parts := splitterPattern.Split(string(content), -1)
+	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
-		// Ensure the part has data, otherwise we can ignore the split
-		if len(part) > 0 {
+		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
+		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
@@ -66,7 +76,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		return &suite, err
 	}
 
-	// Append the valuesfiles from command to the testsuites.
+	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
 
 	return &suite, nil
@@ -146,7 +156,7 @@ func iterateAllKeys(renderedFiles map[string]string, chartName, helmTestSuiteDir
 
 func iterateTemplates(template string, suites []*TestSuite, absPath string, chartRoute string, strict bool, valueFilesSet []string) ([]error, int, []*TestSuite) {
 	var subYamlErrs []error
-	templates := strings.Split(template, "---")
+	templates := splitterPattern.Split(template, -1)
 	previousSuitesLen := len(suites)
 	realIdx := -1
 	for idx, subYaml := range templates {
@@ -229,6 +239,7 @@ func (s *TestSuite) RunV3(
 
 // fill file path related info of TestJob
 func (s *TestSuite) polishTestJobsPathInfo() {
+	log.WithField("test-suite", "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
@@ -240,10 +251,10 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 		// Make deep clone of global set
 		test.globalSet = copySet(s.Set)
-
 		if len(s.Values) > 0 {
 			test.Values = append(s.Values, test.Values...)
 		}
+		log.WithField("test-suite", "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
@@ -358,6 +369,7 @@ func (s *TestSuite) validateTestSuite() error {
 
 	for _, testJob := range s.Tests {
 		if len(testJob.Assertions) == 0 {
+			log.WithField("test-suite", "validate-test-suite").Debugln("no asserts found", testJob)
 			return fmt.Errorf("no asserts found")
 		}
 	}

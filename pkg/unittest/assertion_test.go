@@ -256,7 +256,7 @@ x:
 - template: t.yaml
   isSubset:
     path: e
-    content: 
+    content:
       f: g
 - template: t.yaml
   lengthEqual:

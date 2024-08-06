@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -47,6 +48,32 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 	}
 
 	return result
+}
+
+// writeToFile writes the provided string data to a file with the given filename.
+// It returns an error if the file cannot be created or if there is an error during writing.
+func writeToFile(data string, filename string) error {
+	err := os.MkdirAll(filepath.Dir(filename), 0755)
+	if err != nil {
+		fmt.Println("Error creating folders for file:", err)
+		return err
+	}
+
+	// Create the file with an absolute path
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(data)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return err
+	}
+
+	return nil
 }
 
 func validateTestResultAndSnapshots(
@@ -586,4 +613,94 @@ tests:
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
+}
+
+func TestV3ParseTestMultipleSuitesWithSingleSeparator(t *testing.T) {
+	suiteDoc := `
+suite: first suite without leading triple dashes
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail as nameOverride is too long
+    set:
+      nameOverride: too-long-of-a-name-override-that-should-fail-the-template-immediately
+    asserts:
+      - failedTemplate:
+          errorMessage: nameOverride cannot be longer than 20 characters
+---
+suite: second suite in same separated with triple dashes
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail due to paradox
+    set:
+      name: first-deployment
+    asserts:
+      - failedTemplate: {}
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-suites-withsingle-separator.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.Remove(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 2)
+}
+
+func TestV3ParseTestMultipleSuitesWithSeparatorsAndSetMultilineValue(t *testing.T) {
+	suiteDoc := `
+---
+suite: first test suite for deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should render deployment
+    set:
+      name: first-deployment
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+---
+suite: second suite in same file
+templates:
+  - deployment.yaml
+tests:
+  - it: should render second deployment in second suite
+    set:
+      signing.privateKey: |-
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+        {placeholder}
+        -----END PGP PRIVATE KEY BLOCK-----
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: v1
+---
+suite: third suite in same file
+templates:
+  - secret.yaml
+tests:
+  - it: should render second deployment in second suite
+    set:
+      signing.privateKey: |-
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+        {placeholder}
+        -----END PGP PRIVATE KEY BLOCK-----
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-suites-with-multiline-value.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 3)
 }
