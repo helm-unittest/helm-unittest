@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foo-secondary-deployment
+  namespace: secondary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bar-secondary-deployment
+  namespace: secondary

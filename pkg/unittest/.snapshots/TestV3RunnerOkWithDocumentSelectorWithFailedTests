@@ -1,0 +1,67 @@
+
+### Chart [ with-document-select ] ../../test/data/v3/with-document-select
+
+
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/failing_match_many_deployments_test.yaml
+	- every deployment should be in the default namespace
+
+		- asserts[0] `equal` fail
+			Template:	with-document-select/templates/deployments-secondary-namespace.yaml
+			DocumentIndex:	0
+			Path:	metadata.namespace
+			Expected to equal:
+				default
+			Actual:
+				secondary
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,2 +1,2 @@
+				-default
+				+secondary
+			DocumentIndex:	1
+			Path:	metadata.namespace
+			Expected to equal:
+				default
+			Actual:
+				secondary
+			Diff:
+				--- Expected
+				+++ Actual
+				@@ -1,2 +1,2 @@
+				-default
+				+secondary
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/failing_match_single_deployment_test.yaml
+	- deployment is in the default namespace (matchMany=false explicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
+
+	- deployment is in the default namespace (matchMany=false implicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
+ FAIL  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests_failed/falling_match_single_deployment_in_each_template_test.yaml
+	- deployment is in the default namespace (matchMany=false explicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
+
+	- deployment is in the default namespace (matchMany=false implicitly)
+
+		- asserts[0] `equal` fail
+			Error:
+			multiple indexes found
+
+
+
+Charts:      1 failed, 0 passed, 1 total
+Test Suites: 3 failed, 0 passed, 3 total
+Tests:       5 failed, 0 passed, 5 total
+Snapshot:    0 passed, 0 total
+Time:        XX.XXXms
+
+

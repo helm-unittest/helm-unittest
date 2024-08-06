@@ -119,22 +119,6 @@ func TestSnapshotValidatorWhenNegativeAndFail(t *testing.T) {
 	mockComparer.AssertExpectations(t)
 }
 
-func TestSnapshotValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest("a:b")
-
-	validator := MatchSnapshotValidator{Path: "a"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}
-
 func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 	manifest := makeManifest("a:b")
 
