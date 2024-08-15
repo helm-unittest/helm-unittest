@@ -16,7 +16,7 @@ ENV HELM_DATA_HOME=/usr/local/share/helm
 
 # Ensure to have latest packages
 RUN apk upgrade --no-cache
-RUN apk add --update --no-cache curl ca-certificates git bash && \
+RUN apk add --no-cache --update bash ca-certificates curl git && \
     curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} | tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \

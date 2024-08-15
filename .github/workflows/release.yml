@@ -12,12 +12,12 @@ env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
+  GO_VERSION: 1.22.x
 
 jobs:
   release:
     name: create distribution and upload to release
     runs-on: ubuntu-latest
-    environment: HELMUNITTEST-RELEASE
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -27,7 +27,7 @@ jobs:
       # https://github.com/actions/setup-go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ vars.GO_VERSION }}
+        go-version: ${{ env.GO_VERSION }}
 
     - name: make distribution
       shell: bash
@@ -157,11 +157,14 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
+        env:
+          HELM_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_LATEST_VERSION) }}
+          PLUGIN_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
-            type=raw,value=latest,enable=${{ (matrix.helmVersion == needs.determine-versions.outputs.HELM_LATEST_VERSION) && (matrix.pluginVersion == needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
+            type=raw,value=latest,enable=${{ (matrix.helmVersion == env.HELM_LATEST) && (matrix.pluginVersion == env.PLUGIN_LATEST) }}
       
       - name: Login to Docker Hub
         uses: docker/login-action@v3
