@@ -36,6 +36,7 @@ const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting
 const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
 const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
+const testV3WithDocumentSelectorFailingChart string = "../../test/data/v3/with-document-select-failing"
 const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)

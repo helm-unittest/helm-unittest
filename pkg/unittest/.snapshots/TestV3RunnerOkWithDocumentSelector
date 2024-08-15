@@ -3,6 +3,8 @@
 
 
  PASS  Document Selector and templates are local to the test block	../../test/data/v3/with-document-select/tests/local_test.yaml
+ PASS  Document Selector is matching many documents	../../test/data/v3/with-document-select/tests/match_many_deployments_test.yaml
+ PASS  Document Selector is matching many documents and skipping empty templates	../../test/data/v3/with-document-select/tests/skip_empty_templates_test.yaml
  PASS  Document Selector snapshot tests	../../test/data/v3/with-document-select/tests/snapshot_test.yaml
  PASS  Document Selector to match any template	../../test/data/v3/with-document-select/tests/any_template_test.yaml
  PASS  Document Selector using expression	../../test/data/v3/with-document-select/tests/foo_rbac_test.yaml
@@ -10,8 +12,8 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 5 passed, 5 total
-Tests:       7 passed, 7 total
+Test Suites: 7 passed, 7 total
+Tests:       9 passed, 9 total
 Snapshot:    1 passed, 1 total
 Time:        XX.XXXms
 

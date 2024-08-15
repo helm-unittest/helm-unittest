@@ -78,10 +78,7 @@ func (o operatorValidator) compareFloatValues(expected, actual float64, comparis
 // Validate implement Validatable
 func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 	log.WithField("validator", o.ComparisonType).Debugln("expected content:", o.Value, "path:", o.Path)
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

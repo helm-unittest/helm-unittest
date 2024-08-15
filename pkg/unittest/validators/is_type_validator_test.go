@@ -87,8 +87,7 @@ a:
 
 	validator := IsTypeValidator{"a.b[0].c", "string"}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
+		Docs: []common.K8sManifest{manifest1, manifest2},
 	})
 
 	assert.False(t, pass)
@@ -107,8 +106,7 @@ func TestTypeValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := IsTypeValidator{"a.e", "int"}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest, manifest},
-		Index: -1,
+		Docs: []common.K8sManifest{manifest, manifest},
 	})
 
 	assert.False(t, pass)
@@ -177,20 +175,5 @@ func TestTypeValidatorWhenUnkownPath(t *testing.T) {
 		"DocumentIndex:	0",
 		"Error:",
 		"	unknown path a.b[5]",
-	}, diff)
-}
-
-func TestTypeValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestType)
-	validator := IsTypeValidator{"a.b[0].c", "int"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }

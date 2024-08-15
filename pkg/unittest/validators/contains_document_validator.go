@@ -48,16 +48,42 @@ func (v ContainsDocumentValidator) joinOutput() string {
 }
 
 func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest) bool {
+	if !v.matchKind(manifest) {
+		return false
+	}
+
+	if !v.matchAPIVersion(manifest) {
+		return false
+	}
+
+	if !v.matchName(manifest) {
+		return false
+	}
+
+	if !v.matchNamespace(manifest) {
+		return false
+	}
+
+	return true
+}
+
+func (v ContainsDocumentValidator) matchKind(manifest common.K8sManifest) bool {
 	if kind, ok := manifest["kind"].(string); ok && kind != v.Kind {
 		// if no match, move onto next document
 		return false
 	}
+	return true
+}
 
+func (v ContainsDocumentValidator) matchAPIVersion(manifest common.K8sManifest) bool {
 	if api, ok := manifest["apiVersion"].(string); ok && api != v.APIVersion {
 		// if no match, move onto next document
 		return false
 	}
+	return true
+}
 
+func (v ContainsDocumentValidator) matchName(manifest common.K8sManifest) bool {
 	if v.Name != "" {
 		actual, err := valueutils.GetValueOfSetPath(manifest, "metadata.name")
 		if err != nil {
@@ -69,7 +95,10 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest)
 			return false
 		}
 	}
+	return true
+}
 
+func (v ContainsDocumentValidator) matchNamespace(manifest common.K8sManifest) bool {
 	if v.Namespace != "" {
 		actual, err := valueutils.GetValueOfSetPath(manifest, "metadata.namespace")
 		if err != nil {
@@ -83,16 +112,12 @@ func (v ContainsDocumentValidator) validateManifest(manifest common.K8sManifest)
 			return false
 		}
 	}
-
 	return true
 }
 
 // Validate implement Validatable
 func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

@@ -36,10 +36,7 @@ func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, index
 
 // Validate implement Validatable
 func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := len(manifests) == 0
 	validateErrors := make([]string, 0)

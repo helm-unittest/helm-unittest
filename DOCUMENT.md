@@ -130,9 +130,11 @@ tests:
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
-- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documents for asserting. Generally you can ignore this field if the template file render only one document.
   - **path**: *string*. The `documentSelector` path to assert.
   - **value**: *any*. The expected value.
+  - **matchMany**: *bool, optional*. Set to `true` to allow matching multiple documents. Defaults to `false` which means selector has to match single document across all templates.
+  - **skipEmptyTemplates**: *bool, optional*. Set to `true` to skip asserting templates which didn't render any matching documents. Defaults to `false` which means selector have to find at least one document in every template.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
