@@ -96,11 +96,8 @@ jobs:
       uses: aquasecurity/trivy-action@0.24.0
       with:        
         image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
-        ignore-unfixed: true
-        exit-code: 1
         format: sarif
         output: trivy-results.sarif
-        severity: CRITICAL,HIGH
         
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3

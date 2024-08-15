@@ -251,6 +251,10 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"matchSnapshotRaw":  {reflect.TypeOf(validators.MatchSnapshotRawValidator{}), false, true},
 	"equal":             {reflect.TypeOf(validators.EqualValidator{}), false, true},
 	"notEqual":          {reflect.TypeOf(validators.EqualValidator{}), true, true},
+	"greaterOrEqual":    {reflect.TypeOf(validators.EqualOrGreaterValidator{}), false, true},
+	"notGreaterOrEqual": {reflect.TypeOf(validators.EqualOrGreaterValidator{}), true, true},
+	"lessOrEqual":       {reflect.TypeOf(validators.EqualOrLessValidator{}), false, true},
+	"notLessOrEqual":    {reflect.TypeOf(validators.EqualOrLessValidator{}), true, true},
 	"equalRaw":          {reflect.TypeOf(validators.EqualRawValidator{}), false, true},
 	"notEqualRaw":       {reflect.TypeOf(validators.EqualRawValidator{}), true, true},
 	"exists":            {reflect.TypeOf(validators.ExistsValidator{}), false, true},
@@ -277,4 +281,6 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"isNotNull":         {reflect.TypeOf(validators.ExistsValidator{}), false, true},
 	"isEmpty":           {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), false, true},
 	"isNotEmpty":        {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), true, true},
+	"isType":            {reflect.TypeOf(validators.IsTypeValidator{}), false, true},
+	"isNotType":         {reflect.TypeOf(validators.IsTypeValidator{}), true, true},
 }
