@@ -84,6 +84,22 @@ func TestLengthEqualDocumentsValidatorOk_Single2(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestLengthEqualDocumentsValidatorNegativeOk_Single(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual1)
+
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: 2,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestLengthEqualDocumentsValidatorOk_Multi(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual3_Success)
 
@@ -98,7 +114,7 @@ func TestLengthEqualDocumentsValidatorOk_Multi(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestLengthEqualDocumentsValidatorNegativeOk_Multi(t *testing.T) {
+func TestLengthEqualDocumentsValidatorNegativeFail_Multi(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual3_Success)
 
 	validator := LengthEqualDocumentsValidator{
@@ -133,7 +149,7 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
 
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 1,
+		Count: 2,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -141,7 +157,7 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tcount doesn't match as expected. expected: 1 actual: 2"}, diff)
+	assert.Equal(t, []string{"\texpected result does not match"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorFail_Multi(t *testing.T) {
