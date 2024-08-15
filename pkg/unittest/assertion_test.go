@@ -42,9 +42,9 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - equal:
 - notEqual:
 - greaterOrEqual:
-- ge:
+- notGreaterOrEqual:
 - lessOrEqual:
-- le:
+- notLessOrEqual:
 - equalRaw:
 - notEqualRaw:
 - matchRegex:
@@ -63,6 +63,8 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - isNotNullOrEmpty:
 - isKind:
 - isAPIVersion:
+- isType:
+- isNotType:
 - hasDocuments:
 - isSubset:
 - isNotSubset:
@@ -72,9 +74,9 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - lengthEqual:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 27)
+	assertionsAsMap := make([]map[string]interface{}, 33)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 27)
+	assertions := make([]Assertion, 33)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -95,6 +97,14 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - notEqualRaw:
   not: true
+- greaterOrEqual:
+  not: true
+- notGreaterOrEqual:
+  not: true
+- lessOrEqual:
+  not: true
+- notLessOrEqual:
+  not: true
 - matchRegex:
   not: true
 - notMatchRegex:
@@ -127,6 +137,10 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - isAPIVersion:
   not: true
+- isType:
+  not: true
+- isNotType:
+  not: true
 - hasDocuments:
   not: true
 - isSubset:
@@ -134,7 +148,7 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 - failedTemplate:
   not: true
 `
-	assertions := make([]Assertion, 23)
+	assertions := make([]Assertion, 29)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)
@@ -151,6 +165,12 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - equalRaw:
   not: true
 - notEqualRaw:
+- greaterOrEqual:
+  not: true
+- notGreaterOrEqual:
+- lessOrEqual:
+  not: true
+- notLessOrEqual:
 - matchRegex:
   not: true
 - notMatchRegex:
@@ -175,11 +195,14 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - isSubset:
   not: true
 - isNotSubset:
+- isType:
+  not: true
+- isNotType:
 - failedTemplate:
   not: true
 - notFailedTemplate:
 `
-	assertions := make([]Assertion, 22)
+	assertions := make([]Assertion, 28)
 	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
 
 	a := assert.New(t)

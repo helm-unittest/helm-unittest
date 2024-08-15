@@ -57,7 +57,7 @@ func (a EqualOrLessValidator) Validate(context *ValidateContext) (bool, []string
 			continue
 		}
 
-		result, errors := compareValues(a.Value, actual[0], "less")
+		result, errors := compareValues(a.Value, actual[0], "less", !context.Negative)
 		if errors != nil {
 			errorMessage := a.failInfo(errors[0], idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)

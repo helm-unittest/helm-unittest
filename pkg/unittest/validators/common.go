@@ -157,26 +157,46 @@ func validateRequiredField(actual, field string) error {
 // ensuring that they are of compatible types and that the actual value is greater, less than or equal to the expected value.
 // If successful, it returns true along with a nil error slice. If unsuccessful, it returns false
 // along with an error slice containing information about the validation failure.
-func compareValues(expected, actual interface{}, comparisonType string) (bool, []string) {
+func compareValues(expected, actual interface{}, comparisonType string, negative bool) (bool, []string) {
 	expStr := fmt.Sprintf("%v", expected)
 	actStr := fmt.Sprintf("%v", actual)
+	result := false
 
 	switch exp := expected.(type) {
 	case string:
-		if (comparisonType == "greater" && exp >= actual.(string)) || (comparisonType == "less" && exp <= actual.(string)) {
-			return true, nil
-		}
+		result = compareStringValues(exp, actual.(string), comparisonType, negative)
 	case int:
-		if (comparisonType == "greater" && exp >= actual.(int)) || (comparisonType == "less" && exp <= actual.(int)) {
-			return true, nil
-		}
+		result = compareIntValues(exp, actual.(int), comparisonType, negative)
 	case float64:
-		if (comparisonType == "greater" && exp >= actual.(float64)) || (comparisonType == "less" && exp <= actual.(float64)) {
-			return true, nil
-		}
+		result = compareFloatValues(exp, actual.(float64), comparisonType, negative)
 	default:
 		return false, []string{fmt.Sprintf("unsupported type '%T'", expected)}
 	}
 
-	return false, []string{fmt.Sprintf("the expected '%s' is not %s or equal to the actual '%s'", expStr, comparisonType, actStr)}
+	if !result {
+		return false, []string{fmt.Sprintf("the expected '%s' is not %s or equal to the actual '%s'", expStr, comparisonType, actStr)}
+	}
+
+	return true, nil
+}
+
+func compareStringValues(expected, actual string, comparisonType string, negative bool) bool {
+	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+		return true
+	}
+	return false
+}
+
+func compareIntValues(expected, actual int, comparisonType string, negative bool) bool {
+	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+		return true
+	}
+	return false
+}
+
+func compareFloatValues(expected, actual float64, comparisonType string, negative bool) bool {
+	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+		return true
+	}
+	return false
 }
