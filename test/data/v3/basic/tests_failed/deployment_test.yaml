@@ -53,3 +53,9 @@ tests:
       - isType:
           path: spec.replicas
           type: string
+      - lengthEqual:
+          path:  spec.template.spec.containers
+          count: 10
+      - notLengthEqual:
+          path: spec.template.spec.containers
+          count: 1
