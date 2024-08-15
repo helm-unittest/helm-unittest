@@ -60,7 +60,7 @@ spec:
 
 func TestLengthEqualDocumentsValidatorOk_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual1)
-    count := 1
+	count := 1
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
 		Count: &count,
@@ -75,7 +75,7 @@ func TestLengthEqualDocumentsValidatorOk_Single(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorOk_Single2(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-    count := 2
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
 		Count: &count,
@@ -135,7 +135,7 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Multi(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-    count := 1
+	count := 1
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
 		Count: &count,
@@ -150,7 +150,7 @@ func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-    count := 2
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
 		Count: &count,
@@ -193,6 +193,23 @@ func TestLengthEqualDocumentsValidatorWhenPathAndNoCount(t *testing.T) {
 	assert.Equal(t, []string{"Error:", "\t'count' field must be set if 'path' is used"}, diff)
 }
 
+func TestLengthEqualDocumentsValidatorWhenPathAndNegativeCount(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual3_Fail)
+
+	count := -24
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"Error:", "\t'count' field must be set if 'path' is used"}, diff)
+}
+
 func TestLengthEqualDocumentsValidatorWhenBadConfig(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual3_Fail)
 
@@ -213,7 +230,7 @@ func TestLengthEqualDocumentsValidatorWhenBadConfig(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorOk_Empty(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual0_Success)
-    count := 0
+	count := 0
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.volumes",
 		Count: &count,
@@ -228,13 +245,13 @@ func TestLengthEqualDocumentsValidatorOk_Empty(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorOk_WhenNegative(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual0_Success)
-    count := 1
+	count := 1
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.volumes",
 		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
+		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
 	})
 
