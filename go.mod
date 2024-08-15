@@ -16,7 +16,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yargevad/filepathx v1.0.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.15.3
+	helm.sh/helm/v3 v3.15.4
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
 )
