@@ -151,3 +151,32 @@ func validateRequiredField(actual, field string) error {
 	}
 	return nil
 }
+
+// compareValues performs a validation of a Kubernetes manifest against an expected value.
+// It compares the actual value retrieved from the manifest with the expected value,
+// ensuring that they are of compatible types and that the actual value is greater, less than or equal to the expected value.
+// If successful, it returns true along with a nil error slice. If unsuccessful, it returns false
+// along with an error slice containing information about the validation failure.
+func compareValues(expected, actual interface{}, comparisonType string) (bool, []string) {
+	expStr := fmt.Sprintf("%v", expected)
+	actStr := fmt.Sprintf("%v", actual)
+
+	switch exp := expected.(type) {
+	case string:
+		if (comparisonType == "greater" && exp >= actual.(string)) || (comparisonType == "less" && exp <= actual.(string)) {
+			return true, nil
+		}
+	case int:
+		if (comparisonType == "greater" && exp >= actual.(int)) || (comparisonType == "less" && exp <= actual.(int)) {
+			return true, nil
+		}
+	case float64:
+		if (comparisonType == "greater" && exp >= actual.(float64)) || (comparisonType == "less" && exp <= actual.(float64)) {
+			return true, nil
+		}
+	default:
+		return false, []string{fmt.Sprintf("unsupported type '%T'", expected)}
+	}
+
+	return false, []string{fmt.Sprintf("the expected '%s' is not %s or equal to the actual '%s'", expStr, comparisonType, actStr)}
+}

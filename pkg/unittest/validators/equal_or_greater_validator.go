@@ -23,36 +23,6 @@ func (a EqualOrGreaterValidator) failInfo(msg string, index int, not bool) []str
 	)
 }
 
-// validate performs a validation of a Kubernetes manifest against an expected value.
-// It compares the actual value retrieved from the manifest with the expected value,
-// ensuring that they are of compatible types and that the actual value is greater than or equal to the expected value.
-// If successful, it returns true along with a nil error slice. If unsuccessful, it returns false
-// along with an error slice containing information about the validation failure.
-func (a EqualOrGreaterValidator) validate(expected, actual interface{}) (bool, []string) {
-
-	expStr := fmt.Sprintf("%v", expected)
-	actStr := fmt.Sprintf("%v", actual)
-
-	switch exp := expected.(type) {
-	case string:
-		if exp >= actual.(string) {
-			return true, nil
-		}
-	case int:
-		if exp >= actual.(int) {
-			return true, nil
-		}
-	case float64:
-		if exp >= actual.(float64) {
-			return true, nil
-		}
-	default:
-		return false, []string{fmt.Sprintf("unsupported type '%T'", expected)}
-	}
-
-	return false, []string{fmt.Sprintf("the expected '%s' is not greater or equal to the actual '%s'", expStr, actStr)}
-}
-
 // Validate implement Validatable
 func (a EqualOrGreaterValidator) Validate(context *ValidateContext) (bool, []string) {
 	log.WithField("validator", "ge").Debugln("expected content:", a.Value, "path:", a.Path)
@@ -87,13 +57,13 @@ func (a EqualOrGreaterValidator) Validate(context *ValidateContext) (bool, []str
 			continue
 		}
 
-		result, errors := a.validate(a.Value, actual[0])
+		result, errors := compareValues(a.Value, actual[0], "greater")
 		if errors != nil {
 			errorMessage := a.failInfo(errors[0], idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 		}
+
 		validateSuccess = determineSuccess(idx, validateSuccess, result)
-		break
 	}
 
 	return validateSuccess, validateErrors
