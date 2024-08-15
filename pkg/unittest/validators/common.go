@@ -30,17 +30,13 @@ type ValidateContext struct {
 	RenderError error
 }
 
-func (c *ValidateContext) getManifests() ([]common.K8sManifest, error) {
-	manifests := make([]common.K8sManifest, 0)
-
+func (c *ValidateContext) getManifests() []common.K8sManifest {
 	// This here is for making a default for unit tests
 	if c.SelectedDocs == nil {
-		manifests = c.Docs
+		return c.Docs
 	} else {
-		manifests = *c.SelectedDocs
+		return *c.SelectedDocs
 	}
-
-	return manifests, nil
 }
 
 // Validatable all validators must implement Validate method

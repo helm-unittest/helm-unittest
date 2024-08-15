@@ -32,10 +32,7 @@ func (t IsTypeValidator) failInfo(actual string, index int, not bool) []string {
 
 // Validate implement Validatable
 func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

@@ -32,10 +32,7 @@ func (v IsSubsetValidator) failInfo(actual interface{}, index int, not bool) []s
 
 // Validate implement Validatable
 func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
