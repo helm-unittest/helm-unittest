@@ -72,7 +72,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tvalue",
-				"Expected to be less than or equal to, got:",
+				"Expected to be less then or equal to, got:",
 				"\tthe expected '7' is not less or equal to the actual '6'",
 			},
 		},
@@ -84,7 +84,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be less than or equal to, got:",
+				"Expected to be less then or equal to, got:",
 				"\tthe expected '1.71' is not less or equal to the actual '1.7'",
 			},
 		},
@@ -96,7 +96,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"Path:\tcpu",
-				"Expected to be less than or equal to, got:",
+				"Expected to be less then or equal to, got:",
 				"\tthe expected '1.342' is not less or equal to the actual '1.341'",
 			},
 		},

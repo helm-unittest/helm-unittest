@@ -65,7 +65,7 @@ tests:
           path: metadata.name
           type: string
       - lengthEqual:
-          path:  spec.template.spec.containers
+          path: spec.template.spec.containers
           count: 1
       - notLengthEqual:
           path: spec.template.spec.containers
@@ -90,10 +90,10 @@ tests:
       - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
           value: "1540m"
-      - ge:
+      - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.11
-      - ge:
+      - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
 
@@ -116,9 +116,9 @@ tests:
       - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
           value: "1280m"
-      - le:
+      - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.09
-      - le:
+      - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
