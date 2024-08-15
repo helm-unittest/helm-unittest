@@ -299,7 +299,22 @@
 				  ports:
 				    - containerPort: null
 
-		- asserts[15] `lengthEqual` fail
+		- asserts[15] `isType` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			Path:	spec.replicas
+			Expected to be of type:
+				string
+			Actual:
+				int
+			DocumentIndex:	1
+			Path:	spec.replicas
+			Expected to be of type:
+				string
+			Actual:
+				int
+
+		- asserts[16] `lengthEqual` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
 			Error:
@@ -312,6 +327,7 @@
 		- asserts[16] `notLengthEqual` fail
 			Template:	basic/templates/deployment.yaml
 				expected result does not match
+
  FAIL  test deployment that would be fail as it is missing the include	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should not render
 		Error: template: basic/templates/deployment.yaml:13:24: executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>: error calling include: template: no template "basic/templates/configmap.yaml" associated with template "gotpl"

@@ -243,4 +243,5 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"isNotNull":         {reflect.TypeOf(validators.ExistsValidator{}), false, true},
 	"isEmpty":           {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), false, true},
 	"isNotEmpty":        {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), true, true},
+	"isType":            {reflect.TypeOf(validators.IsTypeValidator{}), false, true},
 }

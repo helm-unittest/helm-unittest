@@ -61,6 +61,9 @@ tests:
           count: 2
       - matchSnapshot:
           path: spec
+      - isType:
+          path: metadata.name
+          type: string
       - lengthEqual:
           path:  spec.template.spec.containers
           count: 1
