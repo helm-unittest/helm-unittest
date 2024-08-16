@@ -73,20 +73,3 @@ func TestIsAPIVersionValidatorWhenNegativeAndFail(t *testing.T) {
 		"	v1",
 	}, diff)
 }
-
-func TestIsAPIVersionValidatorWhenInvalidIndex(t *testing.T) {
-	doc := "apiVersion: v1"
-	manifest := makeManifest(doc)
-
-	validator := IsAPIVersionValidator{"v1"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}

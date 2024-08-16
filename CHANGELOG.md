@@ -1,3 +1,14 @@
+0.6.0 / 2024-08-31
+==================
+- Added feature isType assertion (credits @rquinio1A, resolves #325)
+- Added feature GreaterThan/LessThan assertion (credits @ivankatliarchuk, resolves #294)
+- Fix lengthEqual count to use 0 (credits @ivankatliarchuk, resolves #346, resolves #368)
+- Improvement on explicitly allow documentSelector to return multiple results (credits @mszygenda, resolves #308)
+- Improvement on failedTemplate to support regexPattern (credits @ivankatliarchuk, resolves #221, resolves #349)
+- Improvement on build and release workflows to align with OpenSSF (credits @ivankatliarchuk, resolves #360)
+- Update packages to latest patch versions
+- Update documentation
+
 0.5.2 / 2024-07-23
 ==================
 - Fix notLengthEqual assertion is never satisfied (credits @snorwin)

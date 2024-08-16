@@ -146,7 +146,8 @@ type TestJob struct {
 	Set              map[string]interface{}
 	Template         string
 	Templates        []string
-	DocumentIndex    *int                         `yaml:"documentIndex"`
+	DocumentIndex    *int `yaml:"documentIndex"`
+	DocumentIndices  map[string][]int
 	DocumentSelector *valueutils.DocumentSelector `yaml:"documentSelector"`
 	Release          struct {
 		Name      string
@@ -212,13 +213,6 @@ func (t *TestJob) RunV3(
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
 	if err != nil {
 		result.ExecError = err
-		return result
-	}
-
-	// determine documentIndex
-	indexError := t.determineDocumentIndex(manifestsOfFiles)
-	if indexError != nil {
-		result.ExecError = indexError
 		return result
 	}
 
@@ -482,23 +476,6 @@ func (t *TestJob) determineRenderSuccess() {
 	}
 }
 
-func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
-	filteredManifests := t.manifestsUnderTest(manifestOfFiles)
-	if t.DocumentSelector != nil {
-		idx, err := t.DocumentSelector.FindDocumentsIndex(filteredManifests)
-		if err != nil {
-			return err
-		} else {
-			// Update the DocumentIndex if the found idx is not -1
-			if idx != -1 {
-				t.DocumentIndex = &idx
-			}
-		}
-	}
-
-	return nil
-}
-
 // manifestsUnderTest is a method of the TestJob type that filters a map of Kubernetes manifests
 // based on the user specified template or templates. It returns a new map containing only the manifests
 // that match the specified criteria.
@@ -540,6 +517,10 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 
 		if t.DocumentIndex != nil {
 			assertion.DocumentIndex = *t.DocumentIndex
+		}
+
+		if assertion.DocumentSelector == nil {
+			assertion.DocumentSelector = t.DocumentSelector
 		}
 
 		if assertion.Template == "" {

@@ -2,7 +2,7 @@ suite: Document Selector and templates are local to the test block
 tests:
   - it: should match the correct kind when local templates configured and ignore index in documents count
     templates:
-      - templates/deployments.yaml
+      - templates/deployments-default-namespace.yaml
     documentSelector:
       path: metadata.name
       value: foo-deployment
@@ -13,7 +13,7 @@ tests:
       - hasDocuments:
           count: 2
   - it: should match the correct kind when local template is configured and ignore index in documents count
-    template: templates/deployments.yaml
+    template: templates/deployments-default-namespace.yaml
     documentSelector:
       path: metadata.name
       value: bar-deployment

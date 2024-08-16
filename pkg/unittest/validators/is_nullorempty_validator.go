@@ -30,10 +30,7 @@ func (v IsNullOrEmptyValidator) failInfo(actual interface{}, index int, not bool
 
 // Validate implement Validatable
 func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

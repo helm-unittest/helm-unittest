@@ -16,8 +16,8 @@ import (
 // Assertion defines target and metrics to validate rendered result
 type Assertion struct {
 	Template             string
-	DocumentIndex        int
 	DocumentSelector     *valueutils.DocumentSelector
+	DocumentIndex        int
 	Not                  bool
 	AssertType           string
 	validator            validators.Validatable
@@ -41,61 +41,63 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	// Sort or defaultTemplates to ensure a consistent output
-	sort.Strings(a.defaultTemplates)
+	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
+	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
-	for idx, template := range a.defaultTemplates {
-		rendered, ok := templatesResult[template]
-		var validatePassed bool
-		var singleFailInfo []string
-		if !ok && a.requireRenderSuccess {
-			noFile := []string{"Error:", a.noFileErrMessage(template)}
-			failInfo = append(failInfo, noFile...)
-			assertionPassed = false
-			break
-		}
+	// Sort templates to ensure a consistent output
+	sort.Strings(selectedTemplates)
 
-		if a.requireRenderSuccess != renderSucceed {
-			invalidRender := ""
-			if len(rendered) > 0 {
-				invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
-			} else {
-				invalidRender = "Error: rendered manifest is empty"
+	if indexError != nil {
+		invalidDocumentIndex := []string{"Error:", indexError.Error()}
+		failInfo = append(failInfo, invalidDocumentIndex...)
+	} else {
+		for idx, template := range selectedTemplates {
+			rendered, ok := templatesResult[template]
+			var validatePassed bool
+			var singleFailInfo []string
+			if !ok && a.requireRenderSuccess {
+				noFile := []string{"Error:", a.noFileErrMessage(template)}
+				failInfo = append(failInfo, noFile...)
+				assertionPassed = false
+				break
 			}
-			failInfo = append(failInfo, invalidRender)
-			break
+
+			if a.requireRenderSuccess != renderSucceed {
+				invalidRender := ""
+				if len(rendered) > 0 {
+					invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
+				} else {
+					invalidRender = "Error: rendered manifest is empty"
+				}
+				failInfo = append(failInfo, invalidRender)
+				break
+			}
+
+			singleTemplateResult := make(map[string][]common.K8sManifest)
+			singleTemplateResult[template] = rendered
+
+			selectedDocs := selectedDocsByTemplate[template]
+
+			validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
+				Docs:             rendered,
+				SelectedDocs:     &selectedDocs,
+				Negative:         a.Not != a.antonym,
+				SnapshotComparer: snapshotComparer,
+				RenderError:      renderError,
+			})
+
+			if !validatePassed {
+				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
+				singleFailInfo = append(failInfoTemplate, singleFailInfo...)
+			}
+
+			if idx == 0 {
+				assertionPassed = validatePassed
+			}
+
+			assertionPassed = assertionPassed && validatePassed
+			failInfo = append(failInfo, singleFailInfo...)
 		}
-
-		singleTemplateResult := make(map[string][]common.K8sManifest)
-		singleTemplateResult[template] = rendered
-
-		// Update the DocumentIndex if the found idx is not -1
-		indexError := a.determineDocumentIndex(singleTemplateResult)
-		if indexError != nil {
-			invalidDocumentIndex := []string{"Error:", indexError.Error()}
-			failInfo = append(failInfo, invalidDocumentIndex...)
-			break
-		}
-
-		validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
-			Docs:             rendered,
-			Index:            a.DocumentIndex,
-			Negative:         a.Not != a.antonym,
-			SnapshotComparer: snapshotComparer,
-			RenderError:      renderError,
-		})
-
-		if !validatePassed {
-			failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
-			singleFailInfo = append(failInfoTemplate, singleFailInfo...)
-		}
-
-		if idx == 0 {
-			assertionPassed = validatePassed
-		}
-
-		assertionPassed = assertionPassed && validatePassed
-		failInfo = append(failInfo, singleFailInfo...)
 	}
 
 	result.Passed = assertionPassed
@@ -104,18 +106,50 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) determineDocumentIndex(templatesResult map[string][]common.K8sManifest) error {
-	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
-		idx, err := a.DocumentSelector.FindDocumentsIndex(templatesResult)
-		if err != nil {
-			return err
-		} else {
-			if idx != -1 {
-				a.DocumentIndex = idx
-			}
-		}
+func (a *Assertion) getDocumentsByDefaultTemplates(templatesResult map[string][]common.K8sManifest) map[string][]common.K8sManifest {
+	documentsByDefaultTemplates := map[string][]common.K8sManifest{}
+
+	for _, template := range a.defaultTemplates {
+		documentsByDefaultTemplates[template] = templatesResult[template]
 	}
-	return nil
+
+	return documentsByDefaultTemplates
+}
+
+func (a *Assertion) getKeys(docs map[string][]common.K8sManifest) []string {
+	keys := []string{}
+
+	for key := range docs {
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
+func (a *Assertion) selectDocumentsForAssertion(docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+	if a.DocumentSelector != nil && a.DocumentSelector.Path != "" {
+		return a.DocumentSelector.SelectDocuments(docs)
+	}
+
+	if a.DocumentIndex != -1 {
+		return a.selectDocumentsByIndex(a.DocumentIndex, docs)
+	}
+
+	return docs, nil
+}
+
+func (a *Assertion) selectDocumentsByIndex(index int, docs map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+	selectedDocs := map[string][]common.K8sManifest{}
+
+	for template, manifests := range docs {
+		if index >= len(manifests) {
+			return map[string][]common.K8sManifest{}, fmt.Errorf("Document index %d is out of rage", a.DocumentIndex)
+		}
+
+		selectedDocs[template] = []common.K8sManifest{manifests[index]}
+	}
+
+	return selectedDocs, nil
 }
 
 func (a *Assertion) noFileErrMessage(template string) string {
@@ -153,10 +187,14 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
 		documentSelectorPath := documentSelector["path"].(string)
 		documentSelectorValue := documentSelector["value"]
+		documentSelectorMatchMany := documentSelector["matchMany"] == true
+		documentSelectorSkipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
 
 		a.DocumentSelector = &valueutils.DocumentSelector{
-			Path:  documentSelectorPath,
-			Value: documentSelectorValue,
+			Path:               documentSelectorPath,
+			Value:              documentSelectorValue,
+			MatchMany:          documentSelectorMatchMany,
+			SkipEmptyTemplates: documentSelectorSkipEmptyTemplates,
 		}
 	}
 

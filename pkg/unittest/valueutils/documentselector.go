@@ -8,48 +8,75 @@ import (
 )
 
 type DocumentSelector struct {
-	Path  string
-	Value interface{}
+	SkipEmptyTemplates bool `yaml:"skipEmptyTemplates"`
+	MatchMany          bool `yaml:"matchMany"`
+	Path               string
+	Value              interface{}
 }
 
-// FindDocumentIndex, find the index of a document, based on a jsonyamlpath and value
-func (ds DocumentSelector) FindDocumentsIndex(manifests map[string][]common.K8sManifest) (int, error) {
-	indexFound := false
-	actualIndex := -1
-	for _, fileManifests := range manifests {
-		for idx, doc := range fileManifests {
-			var indexError error
-			actualIndex, indexFound, indexError = ds.findDocumentIndex(doc, indexFound, actualIndex, idx)
-			if indexError != nil {
-				return actualIndex, indexError
+func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
+
+	matchingDocuments := map[string][]common.K8sManifest{}
+	matchingDocumentsCount := 0
+
+	for template, manifests := range documentsByTemplate {
+		filteredManifests, err := ds.selectDocuments(manifests)
+
+		filteredManifestsCount := len(filteredManifests)
+		matchingDocumentsCount += filteredManifestsCount
+
+		if err != nil {
+			return map[string][]common.K8sManifest{}, err
+		}
+
+		if !ds.MatchMany && matchingDocumentsCount > 1 {
+			return map[string][]common.K8sManifest{}, errors.New("multiple indexes found")
+		}
+
+		if filteredManifestsCount > 0 || !ds.SkipEmptyTemplates {
+			matchingDocuments[template] = filteredManifests
+		}
+	}
+
+	return matchingDocuments, nil
+}
+
+func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.K8sManifest, error) {
+	selectedDocs := []common.K8sManifest{}
+
+	for _, doc := range docs {
+		var indexError error
+		isMatchingSelector, indexError := ds.isMatchingSelector(doc)
+
+		if indexError != nil {
+			return selectedDocs, indexError
+		} else if isMatchingSelector {
+			if (!ds.MatchMany) && (len(selectedDocs) > 0) {
+				return selectedDocs, errors.New("multiple indexes found")
+			} else {
+				selectedDocs = append(selectedDocs, doc)
 			}
 		}
 	}
 
-	if indexFound {
-		return actualIndex, nil
+	if ds.SkipEmptyTemplates || len(selectedDocs) > 0 {
+		return selectedDocs, nil
 	}
 
-	return actualIndex, errors.New("document not found")
+	return selectedDocs, errors.New("document not found")
 }
 
-func (ds DocumentSelector) findDocumentIndex(doc common.K8sManifest, indexFound bool, currentIndex, idx int) (int, bool, error) {
-	foundIndex := currentIndex
+func (ds DocumentSelector) isMatchingSelector(doc common.K8sManifest) (bool, error) {
 	manifestValues, err := GetValueOfSetPath(doc, ds.Path)
 	if err != nil {
-		return foundIndex, false, err
+		return false, err
 	}
 
 	for _, manifestValue := range manifestValues {
 		if reflect.DeepEqual(ds.Value, manifestValue) {
-			if !indexFound {
-				indexFound = true
-				foundIndex = idx
-			} else {
-				return foundIndex, indexFound, errors.New("multiple indexes found")
-			}
+			return true, nil
 		}
 	}
 
-	return foundIndex, indexFound, nil
+	return false, nil
 }

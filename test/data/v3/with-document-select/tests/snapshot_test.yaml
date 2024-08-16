@@ -1,10 +1,10 @@
 suite: Document Selector snapshot tests
 templates:
-  - templates/deployments.yaml
+  - templates/deployments-default-namespace.yaml
   - templates/foo-service.yaml
 tests:
   - it: should match snapshot and find document
-    template: templates/deployments.yaml
+    template: templates/deployments-default-namespace.yaml
     documentSelector:
       path: metadata
       value:

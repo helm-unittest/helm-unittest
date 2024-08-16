@@ -108,7 +108,6 @@ func TestFailedTemplateValidatorWhenEmptyFail(t *testing.T) {
 			pass, diff := tt.validator.Validate(&ValidateContext{
 				Docs:     []common.K8sManifest{},
 				Negative: false,
-				Index:    -1,
 			})
 
 			assert.False(t, pass)
@@ -141,7 +140,6 @@ func TestFailedTemplateValidatorWhenEmptyNegativeAndOk(t *testing.T) {
 			pass, diff := tt.validator.Validate(&ValidateContext{
 				Docs:     []common.K8sManifest{},
 				Negative: true,
-				Index:    -1,
 			})
 
 			assert.True(t, pass)
@@ -227,43 +225,6 @@ func TestFailedTemplateValidatorWhenNegativeAndFail(t *testing.T) {
 	}, diff)
 }
 
-func TestFailedTemplateValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(failedTemplate)
-
-	tests := []struct {
-		name      string
-		validator FailedTemplateValidator
-	}{
-		{
-			name:      "test case 1: with error message",
-			validator: FailedTemplateValidator{ErrorMessage: "A field should be required"},
-		},
-		{
-			name:      "test case 2: empty error message",
-			validator: FailedTemplateValidator{},
-		},
-		{
-			name:      "test case 3: with error message",
-			validator: FailedTemplateValidator{ErrorPattern: "should be required"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pass, diff := tt.validator.Validate(&ValidateContext{
-				Docs:  []common.K8sManifest{manifest},
-				Index: 2,
-			})
-
-			assert.False(t, pass)
-			assert.Equal(t, []string{
-				"Error:",
-				"	documentIndex 2 out of range",
-			}, diff)
-		})
-	}
-}
-
 func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -284,7 +245,6 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 
 			pass, diff := tt.validator.Validate(&ValidateContext{
 				Docs:        []common.K8sManifest{},
-				Index:       -1,
 				RenderError: errors.New(tt.validator.ErrorMessage),
 			})
 

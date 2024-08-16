@@ -15,17 +15,16 @@ ENV PLUGIN_URL="https://github.com/helm-unittest/helm-unittest/"
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
 # Ensure to have latest packages
-RUN apk upgrade --no-cache
-RUN apk add --no-cache --update bash ca-certificates curl git && \
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --update bash ca-certificates curl git && \
     curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} | tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
     helm plugin install ${PLUGIN_URL} --version ${PLUGIN_VERSION} && \
     rm -rf ${TARGETOS}-${TARGETARCH} && \
     apk del curl git bash && \
-    rm -f /var/cache/apk/*
-
-RUN addgroup -S helmgroup && \
+    rm -f /var/cache/apk/* && \
+    addgroup -S helmgroup && \
     adduser -u 1000 -S helmuser -G helmgroup
 
 USER helmuser
