@@ -12,10 +12,10 @@ import (
 type LengthEqualDocumentsValidator struct {
 	Paths []string // optional
 	Path  string   // optional
-	Count int      // optional if paths defined
+	Count *int     // optional if paths defined
 }
 
-func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, idx, count int) (bool, []string, int) {
+func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, idx int, count *int) (bool, []string, int) {
 	spec, err := valueutils.GetValueOfSetPath(manifest, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, idx, err.Error()), 0
@@ -26,15 +26,13 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	}
 
 	specArr, ok := spec[0].([]interface{})
-	if !ok {
+	if !ok && count == nil {
 		return false, splitInfof(errorFormat, idx, fmt.Sprintf("%s is not array", path)), 0
 	}
 	specLen := len(specArr)
-	if count > -1 {
-		if specLen != count {
-			return false, splitInfof(errorFormat, idx, fmt.Sprintf(
-				"count doesn't match as expected. expected: %d actual: %d", count, specLen)), 0
-		}
+	if count != nil && specLen != *count {
+		return false, splitInfof(errorFormat, idx, fmt.Sprintf(
+			"count doesn't match as expected. expected: %d actual: %d", *count, specLen)), 0
 	}
 	return true, []string{}, specLen
 }
@@ -64,20 +62,20 @@ func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string
 	return true, []string{}, arrayCount
 }
 
-func (v LengthEqualDocumentsValidator) validatePathCount(context *ValidateContext) bool {
-	return len(v.Path) > 0 && v.Count == 0
+func (v LengthEqualDocumentsValidator) validatePathCount() bool {
+	return len(v.Path) > 0 && (v.Count == nil || (v.Count != nil && *v.Count < 0))
 }
 
-func (v LengthEqualDocumentsValidator) validatePathPaths(context *ValidateContext) bool {
+func (v LengthEqualDocumentsValidator) validatePathPaths() bool {
 	return len(v.Path) > 0 && len(v.Paths) > 0
 }
 
 // Validate implement Validatable
 func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
-	if v.validatePathCount(context) {
+	if v.validatePathCount() {
 		return false, splitInfof(errorFormat, -1, "'count' field must be set if 'path' is used")
 	}
-	if v.validatePathPaths(context) {
+	if v.validatePathPaths() {
 		return false, splitInfof(errorFormat, -1, "'paths' couldn't be used with 'path'")
 	}
 	singleMode := len(v.Path) > 0
@@ -98,7 +96,7 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 			optimizeCheck := true
 			for _, path := range v.Paths {
 				var validateSingleErrors []string
-				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, -1)
+				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, v.Count)
 				if !validateSuccess {
 					validateErrors = append(validateErrors, validateSingleErrors...)
 					optimizeCheck = false
