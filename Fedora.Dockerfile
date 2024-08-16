@@ -26,10 +26,9 @@ RUN yum install -y git && \
     helm plugin install ${PLUGIN_URL} && \
     rm -rf ${TARGETOS}-${TARGETARCH} && \
     yum remove -y git && \
-    rm -rf /var/cache/yum/* ;
-
-RUN groupadd -r helmgroup \
-    && useradd -u 1000 -r helmuser -g helmgroup
+    rm -rf /var/cache/yum/* && \
+    groupadd -r helmgroup && \
+    useradd -u 1000 -r helmuser -g helmgroup
 
 USER helmuser
 
