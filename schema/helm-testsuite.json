@@ -407,7 +407,7 @@
                   "properties": {
                     "failedTemplate": {
                       "type": "object",
-                      "description": "Assert the value of errorMessage is the same as the human readable template error.",
+                      "description": "Assert the value of errorMessage is the same as the human readable template error, or assert that a template failure occurs.",
                       "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
                       "oneOf": [
                         {
@@ -441,6 +441,12 @@
                           "required": [
                             "errorPattern"
                           ]
+                        },
+                        {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "description": "Assert that a failure occurs while templating",
+                          "markdownDescription": "**failedTemplate** (object)\n\nAssert that a failure occurs while templating."
                         }
                       ]
                     }
