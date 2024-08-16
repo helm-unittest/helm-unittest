@@ -71,7 +71,6 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, schema, fmt.Sprintf("Schema '%s' is not valid!!!", fullPath))
 
-	// TODO: pass multiple tests tests
 	tests := []struct {
 		testsPath    string
 	}{
