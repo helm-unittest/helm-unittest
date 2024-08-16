@@ -556,7 +556,7 @@
                         },
                         "value": {
                           "description": "The expected value.",
-                          "markdownDescription": "**value** (number) _required_\n\nThe expected value."
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
                         }
                       },
                       "additionalProperties": false
@@ -582,7 +582,7 @@
                         },
                         "value": {
                           "description": "The expected value.",
-                          "markdownDescription": "**value** (number) _required_\n\nThe expected value."
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
                         }
                       },
                       "additionalProperties": false
