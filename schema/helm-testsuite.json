@@ -483,9 +483,8 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "number",
                           "description": "The expected value.",
-                          "markdownDescription": "**value** (number) _required_\n\nThe expected value."
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
                         }
                       },
                       "additionalProperties": false
@@ -510,9 +509,8 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "number",
                           "description": "The expected value.",
-                          "markdownDescription": "**value** (number) _required_\n\nThe expected value."
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
                         }
                       },
                       "additionalProperties": false
@@ -557,7 +555,6 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "number",
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number) _required_\n\nThe expected value."
                         }
@@ -584,7 +581,6 @@
                           "$ref": "#/definitions/assertion/path"
                         },
                         "value": {
-                          "type": "number",
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number) _required_\n\nThe expected value."
                         }
