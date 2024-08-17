@@ -12,22 +12,27 @@ env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
+  GO_VERSION: 1.22.x
 
 jobs:
   release:
     name: create distribution and upload to release
     runs-on: ubuntu-latest
-    environment: HELMUNITTEST-RELEASE
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+      with:
+        egress-policy: audit
+
     - name: checkout
       # https://github.com/actions/checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
     - name: setup go
       # https://github.com/actions/setup-go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
       with:
-        go-version: ${{ vars.GO_VERSION }}
+        go-version: ${{ env.GO_VERSION }}
 
     - name: make distribution
       shell: bash
@@ -35,7 +40,7 @@ jobs:
 
     - name: publish artifacts
       # https://github.com/softprops/action-gh-release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
       with:
         files: _dist/**
 
@@ -50,6 +55,11 @@ jobs:
       HELM_LATEST_VERSION: ${{ steps.helm-versions.outputs.helmlatestversion }}
       HELM_PLUGIN_LATEST_VERSION: ${{ steps.helm-plugin-versions.outputs.helmpluginlatestversion }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
       - id: helm-versions
         run: |
           helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
@@ -74,6 +84,11 @@ jobs:
         helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
@@ -83,22 +98,22 @@ jobs:
       - name: Docker meta
         id: meta
         # https://github.com/docker/metadata-action
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
       
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
       
       - name: Set up Docker Buildx
         # https://github.com/docker/setup-buildx-action
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
       
       - name: Login to Docker Hub
         # https://github.com/docker/login-action
-        uses: docker/login-action@v3
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -106,7 +121,7 @@ jobs:
       - name: Build and push by digest
         id: build
         # https://github.com/docker/build-push-action
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           build-args: |
             HELM_VERSION=${{ matrix.helmVersion }}
@@ -124,7 +139,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
       
       - name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -144,27 +159,35 @@ jobs:
         helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: /tmp/digests
           pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
           merge-multiple: true
       
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
       
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        env:
+          HELM_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_LATEST_VERSION) }}
+          PLUGIN_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
-            type=raw,value=latest,enable=${{ (matrix.helmVersion == needs.determine-versions.outputs.HELM_LATEST_VERSION) && (matrix.pluginVersion == needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
+            type=raw,value=latest,enable=${{ (matrix.helmVersion == env.HELM_LATEST) && (matrix.pluginVersion == env.PLUGIN_LATEST) }}
       
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

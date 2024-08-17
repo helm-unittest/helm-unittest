@@ -3,14 +3,14 @@ FROM --platform=$BUILDPLATFORM fedora:40
 # variable "HELM_VERSION" must be passed as docker environment variables during the image build
 # docker buildx build --load --no-cache --platform linux/amd64 --build-arg HELM_VERSION=3.13.0 -t fedora/helm-unittest:test -f Fedora.Dockerfile .
 
-ADD plugin.yaml helm-unittest/plugin.yaml
-ADD install-binary.sh helm-unittest/install-binary.sh
-ADD untt helm-unittest/untt
-
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 ARG HELM_VERSION
+
+COPY plugin.yaml helm-unittest/plugin.yaml
+COPY install-binary.sh helm-unittest/install-binary.sh
+COPY untt helm-unittest/untt
 
 ENV SKIP_BIN_INSTALL=1
 ENV HELM_BASE_URL="https://get.helm.sh"
@@ -26,10 +26,9 @@ RUN yum install -y git && \
     helm plugin install ${PLUGIN_URL} && \
     rm -rf ${TARGETOS}-${TARGETARCH} && \
     yum remove -y git && \
-    rm -rf /var/cache/yum/* ;
-
-RUN groupadd -r helmgroup \
-    && useradd -u 1000 -r helmuser -g helmgroup
+    rm -rf /var/cache/yum/* && \
+    groupadd -r helmgroup && \
+    useradd -u 1000 -r helmuser -g helmgroup
 
 USER helmuser
 

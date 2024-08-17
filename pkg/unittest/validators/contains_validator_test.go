@@ -54,8 +54,7 @@ func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest1, manifest2},
-		Index: -1,
+		Docs: []common.K8sManifest{manifest1, manifest2},
 	})
 
 	assert.True(t, pass)
@@ -210,8 +209,7 @@ a:
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
@@ -236,8 +234,7 @@ func TestContainsValidatorMultiManifestWhenBothFail(t *testing.T) {
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
@@ -317,27 +314,6 @@ a:
 		"	expect 'a.b' to be an array, got:",
 		"	c: hello world",
 		"	d: foo bar",
-	}, diff)
-}
-
-func TestContainsValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestContains)
-
-	validator := ContainsValidator{
-		"a.b",
-		common.K8sManifest{"d": "foo bar"},
-		nil,
-		false,
-	}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }
 

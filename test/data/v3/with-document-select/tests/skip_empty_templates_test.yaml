@@ -1,0 +1,14 @@
+suite: Document Selector is matching many documents and skipping empty templates
+templates:
+  - "*"
+tests:
+  - it: deployment names should end with -deployment suffix
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+      skipEmptyTemplates: true
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: -deployment$

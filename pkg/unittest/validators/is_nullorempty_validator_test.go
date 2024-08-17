@@ -98,22 +98,6 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 	}
 }
 
-func TestIsNullOrEmptyValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docWithEmptyElements)
-
-	validator := IsNullOrEmptyValidator{"a"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}
-
 func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 

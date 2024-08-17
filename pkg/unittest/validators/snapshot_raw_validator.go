@@ -32,10 +32,7 @@ func (v MatchSnapshotRawValidator) failInfo(compared *snapshot.CompareResult, no
 
 // Validate implement Validatable
 func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

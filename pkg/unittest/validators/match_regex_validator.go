@@ -38,70 +38,68 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 		return false, splitInfof(errorFormat, -1, verr.Error())
 	}
 
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
+		currentSuccess := false
+		currentSuccess, validateErrors = v.validateManifest(manifest, idx, context, currentSuccess, validateErrors)
 
-		p, err := regexp.Compile(v.Pattern)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, -1, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			break
-		}
-
-		if len(actual) == 0 {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
-
-		singleActual := actual[0]
-		if s, ok := singleActual.(string); ok {
-			if v.DecodeBase64 {
-				decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
-				if err != nil {
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
-					validateErrors = append(validateErrors, errorMessage...)
-					continue
-				}
-				s = string(decodedSingleActual)
-			}
-
-			if p.MatchString(s) == context.Negative {
-				validateSuccess = false
-				errorMessage := v.failInfo(s, idx, context.Negative)
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-
-			validateSuccess = determineSuccess(idx, validateSuccess, true)
-			continue
-		}
-
-		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-			"expect '%s' to be a string, got:\n%s",
-			v.Path,
-			common.TrustedMarshalYAML(singleActual),
-		))
-		validateErrors = append(validateErrors, errorMessage...)
+		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
 	}
 
+	return validateSuccess, validateErrors
+}
+
+func (v MatchRegexValidator) validateManifest(manifest common.K8sManifest, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+	if err != nil {
+		errorMessage := splitInfof(errorFormat, idx, err.Error())
+		validateErrors = append(validateErrors, errorMessage...)
+		return validateSuccess, validateErrors
+	}
+
+	p, err := regexp.Compile(v.Pattern)
+	if err != nil {
+		errorMessage := splitInfof(errorFormat, -1, err.Error())
+		validateErrors = append(validateErrors, errorMessage...)
+		return validateSuccess, validateErrors
+	}
+
+	if len(actual) == 0 {
+		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
+		validateErrors = append(validateErrors, errorMessage...)
+		return validateSuccess, validateErrors
+	}
+
+	singleActual := actual[0]
+	if s, ok := singleActual.(string); ok {
+		if v.DecodeBase64 {
+			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
+				validateErrors = append(validateErrors, errorMessage...)
+				return validateSuccess, validateErrors
+			}
+			s = string(decodedSingleActual)
+		}
+
+		if p.MatchString(s) == context.Negative {
+			errorMessage := v.failInfo(s, idx, context.Negative)
+			validateErrors = append(validateErrors, errorMessage...)
+			return validateSuccess, validateErrors
+		}
+
+		return true, validateErrors
+	}
+
+	errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
+		"expect '%s' to be a string, got:\n%s",
+		v.Path,
+		common.TrustedMarshalYAML(singleActual),
+	))
+	validateErrors = append(validateErrors, errorMessage...)
 	return validateSuccess, validateErrors
 }

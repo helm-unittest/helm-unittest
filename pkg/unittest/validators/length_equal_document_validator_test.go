@@ -52,14 +52,18 @@ spec:
   rules:
    - host: a.example.com
 `
+	testDocLengthEqual0_Success = `
+spec:
+  volumes:
+`
 )
 
 func TestLengthEqualDocumentsValidatorOk_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual1)
-
+	count := 1
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 1,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -71,10 +75,10 @@ func TestLengthEqualDocumentsValidatorOk_Single(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorOk_Single2(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 2,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -86,10 +90,10 @@ func TestLengthEqualDocumentsValidatorOk_Single2(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorNegativeOk_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual1)
-
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 2,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -131,10 +135,10 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Multi(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-
+	count := 1
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 1,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -146,10 +150,10 @@ func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 
 func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual2)
-
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Path:  "spec.tls",
-		Count: 2,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -189,13 +193,31 @@ func TestLengthEqualDocumentsValidatorWhenPathAndNoCount(t *testing.T) {
 	assert.Equal(t, []string{"Error:", "\t'count' field must be set if 'path' is used"}, diff)
 }
 
+func TestLengthEqualDocumentsValidatorWhenPathAndNegativeCount(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual3_Fail)
+
+	count := -24
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"Error:", "\t'count' field must be set if 'path' is used"}, diff)
+}
+
 func TestLengthEqualDocumentsValidatorWhenBadConfig(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual3_Fail)
 
+	count := 2
 	validator := LengthEqualDocumentsValidator{
 		Paths: []string{"spec.tls"},
 		Path:  "spec.tls",
-		Count: 2,
+		Count: &count,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -204,4 +226,35 @@ func TestLengthEqualDocumentsValidatorWhenBadConfig(t *testing.T) {
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{"Error:", "\t'paths' couldn't be used with 'path'"}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorOk_Empty(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual0_Success)
+	count := 0
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.volumes",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorOk_WhenNegative(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual0_Success)
+	count := 1
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.volumes",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

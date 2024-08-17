@@ -166,22 +166,6 @@ func TestMatchRegexValidatorWhenNegativeAndMatchFail(t *testing.T) {
 	}, diff)
 }
 
-func TestMatchRegexValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestMatchRegex)
-
-	validator := MatchRegexValidator{"a.b[0].c", "^hello", false}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}
-
 func TestMatchRegexValidatorWhenNoPattern(t *testing.T) {
 	manifest := makeManifest(docToTestMatchRegex)
 

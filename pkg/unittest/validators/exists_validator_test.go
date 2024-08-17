@@ -85,23 +85,6 @@ func TestExistsValidatorWhenNegativeAndFail(t *testing.T) {
 	}, diff)
 }
 
-func TestExistsValidatorWhenInvalidIndex(t *testing.T) {
-	doc := "a:"
-	manifest := makeManifest(doc)
-
-	validator := ExistsValidator{"a"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
-	}, diff)
-}
-
 func TestExistsValidatorWhenInvalidPath(t *testing.T) {
 	doc := "x:"
 	manifest := makeManifest(doc)

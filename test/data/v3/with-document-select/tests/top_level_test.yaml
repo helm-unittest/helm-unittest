@@ -1,6 +1,6 @@
 suite: Document Selector validation with object validation
 templates:
-  - templates/deployments.yaml
+  - templates/deployments-default-namespace.yaml
 tests:
   - it: should match the correct kind when global templates provided
     documentSelector:
