@@ -1066,6 +1066,16 @@
           "type": "string",
           "description": "The expected value.",
           "markdownDescription": "**value** (any)\n\nThe expected value."
+        },
+        "matchAny": {
+          "type": "boolean",
+          "description": "Set to true to allow matching multiple documents.",
+          "markdownDescription": "**matchAny** (boolean) _optional_\n\nSet to **true* to allow matching multiple documents. Defaults to **false** which means selector has to match single document across all templates."
+        },
+        "skipEmptyTemplates": {
+          "type": "boolean",
+          "description": "Set to true to skip asserting templates which didn't render any matching documents.",
+          "markdownDescription": "**skipEmptyTemplates** (boolean) _optional_\n\nSet to **true** to skip asserting templates which didn't render any matching documents. Defaults to **false* which means selector have to find at least one document in every template."
         }
       },
       "required": [

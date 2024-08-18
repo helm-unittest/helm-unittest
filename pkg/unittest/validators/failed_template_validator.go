@@ -46,63 +46,84 @@ func (a FailedTemplateValidator) failInfo(actual interface{}, index int, not boo
 
 // Validate implement Validatable
 func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
-	validateSuccess := true
+	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	if a.ErrorMessage != "" && a.ErrorPattern != "" {
-		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, -1, "single attribute 'errorMessage' or 'errorPattern' supported at the same time")
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if context.RenderError != nil {
 		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
-			validateSuccess = false
 			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+		} else {
+			validateSuccess = true
 		}
 	} else {
-		for idx, manifest := range manifests {
-			actual := manifest[common.RAW]
+		validateSuccess, validateErrors = a.validateManifests(manifests, context)
+	}
 
-			if a == (FailedTemplateValidator{}) && !context.Negative {
-				// If the validator is empty and the context is not negative,
-				// continue to the next iteration without throwing an error.
-				continue
-			}
+	return validateSuccess, validateErrors
+}
 
-			if a.ErrorPattern != "" {
-				p, err := regexp.Compile(a.ErrorPattern)
-				if err != nil {
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, -1, err.Error())
-					validateErrors = append(validateErrors, errorMessage...)
-					break
-				}
+func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifest, context *ValidateContext) (bool, []string) {
+	validateSuccess := true
+	validateErrors := make([]string, 0)
 
-				if p.MatchString(actual.(string)) == context.Negative {
-					validateSuccess = false
-					errorMessage := a.failInfo(actual, idx, context.Negative)
-					validateErrors = append(validateErrors, errorMessage...)
-					continue
-				}
-			} else if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, actual.(string)) == context.Negative {
-				validateSuccess = false
-				errorMessage := a.failInfo(actual, idx, context.Negative)
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-			validateSuccess = determineSuccess(idx, validateSuccess, true)
+	for idx, manifest := range manifests {
+		currentSuccess := false
+		actual := manifest[common.RAW]
+
+		if a == (FailedTemplateValidator{}) && !context.Negative {
+			// If the validator is empty and the context is not negative,
+			// continue to the next iteration without throwing an error.
+			continue
 		}
 
-		if len(manifests) == 0 && !context.Negative {
-			validateSuccess = false
-			errorMessage := a.failInfo("No failed document", -1, context.Negative)
-			validateErrors = append(validateErrors, errorMessage...)
+		if a.ErrorPattern != "" {
+			currentSuccess, validateErrors = a.validateErrorPattern(actual, idx, context, currentSuccess, validateErrors)
+		} else {
+			currentSuccess, validateErrors = a.validateErrorMessage(actual, idx, context, currentSuccess, validateErrors)
 		}
+
+		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		validateSuccess = false
+		errorMessage := a.failInfo("No failed document", -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	}
+
+	return validateSuccess, validateErrors
+}
+
+func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+	p, err := regexp.Compile(a.ErrorPattern)
+	if err != nil {
+		errorMessage := splitInfof(errorFormat, -1, err.Error())
+		validateErrors = append(validateErrors, errorMessage...)
+		return validateSuccess, validateErrors
+	}
+
+	if p.MatchString(actual.(string)) == context.Negative {
+		errorMessage := a.failInfo(actual, idx, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else {
+		validateSuccess = true
+	}
+
+	return validateSuccess, validateErrors
+}
+
+func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+	if reflect.DeepEqual(a.ErrorMessage, actual.(string)) == context.Negative {
+		errorMessage := a.failInfo(actual, idx, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

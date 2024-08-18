@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var docToTestIndex0 = `
+var firstTemplateDocToTestIndex0 = `
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,7 +17,7 @@ metadata:
   namespace: bar
   service: internal
 `
-var docToTestIndex1 = `
+var firstTemplateDocToTestIndex1 = `
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,38 +25,66 @@ metadata:
   namespace: bar
 `
 
-func createMultiManifest() map[string][]common.K8sManifest {
-	manifest1 := common.K8sManifest{}
-	yaml.Unmarshal([]byte(docToTestIndex0), &manifest1)
-	manifest2 := common.K8sManifest{}
-	yaml.Unmarshal([]byte(docToTestIndex1), &manifest2)
+var secondTemplateDocToTestIndex0 = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: foo
+  namespace: foo
+`
 
-	manifestArray := []common.K8sManifest{manifest1, manifest2}
-	multiManifest := map[string][]common.K8sManifest{
-		"service.yaml": manifestArray,
+var secondTemplateDocToTestIndex1 = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: foo
+  namespace: foo
+`
+
+func createSingleTemplateMultiManifest() map[string][]common.K8sManifest {
+	return map[string][]common.K8sManifest{
+		"firstTemplate": {
+			parseManifest(firstTemplateDocToTestIndex0), parseManifest(firstTemplateDocToTestIndex1),
+		},
 	}
+}
 
-	return multiManifest
+func createMultiTemplateMultiManifest() map[string][]common.K8sManifest {
+	return map[string][]common.K8sManifest{
+		"firstTemplate": {
+			parseManifest(firstTemplateDocToTestIndex0), parseManifest(firstTemplateDocToTestIndex1),
+		},
+		"secondTemplate": {
+			parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1),
+		},
+	}
+}
+
+func parseManifest(manifest string) common.K8sManifest {
+	parsedManifest := common.K8sManifest{}
+	yaml.Unmarshal([]byte(manifest), &parsedManifest)
+
+	return parsedManifest
 }
 
 func TestFindDocumentsIndexSinglePathOk(t *testing.T) {
 	a := assert.New(t)
-	expectedIndex := 0
+	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": {parseManifest(firstTemplateDocToTestIndex0)}}
 
 	selector := DocumentSelector{
 		Path:  "metadata.service",
 		Value: "internal",
 	}
 
-	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
 
 	a.Nil(err)
-	a.Equal(expectedIndex, actualIndex)
+	a.Equal(expectedManifests, actualManifests)
 }
 
 func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 	a := assert.New(t)
-	expectedIndex := 1
+	expectedManifests := map[string][]common.K8sManifest{"firstTemplate": {parseManifest(firstTemplateDocToTestIndex1)}}
 
 	selector := DocumentSelector{
 		Path: "metadata",
@@ -66,40 +94,92 @@ func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 		},
 	}
 
-	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
 
 	a.Nil(err)
-	a.Equal(expectedIndex, actualIndex)
+	a.Equal(expectedManifests, actualManifests)
 }
 
 func TestFindDocumentIndexMultiIndexNOk(t *testing.T) {
 	a := assert.New(t)
-	expectedIndex := 0
+	expectedManifests := map[string][]common.K8sManifest{}
 
 	selector := DocumentSelector{
 		Path:  "metadata.name",
 		Value: "foo",
 	}
 
-	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
 
 	a.NotNil(err)
 	a.EqualError(err, "multiple indexes found")
-	a.Equal(expectedIndex, actualIndex)
+	a.Equal(expectedManifests, actualManifests)
+}
+
+func TestFindDocumentIndicesMultiAllowedIndexOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := createSingleTemplateMultiManifest()
+
+	selector := DocumentSelector{
+		Path:      "metadata.name",
+		Value:     "foo",
+		MatchMany: true,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
 }
 
 func TestFindDocumentIndexNoDocumentNOk(t *testing.T) {
 	a := assert.New(t)
-	expectedIndex := -1
+	expectedManifests := map[string][]common.K8sManifest{}
 
 	selector := DocumentSelector{
 		Path:  "meta.data",
 		Value: "bar",
 	}
 
-	actualIndex, err := selector.FindDocumentsIndex(createMultiManifest())
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
 
 	a.NotNil(err)
 	a.EqualError(err, "document not found")
-	a.Equal(expectedIndex, actualIndex)
+	a.Equal(expectedManifests, actualManifests)
+}
+
+func TestFindDocumentIndicesMatchManyAndSkipEmptyTemplatesOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := map[string][]common.K8sManifest{
+		"secondTemplate": {parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
+	}
+
+	selector := DocumentSelector{
+		Path:               "metadata.namespace",
+		Value:              "foo",
+		MatchMany:          true,
+		SkipEmptyTemplates: true,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createMultiTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
+}
+
+func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := map[string][]common.K8sManifest{}
+
+	selector := DocumentSelector{
+		Path:               "metadata.namespace",
+		Value:              "foo",
+		MatchMany:          true,
+		SkipEmptyTemplates: false,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createMultiTemplateMultiManifest())
+
+	a.EqualError(err, "document not found")
+	a.Equal(expectedManifests, actualManifests)
 }

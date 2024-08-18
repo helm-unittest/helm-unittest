@@ -79,43 +79,19 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 		return false, splitInfof(errorFormat, -1, "'paths' couldn't be used with 'path'")
 	}
 	singleMode := len(v.Path) > 0
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
+
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 	for idx, manifest := range manifests {
+		currentSuccess := false
 		if singleMode {
-			var validateSingleErrors []string
-			validateSuccess, validateSingleErrors, _ = v.singleValidateCounts(manifest, v.Path, idx, v.Count)
-			validateErrors = append(validateErrors, validateSingleErrors...)
-			continue
+			currentSuccess, validateErrors = v.validateSingleMode(manifest, idx, validateErrors)
 		} else {
-			pathCount := map[string]int{}
-			optimizeCheck := true
-			for _, path := range v.Paths {
-				var validateSingleErrors []string
-				validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, v.Count)
-				if !validateSuccess {
-					validateErrors = append(validateErrors, validateSingleErrors...)
-					optimizeCheck = false
-				}
-			}
-
-			if !optimizeCheck {
-				continue
-			}
-
-			var arrayCount int
-			var validateSingleErrors []string
-			validateSuccess, validateSingleErrors, arrayCount = v.arraysValidateCounts(pathCount, idx)
-			validateErrors = append(validateErrors, validateSingleErrors...)
-
-			if arrayCount == -1 {
-				continue
-			}
+			currentSuccess, validateErrors = v.validateMultipleMode(manifest, idx, validateErrors)
 		}
+
+		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
 	}
 
 	if validateSuccess == context.Negative {
@@ -124,6 +100,41 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	} else {
 		validateSuccess = true
 		validateErrors = make([]string, 0)
+	}
+
+	return validateSuccess, validateErrors
+}
+
+func (v LengthEqualDocumentsValidator) validateSingleMode(manifest common.K8sManifest, idx int, validateErrors []string) (bool, []string) {
+	validateSuccess, validateSingleErrors, _ := v.singleValidateCounts(manifest, v.Path, idx, v.Count)
+	validateErrors = append(validateErrors, validateSingleErrors...)
+	return validateSuccess, validateErrors
+}
+
+func (v LengthEqualDocumentsValidator) validateMultipleMode(manifest common.K8sManifest, idx int, validateErrors []string) (bool, []string) {
+	var validateSingleErrors []string
+	pathCount := map[string]int{}
+	optimizeCheck := true
+	validateSuccess := false
+
+	for _, path := range v.Paths {
+		validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, v.Count)
+		if !validateSuccess {
+			validateErrors = append(validateErrors, validateSingleErrors...)
+			optimizeCheck = false
+		}
+	}
+
+	if !optimizeCheck {
+		return false, validateErrors
+	}
+
+	var arrayCount int
+	validateSuccess, validateSingleErrors, arrayCount = v.arraysValidateCounts(pathCount, idx)
+	validateErrors = append(validateErrors, validateSingleErrors...)
+
+	if arrayCount == -1 {
+		return false, validateErrors
 	}
 
 	return validateSuccess, validateErrors

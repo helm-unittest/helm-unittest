@@ -32,10 +32,7 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 		return false, splitInfof(errorFormat, -1, verr.Error())
 	}
 
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

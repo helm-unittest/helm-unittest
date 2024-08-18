@@ -40,10 +40,7 @@ func (a EqualRawValidator) failInfo(actual interface{}, not bool) []string {
 
 // Validate implement Validatable
 func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)

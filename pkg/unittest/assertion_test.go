@@ -367,3 +367,30 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 		CustomInfo: "",
 	}, result)
 }
+
+func TestAssertionAssertWhenDocumentIndexIsOutOfRange(t *testing.T) {
+	manifest := common.K8sManifest{}
+	renderedMap := map[string][]common.K8sManifest{
+		"template.yaml": {manifest},
+	}
+	assertionYAML := `
+template: template.yaml
+documentIndex: 1
+equal:
+`
+	assertion := new(Assertion)
+	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	a.Equal(&results.AssertionResult{
+		Index:      0,
+		FailInfo:   []string{"Error:", "Document index 1 is out of rage"},
+		Passed:     false,
+		AssertType: "equal",
+		Not:        false,
+		CustomInfo: "",
+	}, result)
+}
