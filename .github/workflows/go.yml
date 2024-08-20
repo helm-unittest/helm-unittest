@@ -21,6 +21,7 @@ jobs:
     permissions:
       # Needed to upload the results to github dashboard.
       checks: write
+      issues: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
