@@ -22,6 +22,7 @@ jobs:
       # Needed to upload the results to github dashboard.
       checks: write
       issues: write
+      pull-requests: write      
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
