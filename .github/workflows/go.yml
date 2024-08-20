@@ -75,6 +75,8 @@ jobs:
     permissions:
       # Needed to upload the results to code-scanning dashboard.
       security-events: write
+      # Needed to ensure the job is executed.
+      statuses: write
     runs-on: ubuntu-latest
     needs:
       - full-test
