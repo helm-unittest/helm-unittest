@@ -1,4 +1,4 @@
-name: go release
+name: 'Helm-Unittest Release'
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: write # to publish assets to the release
+  contents: read
 
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
@@ -17,13 +17,10 @@ env:
 jobs:
   release:
     name: create distribution and upload to release
+    permissions:
+      contents: write # to publish assets to the release
     runs-on: ubuntu-latest
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-      with:
-        egress-policy: audit
-
     - name: checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -55,11 +52,6 @@ jobs:
       HELM_LATEST_VERSION: ${{ steps.helm-versions.outputs.helmlatestversion }}
       HELM_PLUGIN_LATEST_VERSION: ${{ steps.helm-plugin-versions.outputs.helmpluginlatestversion }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-        with:
-          egress-policy: audit
-
       - id: helm-versions
         run: |
           helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
@@ -73,6 +65,8 @@ jobs:
           
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
+    permissions:
+      contents: write # to publish assets to the release
     runs-on: ubuntu-latest
     environment: HELMUNITTEST-RELEASE
     needs:
@@ -84,11 +78,6 @@ jobs:
         helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-        with:
-          egress-policy: audit
-
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
@@ -159,11 +148,6 @@ jobs:
         helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-        with:
-          egress-policy: audit
-
       - name: Download digests
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
