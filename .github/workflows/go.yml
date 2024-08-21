@@ -1,4 +1,4 @@
-name: go tests
+name: 'Go Build and Tests'
 
 on:
   push:
@@ -11,26 +11,29 @@ on:
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   GO_VERSION: 1.22.x
+
+permissions:
+  contents: read
       
 jobs:
   full-test:
-    name: full sdk and tools test
+    name: Full SDK and Tools Test
+    permissions:
+      # Needed to upload the results to github dashboard.
+      checks: write
+      issues: write
+      pull-requests: write      
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # tests for target OS
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-      with:
-        egress-policy: audit
-
-    - name: checkout
+    - name: Checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-    - name: setup go
+    - name: Setup Go
       # https://github.com/actions/setup-go
       uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
       with:
@@ -53,13 +56,13 @@ jobs:
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
-      uses: sonarsource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92 # v2.3.0
+      uses: sonarsource/sonarcloud-github-action@eb211723266fe8e83102bac7361f0a05c3ac1d1b # v3.0.0
       if: matrix.os == 'ubuntu-latest' && env.SONAR_TOKEN != ''
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     # Upload the original go test log as an artifact for later review.
-    - name: Upload test log
+    - name: Upload Testlog
       # https://github.com/EnricoMi/publish-unit-test-result-action
       uses: EnricoMi/publish-unit-test-result-action@567cc7f8dcea3eba5da355f6ebc95663310d8a07 # v2.17.0
       if: always() && matrix.os == 'ubuntu-latest'
@@ -68,23 +71,23 @@ jobs:
           test-results/go-test-report.xml
 
   validate_docker:
-    name: build and test docker
+    name: Build and Test Docker
+    permissions:
+      # Needed to upload the results to code-scanning dashboard.
+      security-events: write
+      # Needed to ensure the job is executed.
+      statuses: write
     runs-on: ubuntu-latest
     needs:
       - full-test
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-      with:
-        egress-policy: audit
-
-    - name: checkout
+    - name: Checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         fetch-depth: 1
 
-    - name: setup go
+    - name: Setup go
       # https://github.com/actions/setup-go
       uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
       with:
@@ -110,7 +113,7 @@ jobs:
         output: trivy-results.sarif
         
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@429e1977040da7a23b6822b13c129cd1ba93dbb2 # v3.26.2
+      uses: github/codeql-action/upload-sarif@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3.26.3
       if: always()
       with:
         sarif_file: trivy-results.sarif
