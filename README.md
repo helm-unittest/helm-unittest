@@ -1,6 +1,6 @@
 # helm unittest
 
-[![Github Actions](https://img.shields.io/github/actions/workflow/status/helm-unittest/helm-unittest/go.yml)](https://github.com/helm-unittest/helm-unittest/actions)
+[![Github Actions](https://github.com/helm-unittest/helm-unittest/actions/workflows/go.yml/badge.svg)](https://github.com/helm-unittest/helm-unittest/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9365/badge)](https://www.bestpractices.dev/projects/9365)
