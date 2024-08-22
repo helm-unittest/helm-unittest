@@ -1,8 +1,9 @@
 # helm unittest
 
-[![CircleCI](https://circleci.com/gh/helm-unittest/helm-unittest.svg?style=svg)](https://circleci.com/gh/helm-unittest/helm-unittest)
+[![Github Actions](https://img.shields.io/github/actions/workflow/status/helm-unittest/helm-unittest/go.yml)](https://github.com/helm-unittest/helm-unittest/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9365/badge)](https://www.bestpractices.dev/projects/9365)
 [![OpenSSF](https://api.scorecard.dev/projects/github.com/helm-unittest/helm-unittest/badge)](https://scorecard.dev/viewer/?uri=github.com/helm-unittest/helm-unittest)
 
 Unit test for _helm chart_ in YAML to keep your chart consistent and robust!
