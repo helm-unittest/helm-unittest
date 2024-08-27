@@ -122,3 +122,18 @@ tests:
       - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
+      - notLessOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.2
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 11.0
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 0.1
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.memory
+          value: "1Mi"
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.memory
+          value: "101Mi"
