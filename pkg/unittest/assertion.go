@@ -51,6 +51,29 @@ func (a *Assertion) Assert(
 		invalidDocumentIndex := []string{"Error:", indexError.Error()}
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
+		// Check for failed templates when no documents are found
+		if len(selectedTemplates) == 0 {
+			var validatePassed bool
+			var singleFailInfo []string
+
+			if a.requireRenderSuccess != renderSucceed {
+				invalidRender := "Error: rendered manifest is empty"
+				failInfo = append(failInfo, invalidRender)
+				assertionPassed = false
+			} else {
+				validatePassed, singleFailInfo = a.validator.Validate(&validators.ValidateContext{
+					Docs:             []common.K8sManifest{},
+					SelectedDocs:     &[]common.K8sManifest{},
+					Negative:         a.Not != a.antonym,
+					SnapshotComparer: snapshotComparer,
+					RenderError:      renderError,
+				})
+			}
+
+			assertionPassed = validatePassed
+			failInfo = append(failInfo, singleFailInfo...)
+		}
+
 		for idx, template := range selectedTemplates {
 			rendered, ok := templatesResult[template]
 			var validatePassed bool
