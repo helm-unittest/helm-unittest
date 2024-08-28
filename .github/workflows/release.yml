@@ -12,7 +12,7 @@ env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
-  GO_VERSION: 1.22.x
+  GO_VERSION: 1.23.x
 
 jobs:
   release:
