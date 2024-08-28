@@ -14,7 +14,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	log "github.com/sirupsen/logrus"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -474,40 +473,6 @@ func (t *TestJob) determineRenderSuccess() {
 	for _, assertion := range t.Assertions {
 		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
 	}
-}
-
-// manifestsUnderTest is a method of the TestJob type that filters a map of Kubernetes manifests
-// based on the user specified template or templates. It returns a new map containing only the manifests
-// that match the specified criteria.
-func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
-	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests), " and ", manifests)
-	result := make(map[string][]common.K8sManifest)
-	if t.Template != "" {
-		result = t.filterManifestsByTemplate(manifests, t.Template)
-	}
-	if t.Templates != nil && len(t.Templates) > 0 {
-		for _, template := range t.Templates {
-			result = t.filterManifestsByTemplate(manifests, template)
-		}
-	}
-	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
-	if len(result) == 0 {
-		return manifests
-	}
-	return result
-}
-
-// filterManifestsByTemplate is a helper method that filters a map of Kubernetes manifests
-// based on a specified template. It returns a new map containing only the manifests
-// that match the specified template.
-func (t *TestJob) filterManifestsByTemplate(manifests map[string][]common.K8sManifest, template string) map[string][]common.K8sManifest {
-	filteredManifests := make(map[string][]common.K8sManifest)
-	for key, value := range manifests {
-		if strings.Contains(key, template) {
-			filteredManifests[key] = value
-		}
-	}
-	return filteredManifests
 }
 
 // add prefix to Assertion.Template
