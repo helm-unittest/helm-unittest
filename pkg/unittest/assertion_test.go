@@ -387,7 +387,7 @@ equal:
 	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
-		FailInfo:   []string{"Error:", "Document index 1 is out of rage"},
+		FailInfo:   []string{"Error:", "document index 1 is out of rage"},
 		Passed:     false,
 		AssertType: "equal",
 		Not:        false,
