@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
-  GO_VERSION: 1.22.x
+  GO_VERSION: 1.23.x
 
 permissions:
   contents: read
