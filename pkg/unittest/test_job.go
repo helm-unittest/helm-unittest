@@ -483,19 +483,11 @@ func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) 
 	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests), " and ", manifests)
 	result := make(map[string][]common.K8sManifest)
 	if t.Template != "" {
-		for key, value := range manifests {
-			if strings.Contains(key, t.Template) {
-				result[key] = value
-			}
-		}
+		result = t.filterManifestsByTemplate(manifests, t.Template)
 	}
 	if t.Templates != nil && len(t.Templates) > 0 {
 		for _, template := range t.Templates {
-			for key, value := range manifests {
-				if strings.Contains(key, template) {
-					result[key] = value
-				}
-			}
+			result = t.filterManifestsByTemplate(manifests, template)
 		}
 	}
 	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
@@ -503,6 +495,19 @@ func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) 
 		return manifests
 	}
 	return result
+}
+
+// filterManifestsByTemplate is a helper method that filters a map of Kubernetes manifests
+// based on a specified template. It returns a new map containing only the manifests
+// that match the specified template.
+func (t *TestJob) filterManifestsByTemplate(manifests map[string][]common.K8sManifest, template string) map[string][]common.K8sManifest {
+	filteredManifests := make(map[string][]common.K8sManifest)
+	for key, value := range manifests {
+		if strings.Contains(key, template) {
+			filteredManifests[key] = value
+		}
+	}
+	return filteredManifests
 }
 
 // add prefix to Assertion.Template
