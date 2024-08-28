@@ -533,3 +533,53 @@ asserts:
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
+
+func TestV3RunJobWithSchemaAndNullValue(t *testing.T) {
+	c, _ := loader.Load(testV3WithSchemaChart)
+	manifest := `
+it: should work
+set:
+  image:
+    repository: "repo"
+    pullPolicy: IfNotPresent
+  value: null
+asserts:
+  - failedTemplate: {}
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.NotNil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithSchemaOk(t *testing.T) {
+	c, _ := loader.Load(testV3WithSchemaChart)
+	manifest := `
+it: should work
+template: templates/dummy.yaml
+set:
+  image:
+    repository: "repo"
+    pullPolicy: IfNotPresent
+asserts:
+  - notFailedTemplate: {}
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}

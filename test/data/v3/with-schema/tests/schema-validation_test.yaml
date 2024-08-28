@@ -1,0 +1,10 @@
+suite: test suite
+tests:
+  - it: should succeed
+    set:
+      image:
+        repository: "repo"
+        pullPolicy: IfNotPresent
+      value: null
+    asserts:
+      - failedTemplate: {}

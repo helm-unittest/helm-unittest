@@ -3,6 +3,7 @@
 - Added feature isType assertion (credits @rquinio1A, resolves #325)
 - Added feature GreaterThan/LessThan assertion (credits @ivankatliarchuk, resolves #294)
 - Fix lengthEqual count to use 0 (credits @ivankatliarchuk, resolves #346, resolves #368)
+- Fix run assertions when no document is rendered (resolves #363)
 - Improvement on explicitly allow documentSelector to return multiple results (credits @mszygenda, resolves #308)
 - Improvement on failedTemplate to support regexPattern (credits @ivankatliarchuk, resolves #221, resolves #349)
 - Improvement on build and release workflows to align with OpenSSF (credits @ivankatliarchuk, resolves #360)

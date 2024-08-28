@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"gopkg.in/yaml.v3"
@@ -34,7 +35,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	// The -1 passed as the third argument to Split tells it to return all parts,
 	// including the parts matched by the regular expression pattern.
 	parts := splitterPattern.Split(string(content), -1)
-	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
+	log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
 		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
@@ -239,7 +240,7 @@ func (s *TestSuite) RunV3(
 
 // fill file path related info of TestJob
 func (s *TestSuite) polishTestJobsPathInfo() {
-	log.WithField("test-suite", "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
+	log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
 		test.chartRoute = s.chartRoute
 		test.definitionFile = s.definitionFile
@@ -254,7 +255,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		if len(s.Values) > 0 {
 			test.Values = append(s.Values, test.Values...)
 		}
-		log.WithField("test-suite", "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
+		log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
 
 		if len(s.Templates) > 0 {
 			test.defaultTemplatesToAssert = s.Templates
@@ -369,7 +370,7 @@ func (s *TestSuite) validateTestSuite() error {
 
 	for _, testJob := range s.Tests {
 		if len(testJob.Assertions) == 0 {
-			log.WithField("test-suite", "validate-test-suite").Debugln("no asserts found", testJob)
+			log.WithField(common.LOG_TEST_SUITE, "validate-test-suite").Debugln("no asserts found", testJob)
 			return fmt.Errorf("no asserts found")
 		}
 	}
