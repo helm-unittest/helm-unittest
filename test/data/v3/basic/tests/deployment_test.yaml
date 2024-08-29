@@ -162,3 +162,9 @@ tests:
           path: spec.template.spec.initContainers[?(@.name == "init-basic")].command
           content:
             until nslookup google.com; sleep 2; done
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == "init-basic")].command
+          content:
+            - sh
+            - -c
+          any: true

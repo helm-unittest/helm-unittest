@@ -27,7 +27,7 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: plugin-dir
-plugin-dir: 
+plugin-dir:
   HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
   HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 
@@ -99,3 +99,6 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
+
+test-local:
+	@./untt -f 'tests/*.yaml' test/data/v3/basic
