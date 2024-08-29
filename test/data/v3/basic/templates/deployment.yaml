@@ -73,3 +73,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.dbPort }}
+          command:
+            - ./execute
+            - --stderrthreshold=info
+            - --v=0
+      initContainers:
+        - name: "init-basic"
+          image: busybox:1.28
+          command: ['sh', '-c', "until nslookup google.com; sleep 2; done"]

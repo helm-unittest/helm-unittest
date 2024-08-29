@@ -137,3 +137,28 @@ tests:
       - notGreaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.memory
           value: "101Mi"
+
+  - it: should validate command for container and init container
+    template: templates/deployment.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "basic")].command
+          value:
+            - ./execute
+            - --stderrthreshold=info
+            - --v=0
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "basic")].command
+          content:
+            --v=0
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "init-basic")].command
+          value:
+              - sh
+              - -c
+              - until nslookup google.com; sleep 2; done
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == "init-basic")].command
+          content:
+            until nslookup google.com; sleep 2; done
