@@ -100,5 +100,5 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
 
-test-local:
+test-basic:
 	@./untt -f 'tests/*.yaml' test/data/v3/basic
