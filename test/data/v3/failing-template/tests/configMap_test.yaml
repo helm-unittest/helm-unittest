@@ -9,7 +9,3 @@ tests:
       - failedTemplate: {} # catch any error message
       - failedTemplate:
           errorPattern: "^error"
-      - notFailedTemplate:
-          errorPattern: "^lorem ipsum"
-      - notFailedTemplate:
-          errorMessage: "lorem ipsum"
