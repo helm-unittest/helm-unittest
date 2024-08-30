@@ -34,7 +34,7 @@ tests:
     release:
       name: my-release
     asserts:
-      - isEmpty:
+      - isNullOrEmpty:
           path: metadata.annotations
 
   - it: should fail set tls if given

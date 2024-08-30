@@ -8,5 +8,4 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-      - notFailedTemplate:
-          errorMessage: ""
+      - notFailedTemplate: {}

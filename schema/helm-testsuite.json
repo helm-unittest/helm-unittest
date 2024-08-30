@@ -453,7 +453,8 @@
                   },
                   "required": [
                     "failedTemplate"
-                  ]
+                  ],
+                  "additionalProperties": false
                 },
                 {
                   "properties": {
@@ -466,7 +467,8 @@
                   },
                   "required": [
                     "notFailedTemplate"
-                  ]
+                  ],
+                  "additionalProperties": false
                 },
                 {
                   "properties": {
@@ -655,7 +657,7 @@
                     "isNotNullOrEmpty": {
                       "type": "object",
                       "description": "Assert the value of specified path is NOT null or empty (null, \"\", 0, [], {}).",
-                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is NOT null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "markdownDescription": "**isNotNullOrEmpty** (object)\n\nAssert the value of specified path is NOT null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
@@ -1063,14 +1065,18 @@
           "markdownDescription": "**path** (string)\n\nThe `documentSelector` path to assert."
         },
         "value": {
-          "type": "string",
+          "type": [
+            "string",
+            "object"
+          ],
           "description": "The expected value.",
-          "markdownDescription": "**value** (any)\n\nThe expected value."
+          "markdownDescription": "**value** (string|object)\n\nThe expected value.",
+          "additionalProperties": true
         },
-        "matchAny": {
+        "matchMany": {
           "type": "boolean",
           "description": "Set to true to allow matching multiple documents.",
-          "markdownDescription": "**matchAny** (boolean) _optional_\n\nSet to **true* to allow matching multiple documents. Defaults to **false** which means selector has to match single document across all templates."
+          "markdownDescription": "**matchMany** (boolean) _optional_\n\nSet to **true* to allow matching multiple documents. Defaults to **false** which means selector has to match single document across all templates."
         },
         "skipEmptyTemplates": {
           "type": "boolean",
@@ -1092,7 +1098,8 @@
         "scheme": {
           "type": "object",
           "description": "Define the Kubernetes schema to fake",
-          "markdownDescription": "**scheme**: (object)\n\nDefine the Kubernetes schema to fake"
+          "markdownDescription": "**scheme**: (object)\n\nDefine the Kubernetes schema to fake",
+          "additionalProperties": true
         },
         "objects": {
           "type": "array",
@@ -1100,14 +1107,16 @@
           "markdownDescription": "**objects**: (array of objects)\n\nDefine the Kubernetes objects to fake",
           "minItems": 1,
           "items": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
       "required": [
         "scheme",
         "objects"
-      ]
+      ],
+      "additionalProperties": false
     },
     "release": {
       "type": "object",

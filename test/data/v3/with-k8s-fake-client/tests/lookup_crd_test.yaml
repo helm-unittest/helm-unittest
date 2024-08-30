@@ -18,7 +18,7 @@ tests:
   - it: manifest should match snapshot
     asserts:
       - matchSnapshot: {}
-      - isNotEmpty:
+      - isNotNullOrEmpty:
           path: backup_exists
       - isNullOrEmpty:
           path: backup_not_exists

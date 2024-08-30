@@ -364,7 +364,7 @@
 
 	- should fail set annotations if given
 
-		- asserts[0] `isEmpty` fail
+		- asserts[0] `isNullOrEmpty` fail
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
 			Path:	metadata.annotations
