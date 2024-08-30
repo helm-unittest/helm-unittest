@@ -58,7 +58,7 @@ tests:
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object. This set will override values which are already set in the values file.
 
-- **templates**: *array of string, recommended*. The template files scope to test in this suite. The full chart will be rendered, however only the listed templates are filtered for validation. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_` or have the .tpl extension) are added automatically even if it is in a templates sub-folder, you don't need to add them.
+- **templates**: *array of string, recommended*. The template files scope to test in this suite. Only the selected files will be rendered. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_` or have the .tpl extension) are added automatically even if it is in a templates sub-folder, you don't need to add them.
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
@@ -132,7 +132,7 @@ tests:
 
 - **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documents for asserting. Generally you can ignore this field if the template file render only one document.
   - **path**: *string*. The `documentSelector` path to assert.
-  - **value**: *any*. The expected value.
+  - **value**: *string|object*. The expected value.
   - **matchMany**: *bool, optional*. Set to `true` to allow matching multiple documents. Defaults to `false` which means selector has to match single document across all templates.
   - **skipEmptyTemplates**: *bool, optional*. Set to `true` to skip asserting templates which didn't render any matching documents. Defaults to `false` which means selector have to find at least one document in every template.
 
@@ -184,11 +184,13 @@ The assertion is defined with the assertion type as the key and its parameters a
 
 - **template**: *string, optional*. The template file which render the manifest to be asserted, default to the list of template file defined in `templates` of suite file, unless the template is in the testjob (see TestJob). For example the first assertion above with no `template` specified asserts for both `deployment.yaml` and `service.yaml` by default. If no template file specified in neither suite, testjob and assertion, the assertion returns an error and fail the test.
 
-- **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be asserted, default to -1, which will assert all documents. Generally you can ignored this field if the template file render only one document.
+- **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
-- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.
+- **documentSelector**: *DocumentSelector, optional*. The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documents for asserting. Generally you can ignore this field if the template file render only one document.
   - **path**: *string*. The `documentSelector` path to assert.
-  - **value**: *any*. The expected value.
+  - **value**: *string|object*. The expected value.
+  - **matchMany**: *bool, optional*. Set to `true` to allow matching multiple documents. Defaults to `false` which means selector has to match single document across all templates.
+  - **skipEmptyTemplates**: *bool, optional*. Set to `true` to skip asserting templates which didn't render any matching documents. Defaults to `false` which means selector have to find at least one document in every template.
 
 Map keys in `path` containing periods (`.`) are supported with the use of a `jsonPath` syntax:
 For more detail on the [`jsonPath`](https://github.com/vmware-labs/yaml-jsonpath#syntax) syntax.

@@ -45,7 +45,7 @@ func readAllFiles(dirPath string) ([]schemaValidation, error) {
 		var fileContents []string
 		fileContents = append(fileContents, string(content))
 		result = append(result, schemaValidation{
-			FilePath: filePath,
+			FilePath:     filePath,
 			FileContents: fileContents,
 		})
 	}
@@ -72,7 +72,7 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 	assert.NotEmpty(t, schema, fmt.Sprintf("Schema '%s' is not valid!!!", fullPath))
 
 	tests := []struct {
-		testsPath    string
+		testsPath string
 	}{
 		{
 			testsPath: "../../test/data/v3/basic/tests",
@@ -87,7 +87,43 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 			testsPath: "../../test/data/v3/nested_glob/tests",
 		},
 		{
+			testsPath: "../../test/data/v3/with-document-select/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-files/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-k8s-fake-client/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-samenamesubsubcharts/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-samenamesubsubcharts/charts/with-subsubchartssub/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-samenamesubsubcharts/charts/with-subsubchartssub/charts/with-subsubchartssubsub/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-schema/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-subchart/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-subchart/charts/child-chart/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-subfolder/tests",
+		},
+		{
 			testsPath: "../../test/data/v3/with-subsubcharts/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/charts/with-subsubchartssubsub/tests",
 		},
 	}
 
