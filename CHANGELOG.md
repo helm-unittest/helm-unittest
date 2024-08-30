@@ -1,4 +1,4 @@
-0.6.0 / 2024-08-31
+0.6.0 / 2024-08-29
 ==================
 - Added feature isType assertion (credits @rquinio1A, resolves #325)
 - Added feature GreaterThan/LessThan assertion (credits @ivankatliarchuk, resolves #294)
