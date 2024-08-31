@@ -21,7 +21,7 @@ func (a FailedTemplateValidator) failInfo(actual interface{}, index int, not boo
 	customMessage := " to equal"
 	if a.ErrorPattern != "" {
 		customMessage = " to match"
-	} else if a.ErrorPattern + a.ErrorMessage == "" {
+	} else if a.ErrorPattern+a.ErrorMessage == "" {
 		customMessage = " to throw"
 	}
 
@@ -58,6 +58,7 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if context.RenderError != nil {
 		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
+			// TODO: this block not unit tested. Could be that behavior is wrong
 			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 		} else {
@@ -77,7 +78,6 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 	for idx, manifest := range manifests {
 		currentSuccess := false
 		actual := manifest[common.RAW]
-
 
 		if a == (FailedTemplateValidator{}) && !context.Negative {
 			// If the validator is empty and the context is negative,
