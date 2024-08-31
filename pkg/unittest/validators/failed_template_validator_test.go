@@ -85,7 +85,7 @@ func TestFailedTemplateValidatorWhenEmptyAntonymAndError(t *testing.T) {
 	assert.Equal(t, []string{"DocumentIndex:\t0", "Expected NOT to throw:", "\tA field should not be required"}, diff)
 }
 
-func TestFailedTemplateValidatorWhenAntonymAndNoError(t *testing.T) {
+func TestFailedTemplateValidatorWhenEmptyAntonymAndNoError(t *testing.T) {
 	docToTestContainsValueOnly := `
 a:
   b:
