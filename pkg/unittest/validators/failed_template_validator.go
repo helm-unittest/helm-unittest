@@ -21,9 +21,11 @@ func (a FailedTemplateValidator) failInfo(actual interface{}, index int, not boo
 	customMessage := " to equal"
 	if a.ErrorPattern != "" {
 		customMessage = " to match"
+	} else if a.ErrorPattern + a.ErrorMessage == "" {
+		customMessage = " to throw"
 	}
 
-	message := cmp.Or(a.ErrorMessage, a.ErrorPattern)
+	message := cmp.Or(a.ErrorMessage, a.ErrorPattern, cmp.Or(fmt.Sprintf("%s", actual), "error"))
 
 	log.WithField("validator", "failed_template").Debugln("expected content:", message)
 	log.WithField("validator", "failed_template").Debugln("actual content:", actual)
@@ -76,16 +78,19 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 		currentSuccess := false
 		actual := manifest[common.RAW]
 
+
 		if a == (FailedTemplateValidator{}) && !context.Negative {
-			// If the validator is empty and the context is not negative,
+			// If the validator is empty and the context is negative,
 			// continue to the next iteration without throwing an error.
 			continue
 		}
 
 		if a.ErrorPattern != "" {
 			currentSuccess, validateErrors = a.validateErrorPattern(actual, idx, context, currentSuccess, validateErrors)
-		} else {
+		} else if a.ErrorMessage != "" {
 			currentSuccess, validateErrors = a.validateErrorMessage(actual, idx, context, currentSuccess, validateErrors)
+		} else {
+			currentSuccess, validateErrors = a.validateNoError(actual, idx, context, currentSuccess, validateErrors)
 		}
 
 		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
@@ -125,6 +130,15 @@ func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, idx in
 	} else {
 		validateSuccess = true
 	}
+	return validateSuccess, validateErrors
+}
 
+func (a FailedTemplateValidator) validateNoError(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+	if actual != nil && context.Negative {
+		errorMessage := a.failInfo(actual, idx, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if actual == nil && context.Negative {
+		validateSuccess = true
+	}
 	return validateSuccess, validateErrors
 }

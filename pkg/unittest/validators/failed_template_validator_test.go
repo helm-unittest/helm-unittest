@@ -2,10 +2,12 @@ package validators_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,10 +25,6 @@ func TestFailedTemplateValidatorWhenOk(t *testing.T) {
 		{
 			name:      "test case 1: with error message",
 			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
-		},
-		{
-			name:      "test case 2: with empty error message",
-			validator: FailedTemplateValidator{},
 		},
 		{
 			name:      "test case 3: with error message that match substring",
@@ -47,6 +45,34 @@ func TestFailedTemplateValidatorWhenOk(t *testing.T) {
 	}
 }
 
+func TestFailedTemplateValidatorWhenErrorAndAntonym(t *testing.T) {
+	manifest := makeManifest(failedTemplate)
+	tests := []struct {
+		name      string
+		validator FailedTemplateValidator
+		expected  []string
+	}{
+		{
+			name:      "test case 2: with actual error, catch all and antonym",
+			validator: FailedTemplateValidator{},
+			expected: []string{"DocumentIndex:\t0", "Expected NOT to throw:", "\tA field should be required"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass, diff := tt.validator.Validate(&ValidateContext{
+				Docs:     []common.K8sManifest{manifest},
+				Negative: true,
+			})
+
+			assert.False(t, pass)
+			fmt.Println(diff)
+			assert.Equal(t, tt.expected, diff)
+		})
+	}
+}
+
 func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
 	tests := []struct {
@@ -56,10 +82,6 @@ func TestFailedTemplateValidatorWhenNegativeAndOk(t *testing.T) {
 		{
 			name:      "test case 1: with error message",
 			validator: FailedTemplateValidator{ErrorMessage: "A field should not be required"},
-		},
-		{
-			name:      "test case 2: with empty error message",
-			validator: FailedTemplateValidator{},
 		},
 		{
 			name:      "test case 3: with error message that match substring",
@@ -94,7 +116,7 @@ func TestFailedTemplateValidatorWhenEmptyFail(t *testing.T) {
 		{
 			name:      "test case 2: with empty error message",
 			validator: FailedTemplateValidator{},
-			expected:  []string{"Expected to equal:", "\t", "Actual:", "\tNo failed document"},
+			expected:  []string{"Expected to throw:", "\tNo failed document", "Actual:", "\tNo failed document"},
 		},
 		{
 			name:      "test case 3: with error message that match substring",
@@ -254,7 +276,7 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 	}
 }
 
-func TestFailedTemplateValidatorWhenErrorAndContainsSet(t *testing.T) {
+func TestFailedTemplateValidatorWhenErrorMsgAndErrorPtnSet(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
 	v := FailedTemplateValidator{ErrorMessage: "A field should be required", ErrorPattern: "pattern is set"}
 	pass, diff := v.Validate(&ValidateContext{
