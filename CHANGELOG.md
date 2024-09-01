@@ -1,4 +1,8 @@
-0.6.0 / 2024-08-29
+0.6.1 / 2024-00-01
+==================
+- Fix notFailedTemplate throwing a panic when no error (resolves #400)
+
+0.6.0 / 2024-08-31
 ==================
 - Added feature isType assertion (credits @rquinio1A, resolves #325)
 - Added feature GreaterThan/LessThan assertion (credits @ivankatliarchuk, resolves #294)
