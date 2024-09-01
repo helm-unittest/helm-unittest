@@ -1,4 +1,4 @@
-0.6.1 / 2024-00-01
+0.6.1 / 2024-09-01
 ==================
 - Fix notFailedTemplate throwing a panic when no error (resolves #400)
 
