@@ -33,6 +33,7 @@ tests:
       - containsDocument:
           kind: Ingress
           apiVersion: extensions/v1beta1
+      - notFailedTemplate: {}
 
   - it: should set annotations if given
     set:
