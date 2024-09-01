@@ -55,9 +55,11 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		errorMessage := splitInfof(errorFormat, -1, "single attribute 'errorMessage' or 'errorPattern' supported at the same time")
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if context.RenderError != nil {
-		if a.ErrorMessage != "" && reflect.DeepEqual(a.ErrorMessage, context.RenderError.Error()) == context.Negative && a != (FailedTemplateValidator{}) {
-			errorMessage := a.failInfo(context.RenderError.Error(), -1, context.Negative)
-			validateErrors = append(validateErrors, errorMessage...)
+		// Validating error, when the errorSource is due to rendering errors
+		if a.ErrorPattern != "" {
+			validateSuccess, validateErrors = a.validateErrorPattern(context.RenderError.Error(), -1, context, validateSuccess, validateErrors)
+		} else if a.ErrorMessage != "" {
+			validateSuccess, validateErrors = a.validateErrorMessage(context.RenderError.Error(), -1, context, validateSuccess, validateErrors)
 		} else {
 			validateSuccess = true
 		}
@@ -84,8 +86,10 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 
 		if a.ErrorPattern != "" {
 			currentSuccess, validateErrors = a.validateErrorPattern(actual, idx, context, currentSuccess, validateErrors)
-		} else {
+		} else if a.ErrorMessage != "" {
 			currentSuccess, validateErrors = a.validateErrorMessage(actual, idx, context, currentSuccess, validateErrors)
+		} else {
+			currentSuccess = true
 		}
 
 		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
@@ -108,7 +112,7 @@ func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, idx in
 		return validateSuccess, validateErrors
 	}
 
-	if p.MatchString(actual.(string)) == context.Negative {
+	if (actual != nil && p.MatchString(actual.(string))) == context.Negative {
 		errorMessage := a.failInfo(actual, idx, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else {
@@ -119,7 +123,7 @@ func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, idx in
 }
 
 func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
-	if reflect.DeepEqual(a.ErrorMessage, actual.(string)) == context.Negative {
+	if (actual != nil && reflect.DeepEqual(a.ErrorMessage, actual.(string))) == context.Negative {
 		errorMessage := a.failInfo(actual, idx, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else {

@@ -226,12 +226,17 @@ func TestFailedTemplateValidatorWhenNegativeAndFail(t *testing.T) {
 }
 
 func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
+	testRenderError := errors.New("values don't meet the specifications of the schema(s)")
 	tests := []struct {
 		name      string
 		validator FailedTemplateValidator
 	}{
 		{
-			name:      "Test case 1: with error message",
+			name:      "Test case 1: with error pattern",
+			validator: FailedTemplateValidator{ErrorPattern: "schema"},
+		},
+		{
+			name:      "Test case 2: with error message",
 			validator: FailedTemplateValidator{ErrorMessage: "values don't meet the specifications of the schema(s)"},
 		},
 		{
@@ -245,7 +250,7 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 
 			pass, diff := tt.validator.Validate(&ValidateContext{
 				Docs:        []common.K8sManifest{},
-				RenderError: errors.New(tt.validator.ErrorMessage),
+				RenderError: testRenderError,
 			})
 
 			assert.True(t, pass)
@@ -254,7 +259,7 @@ func TestFailedTemplateValidatorWhenRenderError(t *testing.T) {
 	}
 }
 
-func TestFailedTemplateValidatorWhenErrorAndContainsSet(t *testing.T) {
+func TestFailedTemplateValidatorWhenErrorMessageAndErrorPatternSet(t *testing.T) {
 	manifest := makeManifest(failedTemplate)
 	v := FailedTemplateValidator{ErrorMessage: "A field should be required", ErrorPattern: "pattern is set"}
 	pass, diff := v.Validate(&ValidateContext{
