@@ -64,7 +64,7 @@ jobs:
     # Upload the original go test log as an artifact for later review.
     - name: Upload Testlog
       # https://github.com/EnricoMi/publish-unit-test-result-action
-      uses: EnricoMi/publish-unit-test-result-action@567cc7f8dcea3eba5da355f6ebc95663310d8a07 # v2.17.0
+      uses: EnricoMi/publish-unit-test-result-action@82082dac68ad6a19d980f8ce817e108b9f496c2a # v2.17.1
       if: always() && matrix.os == 'ubuntu-latest'
       with:
         files: |
