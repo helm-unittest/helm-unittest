@@ -41,6 +41,11 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
 		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
+			if testSuite != nil {
+				for _, test := range testSuite.Tests {
+					testSuite.polishChartSettings(test)
+				}
+			}
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
 				return testSuites, suiteErr
@@ -79,14 +84,12 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 
 	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
-
 	return &suite, nil
 }
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
 func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
 	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
-
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
 		return nil, err
