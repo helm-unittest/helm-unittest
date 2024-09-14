@@ -1,6 +1,9 @@
 suite: Configmap multiline Test
 templates:
   - templates/configmap.yaml
+chart:
+  appVersion: 1.0.1
+  version: 0.1.0
 tests:
   - it: should NOT configure ssl params if NOT set to be exposed
     asserts:
@@ -27,3 +30,50 @@ tests:
       - equal:
           path: metadata.name
           value: RELEASE-NAME-basic
+
+  - it: should not override chart values
+    values:
+    - ../values.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 1.0.1
+            chart: basic-0.1.0
+            heritage: Helm
+            release: RELEASE-NAME
+
+  - it: should override chart values
+    values:
+    - ../values.yaml
+    documentIndex: 0
+    chart:
+      appVersion: 2.0.0
+      version: 0.2.0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 2.0.0
+            chart: basic-0.2.0
+            heritage: Helm
+            release: RELEASE-NAME
+
+  - it: should override chart version only
+    values:
+    - ../values.yaml
+    documentIndex: 0
+    chart:
+      version: 0.3.0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 1.0.1
+            chart: basic-0.3.0
+            heritage: Helm
+            release: RELEASE-NAME
