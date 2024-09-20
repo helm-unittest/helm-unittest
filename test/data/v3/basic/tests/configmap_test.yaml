@@ -27,3 +27,9 @@ tests:
       - equal:
           path: metadata.name
           value: RELEASE-NAME-basic
+
+  - it: should validate camelcase function
+    asserts:
+      - equal:
+          path: data["my.camelcase"]
+          value: Camelcase
