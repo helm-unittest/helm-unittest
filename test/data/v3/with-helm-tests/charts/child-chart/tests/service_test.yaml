@@ -1,6 +1,8 @@
 suite: test service
 templates:
   - templates/service.yaml
+chart:
+  version: 0.3.1
 tests:
   - it: should pass
     release:
@@ -21,6 +23,9 @@ tests:
           value:
             app: child-chart
             release: my-release
+      - equal:
+          path: metadata.labels.chart
+          value: child-chart-0.1.1
 
   - it: should render right if values given
     set:
@@ -29,6 +34,8 @@ tests:
         internalPort: 1234
         externalPort: 4321
         name: cool-service
+    chart:
+      version: 0.2.1
     asserts:
       - contains:
           path: spec.ports
@@ -40,3 +47,6 @@ tests:
       - equal:
           path: spec.type
           value: NodePort
+      - equal:
+          path: metadata.labels.chart
+          value: child-chart-0.1.1

@@ -703,3 +703,144 @@ tests:
 	a.Nil(err)
 	a.Len(suites, 3)
 }
+
+func TestV3ParseTestSingleSuitesWithSuiteChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+---
+suite: test suite with explicit version and appVersion
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v1
+  version: 1.0.0
+tests:
+  - it: should render deployment
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "override", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("1.0.0", suite.Chart.Version)
+		a.Equal("v1", suite.Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuiteWithTestChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with explicit version and appVersion
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v1
+  version: 1.0.0
+tests:
+  - it: should override chart.version
+    chart:
+      version: 1.0.1
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("1.0.0", suite.Chart.Version)
+		a.Equal("v1", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 1)
+		a.Equal("1.0.1", suite.Tests[0].Chart.Version)
+		a.Equal("v1", suite.Tests[0].Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuitesWithMutlipleTestChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite without chart metadata
+templates:
+  - deployment.yaml
+tests:
+  - it: should override chart metadata
+    chart:
+      version: 1.0.1
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+  - it: should not override chart metadata
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("", suite.Chart.Version)
+		a.Equal("", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 2)
+		a.Equal("1.0.1", suite.Tests[0].Chart.Version)
+		a.Equal("", suite.Tests[0].Chart.AppVersion)
+		a.Equal("", suite.Tests[1].Chart.Version)
+		a.Equal("", suite.Tests[1].Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuitesWithChartMetadataAndEmptyVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v3
+tests:
+  - it: should not override with empty appVersion
+    chart:
+      appVersion:
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("v3", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 1)
+		a.Equal("v3", suite.Tests[0].Chart.AppVersion)
+	}
+}
