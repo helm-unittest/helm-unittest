@@ -1,0 +1,22 @@
+# https://gitlab.com/gitlab-org/charts/gitlab-runner/-/blob/main/templates/hpa.yaml
+{{- if .Values.hpa }}
+{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
+apiVersion: autoscaling/v2
+{{- else if .Capabilities.APIVersions.Has "autoscaling/v2beta2" }}
+apiVersion: autoscaling/v2beta2
+{{- else }}
+apiVersion: autoscaling/v2beta1
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa
+  labels:
+    kubeVersion.minor: {{ .Capabilities.KubeVersion.Minor | quote }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+{{- end }}
