@@ -252,6 +252,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 		test.definitionFile = s.definitionFile
 
 		s.polishReleaseSettings(test)
+		s.polishCapabilitiesSettings(test)
 		s.polishKubernetesProviderSettings(test)
 		s.polishChartSettings(test)
 
@@ -299,10 +300,10 @@ func (s *TestSuite) polishReleaseSettings(test *TestJob) {
 func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 
 	if val, ok := test.CapabilitiesFields["majorVersion"]; ok {
-		test.Capabilities.MajorVersion = convertIToString(val)
+		test.Capabilities.MajorVersion = ConvertIToString(val)
 	}
 	if val, ok := test.CapabilitiesFields["minorVersion"]; ok {
-		test.Capabilities.MinorVersion = convertIToString(val)
+		test.Capabilities.MinorVersion = ConvertIToString(val)
 	}
 
 	test.Capabilities.MajorVersion = cmp.Or(test.Capabilities.MajorVersion, s.Capabilities.MajorVersion)

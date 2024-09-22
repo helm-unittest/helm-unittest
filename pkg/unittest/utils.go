@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-// convertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
+// ConvertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
 // If the input value is nil, it returns an empty string.
-func convertIToString(val interface{}) string {
+func ConvertIToString(val interface{}) string {
 	if val == nil {
 		return ""
 	}

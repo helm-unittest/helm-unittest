@@ -133,7 +133,7 @@ documentIndex: 0
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
   - matchRegex:
       path: metadata.name
       pattern: -basic$
@@ -162,7 +162,7 @@ documentSelector:
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
   - matchRegex:
       path: metadata.name
       pattern: -basic
@@ -190,11 +190,11 @@ templates:
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
     template: templates/deployment.yaml
   - equal:
       path: kind
-      value: ConfigMap   
+      value: ConfigMap
     template: templates/configmap.yaml
   - exists:
       path: metadata.name
@@ -363,7 +363,7 @@ func TestV3RunJobWithReleaseSettings(t *testing.T) {
 it: should work
 release:
   name: my-release
-  namespace: test  
+  namespace: test
 asserts:
   - equal:
       path: metadata.name
@@ -444,11 +444,13 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
