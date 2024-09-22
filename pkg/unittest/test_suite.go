@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -299,29 +298,12 @@ func (s *TestSuite) polishReleaseSettings(test *TestJob) {
 // override capabilities settings in testjobs when defined in testsuite
 func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 
-	if val, ok := test.CapabilitiesFields["majorVersion"]; ok {
-		test.Capabilities.MajorVersion = ConvertIToString(val)
-	}
-	if val, ok := test.CapabilitiesFields["minorVersion"]; ok {
-		test.Capabilities.MinorVersion = ConvertIToString(val)
-	}
+	test.SetCapabilities()
 
 	test.Capabilities.MajorVersion = cmp.Or(test.Capabilities.MajorVersion, s.Capabilities.MajorVersion)
 	test.Capabilities.MinorVersion = cmp.Or(test.Capabilities.MinorVersion, s.Capabilities.MinorVersion)
 
-	if val, ok := test.CapabilitiesFields["apiVersions"]; ok {
-		if val == nil {
-			// key capabilities.apiVersions key exist but is not set
-			test.Capabilities.APIVersions = nil
-		} else if reflect.TypeOf(val).Kind() == reflect.Slice {
-			for _, v := range val.([]interface{}) {
-				if str, ok := v.(string); ok {
-					test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, str)
-				}
-			}
-		}
-	} else if len(s.Capabilities.APIVersions) > 0 {
-		// key capabilities.apiVersions exist but is not set
+	if len(s.Capabilities.APIVersions) > 0 && (test.Capabilities.APIVersions == nil || len(test.Capabilities.APIVersions) == 0) {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
 	}
 	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)

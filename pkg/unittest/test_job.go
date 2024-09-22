@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -223,7 +224,6 @@ func (t *TestJob) RunV3(
 
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
@@ -552,4 +552,45 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 	}
 
 	return templatesPath
+}
+
+// SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.
+// It extracts majorVersion, minorVersion, and apiVersions fields and sets the corresponding
+// fields in Capabilities. If apiVersions is nil, it sets APIVersions to nil. If it's a slice,
+// it appends string values to APIVersions.
+func (t *TestJob) SetCapabilities() {
+	if val, ok := t.CapabilitiesFields["majorVersion"]; ok {
+		t.Capabilities.MajorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["minorVersion"]; ok {
+		t.Capabilities.MinorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
+		if val == nil {
+			// key capabilities.apiVersions key exist but is not set
+			t.Capabilities.APIVersions = nil
+		} else if reflect.TypeOf(val).Kind() == reflect.Slice {
+			for _, v := range val.([]interface{}) {
+				if str, ok := v.(string); ok {
+					t.Capabilities.APIVersions = append(t.Capabilities.APIVersions, str)
+				}
+			}
+		}
+	}
+}
+
+// ConvertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
+// If the input value is nil, it returns an empty string.
+func convertIToString(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	switch v := val.(type) {
+	case string:
+		return v
+	case int, int8, int16, int32, int64:
+		return fmt.Sprintf("%d", val)
+	default:
+		return ""
+	}
 }
