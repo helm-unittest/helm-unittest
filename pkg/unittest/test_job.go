@@ -145,7 +145,7 @@ type Capabilities struct {
 	APIVersions  []string `yaml:"apiVersions"`
 }
 
-// CapabilitiesFields required to identify where or not the filed is configured, and the value is empty or not
+// CapabilitiesFields required to identify where or not the filed is provided, and the value is unset or not
 type CapabilitiesFields map[string]interface{}
 
 // TestJob definition of a test, including values and assertions
