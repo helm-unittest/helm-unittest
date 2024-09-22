@@ -138,6 +138,15 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
+type Capabilities struct {
+	MajorVersion string   `yaml:"majorVersion"`
+	MinorVersion string   `yaml:"minorVersion"`
+	APIVersions  []string `yaml:"apiVersions"`
+}
+
+// CapabilitiesFields required to identify where or not the filed is configured, and the value is empty or not
+type CapabilitiesFields map[string]interface{}
+
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name             string `yaml:"it"`
@@ -158,11 +167,8 @@ type TestJob struct {
 		Version    string
 		AppVersion string `yaml:"appVersion"`
 	}
-	Capabilities struct {
-		MajorVersion string   `yaml:"majorVersion"`
-		MinorVersion string   `yaml:"minorVersion"`
-		APIVersions  []string `yaml:"apiVersions"`
-	}
+	Capabilities       Capabilities                 `yaml:"-"`
+	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
@@ -287,7 +293,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 	options := *t.releaseV3Option()
 
-	//Check Release Name length
+	// Check Release Name length
 	if t.Release.Name != "" {
 		err = v3util.ValidateReleaseName(t.Release.Name)
 		if err != nil {

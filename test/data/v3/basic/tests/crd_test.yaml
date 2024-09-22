@@ -31,3 +31,6 @@ tests:
       - isType:
           path: apiVersion
           type: string
+      - equal:
+          path: metadata.labels["kubeVersion.minor"]
+          value: "12"
