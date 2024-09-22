@@ -34,3 +34,22 @@ tests:
       - equal:
           path: metadata.labels["kubeVersion.minor"]
           value: "12"
+
+  - it: should pass when minorVersion is unset in unit test
+    capabilities:
+      majorVersion: 1
+      minorVersion:
+      apiVersions:
+        - br.dev.local/v1
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not override minorVersion
+    capabilities:
+      majorVersion: 1
+      apiVersions:
+        - br.dev.local/v1
+    asserts:
+      - hasDocuments:
+          count: 0

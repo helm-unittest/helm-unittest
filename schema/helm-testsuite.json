@@ -1011,17 +1011,17 @@
       "markdownDescription": "**capabilities** (object) _optional_\n\nDefine the `{{ .Capabilities }}` object.",
       "properties": {
         "majorVersion": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "description": "The kubernetes major version, default to the major version which is set by helm.",
           "markdownDescription": "**majorVersion** (integer) _optional_\n\nThe kubernetes major version, default to the major version which is set by helm."
         },
         "minorVersion": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "description": "The kubernetes minor version, default to the minor version which is set by helm.",
           "markdownDescription": "**minorVersion** (integer) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
         },
         "apiVersions": {
-          "type": "array",
+          "type": ["array", "null"],
           "description": "A set of versions, default to the versionset used by the defined kubernetes version.",
           "markdownDescription": "**apiVersions** (array<string>) _optional_\n\nA set of versions, default to the versionset used by the defined kubernetes version.",
           "items": {

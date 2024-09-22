@@ -303,7 +303,7 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 	test.Capabilities.MajorVersion = cmp.Or(test.Capabilities.MajorVersion, s.Capabilities.MajorVersion)
 	test.Capabilities.MinorVersion = cmp.Or(test.Capabilities.MinorVersion, s.Capabilities.MinorVersion)
 
-	if len(s.Capabilities.APIVersions) > 0 && (test.Capabilities.APIVersions == nil || len(test.Capabilities.APIVersions) == 0) {
+	if len(s.Capabilities.APIVersions) > 0 && test.Capabilities.APIVersions != nil {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
 	}
 	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)

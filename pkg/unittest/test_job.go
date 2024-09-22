@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"os"
@@ -392,20 +393,21 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 	return &options
 }
 
-// get chartutil.Capabilities ready for render
+// capabilitiesV3 chartutil.Capabilities ready for render
+// function returns a v3util.Capabilities struct based on the TestJob's capabilities.
+// It overrides the KubeVersion field if majorVersion or minorVersion are set
 func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 	capabilities := v3util.DefaultCapabilities
 
 	// Override the version, when set.
-	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
+	if t.Capabilities.MajorVersion != "" || t.Capabilities.MinorVersion != "" {
 		capabilities.KubeVersion = v3util.KubeVersion{
 			Version: fmt.Sprintf("v%s.%s.0", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion),
-			Major:   t.Capabilities.MajorVersion,
-			Minor:   t.Capabilities.MinorVersion,
+			Major:   cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major),
+			Minor:   cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor),
 		}
 	}
 
-	// Add ApiVersions when set
 	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
 
 	return capabilities
@@ -567,7 +569,7 @@ func (t *TestJob) SetCapabilities() {
 	}
 	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
 		if val == nil {
-			// key capabilities.apiVersions key exist but is not set
+			// key capabilities.apiVersions key exist but is unset
 			t.Capabilities.APIVersions = nil
 		} else if reflect.TypeOf(val).Kind() == reflect.Slice {
 			for _, v := range val.([]interface{}) {
@@ -576,6 +578,9 @@ func (t *TestJob) SetCapabilities() {
 				}
 			}
 		}
+	} else {
+		// APIVersions not set on test level
+		t.Capabilities.APIVersions = make([]string, 0)
 	}
 }
 
