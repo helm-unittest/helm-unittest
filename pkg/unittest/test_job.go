@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -568,15 +567,18 @@ func (t *TestJob) SetCapabilities() {
 		t.Capabilities.MinorVersion = convertIToString(val)
 	}
 	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
-		if val == nil {
-			// key capabilities.apiVersions key exist but is unset
-			t.Capabilities.APIVersions = nil
-		} else if reflect.TypeOf(val).Kind() == reflect.Slice {
-			for _, v := range val.([]interface{}) {
-				if str, ok := v.(string); ok {
+		switch v := val.(type) {
+		case []interface{}:
+			t.Capabilities.APIVersions = make([]string, 0, len(v)) // optimize slice allocation
+			for _, item := range v {
+				if str, ok := item.(string); ok {
 					t.Capabilities.APIVersions = append(t.Capabilities.APIVersions, str)
 				}
 			}
+		case nil:
+		default:
+			// key capabilities.apiVersions exists but is unset
+			t.Capabilities.APIVersions = nil
 		}
 	} else {
 		// APIVersions not set on test level
