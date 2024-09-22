@@ -549,7 +549,7 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	_ = unmarshalJob(manifest, &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -620,7 +620,7 @@ asserts:
   - failedTemplate: {}
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	_ = unmarshalJob(manifest, &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
