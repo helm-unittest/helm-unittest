@@ -458,6 +458,77 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV3RunJobWithCapabilityApiVersionUnset(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+  apiVersions:
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	a.False(testResult.Passed)
+	a.Equal(0, len(tj.Capabilities.APIVersions))
+}
+
+func TestV3RunJobWithCapabilityApiVersionNotSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	a.False(testResult.Passed)
+	a.Equal([]string{}, tj.Capabilities.APIVersions)
+	a.Equal("12", tj.Capabilities.MinorVersion)
+}
+
+func TestV3RunJobWithCapabilityMinorVersionSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  minorVersion: 7
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	a.False(testResult.Passed)
+	a.Equal("7", tj.Capabilities.MinorVersion)
+}
+
 func TestV3RunJobWithChartSettings(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
