@@ -1,3 +1,7 @@
+0.6.2 / 2024-09-30
+==================
+- Fix assertion does not match when using camelcase function (resolves #359)
+
 0.6.1 / 2024-09-01
 ==================
 - Fix notFailedTemplate throwing a panic when no error (resolves #400)
