@@ -1,9 +1,6 @@
 dependencies:
-- name: postgresql
-  repository: https://kubernetes-charts.storage.googleapis.com
-  version: 0.8.3
-- name: postgresql
-  repository: https://kubernetes-charts.storage.googleapis.com
-  version: 0.8.3
-digest: sha256:6ac88461535205e69bafcee4675ba1d353490d3260c4c13c552024e4ca0b7998
-generated: "2020-03-31T17:15:46.7784064+02:00"
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.15.0
+digest: sha256:0337d723c5957e03ef7f700a92ca7b188c6f261b10d2c60b1fabb61fe1e18d28
+generated: "2024-09-04T23:19:03.361118795+02:00"

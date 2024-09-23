@@ -12,3 +12,6 @@ dependencies:
     version: 0.8.3
     alias: another-postgresql
     condition: another-postgresql.enabled
+  - name: cert-manager
+    version: 1.15.0
+    repository: https://charts.jetstack.io

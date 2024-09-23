@@ -21,7 +21,7 @@ import (
 )
 
 // m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
-var splitterPattern = regexp.MustCompile("(?m:^---$)")
+var splitterPattern = regexp.MustCompile("(?:^|\\s*\n)---\\s*")
 
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {

@@ -270,7 +270,7 @@ func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.NotNil(err)
-	a.EqualError(err, "yaml: unmarshal errors:\n  line 7: field documents not found in type unittest.TestJob")
+	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
 	a.Len(suites, 2)
 	for _, suite := range suites {
 		a.Equal("test deployment", suite.Name)
@@ -560,6 +560,28 @@ tests:
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
+}
+
+func TestV3RunSuiteWithSubChartsTrimmingWhenPass(t *testing.T) {
+	suiteDoc := `
+suite: test cert-manager rbac with trimming
+templates:
+  - charts/cert-manager/templates/rbac.yaml
+tests:
+  - it: templates
+    release:
+      name: cert-manager
+      namespace: cert-manager
+    asserts:
+      - notFailedTemplate: {}
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
+	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test cert-manager rbac with trimming", 1, 0, 0, 0, 0)
 }
 
 func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
