@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64]
+        platform: [linux/amd64, linux/arm64, linux/s390x]
         helmVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_VERSIONS) }}
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
