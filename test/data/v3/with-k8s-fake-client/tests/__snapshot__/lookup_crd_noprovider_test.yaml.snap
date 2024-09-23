@@ -1,0 +1,4 @@
+manifest should match snapshot:
+  1: |
+    backup_exists: {}
+    backup_not_exists: {}
