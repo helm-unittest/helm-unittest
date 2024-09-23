@@ -2,6 +2,7 @@
 ==================
 - Fix assertion does not match when using camelcase function (resolves #359)
 - Fix templating multi document Helm file with trims break YAML parsing (resolves #403)
+- Fix lookup of resources defined in kubernetesProvider without any objects (resolves #380)
 
 0.6.1 / 2024-09-01
 ==================

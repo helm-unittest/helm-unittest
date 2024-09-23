@@ -330,9 +330,13 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
-	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	var outputOfFiles map[string]string
 
-	// Correct output.
+	if len(t.KubernetesProvider.Objects) > 0 {
+		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	} else {
+		outputOfFiles, err = v3engine.Render(filteredChart, vals)
+	}
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
