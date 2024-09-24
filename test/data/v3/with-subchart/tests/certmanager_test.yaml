@@ -1,0 +1,10 @@
+suite: test cert-manager rbac
+templates:
+  - charts/cert-manager/templates/rbac.yaml
+tests:
+  - it: templates
+    release:
+      name: cert-manager
+      namespace: cert-manager
+    asserts:
+      - notFailedTemplate: {}

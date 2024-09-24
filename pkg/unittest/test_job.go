@@ -205,6 +205,12 @@ func (t *TestJob) RunV3(
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
 
+	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
+	// Still questioning why rendering in helm template is working, as it is using similar steps.
+	for file, rendered := range outputOfFiles {
+		outputOfFiles[file] = splitterPattern.ReplaceAllString(rendered, "\n---\n")
+	}
+
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
@@ -312,12 +318,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		targetChart.Metadata.AppVersion = t.Chart.AppVersion
 	}
 
-	err = v3util.ProcessDependencies(targetChart, values)
+	err = v3util.ProcessDependenciesWithMerge(targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, t.capabilitiesV3())
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
 	if err != nil {
 		return nil, false, err
 	}
@@ -331,7 +337,13 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
-	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	var outputOfFiles map[string]string
+
+	if len(t.KubernetesProvider.Objects) > 0 {
+		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	} else {
+		outputOfFiles, err = v3engine.Render(filteredChart, vals)
+	}
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)

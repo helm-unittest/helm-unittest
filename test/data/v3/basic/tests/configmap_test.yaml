@@ -33,7 +33,7 @@ tests:
 
   - it: should not override chart values
     values:
-    - ../values.yaml
+      - ../values.yaml
     documentIndex: 0
     asserts:
       - equal:
@@ -47,7 +47,7 @@ tests:
 
   - it: should override chart values
     values:
-    - ../values.yaml
+      - ../values.yaml
     documentIndex: 0
     chart:
       appVersion: 2.0.0
@@ -64,7 +64,7 @@ tests:
 
   - it: should override chart version only
     values:
-    - ../values.yaml
+      - ../values.yaml
     documentIndex: 0
     chart:
       version: 0.3.0
@@ -77,3 +77,9 @@ tests:
             chart: basic-0.3.0
             heritage: Helm
             release: RELEASE-NAME
+
+  - it: should validate camelcase function
+    asserts:
+      - equal:
+          path: data["my.camelcase"]
+          value: Camelcase

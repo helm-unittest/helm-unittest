@@ -1,0 +1,9 @@
+manifest should match snapshot:
+  1: |
+    ingress_exists: {}
+    ingress_not_exists: {}
+    namespace_exists: {}
+    namespace_not_exists: {}
+    namespaces: {}
+    pod_exists: {}
+    pod_not_exists: {}

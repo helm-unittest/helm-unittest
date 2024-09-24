@@ -1,0 +1,18 @@
+templates:
+  - templates/lookup.yaml
+tests:
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+      - isNullOrEmpty:
+          path: pod_exists
+      - isNullOrEmpty:
+          path: ingress_exists
+      - isNullOrEmpty:
+          path: namespace_exists
+      - isNullOrEmpty:
+          path: pod_not_exists
+      - isNullOrEmpty:
+          path: ingress_not_exists
+      - isNullOrEmpty:
+          path: namespace_not_exists
