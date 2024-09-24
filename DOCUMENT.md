@@ -145,7 +145,7 @@ tests:
 - **capabilities**: *object, optional*. Define the `{{ .Capabilities }}` object.
   - **majorVersion**: *int, optional*. The kubernetes major version, default to the major version which is set by helm.
   - **minorVersion**: *int, optional*. The kubernetes minor version, default to the minor version which is set by helm.
-  - **apiVersions**: *array of string, optional*. A set of versions, default to the versionset used by the defined kubernetes version.
+  - **apiVersions**: *array of string, empty, optional*. A set of versions, default to the version set used by the defined kubernetes version.
 
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
