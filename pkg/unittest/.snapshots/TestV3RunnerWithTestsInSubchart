@@ -2,10 +2,10 @@
 ### Chart [ with-subchart ] ../../test/data/v3/with-subchart
 
 
+ PASS  test cert-manager rbac	../../test/data/v3/with-subchart/tests/certmanager_test.yaml
  PASS  test child_chart name	../../test/data/v3/with-subchart/charts/child-chart/tests/child_chart_test.yaml
  PASS  test deployment	../../test/data/v3/with-subchart/charts/child-chart/tests/deployment_test.yaml
  PASS  test deployment	../../test/data/v3/with-subchart/tests/deployment_test.yaml
- PASS  test hpa	../../test/data/v3/with-subchart/charts/child-chart/tests/hpa_test.yaml
  PASS  test ingress	../../test/data/v3/with-subchart/charts/child-chart/tests/ingress_test.yaml
  PASS  test ingress	../../test/data/v3/with-subchart/tests/ingress_test.yaml
  PASS  test notes	../../test/data/v3/with-subchart/charts/child-chart/tests/notes_test.yaml
@@ -18,7 +18,7 @@
 
 Charts:      1 passed, 1 total
 Test Suites: 12 passed, 12 total
-Tests:       26 passed, 26 total
+Tests:       25 passed, 25 total
 Snapshot:    10 passed, 10 total
 Time:        XX.XXXms
 
