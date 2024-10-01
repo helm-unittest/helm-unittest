@@ -270,29 +270,12 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 // override release settings in testjobs when defined in testsuite
 func (s *TestSuite) polishReleaseSettings(test *TestJob) {
-	if s.Release.Name != "" {
-		if test.Release.Name == "" {
-			test.Release.Name = s.Release.Name
-		}
-	}
 
-	if s.Release.Namespace != "" {
-		if test.Release.Namespace == "" {
-			test.Release.Namespace = s.Release.Namespace
-		}
-	}
-
-	if s.Release.Revision > 0 {
-		if test.Release.Revision == 0 {
-			test.Release.Revision = s.Release.Revision
-		}
-	}
-
-	if s.Release.IsUpgrade {
-		if !test.Release.IsUpgrade {
-			test.Release.IsUpgrade = s.Release.IsUpgrade
-		}
-	}
+	test.Release.Name = cmp.Or(test.Release.Name, s.Release.Name)
+	test.Release.Namespace = cmp.Or(test.Release.Namespace, s.Release.Namespace)
+	test.Release.Revision = cmp.Or(test.Release.Revision, s.Release.Revision)
+	test.Release.IsUpgrade = cmp.Or(test.Release.IsUpgrade, s.Release.IsUpgrade)
+	log.WithField(common.LOG_TEST_SUITE, "polish-release-settings").Debug("test.release '", test.Release)
 }
 
 // override capabilities settings in testjobs when defined in testsuite
@@ -310,9 +293,9 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 }
 
 func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
-	if len(s.KubernetesProvider.Objects) > 0 {
-		test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
-	}
+
+	test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
+
 	if len(s.KubernetesProvider.Scheme) > 0 {
 		if test.KubernetesProvider.Scheme == nil {
 			test.KubernetesProvider.Scheme = map[string]KubernetesFakeKindProps{}
@@ -325,12 +308,10 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 // override chart settings in testjobs when defined in testsuite
 func (s *TestSuite) polishChartSettings(test *TestJob) {
-	if test.Chart.Version == "" && s.Chart.Version != "" {
-		test.Chart.Version = s.Chart.Version
-	}
-	if test.Chart.AppVersion == "" && s.Chart.AppVersion != "" {
-		test.Chart.AppVersion = s.Chart.AppVersion
-	}
+
+	test.Chart.Version = cmp.Or(test.Chart.Version, s.Chart.Version)
+	test.Chart.AppVersion = cmp.Or(test.Chart.AppVersion, s.Chart.AppVersion)
+	log.WithField(common.LOG_TEST_SUITE, "polish-chart-settings").Debug("test.chart '", test.Chart)
 }
 
 func (s *TestSuite) runV3TestJobs(

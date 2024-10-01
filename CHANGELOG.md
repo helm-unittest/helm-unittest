@@ -1,9 +1,11 @@
-0.6.2 / 2024-09-30
+0.6.2 / 2024-10-02
 ==================
 - Fix assertion does not match when using camelcase function (resolves #359)
 - Fix templating multi document Helm file with trims break YAML parsing (resolves #403)
 - Fix lookup of resources defined in kubernetesProvider without any objects (resolves #380)
-- Improvement support for linux x390x
+- Fix chart object cannot be overwritten in the test job (credits @ivankatliarchuk, resolves #412)
+- Fix capabilities.apiVersions cannot be unset (resolves #413)
+- Improvement support for linux x390x (credits @dandotimujahid)
 - Update packages to latest patch versions
 - Update documentation
 

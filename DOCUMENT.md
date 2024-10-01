@@ -126,7 +126,7 @@ tests:
 
 - **set**: *object of any, optional*. Set the values directly in suite file. The key is the value path with the format just like `--set` option of `helm install`, for example `image.pullPolicy`. The value is anything you want to set to the path specified by the key, which can be even an array or an object. This set will override values which are already set in the values file.
 
-- **template**: *string, optional*. **templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
+- **template**: *string, optional*. <br/>**templates**: *array of string, optional*. The template file(s) which render the manifest to be tested, default to the list of template file defined in `templates` of suite file, unless template is defined in the assertion(s) (check [Assertion](#assertion)).
 
 - **documentIndex**: *int, optional*. The index of rendered documents (divided by `---`) to be tested, default to -1, which results in asserting all documents (see Assertion). Generally you can ignored this field if the template file render only one document.
 
@@ -150,6 +150,10 @@ tests:
 - **chart**: *object, optional*. Define the `{{ .Chart }}` object.
   - **version**: *string, optional*. The semantic version of the chart, default to the version set in the Chart.
   - **appVersion**: *string, optional*. The app-version of the chart, default to the app-version set in the Chart.
+
+- **kubernetesProvider**: *object, optional*. Define Kubernetes resources to fake.
+  - **scheme**: *object, optional*. Define the Kubernetes schema to fake
+  - **objects**: *array of objects*. Define the Kubernetes objects to fake
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 

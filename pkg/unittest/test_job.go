@@ -410,13 +410,13 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 	capabilities := v3util.DefaultCapabilities
 
-	// Override the version, when set.
-	if t.Capabilities.MajorVersion != "" || t.Capabilities.MinorVersion != "" {
-		capabilities.KubeVersion = v3util.KubeVersion{
-			Version: fmt.Sprintf("v%s.%s.0", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion),
-			Major:   cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major),
-			Minor:   cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor),
-		}
+	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
+	minorVersion := cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor)
+
+	capabilities.KubeVersion = v3util.KubeVersion{
+		Version: fmt.Sprintf("v%s.%s.0", majorVersion, minorVersion),
+		Major:   majorVersion,
+		Minor:   minorVersion,
 	}
 
 	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
