@@ -68,3 +68,26 @@ tests:
       - lengthEqual:
           path: namespaces.items
           count: 2
+  - it: manifest should validate pod_not_exists due to additional object add in testjob
+    kubernetesProvider:
+      objects:
+        - kind: Pod
+          apiVersion: v1
+          metadata:
+            name: not-exists
+            namespace: default
+    asserts:
+      - isNotNullOrEmpty:
+          path: pod_not_exists
+      - equal:
+          path: pod_not_exists.kind
+          value: Pod
+      - equal:
+          path: pod_not_exists.apiVersion
+          value: v1
+      - equal:
+          path: pod_not_exists.metadata.name
+          value: not-exists
+      - equal:
+          path: pod_not_exists.metadata.namespace
+          value: default

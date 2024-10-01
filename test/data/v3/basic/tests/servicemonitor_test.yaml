@@ -5,7 +5,6 @@ capabilities:
   apiVersions:
     - monitoring.coreos.com/v1
 tests:
-
   - it: with monitoring disabled, ServiceMonitor not created
     capabilities:
       apiVersions:
@@ -15,6 +14,7 @@ tests:
 
   - it: with monitoring, ServiceMonitor is created
     capabilities:
+      apiVersions: []
       minorVersion: 20
     asserts:
       - hasDocuments:
@@ -24,4 +24,3 @@ tests:
       - equal:
           path: metadata.labels["kubeVersion.minor"]
           value: "20"
-

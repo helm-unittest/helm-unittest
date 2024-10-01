@@ -81,9 +81,14 @@ tests:
         limits:
           memory: "128Mi"
           cpu: "1500m"
+    chart:
+      appVersion: 0.1.0
     template: templates/deployment.yaml
     documentIndex: 0
     asserts:
+      - greaterOrEqual:
+          path: metadata.labels.appVersion
+          value: 2.0.0
       - greaterOrEqual:
           path: spec.template.spec.securityContext.runAsUser
           value: 1286
@@ -107,9 +112,14 @@ tests:
         limits:
           memory: "128Mi"
           cpu: "1500m"
+    chart:
+      appVersion: 10.0.0
     template: templates/deployment.yaml
     documentIndex: 0
     asserts:
+      - lessOrEqual:
+          path: metadata.labels.appVersion
+          value: 10.0.0
       - lessOrEqual:
           path: spec.template.spec.securityContext.runAsUser
           value: 1281
