@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"os"
@@ -138,6 +139,15 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
+type Capabilities struct {
+	MajorVersion string   `yaml:"majorVersion"`
+	MinorVersion string   `yaml:"minorVersion"`
+	APIVersions  []string `yaml:"apiVersions"`
+}
+
+// CapabilitiesFields required to identify where or not the filed is provided, and the value is unset or not
+type CapabilitiesFields map[string]interface{}
+
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name             string `yaml:"it"`
@@ -158,11 +168,8 @@ type TestJob struct {
 		Version    string
 		AppVersion string `yaml:"appVersion"`
 	}
-	Capabilities struct {
-		MajorVersion string   `yaml:"majorVersion"`
-		MinorVersion string   `yaml:"minorVersion"`
-		APIVersions  []string `yaml:"apiVersions"`
-	}
+	Capabilities       Capabilities                 `yaml:"-"`
+	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
@@ -293,7 +300,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 	options := *t.releaseV3Option()
 
-	//Check Release Name length
+	// Check Release Name length
 	if t.Release.Name != "" {
 		err = v3util.ValidateReleaseName(t.Release.Name)
 		if err != nil {
@@ -397,20 +404,21 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 	return &options
 }
 
-// get chartutil.Capabilities ready for render
+// capabilitiesV3 chartutil.Capabilities ready for render
+// function returns a v3util.Capabilities struct based on the TestJob's capabilities.
+// It overrides the KubeVersion field if majorVersion or minorVersion are set
 func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 	capabilities := v3util.DefaultCapabilities
 
 	// Override the version, when set.
-	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
+	if t.Capabilities.MajorVersion != "" || t.Capabilities.MinorVersion != "" {
 		capabilities.KubeVersion = v3util.KubeVersion{
 			Version: fmt.Sprintf("v%s.%s.0", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion),
-			Major:   t.Capabilities.MajorVersion,
-			Minor:   t.Capabilities.MinorVersion,
+			Major:   cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major),
+			Minor:   cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor),
 		}
 	}
 
-	// Add ApiVersions when set
 	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
 
 	return capabilities
@@ -557,4 +565,51 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 	}
 
 	return templatesPath
+}
+
+// SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.
+// It extracts majorVersion, minorVersion, and apiVersions fields and sets the corresponding
+// fields in Capabilities. If apiVersions is nil, it sets APIVersions to nil. If it's a slice,
+// it appends string values to APIVersions.
+func (t *TestJob) SetCapabilities() {
+	if val, ok := t.CapabilitiesFields["majorVersion"]; ok {
+		t.Capabilities.MajorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["minorVersion"]; ok {
+		t.Capabilities.MinorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
+		switch v := val.(type) {
+		case []interface{}:
+			t.Capabilities.APIVersions = make([]string, 0, len(v)) // optimize slice allocation
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					t.Capabilities.APIVersions = append(t.Capabilities.APIVersions, str)
+				}
+			}
+		case nil:
+		default:
+			// key capabilities.apiVersions exists but is unset
+			t.Capabilities.APIVersions = nil
+		}
+	} else {
+		// APIVersions not set on test level
+		t.Capabilities.APIVersions = make([]string, 0)
+	}
+}
+
+// ConvertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
+// If the input value is nil, it returns an empty string.
+func convertIToString(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	switch v := val.(type) {
+	case string:
+		return v
+	case int, int8, int16, int32, int64:
+		return fmt.Sprintf("%d", val)
+	default:
+		return ""
+	}
 }

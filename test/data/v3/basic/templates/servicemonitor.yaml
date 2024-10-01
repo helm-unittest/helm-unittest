@@ -1,0 +1,17 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus
+  namespace: prometheus
+  labels:
+    kubeVersion.minor: {{ .Capabilities.KubeVersion.Minor | quote }}
+spec:
+  endpoints:
+    - interval: 30s
+      targetPort: 9090
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - prometheus
+  {{- end }}

@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -44,6 +45,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			if testSuite != nil {
 				for _, test := range testSuite.Tests {
 					testSuite.polishChartSettings(test)
+					testSuite.polishCapabilitiesSettings(test)
 				}
 			}
 			testSuites = append(testSuites, testSuite)
@@ -295,16 +297,16 @@ func (s *TestSuite) polishReleaseSettings(test *TestJob) {
 
 // override capabilities settings in testjobs when defined in testsuite
 func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
-	if s.Capabilities.MajorVersion != "" && s.Capabilities.MinorVersion != "" {
-		if test.Capabilities.MajorVersion == "" && test.Capabilities.MinorVersion == "" {
-			test.Capabilities.MajorVersion = s.Capabilities.MajorVersion
-			test.Capabilities.MinorVersion = s.Capabilities.MinorVersion
-		}
-	}
 
-	if len(s.Capabilities.APIVersions) > 0 {
+	test.SetCapabilities()
+
+	test.Capabilities.MajorVersion = cmp.Or(test.Capabilities.MajorVersion, s.Capabilities.MajorVersion)
+	test.Capabilities.MinorVersion = cmp.Or(test.Capabilities.MinorVersion, s.Capabilities.MinorVersion)
+
+	if len(s.Capabilities.APIVersions) > 0 && test.Capabilities.APIVersions != nil {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
 	}
+	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)
 }
 
 func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {

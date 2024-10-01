@@ -1,0 +1,37 @@
+suite: test hpa
+templates:
+  - hpa.yaml
+capabilities:
+  minorVersion: 11
+  apiVersions:
+    - autoscaling/v2
+tests:
+  - it: should not override apiVersion when not defined at test level
+    set:
+      hpa:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: autoscaling/v2
+      - equal:
+          path: metadata.labels["kubeVersion.minor"]
+          value: "11"
+
+  - it: should not override apiVersion and override minorVersion
+    capabilities:
+      minorVersion: 20
+    set:
+      hpa:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: autoscaling/v2
+      - equal:
+          path: metadata.labels["kubeVersion.minor"]
+          value: "20"
+      - isAPIVersion:
+          of: autoscaling/v2

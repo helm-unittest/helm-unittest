@@ -63,7 +63,7 @@ func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
 
 	// Validate loaded chart
 	assert.NotNil(t, sut)
-	assert.Equal(t, 56, templatesCount)
+	assert.Equal(t, 57, templatesCount)
 }
 
 func TestCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {

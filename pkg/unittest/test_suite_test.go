@@ -866,3 +866,203 @@ tests:
 		a.Equal("v3", suite.Tests[0].Chart.AppVersion)
 	}
 }
+
+func TestV3ParseTestSingleSuitesWithKubeCapabilitiesUnset(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  apiVersions:
+    - autoscaling/v2
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      apiVersions:
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "unset-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
+	a.Equal([]string(nil), suites[0].Tests[0].Capabilities.APIVersions)
+}
+
+func TestV3ParseTestSingleSuitesWithKubeCapabilitiesOverrided(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  apiVersions:
+   - autoscaling/v2
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      apiVersions:
+       - autoscaling/v1
+       - monitoring.coreos.com/v1
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
+	a.Equal([]string{"autoscaling/v1", "monitoring.coreos.com/v1", "autoscaling/v2"}, suites[0].Tests[0].Capabilities.APIVersions)
+}
+
+func TestV3ParseTestSingleSuitesShouldNotUnsetSuiteK8sVersions(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      majorVersion:
+      minorVersion:
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.Equal(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+}
+
+func TestV3ParseTestSingleSuitesWithSuiteK8sVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      majorVersion:
+      minorVersion: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+	a.Equal("15", suites[0].Capabilities.MinorVersion)
+	a.Equal("10", suites[0].Tests[0].Capabilities.MinorVersion)
+}
+
+func TestV3ParseTestMultipleSuitesWithK8sVersionOverrides(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+  apiVersions:
+   - v1
+tests:
+  - it: should keep majorVersion, minorVersion and keep apiVersions
+    capabilities:
+      majorVersion:
+      minorVersion: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: second suite in same file
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 4
+  minorVersion: 13
+tests:
+  - it: should keep majorVersion, unset apiVersion and override minorVersion
+    capabilities:
+      majorVersion:
+      minorVersion: 11
+      apiVersions:
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: third suite in same file
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 3
+  minorVersion: 11
+  apiVersions:
+   - v1
+tests:
+  - it: should override majorVersion, keep minorVersion and extend apiVersions
+    capabilities:
+      majorVersion: 1
+      minorVersion:
+      apiVersions:
+       - extensions/v1beta1
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-capabilities-modifications.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 3)
+	// first
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+	a.Equal(suites[0].Capabilities.APIVersions, suites[0].Tests[0].Capabilities.APIVersions)
+	a.Equal("15", suites[0].Capabilities.MinorVersion)
+	a.Equal("10", suites[0].Tests[0].Capabilities.MinorVersion)
+	// second
+	a.Equal(suites[1].Capabilities.MajorVersion, suites[1].Tests[0].Capabilities.MajorVersion)
+	a.Equal("11", suites[1].Tests[0].Capabilities.MinorVersion)
+	// third
+	a.NotEqual(suites[2].Capabilities.MajorVersion, suites[2].Tests[0].Capabilities.MajorVersion)
+	a.Equal("1", suites[2].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(len(suites[2].Capabilities.APIVersions), len(suites[2].Tests[0].Capabilities.APIVersions))
+}

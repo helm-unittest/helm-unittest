@@ -133,7 +133,7 @@ documentIndex: 0
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
   - matchRegex:
       path: metadata.name
       pattern: -basic$
@@ -162,7 +162,7 @@ documentSelector:
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
   - matchRegex:
       path: metadata.name
       pattern: -basic
@@ -190,11 +190,11 @@ templates:
 asserts:
   - equal:
       path: kind
-      value: Deployment   
+      value: Deployment
     template: templates/deployment.yaml
   - equal:
       path: kind
-      value: ConfigMap   
+      value: ConfigMap
     template: templates/configmap.yaml
   - exists:
       path: metadata.name
@@ -363,7 +363,7 @@ func TestV3RunJobWithReleaseSettings(t *testing.T) {
 it: should work
 release:
   name: my-release
-  namespace: test  
+  namespace: test
 asserts:
   - equal:
       path: metadata.name
@@ -444,16 +444,89 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithCapabilityApiVersionUnset(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+  apiVersions:
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	a.False(testResult.Passed)
+	a.Equal(0, len(tj.Capabilities.APIVersions))
+}
+
+func TestV3RunJobWithCapabilityApiVersionNotSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  majorVersion: 1
+  minorVersion: 12
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	a.False(testResult.Passed)
+	a.Equal([]string{}, tj.Capabilities.APIVersions)
+	a.Equal("12", tj.Capabilities.MinorVersion)
+}
+
+func TestV3RunJobWithCapabilityMinorVersionSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+capabilities:
+  minorVersion: 7
+asserts:
+  - hasDocuments:
+      count: 1
+    template: templates/crd_backup.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	a.False(testResult.Passed)
+	a.Equal("7", tj.Capabilities.MinorVersion)
 }
 
 func TestV3RunJobWithChartSettings(t *testing.T) {
@@ -476,7 +549,7 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	_ = unmarshalJob(manifest, &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -547,7 +620,7 @@ asserts:
   - failedTemplate: {}
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
+	_ = unmarshalJob(manifest, &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 

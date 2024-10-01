@@ -1021,7 +1021,7 @@
           "markdownDescription": "**minorVersion** (integer) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
         },
         "apiVersions": {
-          "type": "array",
+          "type": ["array", "null"],
           "description": "A set of versions, default to the versionset used by the defined kubernetes version.",
           "markdownDescription": "**apiVersions** (array<string>) _optional_\n\nA set of versions, default to the versionset used by the defined kubernetes version.",
           "items": {
