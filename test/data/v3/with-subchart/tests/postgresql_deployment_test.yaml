@@ -17,7 +17,7 @@ tests:
       - matchSnapshot:
           path: spec
 
-  - it: should override chart version for installed as a dependency
+  - it: should override subchart version when installed as a dependency
     values:
       - ./values/image.yaml
     asserts:
