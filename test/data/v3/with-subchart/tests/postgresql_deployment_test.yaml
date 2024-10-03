@@ -1,6 +1,6 @@
 suite: test postgresql deployment
 templates:
-  - charts/postgresql/templates/deployment.yaml 
+  - charts/postgresql/templates/deployment.yaml
 tests:
   - it: should pass all kinds of assertion for subchart
     values:
