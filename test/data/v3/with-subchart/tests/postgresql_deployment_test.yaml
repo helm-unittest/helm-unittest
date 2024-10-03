@@ -1,6 +1,8 @@
 suite: test postgresql deployment
 templates:
-  - charts/postgresql/templates/deployment.yaml 
+  - charts/postgresql/templates/deployment.yaml
+chart:
+  version: 3.6.1
 tests:
   - it: should pass all kinds of assertion for subchart
     values:
@@ -14,3 +16,11 @@ tests:
           count: 1
       - matchSnapshot:
           path: spec
+
+  - it: should override chart version for installed as a dependency
+    values:
+      - ./values/image.yaml
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-3.6.1
