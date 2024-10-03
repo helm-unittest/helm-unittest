@@ -573,7 +573,7 @@ func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
 			dependency.Metadata.Version = targetChart.Metadata.Version
 		}
 	}
-	// Override the chart appVErsion when version is setup in test.
+	// Override the chart appVersion when version is setup in test.
 	if t.Chart.AppVersion != "" {
 		targetChart.Metadata.AppVersion = t.Chart.AppVersion
 
