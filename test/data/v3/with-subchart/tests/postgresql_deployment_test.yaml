@@ -18,8 +18,6 @@ tests:
           path: spec
 
   - it: should override subchart version when installed as a dependency
-    values:
-      - ./values/image.yaml
     asserts:
       - equal:
           path: metadata.labels.chart
