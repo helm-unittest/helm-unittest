@@ -208,7 +208,11 @@ func (t *TestJob) RunV3(
 	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
 	// Still questioning why rendering in helm template is working, as it is using similar steps.
 	for file, rendered := range outputOfFiles {
-		outputOfFiles[file] = splitterPattern.ReplaceAllString(rendered, "\n---\n")
+		if IsYaml(file) {
+			outputOfFiles[file] = splitterPattern.ReplaceAllString(rendered, "\n---\n")
+		} else {
+			outputOfFiles[file] = rendered
+		}
 	}
 
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
