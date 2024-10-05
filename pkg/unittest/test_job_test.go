@@ -656,3 +656,29 @@ asserts:
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
+
+func TestV3RunJobWithTestJobNotesOk(t *testing.T) {
+	c, _ := loader.Load(testV3WithSubChart)
+	manifest := `
+it: should generate notes
+template: charts/child-chart/templates/NOTES-with-separator.txt
+release:
+  name: test-unit-notes
+  namespace: unit-test
+asserts:
+ - equalRaw:
+   value: |
+     -----
+     Platform release "test-unit-notes" installed in namespace "unit-test"
+
+     Documentation can be found here: https://docs.example.com/
+     -----
+`
+	var tj TestJob
+	err := yaml.Unmarshal([]byte(manifest), &tj)
+	assert.NoError(t, err)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	assert.NoError(t, testResult.ExecError)
+}

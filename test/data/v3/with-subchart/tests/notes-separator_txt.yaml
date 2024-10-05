@@ -10,7 +10,7 @@ tests:
       - equalRaw:
           value: |
             -----
-            HiveMQ Platform release "test-notes" installed in namespace "apps-notes"
+            Platform release "test-notes" installed in namespace "apps-notes"
 
             Documentation can be found here: https://docs.example.com/
             -----
