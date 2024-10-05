@@ -1,4 +1,4 @@
-suite: test subchart hivemq-platform notes.txt
+suite: test subchart notes.txt with yaml separators
 templates:
   - charts/child-chart/templates/NOTES-with-separator.txt
 release:
