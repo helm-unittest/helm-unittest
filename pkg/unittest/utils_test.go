@@ -1,6 +1,8 @@
 package unittest_test
 
 import (
+	"testing"
+
 	"gopkg.in/yaml.v3"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -19,4 +21,28 @@ func unmarshalJob(input string, out *TestJob) error {
 	}
 	out.SetCapabilities()
 	return nil
+}
+
+func TestIsYaml(t *testing.T) {
+	testCases := []struct {
+		name     string
+		fileName string
+		want     bool
+	}{
+		{"yaml file", "test.yaml", true},
+		{"yml file", "config.yml", true},
+		{"template file", "template.tpl", true},
+		{"text file", "data.txt", false},
+		{"no extension", "file", false},
+		{"unknown extension", "unknown.ext", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := IsYaml(tc.fileName)
+			if got != tc.want {
+				t.Errorf("IsYaml(%q) = %v, want %v", tc.fileName, got, tc.want)
+			}
+		})
+	}
 }

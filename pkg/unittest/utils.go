@@ -5,14 +5,10 @@ import (
 )
 
 func IsYaml(fileName string) bool {
-	ext := filepath.Ext(fileName)
-	validExtensions := []string{".yaml", ".yml", ".tpl"}
-
-	for _, b := range validExtensions {
-		if b == ext {
-			return true
-		}
+	switch filepath.Ext(fileName) {
+	case ".yaml", ".yml", ".tpl":
+		return true
+	default:
+		return false
 	}
-
-	return false
 }
