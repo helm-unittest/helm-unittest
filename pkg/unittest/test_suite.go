@@ -22,6 +22,7 @@ import (
 )
 
 // m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
+// helm https://github.com/helm/helm/blob/145d12f82fc7a2e39a17713340825686b661e0a1/pkg/releaseutil/manifest.go#L36
 var splitterPattern = regexp.MustCompile("(?:^|\\s*\n)---\\s*")
 
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite

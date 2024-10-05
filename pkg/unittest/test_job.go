@@ -78,6 +78,8 @@ func parseRenderError(regexPattern, errorMessage string) (string, map[string]str
 }
 
 func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
+	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
+	rendered = splitterPattern.ReplaceAllString(rendered, "\n---\n")
 	decoder := yaml.NewDecoder(strings.NewReader(rendered))
 	parsedYamls := make([]common.K8sManifest, 0)
 
@@ -204,12 +206,6 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
-
-	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
-	// Still questioning why rendering in helm template is working, as it is using similar steps.
-	for file, rendered := range outputOfFiles {
-		outputOfFiles[file] = splitterPattern.ReplaceAllString(rendered, "\n---\n")
-	}
 
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
