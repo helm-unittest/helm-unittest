@@ -1,8 +1,6 @@
 package unittest_test
 
 import (
-	"testing"
-
 	"gopkg.in/yaml.v3"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
