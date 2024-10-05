@@ -579,7 +579,7 @@ func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
 		}
 	}
 
-	updateMetadata(t.Chart.Version, t.Chart.AppVersion)
+	updateMetadata(targetChart.Metadata.Version, targetChart.Metadata.AppVersion)
 }
 
 // SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.
