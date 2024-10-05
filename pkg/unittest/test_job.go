@@ -570,12 +570,8 @@ func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
 
 	updateMetadata := func(version, appVersion string) {
 		for _, dependency := range targetChart.Dependencies() {
-			if version != "" {
-				dependency.Metadata.Version = version
-			}
-			if appVersion != "" {
-				dependency.Metadata.AppVersion = appVersion
-			}
+			dependency.Metadata.Version = cmp.Or(version, dependency.Metadata.Version)
+			dependency.Metadata.AppVersion = cmp.Or(appVersion, dependency.Metadata.AppVersion)
 		}
 	}
 	updateMetadata(t.Chart.Version, t.Chart.AppVersion)
