@@ -667,12 +667,12 @@ release:
   namespace: unit-test
 asserts:
  - equalRaw:
-   value: |
-     -----
-     Platform release "test-unit-notes" installed in namespace "unit-test"
+     value: |
+       -----
+       Platform release "test-unit-notes" installed in namespace "unit-test"
 
-     Documentation can be found here: https://docs.example.com/
-     -----
+       Documentation can be found here: https://docs.example.com/
+       -----
 `
 	var tj TestJob
 	err := yaml.Unmarshal([]byte(manifest), &tj)
@@ -681,4 +681,5 @@ asserts:
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	assert.NoError(t, testResult.ExecError)
+	assert.True(t, testResult.Passed, testResult.AssertsResult)
 }
