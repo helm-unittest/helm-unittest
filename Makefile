@@ -27,7 +27,7 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: plugin-dir
-plugin-dir: 
+plugin-dir:
   HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
   HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 
@@ -62,7 +62,7 @@ build: unittest ## Compile packages and dependencies
 dist:
 	mkdir -p $(DIST)
 	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt README.md LICENSE plugin.yaml	
+	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
