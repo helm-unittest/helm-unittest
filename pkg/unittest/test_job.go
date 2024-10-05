@@ -565,22 +565,21 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 // chart dependencies. Similarly, if an appVersion is set (t.Chart.AppVersion),
 // it updates the target chart's appVersion and also propagates it to all dependencies.
 func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
-	// Override the chart version when version is setup in test.
-	if t.Chart.Version != "" {
-		targetChart.Metadata.Version = t.Chart.Version
+	targetChart.Metadata.Version = cmp.Or(t.Chart.Version, targetChart.Metadata.Version)
+	targetChart.Metadata.AppVersion = cmp.Or(t.Chart.AppVersion, targetChart.Metadata.AppVersion)
 
+	updateMetadata := func(version, appVersion string) {
 		for _, dependency := range targetChart.Dependencies() {
-			dependency.Metadata.Version = targetChart.Metadata.Version
+			if version != "" {
+				dependency.Metadata.Version = version
+			}
+			if appVersion != "" {
+				dependency.Metadata.AppVersion = appVersion
+			}
 		}
 	}
-	// Override the chart appVersion when version is setup in test.
-	if t.Chart.AppVersion != "" {
-		targetChart.Metadata.AppVersion = t.Chart.AppVersion
 
-		for _, dependency := range targetChart.Dependencies() {
-			dependency.Metadata.AppVersion = targetChart.Metadata.AppVersion
-		}
-	}
+	updateMetadata(t.Chart.Version, t.Chart.AppVersion)
 }
 
 // SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.
