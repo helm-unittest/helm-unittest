@@ -634,8 +634,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "without-subchart-version-override.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Empty(t, testSuite.Chart.Version)
@@ -663,8 +662,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "with-suite-version-override.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.3")
@@ -694,8 +692,7 @@ tests:
 	testSuite := TestSuite{}
 	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 
-	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "with-suite-and-job-version-override.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.2")
