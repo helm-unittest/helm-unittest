@@ -56,7 +56,7 @@ jobs:
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
-      uses: sonarsource/sonarcloud-github-action@eb211723266fe8e83102bac7361f0a05c3ac1d1b # v3.0.0
+      uses: sonarsource/sonarcloud-github-action@383f7e52eae3ab0510c3cb0e7d9d150bbaeab838 # v3.1.0
       if: matrix.os == 'ubuntu-latest' && env.SONAR_TOKEN != ''
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
