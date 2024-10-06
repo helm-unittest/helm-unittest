@@ -304,15 +304,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 	}
 
-	// Override the chart version when version is setup in test.
-	if t.Chart.Version != "" {
-		targetChart.Metadata.Version = t.Chart.Version
-	}
-
-	// Override the chart appVErsion when version is setup in test.
-	if t.Chart.AppVersion != "" {
-		targetChart.Metadata.AppVersion = t.Chart.AppVersion
-	}
+	t.ModifyChartMetadata(targetChart)
 
 	err = v3util.ProcessDependenciesWithMerge(targetChart, values)
 	if err != nil {
@@ -561,6 +553,24 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 	}
 
 	return templatesPath
+}
+
+// ModifyChartMetadata overrides the metadata of a Helm chart based on the values
+// provided in the TestJob. If a chart version is set in the TestJob (t.Chart.Version),
+// it updates the target chart's version and also propagates the same version to all
+// chart dependencies. Similarly, if an appVersion is set (t.Chart.AppVersion),
+// it updates the target chart's appVersion and also propagates it to all dependencies.
+func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
+	targetChart.Metadata.Version = cmp.Or(t.Chart.Version, targetChart.Metadata.Version)
+	targetChart.Metadata.AppVersion = cmp.Or(t.Chart.AppVersion, targetChart.Metadata.AppVersion)
+
+	updateMetadata := func(version, appVersion string) {
+		for _, dependency := range targetChart.Dependencies() {
+			dependency.Metadata.Version = cmp.Or(version, dependency.Metadata.Version)
+			dependency.Metadata.AppVersion = cmp.Or(appVersion, dependency.Metadata.AppVersion)
+		}
+	}
+	updateMetadata(t.Chart.Version, t.Chart.AppVersion)
 }
 
 // SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.

@@ -25,7 +25,7 @@ tests:
             release: my-release
       - equal:
           path: metadata.labels.chart
-          value: child-chart-0.1.1
+          value: child-chart-0.3.1
 
   - it: should render right if values given
     set:
@@ -49,4 +49,4 @@ tests:
           value: NodePort
       - equal:
           path: metadata.labels.chart
-          value: child-chart-0.1.1
+          value: child-chart-0.2.1

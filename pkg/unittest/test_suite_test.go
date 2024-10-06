@@ -614,6 +614,91 @@ tests:
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
+func TestV3RunSuiteWithSubChartsWithAliasWithoutChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite without subchart version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot: {}
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.8.3
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Empty(t, testSuite.Chart.Version)
+	assert.True(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSubChartsWithAliasWithSuiteChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with suite version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+chart:
+  version: 0.6.3
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.6.3
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Equal(t, testSuite.Chart.Version, "0.6.3")
+	assert.True(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSubChartsWithAliasWithJobChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with suite version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+chart:
+  version: 0.6.2
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    chart:
+        version: 0.7.1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.7.1
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Equal(t, testSuite.Chart.Version, "0.6.2")
+	assert.True(t, suiteResult.Passed)
+}
+
 func TestV3RunSuiteNameOverrideFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name too long

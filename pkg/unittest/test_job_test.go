@@ -13,6 +13,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
+	v3chart "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
@@ -655,6 +656,99 @@ asserts:
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestModifyChartMetadataVersions(t *testing.T) {
+	type ChartVersions struct {
+		Version    string
+		AppVersion string
+	}
+	tests := []struct {
+		name                 string
+		testJob              TestJob
+		initialChartVersions ChartVersions
+		dependencies         []*v3chart.Chart // List of dependencies to add
+		expectedVersions     ChartVersions
+	}{
+		{
+			name: "Override version and propagate to dependencies",
+			testJob: TestJob{
+				Chart: struct {
+					Version    string
+					AppVersion string `yaml:"appVersion"`
+				}{
+					Version:    "1.2.3",
+					AppVersion: "1.1.0",
+				},
+			},
+			initialChartVersions: ChartVersions{"1.0.3", "1.0.8"},
+			dependencies: []*v3chart.Chart{
+				{Metadata: &v3chart.Metadata{Version: "0.1.0"}},
+				{Metadata: &v3chart.Metadata{AppVersion: "11.1.0"}},
+			},
+			expectedVersions: ChartVersions{"1.2.3", "1.1.0"},
+		},
+		{
+			name: "Override appVersion and propagate to dependencies",
+			testJob: TestJob{
+				Chart: struct {
+					Version    string
+					AppVersion string `yaml:"appVersion"`
+				}{
+					AppVersion: "2.0.0",
+				},
+			},
+			initialChartVersions: ChartVersions{AppVersion: "1.0.0"},
+			dependencies: []*v3chart.Chart{
+				{Metadata: &v3chart.Metadata{AppVersion: "1.0.0"}},
+			},
+			expectedVersions: ChartVersions{AppVersion: "2.0.0"},
+		},
+		{
+			name: "No overrides when TestJob has empty version and appVersion",
+			testJob: TestJob{
+				Chart: struct {
+					Version    string
+					AppVersion string `yaml:"appVersion"`
+				}{},
+			},
+			initialChartVersions: ChartVersions{Version: "0.1.0", AppVersion: "1.0.0"},
+			dependencies: []*v3chart.Chart{
+				{Metadata: &v3chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
+				{Metadata: &v3chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
+			},
+			expectedVersions: ChartVersions{Version: "0.1.0", AppVersion: "1.0.0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parent := &v3chart.Chart{
+				Metadata: &v3chart.Metadata{
+					Version:    tt.expectedVersions.Version,
+					AppVersion: tt.expectedVersions.AppVersion,
+				},
+			}
+
+			// Add dependencies charts
+			for _, dep := range tt.dependencies {
+				parent.AddDependency(dep)
+			}
+
+			// Call the method to test
+			tt.testJob.ModifyChartMetadata(parent)
+
+			// Assert chart version
+			assert.Equal(t, tt.expectedVersions.Version, parent.Metadata.Version)
+			assert.Equal(t, tt.expectedVersions.AppVersion, parent.Metadata.AppVersion)
+
+			// Assert dependencies' version and appVersion using the Dependencies() method
+			for _, dep := range parent.Dependencies() {
+				assert.Equal(t, tt.expectedVersions.Version, dep.Metadata.Version)
+				assert.Equal(t, tt.expectedVersions.AppVersion, dep.Metadata.AppVersion)
+			}
+		})
+	}
 }
 
 func TestV3RunJobWithTestJobNotesOk(t *testing.T) {
