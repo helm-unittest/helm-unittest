@@ -359,22 +359,4 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!
-Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.23 installed, and run:
-
-```
-git clone git@github.com:helm-unittest/helm-unittest.git
-cd helm-unittest
-```
-
-And please make CI passed when request a PR which would check following things:
-
-- `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
-- `go test ./pkg/unittest/...` passed.
-
-In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed, you need to run:
-
-```
-UPDATE_SNAPSHOTS=true go test ./...
-```
-
-This update the snapshot cache file and please add them before you commit.
+To start developing this plugin please follow the [Contribution](./CONTRIBUTING.md) guidelines. 
