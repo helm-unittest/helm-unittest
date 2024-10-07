@@ -59,7 +59,6 @@ func (a *Assertion) Assert(
 			if a.requireRenderSuccess != renderSucceed {
 				invalidRender := "Error: rendered manifest is empty"
 				failInfo = append(failInfo, invalidRender)
-				assertionPassed = false
 			} else {
 				emptyTemplate := []common.K8sManifest{}
 				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError)

@@ -1,3 +1,10 @@
+0.6.3 / 2024-10-08
+==================
+- Fix regression on document separator for raw files (credits @ivankatliarchuk, resolves #413)
+- Fix chart object to overwritte also in subcharts (credits @ivankatliarchuk, resolves #412)
+- Update packages to latest patch versions
+- Update documentation
+
 0.6.2 / 2024-10-02
 ==================
 - Fix assertion does not match when using camelcase function (resolves #359)
