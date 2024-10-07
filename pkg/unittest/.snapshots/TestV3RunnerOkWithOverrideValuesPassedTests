@@ -13,11 +13,12 @@
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
  PASS  test override names and fullNames in Kubernetes resources	../../test/data/v3/basic/tests/namesOverride_test.yaml
  PASS  test service	../../test/data/v3/basic/tests/service_test.yaml
+ PASS  test service account	../../test/data/v3/basic/tests/serviceaccount_test.yaml
 
 
 Charts:      1 passed, 1 total
-Test Suites: 11 passed, 11 total
-Tests:       31 passed, 31 total
+Test Suites: 12 passed, 12 total
+Tests:       33 passed, 33 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 
