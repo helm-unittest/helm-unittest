@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
@@ -18,27 +21,51 @@ import (
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
+const LOG_TEST_RUNNER = "test-runner"
+
+// getFiles retrieves a list of files matching the given file patterns.
+// If chartPath is provided, the patterns are treated as relative to the chartPath.
+// If setAbsolute is true, the returned file paths are converted to absolute paths.
+//
+// chartPath is the base directory to search for files (can be empty).
+// filePatterns is a slice of file patterns to match (e.g., "tests/*".yaml).
+// setAbsolute indicates whether to return absolute file paths or relative paths.
+//
+// It returns a slice of file paths and an error if any occurred during processing.
 func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	filesSet := make([]string, 0)
+	log.WithField(LOG_TEST_RUNNER, "get-files").Debugln("filepatterns:", filePatterns)
+	var filesSet []string
+	basePath := chartPath + "/" // Prepend chartPath with slash
+
 	for _, pattern := range filePatterns {
-		if !filepath.IsAbs(pattern) {
-			files, err := filepathx.Glob(filepath.Join(chartPath, pattern))
+		if filepath.IsAbs(pattern) {
+			filesSet = append(filesSet, pattern) // Append absolute paths directly
+		} else {
+			var filePath string
+			if strings.Contains(pattern, basePath) {
+				filePath = pattern
+			} else {
+				filePath = filepath.Join(basePath, pattern)
+			}
+			files, err := filepathx.Glob(filePath)
 			if err != nil {
 				return nil, err
 			}
-			if setAbsolute {
-				for _, file := range files {
-					file, _ = filepath.Abs(file)
-					filesSet = append(filesSet, file)
-				}
-			} else {
-				filesSet = append(filesSet, files...)
-			}
-		} else {
-			filesSet = append(filesSet, pattern)
+			filesSet = append(filesSet, files...) // Append all files (relative)
 		}
 	}
 
+	if setAbsolute {
+		// If setAbsolute is true, convert the file paths to absolute paths
+		for i, filePath := range filesSet {
+			if !filepath.IsAbs(filePath) {
+				absPath, _ := filepath.Abs(filePath)
+				filesSet[i] = absPath
+			}
+		}
+	}
+
+	log.WithField(LOG_TEST_RUNNER, "getFiles").Debugln("chartpath:", chartPath, ". fileset:", filesSet)
 	return filesSet, nil
 }
 
@@ -141,6 +168,13 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	return allPassed
 }
 
+// getTestSuites retrieves the list of test suites for the given chart.
+// It parses test suite files and renders test suite files from the chart's tests path (if specified).
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+//
+// It returns a slice of _TestSuite structs and an error if any occurred during processing.
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
 	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
 	if terr != nil {
@@ -182,7 +216,14 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 	return resultSuites, nil
 }
 
-// getV3TestSuites return test files of the chart which matched patterns
+// getV3TestSuites retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
+// It recursively calls itself for each subchart dependency.
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+// chart is the chart object representing the chart being processed.
+//
+// It returns a slice of TestSuite pointers and an error if any occurred during processing.
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
