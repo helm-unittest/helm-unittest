@@ -14,7 +14,7 @@ env:
 
 permissions:
   contents: read
-      
+
 jobs:
   full-test:
     name: Full SDK and Tools Test
@@ -22,7 +22,7 @@ jobs:
       # Needed to upload the results to github dashboard.
       checks: write
       issues: write
-      pull-requests: write      
+      pull-requests: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -52,7 +52,7 @@ jobs:
     # Run tests with nice formatting. Save the coverage and junit test results in test-results
     - name: Run tests
       run: |
-        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
@@ -107,14 +107,14 @@ jobs:
     - name: Run Trivy vulnerability scanner
       # https://github.com/aquasecurity/trivy-action
       uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.25.0
-      with:        
+      with:
         image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
         format: sarif
         output: trivy-results.sarif
-        
+
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
       if: always()
       with:
         sarif_file: trivy-results.sarif
-        
+
