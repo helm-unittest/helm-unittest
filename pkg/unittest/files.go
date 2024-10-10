@@ -9,7 +9,7 @@ import (
 	"github.com/yargevad/filepathx"
 )
 
-const LOG_UTILS = "utils"
+const LOG_FILES = "files"
 
 // GetFiles retrieves a list of files matching the given file patterns.
 // If chartPath is provided, the patterns are treated as relative to the chartPath.
@@ -21,7 +21,7 @@ const LOG_UTILS = "utils"
 //
 // It returns a slice of file paths and an error if any occurred during processing.
 func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	log.WithField(LOG_UTILS, "get-files").Debugln("file-patterns:", filePatterns)
+	log.WithField(LOG_FILES, "get-files").Debugln("file-patterns:", filePatterns)
 	var filesSet []string
 	basePath := chartPath + "/" // Prepend chartPath with slash
 
@@ -52,6 +52,6 @@ func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 			}
 		}
 	}
-	log.WithField(LOG_UTILS, "get-files").Debugln("chart-path:", chartPath, "fileset:", filesSet)
+	log.WithField(LOG_FILES, "get-files").Debugln("chart-path:", chartPath, "fileset:", filesSet)
 	return filesSet, nil
 }
