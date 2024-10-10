@@ -97,7 +97,7 @@ func TestGetFiles_ChartWithSubChartFromRootDefaultPattern(t *testing.T) {
 	}, actual)
 }
 
-func TestGetFiles_ChartWithSubChartFromRootWisibleSubchartTests(t *testing.T) {
+func TestGetFiles_ChartWithSubChartFromRootVisibleSubChartTests(t *testing.T) {
 	helper(t)
 	err := os.Chdir("../../test/data/v3/with-subchart")
 	assert.NoError(t, err)
