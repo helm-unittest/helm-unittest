@@ -56,7 +56,7 @@ jobs:
         go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
 
     - name: Run tests on pull request
-      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      if: github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
       run: |
         go test ./... -coverprofile=test-results/coverage -v -covermode=atomic
 
