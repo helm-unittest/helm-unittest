@@ -50,7 +50,13 @@ jobs:
         go install github.com/jstemmer/go-junit-report/v2@14d61e6e75e3f3c74551d757ad936e8e88014464 # v2.1.0
 
     # Run tests with nice formatting. Save the coverage and junit test results in test-results
-    - name: Run tests
+    - name: Run tests with junit report
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      run: |
+        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+
+    - name: Run tests on pull request
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
       run: |
         go test ./... -coverprofile=test-results/coverage -v -covermode=atomic
 

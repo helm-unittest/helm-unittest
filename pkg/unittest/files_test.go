@@ -3,7 +3,6 @@ package unittest_test
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -70,25 +69,14 @@ func TestGetFiles_ChartWithSubChartCdToSubChart(t *testing.T) {
 	actual, err := GetFiles("charts/child-chart", []string{"tests/*_test.yaml"}, false)
 	assert.NoError(t, err)
 	assert.Equal(t, 6, len(actual))
-	if runtime.GOOS == "windows" {
-		assert.Equal(t, []string{
-			"charts\\child-chart\\tests\\child_chart_test.yaml",
-			"charts\\child-chart\\tests\\deployment_test.yaml",
-			"charts\\child-chart\\tests\\hpa_test.yaml",
-			"charts\\child-chart\\tests\\ingress_test.yaml",
-			"charts\\child-chart\\tests\\notes_test.yaml",
-			"charts\\child-chart\\tests\\service_test.yaml",
-		}, actual)
-	} else {
-		assert.Equal(t, []string{
-			"charts/child-chart/tests/child_chart_test.yaml",
-			"charts/child-chart/tests/deployment_test.yaml",
-			"charts/child-chart/tests/hpa_test.yaml",
-			"charts/child-chart/tests/ingress_test.yaml",
-			"charts/child-chart/tests/notes_test.yaml",
-			"charts/child-chart/tests/service_test.yaml",
-		}, actual)
-	}
+	assertResults(t, []string{
+		"charts/child-chart/tests/child_chart_test.yaml",
+		"charts/child-chart/tests/deployment_test.yaml",
+		"charts/child-chart/tests/hpa_test.yaml",
+		"charts/child-chart/tests/ingress_test.yaml",
+		"charts/child-chart/tests/notes_test.yaml",
+		"charts/child-chart/tests/service_test.yaml",
+	}, actual)
 }
 
 func TestGetFiles_ChartWithSubChartFromRootDefaultPattern(t *testing.T) {
@@ -98,19 +86,15 @@ func TestGetFiles_ChartWithSubChartFromRootDefaultPattern(t *testing.T) {
 
 	actual, err := GetFiles(".", []string{"tests/*_test.yaml"}, false)
 	assert.NoError(t, err)
-	if runtime.GOOS == "windows" {
-
-	} else {
-		assert.Equal(t, []string{
-			"tests/certmanager_test.yaml",
-			"tests/deployment_test.yaml",
-			"tests/ingress_test.yaml",
-			"tests/notes_test.yaml",
-			"tests/postgresql_deployment_test.yaml",
-			"tests/postgresql_secrets_test.yaml",
-			"tests/service_test.yaml",
-		}, actual)
-	}
+	assertResults(t, []string{
+		"tests/certmanager_test.yaml",
+		"tests/deployment_test.yaml",
+		"tests/ingress_test.yaml",
+		"tests/notes_test.yaml",
+		"tests/postgresql_deployment_test.yaml",
+		"tests/postgresql_secrets_test.yaml",
+		"tests/service_test.yaml",
+	}, actual)
 }
 
 func TestGetFiles_ChartWithSubChartFromRootWisibleSubchartTests(t *testing.T) {
@@ -120,9 +104,5 @@ func TestGetFiles_ChartWithSubChartFromRootWisibleSubchartTests(t *testing.T) {
 
 	actual, err := GetFiles(".", []string{"charts/child-chart/tests/deployment_test.yaml"}, false)
 	assert.NoError(t, err)
-	if runtime.GOOS == "windows" {
-
-	} else {
-		assert.Equal(t, []string{"charts/child-chart/tests/deployment_test.yaml"}, actual)
-	}
+	assertResults(t, []string{"charts/child-chart/tests/deployment_test.yaml"}, actual)
 }
