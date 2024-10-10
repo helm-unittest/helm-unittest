@@ -2,12 +2,12 @@ package unittest_test
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/stretchr/testify/assert"
 )
 
 func helper(t *testing.T) {
@@ -18,6 +18,16 @@ func helper(t *testing.T) {
 	})
 }
 
+func assertResults(t *testing.T, expected, actual []string) {
+	t.Helper()
+	var want []string
+	for _, el := range expected {
+		// required as Linux separator is '/' when Windows is '\\'
+		want = append(want, filepath.FromSlash(el))
+	}
+	assert.Equal(t, want, actual)
+}
+
 func TestGetFiles_ChartWithoutSubCharts(t *testing.T) {
 	helper(t)
 	err := os.Chdir("../../test/data/v3/basic")
@@ -25,11 +35,7 @@ func TestGetFiles_ChartWithoutSubCharts(t *testing.T) {
 
 	actual, err := GetFiles(".", []string{"tests/*_test.yaml"}, false)
 	assert.NoError(t, err)
-	if runtime.GOOS == "windows" {
-
-	} else {
-		assert.Equal(t, len(actual), 11)
-	}
+	assert.Equal(t, len(actual), 11)
 }
 
 func TestGetFiles_ChartWithoutSubChartsNoDuplicates(t *testing.T) {
@@ -41,11 +47,7 @@ func TestGetFiles_ChartWithoutSubChartsNoDuplicates(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(actual), 1)
-	if runtime.GOOS == "windows" {
-
-	} else {
-		assert.Equal(t, []string{"tests/configmap_test.yaml"}, actual)
-	}
+	assertResults(t, []string{"tests/configmap_test.yaml"}, actual)
 }
 
 func TestGetFiles_ChartWithoutSubChartsTopLevel(t *testing.T) {
@@ -57,11 +59,7 @@ func TestGetFiles_ChartWithoutSubChartsTopLevel(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(actual), 1)
-	if runtime.GOOS == "windows" {
-
-	} else {
-		assert.Equal(t, []string{"basic/tests/configmap_test.yaml"}, actual)
-	}
+	assertResults(t, []string{"basic/tests/configmap_test.yaml"}, actual)
 }
 
 func TestGetFiles_ChartWithSubChartCdToSubChart(t *testing.T) {
