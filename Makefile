@@ -100,3 +100,6 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
+
+test-basic:
+	@./untt -f 'tests/*.yaml' test/data/v3/basic
