@@ -5,69 +5,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 
-	"github.com/yargevad/filepathx"
-
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
 const LOG_TEST_RUNNER = "test-runner"
-
-// getFiles retrieves a list of files matching the given file patterns.
-// If chartPath is provided, the patterns are treated as relative to the chartPath.
-// If setAbsolute is true, the returned file paths are converted to absolute paths.
-//
-// chartPath is the base directory to search for files (can be empty).
-// filePatterns is a slice of file patterns to match (e.g., "tests/*".yaml).
-// setAbsolute indicates whether to return absolute file paths or relative paths.
-//
-// It returns a slice of file paths and an error if any occurred during processing.
-func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	log.WithField(LOG_TEST_RUNNER, "get-files").Debugln("filepatterns:", filePatterns)
-	var filesSet []string
-	basePath := chartPath + "/" // Prepend chartPath with slash
-
-	for _, pattern := range filePatterns {
-		if filepath.IsAbs(pattern) {
-			filesSet = append(filesSet, pattern) // Append absolute paths directly
-		} else {
-			var filePath string
-			if strings.Contains(pattern, basePath) {
-				filePath = pattern
-			} else {
-				filePath = filepath.Join(basePath, pattern)
-			}
-			files, err := filepathx.Glob(filePath)
-			if err != nil {
-				return nil, err
-			}
-			filesSet = append(filesSet, files...) // Append all files (relative)
-		}
-	}
-
-	if setAbsolute {
-		// If setAbsolute is true, convert the file paths to absolute paths
-		for i, filePath := range filesSet {
-			if !filepath.IsAbs(filePath) {
-				absPath, _ := filepath.Abs(filePath)
-				filesSet[i] = absPath
-			}
-		}
-	}
-
-	log.WithField(LOG_TEST_RUNNER, "getFiles").Debugln("chartpath:", chartPath, ". fileset:", filesSet)
-	return filesSet, nil
-}
 
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
@@ -176,12 +125,12 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 //
 // It returns a slice of _TestSuite structs and an error if any occurred during processing.
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
-	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
+	testFilesSet, terr := GetFiles(chartPath, tr.TestFiles, false)
 	if terr != nil {
 		return nil, terr
 	}
 
-	valuesFilesSet, verr := getFiles("", tr.ValuesFiles, true)
+	valuesFilesSet, verr := GetFiles("", tr.ValuesFiles, true)
 	if verr != nil {
 		return nil, verr
 	}
