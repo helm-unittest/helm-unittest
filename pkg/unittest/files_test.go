@@ -3,6 +3,7 @@ package unittest_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
@@ -142,8 +143,17 @@ func TestGetFiles_ChartWithSubChartPatternMatchingChildTests(t *testing.T) {
 	actual := append(parent, subchart...)
 
 	// Pattern found when executing from parent and child charts
-	assertResults(t, []string{
+	expected := []string{
 		"charts/child-chart/tests/deployment_test.yaml",
 		"charts/child-chart/tests/deployment_test.yaml",
-	}, actual)
+	}
+
+	if runtime.GOOS == "windows" {
+		expected = []string{
+			"charts\\child-chart\\tests\\deployment_test.yaml",
+			"charts/child-chart/tests/deployment_test.yaml",
+		}
+	}
+
+	assert.Equal(t, expected, actual)
 }
