@@ -112,9 +112,11 @@ func TestGetFiles_ChartWithSubChartPatternMatchingParentAndSubChart(t *testing.T
 	err := os.Chdir("../../test/data/v3/with-subchart")
 	assert.NoError(t, err)
 
+	pattern := []string{"tests/deployment_test.yaml"}
+
 	parent, err := GetFiles(".", []string{"tests/deployment_test.yaml"}, false)
 	assert.NoError(t, err)
-	subchart, err := GetFiles("charts/child-chart", []string{"tests/deployment_test.yaml"}, false)
+	subchart, err := GetFiles("charts/child-chart", pattern, false)
 	assert.NoError(t, err)
 
 	actual := append(parent, subchart...)
