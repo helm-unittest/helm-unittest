@@ -55,6 +55,5 @@ func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 		}
 	}
 	log.WithField(LOG_FILES, "get-files").Debugln("chart-path:", chartPath, "fileset:", filesSet)
-	fmt.Println("chart", chartPath, "fileset:", filesSet)
 	return filesSet, nil
 }
