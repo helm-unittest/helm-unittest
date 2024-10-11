@@ -1,7 +1,6 @@
 package unittest
 
 import (
-	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -27,7 +26,6 @@ func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 	basePath := chartPath + "/" // Prepend chartPath with slash
 
 	for _, pattern := range slices.Compact(filePatterns) {
-		fmt.Println("chart", basePath, "pattern", pattern)
 		if filepath.IsAbs(pattern) {
 			filesSet = append(filesSet, pattern) // Append absolute paths directly
 		} else {
