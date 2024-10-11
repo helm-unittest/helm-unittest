@@ -106,3 +106,42 @@ func TestGetFiles_ChartWithSubChartFromRootVisibleSubChartTests(t *testing.T) {
 	assert.NoError(t, err)
 	assertResults(t, []string{"charts/child-chart/tests/deployment_test.yaml"}, actual)
 }
+
+func TestGetFiles_ChartWithSubChartPatternMatchingParentAndSubChart(t *testing.T) {
+	helper(t)
+	err := os.Chdir("../../test/data/v3/with-subchart")
+	assert.NoError(t, err)
+
+	parent, err := GetFiles(".", []string{"tests/deployment_test.yaml"}, false)
+	assert.NoError(t, err)
+	subchart, err := GetFiles("charts/child-chart", []string{"tests/deployment_test.yaml"}, false)
+	assert.NoError(t, err)
+
+	actual := append(parent, subchart...)
+
+	assertResults(t, []string{
+		"tests/deployment_test.yaml",
+		"charts/child-chart/tests/deployment_test.yaml",
+	}, actual)
+}
+
+func TestGetFiles_ChartWithSubChartPatternMatchingChildTests(t *testing.T) {
+	helper(t)
+	err := os.Chdir("../../test/data/v3/with-subchart")
+	assert.NoError(t, err)
+
+	pattern := []string{"charts/child-chart/tests/deployment_test.yaml"}
+
+	parent, err := GetFiles(".", pattern, false)
+	assert.NoError(t, err)
+	subchart, err := GetFiles("charts/child-chart", pattern, false)
+	assert.NoError(t, err)
+
+	actual := append(parent, subchart...)
+
+	// Pattern found when executing from parent and child charts
+	assertResults(t, []string{
+		"charts/child-chart/tests/deployment_test.yaml",
+		"charts/child-chart/tests/deployment_test.yaml",
+	}, actual)
+}
