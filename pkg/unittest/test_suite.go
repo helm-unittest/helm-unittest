@@ -249,23 +249,26 @@ func (s *TestSuite) RunV3(
 func (s *TestSuite) polishTestJobsPathInfo() {
 	log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
-		test.chartRoute = s.chartRoute
-		test.definitionFile = s.definitionFile
 
-		s.polishReleaseSettings(test)
-		s.polishCapabilitiesSettings(test)
-		s.polishKubernetesProviderSettings(test)
-		s.polishChartSettings(test)
+		if test != nil {
+			test.chartRoute = s.chartRoute
+			test.definitionFile = s.definitionFile
 
-		// Make deep clone of global set
-		test.globalSet = copySet(s.Set)
-		if len(s.Values) > 0 {
-			test.Values = append(s.Values, test.Values...)
-		}
-		log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
+			s.polishReleaseSettings(test)
+			s.polishCapabilitiesSettings(test)
+			s.polishKubernetesProviderSettings(test)
+			s.polishChartSettings(test)
 
-		if len(s.Templates) > 0 {
-			test.defaultTemplatesToAssert = s.Templates
+			// Make deep clone of global set
+			test.globalSet = copySet(s.Set)
+			if len(s.Values) > 0 {
+				test.Values = append(s.Values, test.Values...)
+			}
+			log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
+
+			if len(s.Templates) > 0 {
+				test.defaultTemplatesToAssert = s.Templates
+			}
 		}
 	}
 }
