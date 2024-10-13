@@ -45,8 +45,10 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
 			if testSuite != nil {
 				for _, test := range testSuite.Tests {
-					testSuite.polishChartSettings(test)
-					testSuite.polishCapabilitiesSettings(test)
+					if test != nil {
+						testSuite.polishChartSettings(test)
+						testSuite.polishCapabilitiesSettings(test)
+					}
 				}
 			}
 			testSuites = append(testSuites, testSuite)
@@ -55,7 +57,6 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			}
 		}
 	}
-
 	return testSuites, nil
 }
 
@@ -309,6 +310,7 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 // override chart settings in testjobs when defined in testsuite
 func (s *TestSuite) polishChartSettings(test *TestJob) {
+	fmt.Println(test)
 
 	test.Chart.Version = cmp.Or(test.Chart.Version, s.Chart.Version)
 	test.Chart.AppVersion = cmp.Or(test.Chart.AppVersion, s.Chart.AppVersion)
