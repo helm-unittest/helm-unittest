@@ -310,8 +310,6 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 // override chart settings in testjobs when defined in testsuite
 func (s *TestSuite) polishChartSettings(test *TestJob) {
-	fmt.Println(test)
-
 	test.Chart.Version = cmp.Or(test.Chart.Version, s.Chart.Version)
 	test.Chart.AppVersion = cmp.Or(test.Chart.AppVersion, s.Chart.AppVersion)
 	log.WithField(common.LOG_TEST_SUITE, "polish-chart-settings").Debug("test.chart '", test.Chart)
