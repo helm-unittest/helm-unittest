@@ -781,7 +781,7 @@ asserts:
 func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
-it: should error when not supported assert is found
+it: should skip when not supported assert is found
 template: templates/deployment.yaml
 documentIndex: 0
 asserts:
