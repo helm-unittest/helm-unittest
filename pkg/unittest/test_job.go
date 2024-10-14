@@ -201,7 +201,6 @@ func (t *TestJob) RunV3(
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
-
 	result.DisplayName = t.Name
 	userValues, err := t.getUserValues()
 	if err != nil {
