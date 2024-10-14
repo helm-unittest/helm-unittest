@@ -15,6 +15,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
+	log "github.com/sirupsen/logrus"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -22,6 +23,8 @@ import (
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
+
+const LOG_TEST_JOB = "test-job"
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -196,9 +199,10 @@ func (t *TestJob) RunV3(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
+	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
-	result.DisplayName = t.Name
 
+	result.DisplayName = t.Name
 	userValues, err := t.getUserValues()
 	if err != nil {
 		result.ExecError = err
@@ -226,7 +230,6 @@ func (t *TestJob) RunV3(
 
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
@@ -284,7 +287,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
-
+	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
 	return yaml.Marshal(base)
 }
 
@@ -450,6 +453,9 @@ func (t *TestJob) runAssertions(
 	assertsResult := make([]*results.AssertionResult, 0)
 
 	for idx, assertion := range t.Assertions {
+		if assertion == nil {
+			continue
+		}
 		result := assertion.Assert(
 			manifestsOfFiles,
 			snapshotComparer,
@@ -479,7 +485,9 @@ func (t *TestJob) determineRenderSuccess() {
 	t.requireRenderSuccess = true
 
 	for _, assertion := range t.Assertions {
-		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
+		if assertion != nil {
+			t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
+		}
 	}
 }
 
@@ -490,6 +498,9 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 	}
 
 	for _, assertion := range t.Assertions {
+		if assertion == nil {
+			continue
+		}
 		prefixedChartsNameFiles := false
 		templatesToAssert := make([]string, 0)
 
