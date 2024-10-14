@@ -799,4 +799,6 @@ asserts:
 
 	a.Nil(testResult.ExecError)
 	a.Equal(1, len(testResult.AssertsResult))
+	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
+	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
 }
