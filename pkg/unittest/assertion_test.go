@@ -24,7 +24,7 @@ func validateSucceededTestAssertions(
 	a.Nil(err)
 
 	for idx, assertion := range assertions {
-		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx})
+		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false)
 		a.Equal(&results.AssertionResult{
 			Index:      idx,
 			FailInfo:   []string{},
@@ -34,7 +34,6 @@ func validateSucceededTestAssertions(
 			CustomInfo: "",
 		}, result)
 	}
-
 }
 
 func TestAssertionUnmarshaledFromYAML(t *testing.T) {
@@ -336,7 +335,7 @@ equal:
 	a := assert.New(t)
 	a.Nil(err)
 
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\ttemplate \"not-existed.yaml\" not exists or not selected in test suite"},
@@ -357,7 +356,7 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	yaml.Unmarshal([]byte(assertionYAML), &assertion)
 
 	a := assert.New(t)
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\tassertion.template must be given if testsuite.templates is empty"},
@@ -384,7 +383,7 @@ equal:
 	a := assert.New(t)
 	a.Nil(err)
 
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "document index 1 is out of rage"},
