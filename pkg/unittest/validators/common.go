@@ -124,7 +124,6 @@ func uniformContent(content interface{}) string {
 func validateSubset(actual map[string]interface{}, content map[string]interface{}) bool {
 	for key := range content {
 		if !reflect.DeepEqual(actual[key], content[key]) {
-
 			return false
 		}
 	}
