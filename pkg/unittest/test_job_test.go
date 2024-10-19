@@ -661,7 +661,7 @@ asserts:
 func TestV3RunSubChartWithVersionOverride(t *testing.T) {
 	c, _ := loader.Load(testV3WithSubChart)
 	manifest := `
-it: should contain subchart and alias subchart when chart version is explicitly st
+it: should contain subchart and alias subchart when chart version is explicitly set
 chart:
   version: 1.2.3
 templates:
