@@ -65,3 +65,20 @@ func TestEqualRawValidatorWhenNegativeAndFail(t *testing.T) {
 		"	This is a NOTES.txt document.",
 	}, diff)
 }
+
+func TestEqualRawValidatorWhenNegativeAndFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestEqualRaw)
+
+	v := EqualRawValidator{"This is a NOTES.txt document."}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Expected NOT to equal:",
+		"	This is a NOTES.txt document.",
+	}, diff)
+}

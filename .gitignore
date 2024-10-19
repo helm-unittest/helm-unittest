@@ -15,3 +15,5 @@ _dist
 .DS_Store
 
 .idea
+
+.direnv

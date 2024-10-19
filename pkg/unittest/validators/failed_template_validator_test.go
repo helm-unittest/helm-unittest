@@ -263,13 +263,50 @@ func TestFailedTemplateValidatorWhenErrorMessageAndErrorPatternSet(t *testing.T)
 	manifest := makeManifest(failedTemplate)
 	v := FailedTemplateValidator{ErrorMessage: "A field should be required", ErrorPattern: "pattern is set"}
 	pass, diff := v.Validate(&ValidateContext{
-		Docs:     []common.K8sManifest{manifest},
-		Negative: false,
+		Docs: []common.K8sManifest{manifest},
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"Error:",
 		"	single attribute 'errorMessage' or 'errorPattern' supported at the same time",
+	}, diff)
+}
+
+func TestFailedTemplateValidatorShowsAllErrors(t *testing.T) {
+	manifest := makeManifest(failedTemplate)
+	v := FailedTemplateValidator{ErrorMessage: "A field should be required"}
+
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Expected NOT to equal:",
+		"\tA field should be required",
+		"DocumentIndex:\t1",
+		"Expected NOT to equal:",
+		"\tA field should be required",
+	}, diff)
+}
+
+func TestFailedTemplateValidatorFailFast(t *testing.T) {
+	manifest := makeManifest(failedTemplate)
+	v := FailedTemplateValidator{ErrorMessage: "A field should be required"}
+
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Expected NOT to equal:",
+		"	A field should be required",
 	}, diff)
 }
