@@ -658,6 +658,65 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV3RunSubChartWithVersionOverride(t *testing.T) {
+	c, _ := loader.Load(testV3WithSubChart)
+	manifest := `
+it: should contain subchart and alias subchart when chart version is explicitly st
+chart:
+  version: 1.2.3
+templates:
+- charts/another-postgresql/templates/deployment.yaml
+- charts/postgresql/templates/deployment.yaml
+asserts:
+  - matchRegex:
+      path: metadata.labels["chart"]
+      pattern: "(.*-)?postgresql-1.2.3"
+---
+it: should contain subchart and alias subchart without version override
+templates:
+- charts/another-postgresql/templates/deployment.yaml
+- charts/postgresql/templates/deployment.yaml
+asserts:
+  - matchRegex:
+      path: metadata.labels["chart"]
+      pattern: "(.*-)?postgresql-1.3.3"
+`
+	var tj TestJob
+	a := assert.New(t)
+	err := unmarshalJob(manifest, &tj)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunSubChartWithoutVersionOverride(t *testing.T) {
+	c, _ := loader.Load(testV3WithSubChart)
+	manifest := `
+it: should contain subchart and alias subchart without version override
+templates:
+- charts/another-postgresql/templates/deployment.yaml
+- charts/postgresql/templates/deployment.yaml
+asserts:
+  - matchRegex:
+      path: metadata.labels["chart"]
+      pattern: "(.*-)?postgresql-0.8.3"
+`
+	var tj TestJob
+	a := assert.New(t)
+	err := unmarshalJob(manifest, &tj)
+	a.Nil(err)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestModifyChartMetadataVersions(t *testing.T) {
 	type ChartVersions struct {
 		Version    string
