@@ -23,6 +23,12 @@ a: MTIz
 b: TGluZTEgCkxpbmUyCg==
 `
 
+var docToTestEqualMultiplePaths = `
+a:
+  b: 1
+  c: 1
+`
+
 func TestEqualValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 	validator := EqualValidator{"a.b[0].c", 123, false}
@@ -237,7 +243,7 @@ func TestEqualValidatorWhenWrongPath(t *testing.T) {
 	}, diff)
 }
 
-func TestEqualValidatorWhenUnkownPath(t *testing.T) {
+func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
 	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
@@ -251,4 +257,59 @@ func TestEqualValidatorWhenUnkownPath(t *testing.T) {
 		"Error:",
 		"	unknown path a.b[5]",
 	}, diff)
+}
+
+func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestEqual)
+
+	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a.b[5]",
+	}, diff)
+}
+
+func TestEqualValidatorWhenOkWithMultiplePaths(t *testing.T) {
+	manifest := makeManifest(docToTestEqualMultiplePaths)
+	validator := EqualValidator{"a.*", 1, false}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestEqualMultiplePaths)
+	validator := EqualValidator{"a.*", 2, true}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Path:\ta.*",
+		"Expected to equal:",
+		"\t2",
+		"Actual:",
+		"\t1",
+		"Diff:",
+		"\t--- Expected",
+		"\t+++ Actual",
+		"\t@@ -1,2 +1,2 @@",
+		"\t-2",
+		"\t+1"}, diff)
 }

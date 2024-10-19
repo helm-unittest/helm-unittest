@@ -54,13 +54,16 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 
 	for idx, manifest := range manifests {
 		validateSuccess, validateErrors = a.validateManifest(idx, manifest, context, validateSuccess, validateErrors)
+		if !validateSuccess && context.FailFast {
+			break
+		}
 	}
 
 	return validateSuccess, validateErrors
 }
 
 func (a EqualValidator) validateManifest(idx int, manifest common.K8sManifest, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
-	actual, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	actuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, err.Error())
@@ -68,36 +71,47 @@ func (a EqualValidator) validateManifest(idx int, manifest common.K8sManifest, c
 		return validateSuccess, validateErrors
 	}
 
-	if len(actual) == 0 {
+	if len(actuals) == 0 {
 		validateSuccess = false
 		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", a.Path))
 		validateErrors = append(validateErrors, errorMessage...)
 		return validateSuccess, validateErrors
 	}
 
-	singleActual := actual[0]
-	if s, ok := singleActual.(string); ok {
+	for _, actual := range actuals {
+		validateSingleSuccess, validateSingleErrors := a.validateSingleActual(idx, context, actual)
+		validateSuccess = determineSuccess(idx, validateSuccess, validateSingleSuccess)
+		validateErrors = append(validateErrors, validateSingleErrors...)
+		if !validateSingleSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return validateSuccess, validateErrors
+}
+
+func (a EqualValidator) validateSingleActual(idx int, context *ValidateContext, actual interface{}) (bool, []string) {
+	validateErrors := []string{}
+	validateSuccess := false
+	if s, ok := actual.(string); ok {
 		if a.DecodeBase64 {
 			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
 			if err != nil {
-				validateSuccess = false
-				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
+				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", actual))
 				validateErrors = append(validateErrors, errorMessage...)
-				return validateSuccess, validateErrors
+				return false, validateErrors
 			}
 			s = string(decodedSingleActual)
 		}
-		singleActual = uniformContent(s)
+		actual = uniformContent(s)
 	}
 
-	if reflect.DeepEqual(a.Value, singleActual) == context.Negative {
+	if reflect.DeepEqual(a.Value, actual) == context.Negative {
 		validateSuccess = false
-		errorMessage := a.failInfo(singleActual, idx, context.Negative)
+		errorMessage := a.failInfo(actual, idx, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 		return validateSuccess, validateErrors
 	}
 
-	validateSuccess = determineSuccess(idx, validateSuccess, true)
-
-	return validateSuccess, validateErrors
+	return true, []string{}
 }

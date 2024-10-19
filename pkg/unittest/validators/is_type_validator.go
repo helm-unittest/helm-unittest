@@ -43,6 +43,9 @@ func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -50,6 +53,9 @@ func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", t.Path))
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -59,6 +65,9 @@ func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := t.failInfo(actualType, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 

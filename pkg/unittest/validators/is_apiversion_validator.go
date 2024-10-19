@@ -45,6 +45,9 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 			validateSuccess = false
 			errorMessage := v.failInfo(manifest["apiVersion"], idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 

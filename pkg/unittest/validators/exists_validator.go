@@ -38,6 +38,9 @@ func (v ExistsValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
