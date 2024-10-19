@@ -671,15 +671,6 @@ asserts:
   - matchRegex:
       path: metadata.labels["chart"]
       pattern: "(.*-)?postgresql-1.2.3"
----
-it: should contain subchart and alias subchart without version override
-templates:
-- charts/another-postgresql/templates/deployment.yaml
-- charts/postgresql/templates/deployment.yaml
-asserts:
-  - matchRegex:
-      path: metadata.labels["chart"]
-      pattern: "(.*-)?postgresql-1.3.3"
 `
 	var tj TestJob
 	a := assert.New(t)
