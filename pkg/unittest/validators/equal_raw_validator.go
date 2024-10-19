@@ -52,6 +52,9 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := a.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 

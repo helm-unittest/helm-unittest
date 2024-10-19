@@ -164,9 +164,6 @@ spec:
 }
 
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
-	// var actual = "value: 0.3"
-	// manifest := makeManifest(actual)
-
 	tests := []struct {
 		name, doc, path string
 		value           interface{}
@@ -205,6 +202,40 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 			}
 			pass, diff := v.Validate(&ValidateContext{
 				Docs: []common.K8sManifest{manifest},
+			})
+
+			assert.False(t, pass)
+			assert.Equal(t, tt.errorMsg, diff)
+		})
+	}
+}
+
+func TestEqualOrGreaterValidatorWhenTypesDoNotMatchFailFast(t *testing.T) {
+	tests := []struct {
+		name, doc, path string
+		value           interface{}
+		errorMsg        []string
+	}{
+		{
+			name:     "test case 1: compare int and string types",
+			doc:      "value: 500m",
+			path:     "value",
+			value:    5,
+			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manifest := makeManifest(tt.doc)
+
+			v := EqualOrGreaterValidator{
+				Path:  tt.path,
+				Value: tt.value,
+			}
+			pass, diff := v.Validate(&ValidateContext{
+				FailFast: true,
+				Docs:     []common.K8sManifest{manifest, manifest},
 			})
 
 			assert.False(t, pass)

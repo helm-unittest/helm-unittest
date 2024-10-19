@@ -170,3 +170,29 @@ func TestEqualOrLessValidatorWhenTypesDoNotMatch(t *testing.T) {
 		"	actual 'float64' and expected 'int' types do not match",
 	}, diff)
 }
+
+func TestEqualOrLessValidatorWhenFailFast(t *testing.T) {
+	var actual = `
+a:
+  b: 1
+  c: 1
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrLessValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Path:\ta.*",
+		"Expected to be less then or equal to, got:",
+		"\tthe expected '2' is not less or equal to the actual '1'",
+	}, diff)
+}

@@ -20,14 +20,14 @@ type ContainsDocumentValidator struct {
 	Any        bool   // optional
 }
 
-func (v ContainsDocumentValidator) failInfo(actual interface{}, index int, not bool) []string {
+func (v ContainsDocumentValidator) failInfo(actual interface{}, manifestIndex int, not bool) []string {
 
-	log.WithField("validator", "contains_document").Debugln("index content:", index)
+	log.WithField("validator", "contains_document").Debugln("index content:", manifestIndex)
 	log.WithField("validator", "contains_document").Debugln("actual content:", actual)
 
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
-		index,
+		manifestIndex,
 		v.joinOutput(),
 	)
 }
@@ -123,14 +123,20 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		singleSuccess := v.validateManifest(manifest)
+		manifestSuccess := v.validateManifest(manifest)
 
-		if singleSuccess == context.Negative {
-			singleSuccess = false
+		if manifestSuccess == context.Negative {
+			manifestSuccess = false
 			errorMessage := v.failInfo(v.Kind, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+
+			if context.FailFast {
+				// Stop searching as we already found a failing match.
+				validateSuccess = false
+				break
+			}
 		} else {
-			singleSuccess = true
+			manifestSuccess = true
 			if v.Any != context.Negative {
 				validateSuccess = true
 				validateErrors = []string{}
@@ -139,7 +145,7 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 			}
 		}
 
-		validateSuccess = determineSuccess(idx, validateSuccess, singleSuccess)
+		validateSuccess = determineSuccess(idx, validateSuccess, manifestSuccess)
 	}
 
 	if len(manifests) == 0 && !context.Negative {

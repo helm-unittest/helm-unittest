@@ -41,6 +41,9 @@ func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []stri
 			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -48,6 +51,9 @@ func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []stri
 			validateSuccess = false
 			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -68,6 +74,9 @@ func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []stri
 			validateSuccess = false
 			errorMessage := v.failInfo(singleValue, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 

@@ -54,17 +54,22 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 	if a.ErrorMessage != "" && a.ErrorPattern != "" {
 		errorMessage := splitInfof(errorFormat, -1, "single attribute 'errorMessage' or 'errorPattern' supported at the same time")
 		validateErrors = append(validateErrors, errorMessage...)
-	} else if context.RenderError != nil {
+		return false, validateErrors
+	}
+
+	if context.RenderError != nil {
 		// Validating error, when the errorSource is due to rendering errors
 		if a.ErrorPattern != "" {
-			validateSuccess, validateErrors = a.validateErrorPattern(context.RenderError.Error(), -1, context, validateSuccess, validateErrors)
+			return a.validateErrorPattern(context.RenderError.Error(), -1, context)
 		} else if a.ErrorMessage != "" {
-			validateSuccess, validateErrors = a.validateErrorMessage(context.RenderError.Error(), -1, context, validateSuccess, validateErrors)
+			return a.validateErrorMessage(context.RenderError.Error(), -1, context)
 		} else {
 			validateSuccess = true
 		}
 	} else {
-		validateSuccess, validateErrors = a.validateManifests(manifests, context)
+		var errorsToAppend []string
+		validateSuccess, errorsToAppend = a.validateManifests(manifests, context)
+		validateErrors = append(validateErrors, errorsToAppend...)
 	}
 
 	return validateSuccess, validateErrors
@@ -76,6 +81,7 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 
 	for idx, manifest := range manifests {
 		currentSuccess := false
+		validateSingleErrors := []string{}
 		actual := manifest[common.RAW]
 
 		if a == (FailedTemplateValidator{}) && !context.Negative {
@@ -85,14 +91,20 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 		}
 
 		if a.ErrorPattern != "" {
-			currentSuccess, validateErrors = a.validateErrorPattern(actual, idx, context, currentSuccess, validateErrors)
+			currentSuccess, validateSingleErrors = a.validateErrorPattern(actual, idx, context)
 		} else if a.ErrorMessage != "" {
-			currentSuccess, validateErrors = a.validateErrorMessage(actual, idx, context, currentSuccess, validateErrors)
+			currentSuccess, validateSingleErrors = a.validateErrorMessage(actual, idx, context)
 		} else {
 			currentSuccess = true
 		}
 
+		validateErrors = append(validateErrors, validateSingleErrors...)
+
 		validateSuccess = determineSuccess(idx, validateSuccess, currentSuccess)
+
+		if !validateSuccess && context.FailFast {
+			break
+		}
 	}
 
 	if len(manifests) == 0 && !context.Negative {
@@ -104,31 +116,26 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 	return validateSuccess, validateErrors
 }
 
-func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, idx int, context *ValidateContext) (bool, []string) {
 	p, err := regexp.Compile(a.ErrorPattern)
 	if err != nil {
 		errorMessage := splitInfof(errorFormat, -1, err.Error())
-		validateErrors = append(validateErrors, errorMessage...)
-		return validateSuccess, validateErrors
+		return false, errorMessage
 	}
 
 	if (actual != nil && p.MatchString(actual.(string))) == context.Negative {
 		errorMessage := a.failInfo(actual, idx, context.Negative)
-		validateErrors = append(validateErrors, errorMessage...)
-	} else {
-		validateSuccess = true
+		return false, errorMessage
 	}
 
-	return validateSuccess, validateErrors
+	return true, []string{}
 }
 
-func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, idx int, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
+func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, idx int, context *ValidateContext) (bool, []string) {
 	if (actual != nil && reflect.DeepEqual(a.ErrorMessage, actual.(string))) == context.Negative {
 		errorMessage := a.failInfo(actual, idx, context.Negative)
-		validateErrors = append(validateErrors, errorMessage...)
-	} else {
-		validateSuccess = true
+		return false, errorMessage
 	}
 
-	return validateSuccess, validateErrors
+	return true, []string{}
 }

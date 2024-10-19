@@ -176,7 +176,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useFailfast, "failfast", "q", false,
-		"direct quit testing, when a test is failed",
+		"actually directly quit testing, when a test is failed",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

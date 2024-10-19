@@ -88,12 +88,18 @@ func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 		if err != nil {
 			errorMessage := splitInfof(errorFormat, idx, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
 		if len(actual) == 0 {
 			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path '%s'", o.Path))
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -103,6 +109,9 @@ func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 		if actType != expType {
 			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("actual '%s' and expected '%s' types do not match", actType, expType))
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
@@ -110,6 +119,9 @@ func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 		if errors != nil {
 			errorMessage := o.failInfo(errors[0], o.ComparisonType, idx, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 		}
 
 		validateSuccess = determineSuccess(idx, validateSuccess, result)
