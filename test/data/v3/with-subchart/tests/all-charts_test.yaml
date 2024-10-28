@@ -1,0 +1,40 @@
+suite: test chart renders with dependencies and version overrides
+chart:
+  version: 1.2.3
+tests:
+  - it: should render chart with dependencies and suite level version override
+    asserts:
+      - matchRegex:
+          path: metadata.labels["chart"]
+          pattern: "^.*-1.2.3"
+        template: charts/another-postgresql/templates/deployment.yaml
+      - matchRegex:
+          path: metadata.labels["chart"]
+          pattern: "^.*-1.2.3"
+        template: charts/postgresql/templates/deployment.yaml
+      - matchRegex:
+          path: metadata.labels["helm.sh/chart"]
+          pattern: "^.*-1.2.3"
+        template: charts/cert-manager/templates/deployment.yaml
+
+  - it: should render chart with dependencies and test level version override
+    templates:
+    - deployment.yaml
+    - charts/another-postgresql/templates/deployment.yaml
+    - charts/postgresql/templates/deployment.yaml
+    - charts/cert-manager/templates/deployment.yaml
+    chart:
+      version: 0.0.1
+    set:
+      cert-manager:
+        global:
+          commonLabels:
+            chart: version-0.0.1
+      postgresql:
+        postgresPassword: password
+      another-postgresql:
+        postgresPassword: password
+    asserts:
+      - matchRegex:
+          path: metadata.labels["chart"]
+          pattern: "^.*-0.0.1"
