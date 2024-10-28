@@ -106,7 +106,7 @@ jobs:
     # Run trivy security
     - name: Run Trivy vulnerability scanner
       # https://github.com/aquasecurity/trivy-action
-      uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.25.0
+      uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.28.0
       with:        
         image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
         format: sarif
