@@ -130,7 +130,8 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Multi(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"\texpected result does not match"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0",
+		"Path:\tspec.tls", "Expected NOT to match count:", "\t-1", "Actual:", "\t2"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
@@ -145,7 +146,8 @@ func TestLengthEqualDocumentsValidatorFail_Single(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tcount doesn't match as expected. expected: 1 actual: 2", "\texpected result does not match"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Path:\tspec.tls",
+		"Expected to match count:", "\t1", "Actual:", "\t2"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
@@ -161,7 +163,8 @@ func TestLengthEqualDocumentsValidatorNegativeFail_Single(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"\texpected result does not match"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Path:\tspec.tls",
+		"Expected NOT to match count:", "\t2", "Actual:", "\t2"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorFail_Multi(t *testing.T) {
@@ -175,7 +178,8 @@ func TestLengthEqualDocumentsValidatorFail_Multi(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:\t0", "Error:", "\tspec.tls count doesn't match as expected. actual: 2", "\texpected result does not match"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "Path:\tspec.tls",
+		"Expected to match count:", "\t-1", "Actual:", "\t2"}, diff)
 }
 
 func TestLengthEqualDocumentsValidatorWhenPathAndNoCount(t *testing.T) {

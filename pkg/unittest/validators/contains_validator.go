@@ -18,7 +18,7 @@ type ContainsValidator struct {
 	Any     bool
 }
 
-func (v ContainsValidator) failInfo(actual interface{}, manifestIndex int, not bool) []string {
+func (v ContainsValidator) failInfo(actual interface{}, manifestIndex, assertIndex int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML([]interface{}{v.Content})
 	actualYAML := common.TrustedMarshalYAML(actual)
 	containsFailFormat := setFailFormat(not, true, true, false, " to contain")
@@ -29,6 +29,7 @@ func (v ContainsValidator) failInfo(actual interface{}, manifestIndex int, not b
 	return splitInfof(
 		containsFailFormat,
 		manifestIndex,
+		assertIndex,
 		v.Path,
 		expectedYAML,
 		actualYAML,
@@ -65,12 +66,12 @@ func (v ContainsValidator) validateFoundCount(validateFoundCount int) bool {
 	return v.Count != nil && *v.Count == validateFoundCount
 }
 
-func (v ContainsValidator) validateSingle(singleActual []interface{}, idx int, context *ValidateContext) (bool, []string) {
+func (v ContainsValidator) validateSingle(singleActual []interface{}, manifestIndex, assertIndex int, context *ValidateContext) (bool, []string) {
 	validateSingleErrors := []string{}
 	found, validateFoundCount := v.validateContent(singleActual)
 
 	if v.Count == nil && (found == context.Negative) {
-		validateSingleErrors = v.failInfo(singleActual, idx, context.Negative)
+		validateSingleErrors = v.failInfo(singleActual, manifestIndex, assertIndex, context.Negative)
 		return false, validateSingleErrors
 	}
 
@@ -78,9 +79,9 @@ func (v ContainsValidator) validateSingle(singleActual []interface{}, idx int, c
 	if v.Count != nil && ((found && v.validateFoundCount(validateFoundCount)) == context.Negative) {
 		actualYAML := common.TrustedMarshalYAML(singleActual)
 		if !found {
-			validateSingleErrors = v.failInfo(singleActual, idx, context.Negative)
+			validateSingleErrors = v.failInfo(singleActual, manifestIndex, assertIndex, context.Negative)
 		} else {
-			validateSingleErrors = splitInfof(errorFormat, idx, fmt.Sprintf(
+			validateSingleErrors = splitInfof(errorFormat, manifestIndex, assertIndex, fmt.Sprintf(
 				"expect count %d in '%s' to be in array, got %d:\n%s",
 				*v.Count,
 				v.Path,
@@ -94,6 +95,45 @@ func (v ContainsValidator) validateSingle(singleActual []interface{}, idx int, c
 	return true, validateSingleErrors
 }
 
+func (v ContainsValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	if len(actual) == 0 {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+	}
+
+	manifestSuccess := false
+	var manifestValidateErrors []string
+
+	for valuesIndex, singleActual := range actual {
+		singleSuccess := false
+		var singleValidateErrors []string
+		convertedSingleActual, ok := singleActual.([]interface{})
+		if ok {
+			singleSuccess, singleValidateErrors = v.validateSingle(convertedSingleActual, manifestIndex, valuesIndex, context)
+		} else {
+			actualYAML := common.TrustedMarshalYAML(singleActual)
+			singleValidateErrors = splitInfof(errorFormat, manifestIndex, valuesIndex, fmt.Sprintf(
+				"expect '%s' to be an array, got:\n%s",
+				v.Path,
+				actualYAML,
+			))
+		}
+
+		manifestValidateErrors = append(manifestValidateErrors, singleValidateErrors...)
+		manifestSuccess = determineSuccess(valuesIndex, manifestSuccess, singleSuccess)
+
+		if !manifestSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return manifestSuccess, manifestValidateErrors
+}
+
 // Validate implement Validatable
 func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
@@ -101,56 +141,10 @@ func (v ContainsValidator) Validate(context *ValidateContext) (bool, []string) {
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-			continue
-		}
-
-		if len(actual) == 0 {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-			continue
-		}
-
-		var manifestValidateErrors []string
-		manifestSuccess := false
-
-		for valuesIndex, singleActual := range actual {
-			singleSuccess := false
-			var singleValidateErrors []string
-			convertedSingleActual, ok := singleActual.([]interface{})
-			if ok {
-				singleSuccess, singleValidateErrors = v.validateSingle(convertedSingleActual, idx, context)
-			} else {
-				actualYAML := common.TrustedMarshalYAML(singleActual)
-				singleValidateErrors = splitInfof(errorFormat, idx, fmt.Sprintf(
-					"expect '%s' to be an array, got:\n%s",
-					v.Path,
-					actualYAML,
-				))
-			}
-
-			manifestValidateErrors = append(manifestValidateErrors, singleValidateErrors...)
-			manifestSuccess = determineSuccess(valuesIndex, manifestSuccess, singleSuccess)
-
-			if !manifestSuccess && context.FailFast {
-				break
-			}
-		}
-
+	for manifestIndex, manifest := range manifests {
+		manifestSuccess, manifestValidateErrors := v.validateManifest(manifest, manifestIndex, context)
 		validateErrors = append(validateErrors, manifestValidateErrors...)
-		validateSuccess = determineSuccess(idx, validateSuccess, manifestSuccess)
+		validateSuccess = determineSuccess(manifestIndex, validateSuccess, manifestSuccess)
 
 		if !validateSuccess && context.FailFast {
 			break

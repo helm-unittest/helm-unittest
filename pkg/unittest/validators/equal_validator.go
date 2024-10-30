@@ -18,7 +18,7 @@ type EqualValidator struct {
 	DecodeBase64 bool `yaml:"decodeBase64"`
 }
 
-func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []string {
+func (a EqualValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"
@@ -29,7 +29,8 @@ func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []stri
 	if not {
 		return splitInfof(
 			setFailFormat(not, true, false, false, customMessage),
-			index,
+			manifestIndex,
+			actualIndex,
 			a.Path,
 			expectedYAML,
 		)
@@ -37,12 +38,57 @@ func (a EqualValidator) failInfo(actual interface{}, index int, not bool) []stri
 
 	return splitInfof(
 		setFailFormat(not, true, true, true, customMessage),
-		index,
+		manifestIndex,
+		actualIndex,
 		a.Path,
 		expectedYAML,
 		actualYAML,
 		diff(expectedYAML, actualYAML),
 	)
+}
+
+func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	if len(actuals) == 0 {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", a.Path))
+	}
+
+	validateManifestSuccess := false
+	var validateManifestErrors []string
+
+	for actualIndex, actual := range actuals {
+		validateSingleSuccess, validateSingleErrors := a.validateSingleActual(actual, manifestIndex, actualIndex, context)
+		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
+		validateManifestSuccess = determineSuccess(actualIndex, validateManifestSuccess, validateSingleSuccess)
+		if !validateSingleSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return validateManifestSuccess, validateManifestErrors
+}
+
+func (a EqualValidator) validateSingleActual(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	if s, ok := actual.(string); ok {
+		if a.DecodeBase64 {
+			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
+			}
+			s = string(decodedSingleActual)
+		}
+		actual = uniformContent(s)
+	}
+
+	if reflect.DeepEqual(a.Value, actual) == context.Negative {
+		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+	}
+
+	return true, []string{}
 }
 
 // Validate implement Validatable
@@ -52,66 +98,15 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for idx, manifest := range manifests {
-		validateSuccess, validateErrors = a.validateManifest(idx, manifest, context, validateSuccess, validateErrors)
+	for manifestIndex, manifest := range manifests {
+		validateManifestSuccess, validateManifestErrors := a.validateManifest(manifest, manifestIndex, context)
+		validateErrors = append(validateErrors, validateManifestErrors...)
+		validateSuccess = determineSuccess(manifestIndex, validateSuccess, validateManifestSuccess)
+
 		if !validateSuccess && context.FailFast {
 			break
 		}
 	}
 
 	return validateSuccess, validateErrors
-}
-
-func (a EqualValidator) validateManifest(idx int, manifest common.K8sManifest, context *ValidateContext, validateSuccess bool, validateErrors []string) (bool, []string) {
-	actuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
-	if err != nil {
-		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, idx, err.Error())
-		validateErrors = append(validateErrors, errorMessage...)
-		return validateSuccess, validateErrors
-	}
-
-	if len(actuals) == 0 {
-		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", a.Path))
-		validateErrors = append(validateErrors, errorMessage...)
-		return validateSuccess, validateErrors
-	}
-
-	for _, actual := range actuals {
-		validateSingleSuccess, validateSingleErrors := a.validateSingleActual(idx, context, actual)
-		validateSuccess = determineSuccess(idx, validateSuccess, validateSingleSuccess)
-		validateErrors = append(validateErrors, validateSingleErrors...)
-		if !validateSingleSuccess && context.FailFast {
-			break
-		}
-	}
-
-	return validateSuccess, validateErrors
-}
-
-func (a EqualValidator) validateSingleActual(idx int, context *ValidateContext, actual interface{}) (bool, []string) {
-	validateErrors := []string{}
-	validateSuccess := false
-	if s, ok := actual.(string); ok {
-		if a.DecodeBase64 {
-			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
-			if err != nil {
-				errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", actual))
-				validateErrors = append(validateErrors, errorMessage...)
-				return false, validateErrors
-			}
-			s = string(decodedSingleActual)
-		}
-		actual = uniformContent(s)
-	}
-
-	if reflect.DeepEqual(a.Value, actual) == context.Negative {
-		validateSuccess = false
-		errorMessage := a.failInfo(actual, idx, context.Negative)
-		validateErrors = append(validateErrors, errorMessage...)
-		return validateSuccess, validateErrors
-	}
-
-	return true, []string{}
 }

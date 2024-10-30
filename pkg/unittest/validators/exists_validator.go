@@ -9,7 +9,7 @@ type ExistsValidator struct {
 	Path string
 }
 
-func (v ExistsValidator) failInfo(index int, not bool) []string {
+func (v ExistsValidator) failInfo(manifestIndex, actualIndex int, not bool) []string {
 	format := "Path:%s expected to "
 
 	if not {
@@ -20,7 +20,8 @@ func (v ExistsValidator) failInfo(index int, not bool) []string {
 
 	return splitInfof(
 		format,
-		index,
+		manifestIndex,
+		actualIndex,
 		v.Path,
 	)
 }
@@ -36,7 +37,7 @@ func (v ExistsValidator) Validate(context *ValidateContext) (bool, []string) {
 		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 		if err != nil {
 			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
+			errorMessage := splitInfof(errorFormat, idx, -1, err.Error())
 			validateErrors = append(validateErrors, errorMessage...)
 			if context.FailFast {
 				break
@@ -46,7 +47,7 @@ func (v ExistsValidator) Validate(context *ValidateContext) (bool, []string) {
 
 		if len(actual) > 0 == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(idx, context.Negative)
+			errorMessage := v.failInfo(idx, -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			continue
 		}

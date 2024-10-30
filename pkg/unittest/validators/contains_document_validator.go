@@ -20,7 +20,7 @@ type ContainsDocumentValidator struct {
 	Any        bool   // optional
 }
 
-func (v ContainsDocumentValidator) failInfo(actual interface{}, manifestIndex int, not bool) []string {
+func (v ContainsDocumentValidator) failInfo(actual interface{}, manifestIndex, assertIndex int, not bool) []string {
 
 	log.WithField("validator", "contains_document").Debugln("index content:", manifestIndex)
 	log.WithField("validator", "contains_document").Debugln("actual content:", actual)
@@ -28,6 +28,7 @@ func (v ContainsDocumentValidator) failInfo(actual interface{}, manifestIndex in
 	return splitInfof(
 		setFailFormat(not, false, false, false, " to contain document"),
 		manifestIndex,
+		assertIndex,
 		v.joinOutput(),
 	)
 }
@@ -127,7 +128,7 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 
 		if manifestSuccess == context.Negative {
 			manifestSuccess = false
-			errorMessage := v.failInfo(v.Kind, idx, context.Negative)
+			errorMessage := v.failInfo(v.Kind, idx, -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 
 			if context.FailFast {
@@ -149,7 +150,7 @@ func (v ContainsDocumentValidator) Validate(context *ValidateContext) (bool, []s
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo(v.Kind, 0, context.Negative)
+		errorMessage := v.failInfo(v.Kind, 0, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

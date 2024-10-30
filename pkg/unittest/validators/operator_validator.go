@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,11 +17,12 @@ type operatorValidator struct {
 	ComparisonType string
 }
 
-func (o operatorValidator) failInfo(msg, comparisonType string, index int, not bool) []string {
+func (o operatorValidator) failInfo(msg, comparisonType string, manifestIndex, actualIndex int, not bool) []string {
 	customMsg := fmt.Sprintf(" to be %s then or equal to, got", comparisonType)
 	return splitInfof(
 		setFailFormat(not, true, false, false, customMsg),
-		index,
+		manifestIndex,
+		actualIndex,
 		o.Path,
 		msg,
 	)
@@ -75,6 +77,49 @@ func (o operatorValidator) compareFloatValues(expected, actual float64, comparis
 	return false
 }
 
+func (o operatorValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, o.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	if len(actuals) == 0 {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path '%s'", o.Path))
+	}
+
+	validateManifestSuccess := false
+	var validateManifestErrors []string
+
+	for actualIndex, actual := range actuals {
+		actType := reflect.TypeOf(actual)
+		expType := reflect.TypeOf(o.Value)
+
+		validateSingleSuccess := false
+		var validateSingleErrors []string
+
+		if actType != expType {
+			errorMessage := splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("actual '%s' and expected '%s' types do not match", actType, expType))
+			validateManifestErrors = append(validateManifestErrors, errorMessage...)
+			continue
+		}
+
+		validateSingleSuccess, errors := o.compareValues(o.Value, actual, o.ComparisonType, !context.Negative)
+		if errors != nil {
+			errorMessage := o.failInfo(errors[0], o.ComparisonType, manifestIndex, actualIndex, context.Negative)
+			validateSingleErrors = append(validateSingleErrors, errorMessage...)
+		}
+
+		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
+		validateManifestSuccess = determineSuccess(actualIndex, validateManifestSuccess, validateSingleSuccess)
+
+		if !validateManifestSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return validateManifestSuccess, validateManifestErrors
+}
+
 // Validate implement Validatable
 func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 	log.WithField("validator", o.ComparisonType).Debugln("expected content:", o.Value, "path:", o.Path)
@@ -83,48 +128,14 @@ func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, o.Path)
-		if err != nil {
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-			continue
+	for manifestIndex, manifest := range manifests {
+		validateManifestSuccess, validateManifestErrors := o.validateManifest(manifest, manifestIndex, context)
+		validateErrors = append(validateErrors, validateManifestErrors...)
+		validateSuccess = determineSuccess(manifestIndex, validateSuccess, validateManifestSuccess)
+
+		if !validateSuccess && context.FailFast {
+			break
 		}
-
-		if len(actual) == 0 {
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path '%s'", o.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-			continue
-		}
-
-		actType := reflect.TypeOf(actual[0])
-		expType := reflect.TypeOf(o.Value)
-
-		if actType != expType {
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("actual '%s' and expected '%s' types do not match", actType, expType))
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-			continue
-		}
-
-		result, errors := o.compareValues(o.Value, actual[0], o.ComparisonType, !context.Negative)
-		if errors != nil {
-			errorMessage := o.failInfo(errors[0], o.ComparisonType, idx, context.Negative)
-			validateErrors = append(validateErrors, errorMessage...)
-			if context.FailFast {
-				break
-			}
-		}
-
-		validateSuccess = determineSuccess(idx, validateSuccess, result)
 	}
 
 	return validateSuccess, validateErrors

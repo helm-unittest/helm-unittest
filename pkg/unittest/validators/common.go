@@ -74,7 +74,7 @@ Expected` + notAnnotation + customize + `:
 }
 
 // splitInfof split multi line string into array of string
-func splitInfof(format string, manifestIndex int, replacements ...string) []string {
+func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")
 	indentedReplacements := make([]interface{}, len(replacements))
 	for i, r := range replacements {
@@ -92,6 +92,12 @@ func splitInfof(format string, manifestIndex int, replacements ...string) []stri
 	if manifestIndex >= 0 {
 		manifestIndexString := []string{fmt.Sprintf("DocumentIndex:\t%d", manifestIndex)}
 		splittedStrings = append(manifestIndexString, splittedStrings...)
+	}
+
+	// Only shown multiple values are found for assertions.
+	if valuesIndex > 0 {
+		valuesIndexString := []string{fmt.Sprintf("ValuesIndex:\t%d", valuesIndex)}
+		splittedStrings = append(valuesIndexString, splittedStrings...)
 	}
 
 	return splittedStrings
