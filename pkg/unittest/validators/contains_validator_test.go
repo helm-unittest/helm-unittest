@@ -165,6 +165,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- name: VALUE3",
@@ -203,6 +204,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- name: VALUE3",
@@ -212,6 +214,7 @@ a:
 		"	- name: VALUE2",
 		"	  value: bla2",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- name: VALUE3",
@@ -248,6 +251,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- name: VALUE3",
@@ -293,6 +297,7 @@ func TestContainsValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- e: bar bar",
@@ -327,6 +332,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- d: foo bar",
@@ -352,6 +358,7 @@ func TestContainsValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- e: foo bar",
@@ -361,6 +368,7 @@ func TestContainsValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"	- e: bar",
 		"	- e: bar",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- e: foo bar",
@@ -389,6 +397,7 @@ func TestContainsValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected NOT to contain:",
 		"	- d: foo bar",
@@ -418,6 +427,7 @@ func TestContainsValidatorMultiDocsWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected NOT to contain:",
 		"	- d: foo bar",
@@ -451,6 +461,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a.b' to be an array, got:",
 		"	c: hello world",
@@ -598,6 +609,7 @@ func TestContainsValidatorWhenNotMultipleTimesInArray(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect count 1 in 'a.b' to be in array, got 2:",
 		"	- c: hello world",
@@ -624,6 +636,7 @@ func TestContainsValidatorWhenNotFoundMultipleTimesInArray(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	- f: bar",

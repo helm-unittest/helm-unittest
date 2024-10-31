@@ -69,6 +69,7 @@ func TestIsNullOrEmptyValidatorWhenFail(t *testing.T) {
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
+			"ValuesIndex:	0",
 			"Path:	" + key,
 			"Expected to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
@@ -91,6 +92,7 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
+			"ValuesIndex:	0",
 			"Path:	" + key,
 			"Expected NOT to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
@@ -146,6 +148,7 @@ func TestIsNullOrEmptyValidatorWhenFailFast(t *testing.T) {
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
+			"ValuesIndex:	0",
 			"Path:	" + key,
 			"Expected to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],

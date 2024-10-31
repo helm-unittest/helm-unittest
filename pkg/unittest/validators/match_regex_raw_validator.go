@@ -50,14 +50,14 @@ func (v MatchRegexRawValidator) Validate(context *ValidateContext) (bool, []stri
 			validateSuccess = false
 			errorMessage := v.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, true)
-
-		if !validateSuccess && context.FailFast {
-			break
-		}
 	}
 
 	return validateSuccess, validateErrors

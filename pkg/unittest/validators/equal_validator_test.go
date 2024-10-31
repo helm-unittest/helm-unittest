@@ -62,7 +62,7 @@ func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:	0", "Error:", "	unable to decode base64 expected content Line1 ", "	Line2"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	unable to decode base64 expected content Line1 ", "	Line2"}, diff)
 }
 
 func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
@@ -119,6 +119,7 @@ func TestEqualValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to equal:",
 		"	d: 321",
@@ -154,6 +155,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to equal:",
 		"	c: 321",
@@ -183,6 +185,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to equal:",
 		"	c: 321",
@@ -195,6 +198,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"	-c: 321",
 		"	+c: 123",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to equal:",
 		"	c: 321",
@@ -221,6 +225,7 @@ func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected NOT to equal:",
 		"	c: 123",
@@ -301,6 +306,7 @@ func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:\t0",
+		"ValuesIndex:\t0",
 		"Path:\ta.*",
 		"Expected to equal:",
 		"\t2",

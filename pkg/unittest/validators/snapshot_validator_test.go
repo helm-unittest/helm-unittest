@@ -70,11 +70,13 @@ func TestSnapshotValidatorWhenFail(t *testing.T) {
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:             []common.K8sManifest{data},
 		SnapshotComparer: mockComparer,
+		FailFast:         true,
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a",
 		"Expected to match snapshot 0:",
 		"	--- Expected",
@@ -110,6 +112,7 @@ func TestSnapshotValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a",
 		"Expected NOT to match snapshot 0:",
 		"	a:",

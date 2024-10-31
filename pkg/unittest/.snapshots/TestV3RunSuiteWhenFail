@@ -12,9 +12,10 @@
       AssertsResult: ([]*results.AssertionResult) (len=1) {
         (*results.AssertionResult)({
           Index: (int) 0,
-          FailInfo: ([]string) (len=13) {
+          FailInfo: ([]string) (len=14) {
             (string) (len=41) "Template:\tbasic/templates/deployment.yaml",
             (string) (len=16) "DocumentIndex:\t0",
+            (string) (len=14) "ValuesIndex:\t0",
             (string) (len=10) "Path:\tkind",
             (string) (len=18) "Expected to equal:",
             (string) (len=4) "\tPod",

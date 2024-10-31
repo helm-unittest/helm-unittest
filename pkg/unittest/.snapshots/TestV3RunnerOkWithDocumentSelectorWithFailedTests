@@ -8,6 +8,7 @@
 		- asserts[0] `equal` fail
 			Template:	with-document-select/templates/deployments-secondary-namespace.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	metadata.namespace
 			Expected to equal:
 				default
@@ -20,6 +21,7 @@
 				-default
 				+secondary
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	metadata.namespace
 			Expected to equal:
 				default

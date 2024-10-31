@@ -71,6 +71,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			value: 5,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tvalue",
 				"Expected to be greater then or equal to, got:",
 				"\tthe expected '5' is not greater or equal to the actual '25'",
@@ -83,6 +84,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			value: 1.31,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
 				"\tthe expected '1.31' is not greater or equal to the actual '1.7'",
@@ -95,6 +97,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			value: 1.338,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
 				"\tthe expected '1.338' is not greater or equal to the actual '1.341'",
@@ -107,6 +110,7 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			value: "590m",
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
 				"\tthe expected '590m' is not greater or equal to the actual '600m'",
@@ -130,6 +134,31 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			assert.Equal(t, tt.errorMsg, diff)
 		})
 	}
+}
+
+func TestEqualOrGreaterValidatorWhenInvalidPath(t *testing.T) {
+	var actual = `
+spec:
+  containers:
+	- name: nginx
+	  image: nginx
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrGreaterValidator{
+		Path:  "spec[first]",
+		Value: 1.2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	invalid array index [first] before position 11: non-integer array index",
+	}, diff)
 }
 
 func TestEqualOrGreaterValidatorWhenUnkownPath(t *testing.T) {
@@ -174,21 +203,21 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 			doc:      "value: 500m",
 			path:     "value",
 			value:    5,
-			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
+			errorMsg: []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
 		},
 		{
 			name:     "test case 1: compare string and int types",
 			doc:      "value: 50",
 			path:     "value",
 			value:    "50m",
-			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
+			errorMsg: []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
 		},
 		{
 			name:     "test case 1: compare string and string(int) types",
 			doc:      "value: 50",
 			path:     "value",
 			value:    "50",
-			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
+			errorMsg: []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	actual 'int' and expected 'string' types do not match"},
 		},
 	}
 
@@ -221,7 +250,7 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatchFailFast(t *testing.T) {
 			doc:      "value: 500m",
 			path:     "value",
 			value:    5,
-			errorMsg: []string{"DocumentIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
+			errorMsg: []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	actual 'string' and expected 'int' types do not match"},
 		},
 	}
 

@@ -68,6 +68,7 @@ func TestTypeValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to be of type:",
 		"	int",
@@ -90,6 +91,7 @@ func TestTypeValidatorWhenFailFast(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to be of type:",
 		"	int",
@@ -115,6 +117,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected to be of type:",
 		"	string",
@@ -134,12 +137,14 @@ func TestTypeValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected to be of type:",
 		"	int",
 		"Actual:",
 		"	string",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected to be of type:",
 		"	int",
@@ -160,6 +165,7 @@ func TestTypeValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected NOT to be of type:",
 		"	string",

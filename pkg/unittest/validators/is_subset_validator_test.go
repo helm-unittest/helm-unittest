@@ -63,6 +63,7 @@ func TestIsSubsetValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: bar bar",
@@ -94,6 +95,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	d: foo bar",
@@ -117,6 +119,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: foo bar",
@@ -125,6 +128,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"	d: foo bar",
 		"	x: baz",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: foo bar",
@@ -150,6 +154,7 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected NOT to contain:",
 		"	d: foo bar",
@@ -177,6 +182,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a.b.c' to be an object, got:",
 		"	hello world",
@@ -201,6 +207,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a.b.c' to be an object, got:",
 		"	hello world",
@@ -290,6 +297,7 @@ func TestIsSubsetValidatorWhenFailFast(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: bar bar",

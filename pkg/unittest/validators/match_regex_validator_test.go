@@ -56,7 +56,7 @@ func TestMatchRegexValidatorWithBase64WhenNOk(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:	0", "Error:", "	unable to decode base64 expected content hello world"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	unable to decode base64 expected content hello world"}, diff)
 }
 
 func TestMatchRegexValidatorWithBase64WhenOk(t *testing.T) {
@@ -120,6 +120,7 @@ func TestMatchRegexValidatorWhenNotString(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a' to be a string, got:",
 		"	123.456",
@@ -138,6 +139,29 @@ func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
+		"Path:	a.b[0].c",
+		"Expected to match:",
+		"	^foo",
+		"Actual:",
+		"	hello world",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenMatchFailFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	log.SetLevel(log.DebugLevel)
+
+	validator := MatchRegexValidator{"a.b[0].c", "^foo", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
+	})
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected to match:",
 		"	^foo",
@@ -158,6 +182,7 @@ func TestMatchRegexValidatorWhenNegativeAndMatchFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected NOT to match:",
 		"	^hello",
@@ -197,12 +222,13 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 	}, diff)
 }
 
-func TestMatchRegexValidatorWhenUnknownPath(t *testing.T) {
+func TestMatchRegexValidatorWhenUnknownPathFailFast(t *testing.T) {
 	manifest := makeManifest("a.b.d::error")
 
 	validator := MatchRegexValidator{"a[2]", "^hello", false}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest},
 	})
 
 	assert.False(t, pass)

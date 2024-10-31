@@ -89,15 +89,16 @@ func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...s
 		"\n",
 	)
 
+	// Only shown multiple values are found for assertions.
+	if valuesIndex >= 0 {
+		valuesIndexString := []string{fmt.Sprintf("ValuesIndex:\t%d", valuesIndex)}
+		splittedStrings = append(valuesIndexString, splittedStrings...)
+	}
+
+	// Only shown manifest index if it is not -1
 	if manifestIndex >= 0 {
 		manifestIndexString := []string{fmt.Sprintf("DocumentIndex:\t%d", manifestIndex)}
 		splittedStrings = append(manifestIndexString, splittedStrings...)
-	}
-
-	// Only shown multiple values are found for assertions.
-	if valuesIndex > 0 {
-		valuesIndexString := []string{fmt.Sprintf("ValuesIndex:\t%d", valuesIndex)}
-		splittedStrings = append(valuesIndexString, splittedStrings...)
 	}
 
 	return splittedStrings
