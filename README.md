@@ -359,4 +359,6 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!
-To start developing this plugin please follow the [Contribution](./CONTRIBUTING.md) guidelines. 
+To start developing this plugin please follow the [Contribution](./CONTRIBUTING.md) guidelines.
+
+<!-- kick off build -->
