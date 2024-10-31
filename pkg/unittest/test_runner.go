@@ -12,35 +12,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 
-	"github.com/yargevad/filepathx"
-
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
-func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	filesSet := make([]string, 0)
-	for _, pattern := range filePatterns {
-		if !filepath.IsAbs(pattern) {
-			files, err := filepathx.Glob(filepath.Join(chartPath, pattern))
-			if err != nil {
-				return nil, err
-			}
-			if setAbsolute {
-				for _, file := range files {
-					file, _ = filepath.Abs(file)
-					filesSet = append(filesSet, file)
-				}
-			} else {
-				filesSet = append(filesSet, files...)
-			}
-		} else {
-			filesSet = append(filesSet, pattern)
-		}
-	}
-
-	return filesSet, nil
-}
+const LOG_TEST_RUNNER = "test-runner"
 
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
@@ -141,13 +117,20 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	return allPassed
 }
 
+// getTestSuites retrieves the list of test suites for the given chart.
+// It parses test suite files and renders test suite files from the chart's tests path (if specified).
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+//
+// It returns a slice of _TestSuite structs and an error if any occurred during processing.
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
-	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
+	testFilesSet, terr := GetFiles(chartPath, tr.TestFiles, false)
 	if terr != nil {
 		return nil, terr
 	}
 
-	valuesFilesSet, verr := getFiles("", tr.ValuesFiles, true)
+	valuesFilesSet, verr := GetFiles("", tr.ValuesFiles, true)
 	if verr != nil {
 		return nil, verr
 	}
@@ -182,7 +165,14 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 	return resultSuites, nil
 }
 
-// getV3TestSuites return test files of the chart which matched patterns
+// getV3TestSuites retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
+// It recursively calls itself for each subchart dependency.
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+// chart is the chart object representing the chart being processed.
+//
+// It returns a slice of TestSuite pointers and an error if any occurred during processing.
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
