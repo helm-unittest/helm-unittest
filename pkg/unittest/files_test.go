@@ -88,6 +88,7 @@ func TestGetFiles_ChartWithSubChartFromRootDefaultPattern(t *testing.T) {
 	actual, err := GetFiles(".", []string{"tests/*_test.yaml"}, false)
 	assert.NoError(t, err)
 	assertArrayPathOsAgnostic(t, []string{
+		"tests/all-charts_test.yaml",
 		"tests/certmanager_test.yaml",
 		"tests/deployment_test.yaml",
 		"tests/ingress_test.yaml",
