@@ -69,6 +69,7 @@ func TestIsNullOrEmptyValidatorWhenFail(t *testing.T) {
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
+			"ValuesIndex:	0",
 			"Path:	" + key,
 			"Expected to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
@@ -91,6 +92,7 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 		assert.False(t, pass)
 		assert.Equal(t, []string{
 			"DocumentIndex:	0",
+			"ValuesIndex:	0",
 			"Path:	" + key,
 			"Expected NOT to be null or empty, got:",
 			"\t" + string(valueYAML)[:len(valueYAML)-1],
@@ -111,5 +113,81 @@ func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 		"DocumentIndex:	0",
 		"Error:",
 		"	unknown path x.a",
+	}, diff)
+}
+
+func TestIsNullOrEmptyValidatorWhenInvalidPathFailFast(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsNullOrEmptyValidator{"x.a"}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path x.a",
+	}, diff)
+}
+
+func TestIsNullOrEmptyValidatorWhenFailFast(t *testing.T) {
+	manifest := makeManifest(docWithNonEmptyElement)
+
+	log.SetLevel(log.DebugLevel)
+
+	for key, value := range manifest {
+		validator := IsNullOrEmptyValidator{key}
+		valueYAML := common.TrustedMarshalYAML(value)
+		pass, diff := validator.Validate(&ValidateContext{
+			FailFast: true,
+			Docs:     []common.K8sManifest{manifest, manifest},
+		})
+		assert.False(t, pass)
+		assert.Equal(t, []string{
+			"DocumentIndex:	0",
+			"ValuesIndex:	0",
+			"Path:	" + key,
+			"Expected to be null or empty, got:",
+			"\t" + string(valueYAML)[:len(valueYAML)-1],
+		}, diff)
+	}
+}
+
+func TestFailWhenInvalidJsonPath(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsNullOrEmptyValidator{"x[b]"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Error:",
+		"\tinvalid array index [b] before position 4: non-integer array index",
+		"DocumentIndex:\t1",
+		"Error:",
+		"\tinvalid array index [b] before position 4: non-integer array index",
+	}, diff)
+}
+
+func TestFailWhenInvalidJsonPathFailFast(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsNullOrEmptyValidator{"x[b]"}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"Error:",
+		"\tinvalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }

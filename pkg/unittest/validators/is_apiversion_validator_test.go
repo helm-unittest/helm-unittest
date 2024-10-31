@@ -73,3 +73,22 @@ func TestIsAPIVersionValidatorWhenNegativeAndFail(t *testing.T) {
 		"	v1",
 	}, diff)
 }
+
+func TestIsAPIVersionValidatorWhenNegativeAndFailFast(t *testing.T) {
+	doc := "apiVersion: v1"
+	manifest := makeManifest(doc)
+
+	validator := IsAPIVersionValidator{"v1"}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Expected NOT to be apiVersion:",
+		"	v1",
+	}, diff)
+}

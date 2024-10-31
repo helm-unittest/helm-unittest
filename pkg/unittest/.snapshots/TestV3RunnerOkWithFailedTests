@@ -8,6 +8,7 @@
 		- asserts[0] `matchRegex` fail
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	data["my.conf"]
 			Expected to match:
 				cacertfile
@@ -18,6 +19,7 @@
 		- asserts[1] `contains` fail
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Error:
 				expect count -1 in 'data["my.array"]' to be in array, got 1:
 				- value1
@@ -26,6 +28,7 @@
 		- asserts[2] `contains` fail
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Error:
 				expect count 8 in 'data["my.array"]' to be in array, got 1:
 				- value1
@@ -34,6 +37,7 @@
 		- asserts[3] `contains` fail
 			Template:	basic/templates/configmap.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Error:
 				expect count 1234578901234567890 in 'data["my.array"]' to be in array, got 1:
 				- value1
@@ -99,6 +103,7 @@
 		- asserts[0] `equal` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].image
 			Expected to equal:
 				nginx:stable
@@ -111,6 +116,7 @@
 				-nginx:stable
 				+apache:latest
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].image
 			Expected to equal:
 				nginx:stable
@@ -126,10 +132,12 @@
 		- asserts[1] `notEqual` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].image
 			Expected NOT to equal:
 				apache:latest
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].image
 			Expected NOT to equal:
 				apache:latest
@@ -137,12 +145,14 @@
 		- asserts[2] `matchRegex` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	metadata.name
 			Expected to match:
 				^.*-foobar$
 			Actual:
 				RELEASE-NAME-basic
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	metadata.name
 			Expected to match:
 				^.*-foobar$
@@ -152,6 +162,7 @@
 		- asserts[3] `notMatchRegex` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	metadata.name
 			Expected NOT to match:
 				^.*-basic$
@@ -161,12 +172,14 @@
 		- asserts[4] `contains` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].ports
 			Expected to contain:
 				- containerPort: 80
 			Actual:
 				- containerPort: 8080
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].ports
 			Expected to contain:
 				- containerPort: 80
@@ -176,6 +189,7 @@
 		- asserts[5] `notContains` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].ports
 			Expected NOT to contain:
 				- containerPort: 8080
@@ -199,6 +213,7 @@
 		- asserts[8] `isNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0]
 			Expected to be null or empty, got:
 				image: apache:latest
@@ -216,6 +231,7 @@
 				    port: 8080
 				resources: {}
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0]
 			Expected to be null or empty, got:
 				image: apache:latest
@@ -227,6 +243,7 @@
 		- asserts[9] `isNotNullOrEmpty` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers[0].resources
 			Expected NOT to be null or empty, got:
 				{}
@@ -270,6 +287,7 @@
 		- asserts[14] `contains` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers
 			Expected to contain:
 				- foo
@@ -289,6 +307,7 @@
 				      port: 8080
 				  resources: {}
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.template.spec.containers
 			Expected to contain:
 				- foo
@@ -302,12 +321,14 @@
 		- asserts[15] `isType` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.replicas
 			Expected to be of type:
 				string
 			Actual:
 				int
 			DocumentIndex:	1
+			ValuesIndex:	0
 			Path:	spec.replicas
 			Expected to be of type:
 				string
@@ -317,16 +338,32 @@
 		- asserts[16] `lengthEqual` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
-			Error:
-				count doesn't match as expected. expected: 10 actual: 1
+			Path:	spec.template.spec.containers
+			Expected to match count:
+				10
+			Actual:
+				1
 			DocumentIndex:	1
-			Error:
-				count doesn't match as expected. expected: 10 actual: 1
-				expected result does not match
+			Path:	spec.template.spec.containers
+			Expected to match count:
+				10
+			Actual:
+				1
 
 		- asserts[17] `notLengthEqual` fail
 			Template:	basic/templates/deployment.yaml
-				expected result does not match
+			DocumentIndex:	0
+			Path:	spec.template.spec.containers
+			Expected NOT to match count:
+				1
+			Actual:
+				1
+			DocumentIndex:	1
+			Path:	spec.template.spec.containers
+			Expected NOT to match count:
+				1
+			Actual:
+				1
  FAIL  test deployment that would be fail as it is missing the include	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should not render
 		Error: template: basic/templates/deployment.yaml:13:24: executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>: error calling include: template: no template "basic/templates/configmap.yaml" associated with template "gotpl"
@@ -345,6 +382,7 @@
 		- asserts[0] `contains` fail
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.rules[0].http.paths
 			Expected to contain:
 				- backend:
@@ -367,6 +405,7 @@
 		- asserts[0] `isNullOrEmpty` fail
 			Template:	basic/templates/ingress.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	metadata.annotations
 			Expected to be null or empty, got:
 				ingress.kubernetes.io/rewrite-target: /
@@ -431,6 +470,7 @@
 		- asserts[0] `notContains` fail
 			Template:	basic/templates/service.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.ports
 			Expected NOT to contain:
 				- name: nginx
@@ -446,6 +486,7 @@
 		- asserts[1] `notEqual` fail
 			Template:	basic/templates/service.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.type
 			Expected NOT to equal:
 				ClusterIP
@@ -453,6 +494,7 @@
 		- asserts[2] `notEqual` fail
 			Template:	basic/templates/service.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.selector
 			Expected NOT to equal:
 				app: basic
@@ -463,6 +505,7 @@
 		- asserts[0] `notContains` fail
 			Template:	basic/templates/service.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.ports
 			Expected NOT to contain:
 				- name: cool-service
@@ -478,6 +521,7 @@
 		- asserts[1] `notEqual` fail
 			Template:	basic/templates/service.yaml
 			DocumentIndex:	0
+			ValuesIndex:	0
 			Path:	spec.type
 			Expected NOT to equal:
 				NodePort

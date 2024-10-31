@@ -25,12 +25,14 @@ func (a EqualRawValidator) failInfo(actual interface{}, not bool) []string {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
 			-1,
+			-1,
 			expectedYAML,
 		)
 	}
 
 	return splitInfof(
 		setFailFormat(not, false, true, true, customMessage),
+		-1,
 		-1,
 		expectedYAML,
 		actualYAML,
@@ -52,6 +54,9 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := a.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 

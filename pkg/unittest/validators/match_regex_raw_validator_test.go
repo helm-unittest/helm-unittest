@@ -59,7 +59,8 @@ func TestMatchRegexRawValidatorWhenMatchFail(t *testing.T) {
 
 	validator := MatchRegexRawValidator{"^foo"}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
 	})
 	assert.False(t, pass)
 	assert.Equal(t, []string{

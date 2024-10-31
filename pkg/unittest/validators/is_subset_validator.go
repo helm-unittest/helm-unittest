@@ -14,7 +14,7 @@ type IsSubsetValidator struct {
 	Content interface{}
 }
 
-func (v IsSubsetValidator) failInfo(actual interface{}, index int, not bool) []string {
+func (v IsSubsetValidator) failInfo(actual interface{}, manifestIndex, valueIndex int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(v.Content)
 	actualYAML := common.TrustedMarshalYAML(actual)
 
@@ -23,11 +23,61 @@ func (v IsSubsetValidator) failInfo(actual interface{}, index int, not bool) []s
 
 	return splitInfof(
 		setFailFormat(not, true, true, false, " to contain"),
-		index,
+		manifestIndex,
+		valueIndex,
 		v.Path,
 		expectedYAML,
 		actualYAML,
 	)
+}
+
+func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	if len(actual) == 0 {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+	}
+
+	manifestValidateSuccess := false
+	var manifestValidateErrors []string
+
+	for actualIndex, singleActual := range actual {
+		var errorMessage []string
+		actualMap, actualOk := singleActual.(map[string]interface{})
+		contentMap, contentOk := v.Content.(map[string]interface{})
+
+		if actualOk && contentOk {
+			found := validateSubset(actualMap, contentMap)
+
+			if found == context.Negative {
+				errorMessage = v.failInfo(singleActual, manifestIndex, actualIndex, context.Negative)
+			}
+
+			manifestValidateErrors = append(manifestValidateErrors, errorMessage...)
+			manifestValidateSuccess = determineSuccess(actualIndex, manifestValidateSuccess, found != context.Negative)
+
+			if !manifestValidateSuccess && context.FailFast {
+				break
+			}
+
+			continue
+		}
+
+		actualYAML := common.TrustedMarshalYAML(singleActual)
+		errorMessage = splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf(
+			"expect '%s' to be an object, got:\n%s",
+			v.Path,
+			actualYAML,
+		))
+
+		manifestValidateErrors = append(manifestValidateErrors, errorMessage...)
+		manifestValidateSuccess = determineSuccess(actualIndex, manifestValidateSuccess, false)
+	}
+
+	return manifestValidateSuccess, manifestValidateErrors
 }
 
 // Validate implement Validatable
@@ -38,47 +88,13 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
+		manifestValidateSuccess, manifestValidateErrors := v.validateManifest(manifest, idx, context)
+		validateErrors = append(validateErrors, manifestValidateErrors...)
+		validateSuccess = determineSuccess(idx, validateSuccess, manifestValidateSuccess)
+
+		if !validateSuccess && context.FailFast {
+			break
 		}
-
-		if len(actual) == 0 {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
-
-		singleActual := actual[0]
-		actualMap, actualOk := singleActual.(map[string]interface{})
-		contentMap, contentOk := v.Content.(map[string]interface{})
-
-		if actualOk && contentOk {
-			found := validateSubset(actualMap, contentMap)
-
-			if found == context.Negative {
-				validateSuccess = false
-				errorMessage := v.failInfo(singleActual, idx, context.Negative)
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-
-			validateSuccess = determineSuccess(idx, validateSuccess, true)
-			continue
-		}
-
-		actualYAML := common.TrustedMarshalYAML(singleActual)
-		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-			"expect '%s' to be an object, got:\n%s",
-			v.Path,
-			actualYAML,
-		))
-		validateErrors = append(validateErrors, errorMessage...)
 	}
 
 	return validateSuccess, validateErrors

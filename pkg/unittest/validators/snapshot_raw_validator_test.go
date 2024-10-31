@@ -70,6 +70,7 @@ func TestSnapshotRawValidatorWhenFail(t *testing.T) {
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:             []common.K8sManifest{data},
 		SnapshotComparer: mockComparer,
+		FailFast:         true,
 	})
 
 	assert.False(t, pass)

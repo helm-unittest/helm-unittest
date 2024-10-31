@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
@@ -15,7 +16,7 @@ type IsTypeValidator struct {
 	Type string
 }
 
-func (t IsTypeValidator) failInfo(actual string, index int, not bool) []string {
+func (t IsTypeValidator) failInfo(actual string, manifestIndex, valueIndex int, not bool) []string {
 	customMessage := " to be of type"
 
 	log.WithField("validator", "is_type").Debugln("expected type:", t.Type)
@@ -23,11 +24,47 @@ func (t IsTypeValidator) failInfo(actual string, index int, not bool) []string {
 
 	return splitInfof(
 		setFailFormat(not, true, true, false, customMessage),
-		index,
+		manifestIndex,
+		valueIndex,
 		t.Path,
 		t.Type,
 		actual,
 	)
+}
+
+func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, t.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	if len(actuals) == 0 {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", t.Path))
+	}
+
+	manifestSuccess := false
+	var manifestErrors []string
+
+	for actualIndex, actual := range actuals {
+		singleSuccess := false
+		var singleErrors []string
+		actualType := reflect.TypeOf(actual).String()
+
+		if (actualType == t.Type) == context.Negative {
+			singleErrors = t.failInfo(actualType, manifestIndex, actualIndex, context.Negative)
+		} else {
+			singleSuccess = true
+		}
+
+		manifestErrors = append(manifestErrors, singleErrors...)
+		manifestSuccess = determineSuccess(actualIndex, manifestSuccess, singleSuccess)
+
+		if !manifestSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return manifestSuccess, manifestErrors
 }
 
 // Validate implement Validatable
@@ -38,31 +75,13 @@ func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, t.Path)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
+		manifestSuccess, manifestErrors := t.validateManifest(manifest, idx, context)
+		validateErrors = append(validateErrors, manifestErrors...)
+		validateSuccess = determineSuccess(idx, validateSuccess, manifestSuccess)
+
+		if !validateSuccess && context.FailFast {
+			break
 		}
-
-		if len(actual) == 0 {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", t.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
-
-		actualType := reflect.TypeOf(actual[0]).String()
-
-		if (actualType == t.Type) == context.Negative {
-			validateSuccess = false
-			errorMessage := t.failInfo(actualType, idx, context.Negative)
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
-
-		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
 
 	return validateSuccess, validateErrors

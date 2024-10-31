@@ -304,8 +304,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 	}
 
-	t.ModifyChartMetadata(targetChart)
-
 	err = v3util.ProcessDependenciesWithMerge(targetChart, values)
 	if err != nil {
 		return nil, false, err
@@ -327,6 +325,8 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	var outputOfFiles map[string]string
 
+	// modify chart metadata before rendering
+	t.ModifyChartMetadata(targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
@@ -456,6 +456,7 @@ func (t *TestJob) runAssertions(
 			renderSucceed,
 			renderError,
 			&results.AssertionResult{Index: idx},
+			failfast,
 		)
 
 		assertsResult = append(assertsResult, result)

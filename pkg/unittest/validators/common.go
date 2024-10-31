@@ -28,6 +28,7 @@ type ValidateContext struct {
 	Negative     bool
 	SnapshotComparer
 	RenderError error
+	FailFast    bool
 }
 
 func (c *ValidateContext) getManifests() []common.K8sManifest {
@@ -73,7 +74,7 @@ Expected` + notAnnotation + customize + `:
 }
 
 // splitInfof split multi line string into array of string
-func splitInfof(format string, index int, replacements ...string) []string {
+func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")
 	indentedReplacements := make([]interface{}, len(replacements))
 	for i, r := range replacements {
@@ -88,9 +89,16 @@ func splitInfof(format string, index int, replacements ...string) []string {
 		"\n",
 	)
 
-	if index >= 0 {
-		indexedString := []string{fmt.Sprintf("DocumentIndex:\t%d", index)}
-		splittedStrings = append(indexedString, splittedStrings...)
+	// Only shown multiple values are found for assertions.
+	if valuesIndex >= 0 {
+		valuesIndexString := []string{fmt.Sprintf("ValuesIndex:\t%d", valuesIndex)}
+		splittedStrings = append(valuesIndexString, splittedStrings...)
+	}
+
+	// Only shown manifest index if it is not -1
+	if manifestIndex >= 0 {
+		manifestIndexString := []string{fmt.Sprintf("DocumentIndex:\t%d", manifestIndex)}
+		splittedStrings = append(manifestIndexString, splittedStrings...)
 	}
 
 	return splittedStrings
@@ -123,7 +131,6 @@ func uniformContent(content interface{}) string {
 func validateSubset(actual map[string]interface{}, content map[string]interface{}) bool {
 	for key := range content {
 		if !reflect.DeepEqual(actual[key], content[key]) {
-
 			return false
 		}
 	}

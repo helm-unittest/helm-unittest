@@ -71,6 +71,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			value: 7,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tvalue",
 				"Expected to be less then or equal to, got:",
 				"\tthe expected '7' is not less or equal to the actual '6'",
@@ -83,6 +84,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			value: 1.71,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be less then or equal to, got:",
 				"\tthe expected '1.71' is not less or equal to the actual '1.7'",
@@ -95,6 +97,7 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			value: 1.342,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
+				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be less then or equal to, got:",
 				"\tthe expected '1.342' is not less or equal to the actual '1.341'",
@@ -166,7 +169,35 @@ func TestEqualOrLessValidatorWhenTypesDoNotMatch(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	actual 'float64' and expected 'int' types do not match",
+	}, diff)
+}
+
+func TestEqualOrLessValidatorWhenFailFast(t *testing.T) {
+	var actual = `
+a:
+  b: 1
+  c: 1
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrLessValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
+		"ValuesIndex:\t0",
+		"Path:\ta.*",
+		"Expected to be less then or equal to, got:",
+		"\tthe expected '2' is not less or equal to the actual '1'",
 	}, diff)
 }

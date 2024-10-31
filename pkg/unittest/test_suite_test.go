@@ -562,6 +562,28 @@ tests:
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
 
+func TestV3RunSuiteWithSubChartAliasAndVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with subchart and version override
+chart:
+  version: 1.2.3
+tests:
+  - it: should render subchart and alias subchart templates
+    templates:
+     - charts/another-postgresql/templates/deployment.yaml
+     - charts/postgresql/templates/deployment.yaml
+    asserts:
+     - matchRegex:
+        path: metadata.labels["chart"]
+        pattern: "(.*-)?postgresql-1.2.3"
+`
+	testSuite := TestSuite{}
+	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	assert.True(t, suiteResult.Passed)
+}
+
 func TestV3RunSuiteWithSubChartsTrimmingWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test cert-manager rbac with trimming

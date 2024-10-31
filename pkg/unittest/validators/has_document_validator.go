@@ -23,11 +23,13 @@ func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
 			-1,
+			-1,
 			expectedCount,
 		)
 	}
 	return splitInfof(
 		setFailFormat(not, false, true, false, customMessage),
+		-1,
 		-1,
 		expectedCount,
 		actualCount,
