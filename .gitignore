@@ -1,6 +1,5 @@
 /.vs
 /.vscode
-
 _scratch
 tpl
 vendor/
@@ -11,6 +10,7 @@ untt-dbg
 untt.exe
 untt-dbg.exe
 _dist
+/.debug
 
 .DS_Store
 
