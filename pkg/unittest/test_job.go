@@ -15,6 +15,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
+	"github.com/mdaverde/jsonpath"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -187,6 +188,20 @@ type TestJob struct {
 	requireRenderSuccess bool
 }
 
+func copyMap(m map[string]interface{}) map[string]interface{} {
+	cp := make(map[string]interface{})
+	for k, v := range m {
+		vm, ok := v.(map[string]interface{})
+		if ok {
+			cp[k] = copyMap(vm)
+		} else {
+			cp[k] = v
+		}
+	}
+
+	return cp
+}
+
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	targetChart *v3chart.Chart,
@@ -199,7 +214,10 @@ func (t *TestJob) RunV3(
 	t.determineRenderSuccess()
 	result.DisplayName = t.Name
 
-	userValues, err := t.getUserValues()
+	// Clone default chart values then patch those
+	chartValuesForPatch := copyMap(targetChart.Values)
+	userValues, err := t.getUserValues(chartValuesForPatch)
+
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -241,8 +259,10 @@ func (t *TestJob) RunV3(
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) getUserValues() ([]byte, error) {
-	base := map[string]interface{}{}
+func (t *TestJob) getUserValues(base map[string]interface{}) ([]byte, error) {
+	if base == nil {
+		base = map[string]interface{}{}
+	}
 	routes := spliteChartRoutes(t.chartRoute)
 
 	// Load and merge values files.
@@ -268,21 +288,29 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 	// Merge global set values before merging the other set values
 	for path, values := range t.globalSet {
-		setMap, err := valueutils.BuildValueOfSetPath(values, path)
-		if err != nil {
-			return []byte{}, err
+		// "Issue" with jsonpath is nil values removes the entry from the dict
+		if values != nil {
+			jsonpath.Set(&base, path, values)
+		} else {
+			setMap, err := valueutils.BuildValueOfSetPath(values, path)
+			if err != nil {
+				return []byte{}, err
+			}
+			base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 		}
-
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 
 	for path, values := range t.Set {
-		setMap, err := valueutils.BuildValueOfSetPath(values, path)
-		if err != nil {
-			return []byte{}, err
+		// Same as previous
+		if values != nil {
+			jsonpath.Set(&base, path, values)
+		} else {
+			setMap, err := valueutils.BuildValueOfSetPath(values, path)
+			if err != nil {
+				return []byte{}, err
+			}
+			base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 		}
-
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 
 	return yaml.Marshal(base)
