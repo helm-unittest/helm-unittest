@@ -36,6 +36,9 @@ tests:
           path: metadata.name
           pattern: ^.*-foobar$
       - contains:
+          path: spec.template.spec.containers[*].name
+          content: basic
+      - contains:
           path: spec.template.spec.containers[?(@.name == "basic")].ports
           content:
             containerPort: 8080

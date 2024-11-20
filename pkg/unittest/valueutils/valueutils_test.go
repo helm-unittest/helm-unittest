@@ -17,6 +17,7 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 			"e.f": "false",
 			"g":   map[string]interface{}{"h": "\"quotes\""},
 			"i":   []interface{}{map[string]interface{}{"i1": "1"}, map[string]interface{}{"i2": "2"}},
+			"j":   []interface{}{map[string]interface{}{"k": "1"}, map[string]interface{}{"k": "2"}},
 		},
 	}
 
@@ -36,6 +37,11 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 		a.Equal(expect, actual[0])
 		a.Nil(err)
 	}
+
+    // Test jsonpath returning an array
+    actual, err := GetValueOfSetPath(data, "a.j[*].k")
+    a.Equal([]interface{}{"1", "2"}, actual)
+    a.Nil(err)
 }
 
 func TestGetValueOfSetPathError(t *testing.T) {
