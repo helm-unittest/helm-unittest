@@ -56,14 +56,22 @@ func writeContentToFile(noXMLHeader bool, content interface{}, w io.Writer) erro
 	writer := bufio.NewWriter(w)
 
 	if !noXMLHeader {
-		writer.WriteString(xml.Header)
+		_, headerErr := writer.WriteString(xml.Header)
+		if headerErr != nil {
+			return headerErr
+		}
 	}
 
-	writer.Write(bytes)
-	writer.WriteByte('\n')
-	writer.Flush()
+	_, writeErr := writer.Write(bytes)
+	if writeErr != nil {
+		return writeErr
+	}
+	byteErr := writer.WriteByte('\n')
+	if byteErr != nil {
+		return byteErr
+	}
 
-	return nil
+	return writer.Flush()
 }
 
 // Formatter Interface.

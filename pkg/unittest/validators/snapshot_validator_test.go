@@ -123,7 +123,7 @@ func TestSnapshotValidatorWhenNegativeAndFail(t *testing.T) {
 }
 
 func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
-	manifest := makeManifest("a:b")
+	manifest := makeManifest("a: b")
 
 	cached := "a:\n  b: c\n"
 	mockComparer := new(mockSnapshotComparer)
@@ -148,7 +148,7 @@ func TestSnapshotValidatorWhenInvalidPath(t *testing.T) {
 }
 
 func TestSnapshotValidatorWhenUnknownPath(t *testing.T) {
-	manifest := makeManifest("a:b")
+	manifest := makeManifest("a: b")
 
 	cached := "a:\n  b: c\n"
 	mockComparer := new(mockSnapshotComparer)

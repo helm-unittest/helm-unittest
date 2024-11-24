@@ -22,16 +22,12 @@ func (tjr TestJobResult) print(printer *printer.Printer, verbosity int) {
 	}
 
 	if tjr.ExecError != nil {
-		printer.Println(printer.Highlight("- "+tjr.DisplayName), 1)
-		printer.Println(
-			printer.Highlight("Error: ")+
-				tjr.ExecError.Error()+"\n",
-			2,
-		)
+		printer.Println(printer.Highlight("- %s", tjr.DisplayName), 1)
+		printer.Println(printer.Highlight("Error: %s\n", tjr.ExecError.Error()), 2)
 		return
 	}
 
-	printer.Println(printer.Danger("- "+tjr.DisplayName+"\n"), 1)
+	printer.Println(printer.Danger("- %s\n", tjr.DisplayName), 1)
 	for _, assertResult := range tjr.AssertsResult {
 		assertResult.print(printer, verbosity)
 	}

@@ -34,11 +34,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}
 
-	if len(actuals) == 0 {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown parameter %s", path)), 0
-	}
-
-	manifestSuccess := false
+	manifestSuccess := (len(actuals) == 0 && context.Negative)
 	var manifestErrors []string
 	arrayLength := 0
 
@@ -145,6 +141,7 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	if v.validatePathPaths() {
 		return false, splitInfof(errorFormat, -1, -1, "'paths' couldn't be used with 'path'")
 	}
+	// TODO: with the new approach path can also contain a list of paths
 	singleMode := len(v.Path) > 0
 	manifests := context.getManifests()
 

@@ -167,7 +167,8 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
 }
@@ -235,7 +236,8 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
 }
@@ -308,7 +310,8 @@ func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
 }
@@ -366,7 +369,8 @@ func TestWriteTestOutputAsXUnitWithErrors(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual XUnitAssemblies
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
 }

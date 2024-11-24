@@ -1,3 +1,12 @@
+0.7.0 / 2024-11-25
+==================
+- Fix template path is translated differently (credits @ivankatliarchuk, resolves #300)
+- Fix rendering with subchart alias with version override (credits @ivankatliarchuk, resolves #457)
+- Added multivalue validations (credits @Andreas02-dev, resolves #289, resolves #345, resolves #405)
+- Improved proper FailFast (credits @Andreas02-dev)
+- Update packages to latest patch versions
+- Update documentation
+
 0.6.3 / 2024-10-08
 ==================
 - Fix regression on document separator for raw files (credits @ivankatliarchuk, resolves #413)

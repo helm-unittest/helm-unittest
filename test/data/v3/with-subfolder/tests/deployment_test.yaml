@@ -102,3 +102,9 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.volumes
+      - notLengthEqual:
+          path: spec.template.spec.volumes
+          count: 0
+      - notLengthEqual:
+          path: spec.template.spec.volumes
+          count: 1

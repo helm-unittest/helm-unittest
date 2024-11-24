@@ -207,7 +207,7 @@ func TestMatchRegexValidatorWhenNoPattern(t *testing.T) {
 }
 
 func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
-	manifest := makeManifest("a.b.d::error")
+	manifest := makeManifest("a.b.d: error")
 
 	validator := MatchRegexValidator{"a.[b]", "^hello", false}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -223,7 +223,7 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 }
 
 func TestMatchRegexValidatorWhenUnknownPathFailFast(t *testing.T) {
-	manifest := makeManifest("a.b.d::error")
+	manifest := makeManifest("a.b.d: error")
 
 	validator := MatchRegexValidator{"a[2]", "^hello", false}
 	pass, diff := validator.Validate(&ValidateContext{

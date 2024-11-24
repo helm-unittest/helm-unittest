@@ -140,8 +140,8 @@ func TestEqualOrGreaterValidatorWhenInvalidPath(t *testing.T) {
 	var actual = `
 spec:
   containers:
-	- name: nginx
-	  image: nginx
+    - name: nginx
+      image: nginx
 `
 	manifest := makeManifest(actual)
 
@@ -165,14 +165,13 @@ func TestEqualOrGreaterValidatorWhenUnkownPath(t *testing.T) {
 	var actual = `
 spec:
   containers:
-	- name: nginx
-	  image: nginx
-	  resources:
-		limits:
-		  memory: "256Mi"
-		requests:
-		  cpu: 0.4
-		  memory: "128Mi"
+    - name: nginx
+      image: nginx
+      resources:
+        limits:
+          memory: "256Mi"
+        requests:
+          memory: "128Mi"
 `
 	manifest := makeManifest(actual)
 

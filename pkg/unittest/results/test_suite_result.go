@@ -34,10 +34,10 @@ func (tsr TestSuiteResult) printTitle(printer *printer.Printer) {
 	}
 	var pathToPrint string
 	if tsr.FilePath != "" {
-		pathToPrint = printer.Faint(filepath.ToSlash(filepath.Dir(tsr.FilePath)+string(os.PathSeparator))) +
+		pathToPrint = printer.Faint("%s", filepath.ToSlash(filepath.Dir(tsr.FilePath)+string(os.PathSeparator))) +
 			filepath.Base(tsr.FilePath)
 	}
-	name := printer.Highlight(tsr.DisplayName)
+	name := printer.Highlight("%s", tsr.DisplayName)
 	printer.Println(
 		fmt.Sprintf("%s %s\t%s", label, name, pathToPrint),
 		0,
@@ -48,7 +48,7 @@ func (tsr TestSuiteResult) printTitle(printer *printer.Printer) {
 func (tsr TestSuiteResult) Print(printer *printer.Printer, verbosity int) {
 	tsr.printTitle(printer)
 	if tsr.ExecError != nil {
-		printer.Println(printer.Highlight("- Execution Error: "), 1)
+		printer.Println(printer.Highlight("%s", "- Execution Error: "), 1)
 		printer.Println(tsr.ExecError.Error()+"\n", 2)
 		return
 	}

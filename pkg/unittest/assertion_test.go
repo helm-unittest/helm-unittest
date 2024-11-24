@@ -73,12 +73,14 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - lengthEqual:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 33)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 33)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+	assertionsAsMap := make([]map[string]interface{}, 33)
+	mapErr := yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
+	a.Nil(mapErr)
+	assertions := make([]Assertion, 33)
+	assErr := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
+	a.Nil(assErr)
+
 	for idx, assertion := range assertions {
 		_, ok := assertionsAsMap[idx][assertion.AssertType]
 		a.True(ok)
@@ -147,10 +149,12 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 - failedTemplate:
   not: true
 `
-	assertions := make([]Assertion, 29)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+
+	assertions := make([]Assertion, 29)
+	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
+	a.Nil(err)
+
 	for _, assertion := range assertions {
 		a.True(assertion.Not)
 	}
@@ -201,10 +205,12 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
   not: true
 - notFailedTemplate:
 `
-	assertions := make([]Assertion, 28)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+
+	assertions := make([]Assertion, 28)
+	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
+	a.Nil(err)
+
 	for idx := 0; idx < len(assertions); idx += 2 {
 		a.Equal(assertions[idx].Not, !assertions[idx+1].Not)
 	}
@@ -228,8 +234,7 @@ e:
   f: g
 x:
 `
-	manifest := common.K8sManifest{}
-	yaml.Unmarshal([]byte(manifestDoc), &manifest)
+	manifest := common.TrustedUnmarshalYAML(manifestDoc)
 	renderedMap := map[string][]common.K8sManifest{
 		"t.yaml": {manifest},
 	}
@@ -353,9 +358,10 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	}
 	assertionYAML := "equal:"
 	assertion := new(Assertion)
-	yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
 
 	a := assert.New(t)
+	a.Nil(err)
 	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,

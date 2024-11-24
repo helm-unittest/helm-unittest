@@ -41,11 +41,14 @@ var contentNew = map[string]interface{}{
 	},
 }
 
-func createCache(existed bool) *Cache {
+func createCache(assert *assert.Assertions, existed bool) *Cache {
 	dir, _ := os.MkdirTemp("", "test")
 	cacheFile := filepath.Join(dir, "cache_test.yaml")
 	if existed {
-		os.WriteFile(cacheFile, []byte(lastTimeContent), os.ModePerm)
+		err := os.WriteFile(cacheFile, []byte(lastTimeContent), os.ModePerm)
+		if err != nil {
+			assert.FailNow("Failed to create cache file")
+		}
 	}
 
 	return &Cache{Filepath: cacheFile}
@@ -72,10 +75,10 @@ func verifyCache(assert *assert.Assertions, cache *Cache, exists, changed bool, 
 }
 
 func TestCacheWhenFirstTime(t *testing.T) {
-	cache := createCache(false)
+	a := assert.New(t)
+	cache := createCache(a, false)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, false, false, 0, 0, 0, 0, 0)
 
@@ -97,10 +100,10 @@ func TestCacheWhenFirstTime(t *testing.T) {
 }
 
 func TestCacheWhenNotChanged(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -122,10 +125,10 @@ func TestCacheWhenNotChanged(t *testing.T) {
 }
 
 func TestCacheWhenChanged(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -146,11 +149,11 @@ func TestCacheWhenChanged(t *testing.T) {
 }
 
 func TestCacheWhenNotChangedIfIsUpdating(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	cache.IsUpdating = true
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -172,11 +175,11 @@ func TestCacheWhenNotChangedIfIsUpdating(t *testing.T) {
 }
 
 func TestCacheWhenChangedIfIsUpdating(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	cache.IsUpdating = true
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -204,10 +207,10 @@ func TestCacheWhenChangedIfIsUpdating(t *testing.T) {
 }
 
 func TestCacheWhenHasVanished(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -228,10 +231,10 @@ func TestCacheWhenHasVanished(t *testing.T) {
 }
 
 func TestCacheWhenHasInserted(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -265,10 +268,10 @@ func TestCacheWhenHasInserted(t *testing.T) {
 }
 
 func TestCacheWhenNewOneAtMiddle(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 
@@ -303,11 +306,11 @@ func TestCacheWhenNewOneAtMiddle(t *testing.T) {
 }
 
 func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
-	cache := createCache(true)
+	a := assert.New(t)
+	cache := createCache(a, true)
 	cache.IsUpdating = true
 	err := cache.RestoreFromFile()
 
-	a := assert.New(t)
 	a.Nil(err)
 	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
 

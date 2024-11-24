@@ -215,7 +215,7 @@ a:
 }
 
 func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[b]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -231,7 +231,7 @@ func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
 }
 
 func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -247,7 +247,7 @@ func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
 }
 
 func TestIsSubsetValidatorWhenUnknownPathFailFast(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -264,7 +264,7 @@ func TestIsSubsetValidatorWhenUnknownPathFailFast(t *testing.T) {
 }
 
 func TestIsSubsetValidatorWhenInvalidPathFailFast(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[b]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{

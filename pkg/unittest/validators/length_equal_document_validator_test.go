@@ -104,6 +104,22 @@ func TestLengthEqualDocumentsValidatorNegativeOk_Single(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestLengthEqualDocumentsValidatorNegativeOk_SingleNoPath(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual1)
+	count := 2
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.ssl",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestLengthEqualDocumentsValidatorOk_Multi(t *testing.T) {
 	manifest := makeManifest(testDocLengthEqual3_Success)
 
@@ -112,6 +128,21 @@ func TestLengthEqualDocumentsValidatorOk_Multi(t *testing.T) {
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorNegative_MultiNoPath(t *testing.T) {
+	manifest := makeManifest(testDocLengthEqual3_Success)
+
+	validator := LengthEqualDocumentsValidator{
+		Paths: []string{"spec.ssl", "spec.rules"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
 	})
 
 	assert.True(t, pass)
