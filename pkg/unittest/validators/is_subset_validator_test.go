@@ -246,6 +246,19 @@ func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
 	}, diff)
 }
 
+func TestIsSubsetValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest("a: error")
+
+	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestIsSubsetValidatorWhenUnknownPathFailFast(t *testing.T) {
 	manifest := makeManifest("a: error")
 
@@ -306,4 +319,37 @@ func TestIsSubsetValidatorWhenFailFast(t *testing.T) {
 		"	d: foo bar",
 		"	x: baz",
 	}, diff)
+}
+
+func TestIsSubsetValidatorWhenNoManifestFail(t *testing.T) {
+	validator := IsSubsetValidator{
+		"a.b",
+		map[string]interface{}{"e": "bar bar"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b",
+		"Expected to contain:",
+		"\te: bar bar",
+		"Actual:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := IsSubsetValidator{
+		"a.b",
+		map[string]interface{}{"e": "bar bar"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

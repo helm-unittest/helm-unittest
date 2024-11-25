@@ -141,7 +141,7 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	if v.validatePathPaths() {
 		return false, splitInfof(errorFormat, -1, -1, "'paths' couldn't be used with 'path'")
 	}
-	// TODO: with the new approach path can also contain a list of paths
+
 	singleMode := len(v.Path) > 0
 	manifests := context.getManifests()
 
@@ -163,6 +163,13 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 		if !validateSuccess && context.FailFast {
 			break
 		}
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := v.failInfo("", "", "no manifest found", -1, -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

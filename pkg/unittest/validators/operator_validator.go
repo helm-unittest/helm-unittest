@@ -83,11 +83,11 @@ func (o operatorValidator) validateManifest(manifest common.K8sManifest, manifes
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	if len(actuals) == 0 {
+	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path '%s'", o.Path))
 	}
 
-	validateManifestSuccess := false
+	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
 	var validateManifestErrors []string
 
 	for actualIndex, actual := range actuals {
@@ -136,6 +136,13 @@ func (o operatorValidator) Validate(context *ValidateContext) (bool, []string) {
 		if !validateSuccess && context.FailFast {
 			break
 		}
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := o.failInfo("no manifests found", o.ComparisonType, -1, -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

@@ -30,6 +30,26 @@ func TestSnapshotValidatorWhenOk(t *testing.T) {
 	mockComparer.AssertExpectations(t)
 }
 
+func TestSnapshotValidatorWhenMultiDocOk(t *testing.T) {
+	data := common.K8sManifest{"a": "b"}
+	validator := MatchSnapshotValidator{Path: "a"}
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed: true,
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{data, data},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mockComparer.AssertExpectations(t)
+}
+
 func TestSnapshotValidatorWhenNegativeAndOk(t *testing.T) {
 	data := common.K8sManifest{"a": "b"}
 	validator := MatchSnapshotValidator{Path: "a"}
@@ -170,4 +190,49 @@ func TestSnapshotValidatorWhenUnknownPath(t *testing.T) {
 		"Error:",
 		"	unknown path a[3]",
 	}, diff)
+}
+
+func TestSnapshotValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest("a: b")
+
+	cached := "a:\n  b: c\n"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", "b").Return(&snapshot.CompareResult{
+		Passed:         true,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+	})
+
+	validator := MatchSnapshotValidator{Path: "a[3]"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+		Negative:         true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestSnapshotValidatorWhenNoManifestOk(t *testing.T) {
+	validator := MatchSnapshotValidator{Path: "a"}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestSnapshotValidatorWhenNoManifestNegativeFail(t *testing.T) {
+	validator := MatchSnapshotValidator{Path: "a"}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

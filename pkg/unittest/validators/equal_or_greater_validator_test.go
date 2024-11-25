@@ -191,6 +191,33 @@ spec:
 	}, diff)
 }
 
+func TestEqualOrGreaterValidatorWhenUnkownPathNegative(t *testing.T) {
+	var actual = `
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      resources:
+        limits:
+          memory: "256Mi"
+        requests:
+          memory: "128Mi"
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrGreaterValidator{
+		Path:  "spec.containers[0].resources.requests.cpu",
+		Value: 1.2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 	tests := []struct {
 		name, doc, path string
@@ -270,4 +297,37 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatchFailFast(t *testing.T) {
 			assert.Equal(t, tt.errorMsg, diff)
 		})
 	}
+}
+
+func TestEqualOrGreaterValidatorWhenNoManifestFail(t *testing.T) {
+	v := EqualOrGreaterValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.*",
+		"Expected to be greater then or equal to, got:",
+		"\tno manifests found",
+	}, diff)
+}
+
+func TestEqualOrGreaterValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	v := EqualOrGreaterValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

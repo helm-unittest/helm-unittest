@@ -55,5 +55,12 @@ func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, true)
 	}
 
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
+	}
+
 	return validateSuccess, validateErrors
 }

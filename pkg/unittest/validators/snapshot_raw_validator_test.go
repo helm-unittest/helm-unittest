@@ -112,3 +112,26 @@ func TestSnapshotRawValidatorWhenNegativeAndFail(t *testing.T) {
 
 	mockComparer.AssertExpectations(t)
 }
+
+func TestSnapshotRawValidatorWhenNoManifestOk(t *testing.T) {
+	validator := MatchSnapshotRawValidator{}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestSnapshotRawValidatorWhenNoManifestNegativeFail(t *testing.T) {
+	validator := MatchSnapshotRawValidator{}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{}, diff)
+}

@@ -48,6 +48,41 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestContainsValidatorWhenEmptyManifestFail(t *testing.T) {
+	validator := ContainsValidator{
+		"a.b",
+		map[string]interface{}{"d": "foo bar"},
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:\t0",
+		"Path:\ta.b",
+		"Expected to contain:",
+		"\t- d: foo bar",
+		"Actual:", "\tno manifest found"}, diff)
+}
+
+func TestContainsValidatorWhenEmptyManifestNegativeOk(t *testing.T) {
+	validator := ContainsValidator{
+		"a.b",
+		map[string]interface{}{"d": "foo bar"},
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestContainsValidatorWhenOkWithMultiValues(t *testing.T) {
 
 	var multiAssertToTestContains = `
@@ -553,6 +588,24 @@ func TestContainsValidatorWhenUnknownPathFailfast(t *testing.T) {
 		"Error:",
 		"	unknown path a.b[5]",
 	}, diff)
+}
+
+func TestContainsValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest(docToTestContains)
+
+	validator := ContainsValidator{
+		"a.b[5]",
+		common.K8sManifest{"e": "bar"},
+		nil,
+		false,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }
 
 func TestContainsValidatorWhenMultipleTimesInArray(t *testing.T) {

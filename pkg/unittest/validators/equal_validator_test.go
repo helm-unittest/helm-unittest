@@ -264,6 +264,19 @@ func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 	}, diff)
 }
 
+func TestEqualValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest(docToTestEqual)
+
+	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
@@ -318,4 +331,38 @@ func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 		"\t@@ -1,2 +1,2 @@",
 		"\t-2",
 		"\t+1"}, diff)
+}
+
+func TestEqualValidatorWhenNoManifestFail(t *testing.T) {
+	validator := EqualValidator{"a.b[0].c", 123, false}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b[0].c",
+		"Expected to equal:",
+		"\t123",
+		"Actual:",
+		"\tno manifest found",
+		"Diff:",
+		"\t--- Expected",
+		"\t+++ Actual",
+		"\t@@ -1,2 +1,2 @@",
+		"\t-123",
+		"\t+no manifest found"}, diff)
+}
+
+func TestEqualValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := EqualValidator{"a.b[0].c", 123, false}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

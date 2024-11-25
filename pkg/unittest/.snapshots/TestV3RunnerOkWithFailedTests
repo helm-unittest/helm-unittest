@@ -97,6 +97,10 @@
 
 		- asserts[0] `isKind` fail
 			Template:	basic/templates/empty_deployment.yaml
+			Expected to be kind:
+				Deployment
+			Actual:
+				no manifest found
  FAIL  test deployment that would be fail	../../test/data/v3/basic/tests_failed/deployment_test.yaml
 	- should fail all kinds of assertion
 
@@ -247,9 +251,6 @@
 			Path:	spec.template.spec.containers[0].resources
 			Expected NOT to be null or empty, got:
 				{}
-			DocumentIndex:	1
-			Error:
-				unknown path spec.template.spec.containers[0].resources
 
 		- asserts[10] `isKind` fail
 			Template:	basic/templates/deployment.yaml

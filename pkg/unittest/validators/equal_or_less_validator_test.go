@@ -153,6 +153,33 @@ spec:
 	}, diff)
 }
 
+func TestEqualOrLessValidatorWhenUnkownPathNegative(t *testing.T) {
+	var actual = `
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      resources:
+        limits:
+          memory: "256Mi"
+        requests:
+          memory: "128Mi"
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrLessValidator{
+		Path:  "spec.containers[0].resources.requests.cpu",
+		Value: 1.2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestEqualOrLessValidatorWhenTypesDoNotMatch(t *testing.T) {
 	var actual = "value: 0.3"
 	manifest := makeManifest(actual)
@@ -199,4 +226,37 @@ a:
 		"Expected to be less then or equal to, got:",
 		"\tthe expected '2' is not less or equal to the actual '1'",
 	}, diff)
+}
+
+func TestEqualOrLessValidatorWhenNoManifestFail(t *testing.T) {
+	v := EqualOrLessValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.*",
+		"Expected to be less then or equal to, got:",
+		"\tno manifests found",
+	}, diff)
+}
+
+func TestEqualOrLessValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	v := EqualOrLessValidator{
+		Path:  "a.*",
+		Value: 2,
+	}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

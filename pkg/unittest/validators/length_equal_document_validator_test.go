@@ -293,3 +293,37 @@ func TestLengthEqualDocumentsValidatorOk_WhenNegative(t *testing.T) {
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
+
+func TestLengthEqualDocumentsValidatorNoManifestFail(t *testing.T) {
+	count := 1
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\t",
+		"Expected to match count:",
+		"\t",
+		"Actual:",
+		"\tno manifest found"}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorNoManifestNegativeOk(t *testing.T) {
+	count := 1
+	validator := LengthEqualDocumentsValidator{
+		Path:  "spec.tls",
+		Count: &count,
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}

@@ -63,5 +63,12 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 		validateSuccess = determineSuccess(idx, validateSuccess, true)
 	}
 
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := a.failInfo("no manifest found", context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
+	}
+
 	return validateSuccess, validateErrors
 }

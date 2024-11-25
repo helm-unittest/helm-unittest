@@ -37,17 +37,17 @@ func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manif
 }
 
 func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	validateManifestSuccess := false
-	var validateManifestErrors []string
-
 	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	if len(actual) == 0 {
-		validateManifestErrors = splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+	if len(actual) == 0 && !context.Negative {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
 	}
+
+	validateManifestSuccess := (len(actual) == 0 && context.Negative)
+	var validateManifestErrors []string
 
 	for actualIndex, singleActual := range actual {
 		validateSingleSuccess := false
@@ -75,7 +75,7 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
-	validateSuccess := len(manifests) == 0
+	validateSuccess := (len(manifests) == 0 && !context.Negative)
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {

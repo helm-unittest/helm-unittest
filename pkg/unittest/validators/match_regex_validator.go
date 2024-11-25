@@ -67,11 +67,11 @@ func (v MatchRegexValidator) validateManifest(manifest common.K8sManifest, manif
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 
-	if len(actuals) == 0 {
+	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
 	}
 
-	validateManifestSuccess := false
+	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
 	var validateManifestErrors []string
 
 	for actualIndex, actual := range actuals {
@@ -108,6 +108,13 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 		if !validateSuccess && context.FailFast {
 			break
 		}
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

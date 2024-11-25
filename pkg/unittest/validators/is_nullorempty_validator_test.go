@@ -116,6 +116,19 @@ func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 	}, diff)
 }
 
+func TestIsNullOrEmptyValidatorWhenInvalidPathNegative(t *testing.T) {
+	manifest := makeManifest(docWithEmptyElements)
+
+	validator := IsNullOrEmptyValidator{"x.a"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestIsNullOrEmptyValidatorWhenInvalidPathFailFast(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
@@ -190,4 +203,27 @@ func TestFailWhenInvalidJsonPathFailFast(t *testing.T) {
 		"Error:",
 		"\tinvalid array index [b] before position 4: non-integer array index",
 	}, diff)
+}
+
+func TestIsNullOrEmptyValidatorWhenNoManifestFail(t *testing.T) {
+	validator := IsNullOrEmptyValidator{"key"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\tkey",
+		"Expected to be null or empty, got:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestIsNullOrEmptyValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := IsNullOrEmptyValidator{"key"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

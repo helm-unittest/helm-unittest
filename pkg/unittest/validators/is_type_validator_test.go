@@ -223,6 +223,19 @@ func TestTypeValidatorWhenUnkownPath(t *testing.T) {
 	}, diff)
 }
 
+func TestTypeValidatorWhenUnkownPathNegative(t *testing.T) {
+	manifest := makeManifest(docToTestType)
+
+	v := IsTypeValidator{"a.b[5]", "string"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
 func TestTypeValidatorWhenUnkownPathFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestType)
 
@@ -238,4 +251,31 @@ func TestTypeValidatorWhenUnkownPathFailFast(t *testing.T) {
 		"Error:",
 		"	unknown path a.b[5]",
 	}, diff)
+}
+
+func TestTypeValidatorWhenNoManifestFail(t *testing.T) {
+	validator := IsTypeValidator{"a.b[0]", "int"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b[0]",
+		"Expected to be of type:",
+		"\tint",
+		"Actual:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestTypeValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := IsTypeValidator{"a.b[0]", "int"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

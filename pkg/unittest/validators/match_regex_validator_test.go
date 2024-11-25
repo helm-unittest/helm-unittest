@@ -238,3 +238,43 @@ func TestMatchRegexValidatorWhenUnknownPathFailFast(t *testing.T) {
 		"	unknown path a[2]",
 	}, diff)
 }
+
+func TestMatchRegexValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest("a.b.d: error")
+
+	validator := MatchRegexValidator{"a[2]", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestMatchRegexValidatorWhenNoManifestFail(t *testing.T) {
+	validator := MatchRegexValidator{"a.b[0].c", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b[0].c",
+		"Expected to match:",
+		"\t^hello",
+		"Actual:",
+		"	no manifest found",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := MatchRegexValidator{"a.b[0].c", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
