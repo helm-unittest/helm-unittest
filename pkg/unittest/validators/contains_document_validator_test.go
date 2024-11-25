@@ -111,13 +111,23 @@ func TestContainsDocumentValidatorWhenNotAllDocumentsAreOk(t *testing.T) {
 		Namespace:  "foo",
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
-			makeManifest(docToTestContainsDocument2)},
+		Docs: []common.K8sManifest{
+			makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2),
+			makeManifest(docToTestContainsDocument3),
+			makeManifest(docToTestContainsDocument4),
+		},
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:\t0",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
+		"DocumentIndex:\t2",
+		"Expected to contain document:",
+		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
+		"DocumentIndex:\t3",
 		"Expected to contain document:",
 		"\tKind = Service, apiVersion = v1, Name = bar, Namespace = foo",
 	}, diff)
@@ -295,6 +305,29 @@ func TestContainsDocumentValidatorWhenFailKind(t *testing.T) {
 		"Expected to contain document:",
 		"\tKind = Deployment, apiVersion = apps/v1, Name = foo, Namespace = bar",
 		"DocumentIndex:\t1",
+		"Expected to contain document:",
+		"\tKind = Deployment, apiVersion = apps/v1, Name = foo, Namespace = bar",
+	}, diff)
+}
+
+func TestContainsDocumentValidatorWhenFailKindFailfast(t *testing.T) {
+	validator := ContainsDocumentValidator{
+		Kind:       "Deployment",
+		APIVersion: "apps/v1",
+		Name:       "foo",
+		Namespace:  "bar",
+		Any:        false,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{makeManifest(docToTestContainsDocument1),
+			makeManifest(docToTestContainsDocument2)},
+		FailFast: true,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:\t0",
 		"Expected to contain document:",
 		"\tKind = Deployment, apiVersion = apps/v1, Name = foo, Namespace = bar",
 	}, diff)

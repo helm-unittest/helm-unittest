@@ -56,7 +56,7 @@ func TestMatchRegexValidatorWithBase64WhenNOk(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.Equal(t, []string{"DocumentIndex:	0", "Error:", "	unable to decode base64 expected content hello world"}, diff)
+	assert.Equal(t, []string{"DocumentIndex:	0", "ValuesIndex:	0", "Error:", "	unable to decode base64 expected content hello world"}, diff)
 }
 
 func TestMatchRegexValidatorWithBase64WhenOk(t *testing.T) {
@@ -120,6 +120,7 @@ func TestMatchRegexValidatorWhenNotString(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a' to be a string, got:",
 		"	123.456",
@@ -138,6 +139,29 @@ func TestMatchRegexValidatorWhenMatchFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
+		"Path:	a.b[0].c",
+		"Expected to match:",
+		"	^foo",
+		"Actual:",
+		"	hello world",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenMatchFailFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestMatchRegex)
+
+	log.SetLevel(log.DebugLevel)
+
+	validator := MatchRegexValidator{"a.b[0].c", "^foo", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
+	})
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected to match:",
 		"	^foo",
@@ -158,6 +182,7 @@ func TestMatchRegexValidatorWhenNegativeAndMatchFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected NOT to match:",
 		"	^hello",
@@ -182,7 +207,7 @@ func TestMatchRegexValidatorWhenNoPattern(t *testing.T) {
 }
 
 func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
-	manifest := makeManifest("a.b.d::error")
+	manifest := makeManifest("a.b.d: error")
 
 	validator := MatchRegexValidator{"a.[b]", "^hello", false}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -197,12 +222,13 @@ func TestMatchRegexValidatorWhenErrorGetValueOfSetPath(t *testing.T) {
 	}, diff)
 }
 
-func TestMatchRegexValidatorWhenUnknownPath(t *testing.T) {
-	manifest := makeManifest("a.b.d::error")
+func TestMatchRegexValidatorWhenUnknownPathFailFast(t *testing.T) {
+	manifest := makeManifest("a.b.d: error")
 
 	validator := MatchRegexValidator{"a[2]", "^hello", false}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest},
 	})
 
 	assert.False(t, pass)
@@ -211,4 +237,44 @@ func TestMatchRegexValidatorWhenUnknownPath(t *testing.T) {
 		"Error:",
 		"	unknown path a[2]",
 	}, diff)
+}
+
+func TestMatchRegexValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest("a.b.d: error")
+
+	validator := MatchRegexValidator{"a[2]", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestMatchRegexValidatorWhenNoManifestFail(t *testing.T) {
+	validator := MatchRegexValidator{"a.b[0].c", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b[0].c",
+		"Expected to match:",
+		"\t^hello",
+		"Actual:",
+		"	no manifest found",
+	}, diff)
+}
+
+func TestMatchRegexValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := MatchRegexValidator{"a.b[0].c", "^hello", false}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

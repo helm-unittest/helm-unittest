@@ -101,3 +101,45 @@ func TestExistsValidatorWhenInvalidPath(t *testing.T) {
 		"	invalid array index [b] before position 4: non-integer array index",
 	}, diff)
 }
+
+func TestExistsValidatorWhenInvalidPathFailFast(t *testing.T) {
+	doc := "x:"
+	manifest := makeManifest(doc)
+	secondManifest := makeManifest(doc)
+
+	validator := ExistsValidator{"x[b]"}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, secondManifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	invalid array index [b] before position 4: non-integer array index",
+	}, diff)
+}
+
+func TestExistsValidatorWhenNoManifestFail(t *testing.T) {
+	validator := ExistsValidator{"x"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\tx expected to exists",
+	}, diff)
+}
+
+func TestExistsValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := ExistsValidator{"x"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}

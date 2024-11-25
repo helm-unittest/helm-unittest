@@ -152,7 +152,8 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual JUnitTestSuites
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 }
@@ -205,7 +206,8 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual JUnitTestSuites
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 }
@@ -264,7 +266,8 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual JUnitTestSuites
-	xml.Unmarshal(bytevalue, &actual)
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
 
 	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
 }

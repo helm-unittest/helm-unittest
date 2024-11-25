@@ -21,7 +21,7 @@ func (ar AssertionResult) print(printer *printer.Printer, verbosity int) {
 		return
 	}
 
-	printer.Println(printer.Danger(ar.getTitle()), 2)
+	printer.Println(printer.Danger("%s", ar.getTitle()), 2)
 	for _, infoLine := range ar.FailInfo {
 		printer.Println(infoLine, 3)
 	}

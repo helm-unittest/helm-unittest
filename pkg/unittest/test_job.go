@@ -456,6 +456,7 @@ func (t *TestJob) runAssertions(
 			renderSucceed,
 			renderError,
 			&results.AssertionResult{Index: idx},
+			failfast,
 		)
 
 		assertsResult = append(assertsResult, result)

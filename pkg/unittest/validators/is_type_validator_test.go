@@ -68,6 +68,30 @@ func TestTypeValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
+		"Path:	a.b[0]",
+		"Expected to be of type:",
+		"	int",
+		"Actual:",
+		"	map[string]interface {}",
+	}, diff)
+}
+
+func TestTypeValidatorWhenFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestType)
+
+	log.SetLevel(log.DebugLevel)
+
+	validator := IsTypeValidator{"a.b[0]", "int"}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b[0]",
 		"Expected to be of type:",
 		"	int",
@@ -93,6 +117,7 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b[0].c",
 		"Expected to be of type:",
 		"	string",
@@ -112,12 +137,14 @@ func TestTypeValidatorMultiManifestWhenBothFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected to be of type:",
 		"	int",
 		"Actual:",
 		"	string",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected to be of type:",
 		"	int",
@@ -138,6 +165,7 @@ func TestTypeValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.e",
 		"Expected NOT to be of type:",
 		"	string",
@@ -162,6 +190,23 @@ func TestTypeValidatorWhenWrongPath(t *testing.T) {
 	}, diff)
 }
 
+func TestTypeValidatorWhenWrongPathFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestType)
+
+	v := IsTypeValidator{"a.b[e]", "int"}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	invalid array index [e] before position 6: non-integer array index",
+	}, diff)
+}
+
 func TestTypeValidatorWhenUnkownPath(t *testing.T) {
 	manifest := makeManifest(docToTestType)
 
@@ -176,4 +221,61 @@ func TestTypeValidatorWhenUnkownPath(t *testing.T) {
 		"Error:",
 		"	unknown path a.b[5]",
 	}, diff)
+}
+
+func TestTypeValidatorWhenUnkownPathNegative(t *testing.T) {
+	manifest := makeManifest(docToTestType)
+
+	v := IsTypeValidator{"a.b[5]", "string"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestTypeValidatorWhenUnkownPathFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestType)
+
+	v := IsTypeValidator{"a.b[5]", "string"}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a.b[5]",
+	}, diff)
+}
+
+func TestTypeValidatorWhenNoManifestFail(t *testing.T) {
+	validator := IsTypeValidator{"a.b[0]", "int"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b[0]",
+		"Expected to be of type:",
+		"\tint",
+		"Actual:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestTypeValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := IsTypeValidator{"a.b[0]", "int"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

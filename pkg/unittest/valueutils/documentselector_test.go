@@ -6,7 +6,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 )
 
 var firstTemplateDocToTestIndex0 = `
@@ -61,10 +60,7 @@ func createMultiTemplateMultiManifest() map[string][]common.K8sManifest {
 }
 
 func parseManifest(manifest string) common.K8sManifest {
-	parsedManifest := common.K8sManifest{}
-	yaml.Unmarshal([]byte(manifest), &parsedManifest)
-
-	return parsedManifest
+	return common.TrustedUnmarshalYAML(manifest)
 }
 
 func TestFindDocumentsIndexSinglePathOk(t *testing.T) {

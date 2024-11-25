@@ -4,13 +4,10 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/mock"
-	yaml "gopkg.in/yaml.v3"
 )
 
 func makeManifest(doc string) common.K8sManifest {
-	manifest := common.K8sManifest{}
-	yaml.Unmarshal([]byte(doc), &manifest)
-	return manifest
+	return common.TrustedUnmarshalYAML(doc)
 }
 
 type mockSnapshotComparer struct {

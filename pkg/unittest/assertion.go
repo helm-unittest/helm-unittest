@@ -33,6 +33,7 @@ func (a *Assertion) Assert(
 	renderSucceed bool,
 	renderError error,
 	result *results.AssertionResult,
+	failfast bool,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
@@ -61,7 +62,7 @@ func (a *Assertion) Assert(
 				failInfo = append(failInfo, invalidRender)
 			} else {
 				emptyTemplate := []common.K8sManifest{}
-				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError)
+				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError, failfast)
 			}
 
 			assertionPassed = validatePassed
@@ -95,7 +96,7 @@ func (a *Assertion) Assert(
 
 			selectedDocs := selectedDocsByTemplate[template]
 
-			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs, snapshotComparer, renderError)
+			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs, snapshotComparer, renderError, failfast)
 
 			if !validatePassed {
 				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
@@ -117,7 +118,7 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest, snapshotComparer validators.SnapshotComparer, renderError error) (bool, []string) {
+func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest, snapshotComparer validators.SnapshotComparer, renderError error, failfast bool) (bool, []string) {
 	var validatePassed bool
 	var singleFailInfo []string
 
@@ -127,6 +128,7 @@ func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs
 		Negative:         a.Not != a.antonym,
 		SnapshotComparer: snapshotComparer,
 		RenderError:      renderError,
+		FailFast:         failfast,
 	})
 
 	return validatePassed, singleFailInfo
