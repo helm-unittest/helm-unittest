@@ -117,6 +117,7 @@ jobs:
         image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
         format: sarif
         output: trivy-results.sarif
+        max_attempts: 3
 
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
