@@ -20,7 +20,8 @@ TEST_NAMES ?=basic \
 	with-schema \
 	with-subchart \
 	with-subfolder \
-	with-subsubcharts
+	with-subsubcharts \
+	with-library-chart
 
 .PHONY: help
 help:
@@ -28,8 +29,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-  HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
-  HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+	HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+	HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 
 .PHONY: install
 install: bootstrap build plugin-dir
