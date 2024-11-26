@@ -6,4 +6,4 @@ version: "1"
 dependencies:
 - name: common
   version: "1.x.x"
-  repository: "file://../../../with-library-chart"
+  repository: "file://../../../library-chart"

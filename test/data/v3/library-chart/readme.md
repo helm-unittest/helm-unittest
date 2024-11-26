@@ -27,13 +27,13 @@
 
 ```sh
 # from the project root directory
-helm dependency build test/data/v3/with-library-chart/tests/chart
-helm unittest -f 'tests/unit/*.yaml' --color test/data/v3/with-library-chart/tests/chart
+helm dependency build test/data/v3/library-chart/tests/chart
+helm unittest -f 'tests/unit/*.yaml' --color test/data/v3/library-chart/tests/chart
 
 # or from testing directory
 cd test/data/v3
-helm dependency build with-library-chart/tests/chart
-helm unittest -f 'tests/unit/*.yaml' --color with-library-chart/tests/chart
+helm dependency build library-chart/tests/chart
+helm unittest -f 'tests/unit/*.yaml' --color library-chart/tests/chart
 ```
 
 ## TODO
