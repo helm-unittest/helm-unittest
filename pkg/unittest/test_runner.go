@@ -215,7 +215,14 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)
 
-		snapshotCache.StoreToFileIfNeeded()
+		_, storeErr := snapshotCache.StoreToFileIfNeeded()
+		if storeErr != nil {
+			tr.handleSuiteResult(&results.TestSuiteResult{
+				FilePath:  suite.SnapshotFileUrl(),
+				ExecError: storeErr,
+			})
+			chartPassed = false
+		}
 
 		if !chartPassed && tr.Failfast {
 			break
@@ -264,8 +271,8 @@ func (tr *TestRunner) printChartHeader(chartName, path string) {
 `
 	header := fmt.Sprintf(
 		headerFormat,
-		tr.Printer.Highlight(chartName),
-		tr.Printer.Faint(path),
+		tr.Printer.Highlight("%s", chartName),
+		tr.Printer.Faint("%s", path),
 	)
 	tr.Printer.Println(header, 0)
 }
@@ -273,7 +280,7 @@ func (tr *TestRunner) printChartHeader(chartName, path string) {
 // printErroredChartHeader if chart has exexution error print header with error
 func (tr *TestRunner) printErroredChartHeader(err error) {
 	headerFormat := `
-### ` + tr.Printer.Danger("Error: ") + ` %s
+### ` + tr.Printer.Danger("%s", "Error: ") + ` %s
 `
 	header := fmt.Sprintf(headerFormat, err)
 	tr.Printer.Println(header, 0)
@@ -287,7 +294,7 @@ Snapshot Summary: %s`
 
 		summary := tr.Printer.Danger("%d snapshot failed", tr.snapshotCounting.failed) +
 			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
-			tr.Printer.Faint(" Check changes and use `-u` to update snapshot.")
+			tr.Printer.Faint("%s", " Check changes and use `-u` to update snapshot.")
 
 		tr.Printer.Println(fmt.Sprintf(snapshotFormat, summary), 0)
 	}

@@ -25,12 +25,14 @@ func (a EqualRawValidator) failInfo(actual interface{}, not bool) []string {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
 			-1,
+			-1,
 			expectedYAML,
 		)
 	}
 
 	return splitInfof(
 		setFailFormat(not, false, true, true, customMessage),
+		-1,
 		-1,
 		expectedYAML,
 		actualYAML,
@@ -52,10 +54,20 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 			validateSuccess = false
 			errorMessage := a.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
 		validateSuccess = determineSuccess(idx, validateSuccess, true)
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := a.failInfo("no manifest found", context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

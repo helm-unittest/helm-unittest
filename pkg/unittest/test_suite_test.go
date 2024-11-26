@@ -387,7 +387,8 @@ tests:
     asserts:
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -426,7 +427,8 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -450,7 +452,8 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -486,7 +489,8 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -509,7 +513,8 @@ tests:
           value: Pod
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -532,7 +537,8 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubFolderChart, cache, true, "", &results.TestSuiteResult{})
@@ -554,7 +560,8 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -578,7 +585,8 @@ tests:
         pattern: "(.*-)?postgresql-1.2.3"
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 	assert.True(t, suiteResult.Passed)
@@ -598,7 +606,8 @@ tests:
       - notFailedTemplate: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -628,7 +637,8 @@ tests:
           count: 0
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -654,7 +664,8 @@ tests:
           value: postgresql-0.8.3
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -682,7 +693,8 @@ tests:
           value: postgresql-0.6.3
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -712,7 +724,8 @@ tests:
           value: postgresql-0.7.1
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -735,7 +748,8 @@ tests:
           errorMessage: nameOverride cannot be longer than 20 characters
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	assert.Nil(t, err)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})

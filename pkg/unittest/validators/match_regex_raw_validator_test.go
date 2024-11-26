@@ -59,7 +59,8 @@ func TestMatchRegexRawValidatorWhenMatchFail(t *testing.T) {
 
 	validator := MatchRegexRawValidator{"^foo"}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{manifest},
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
 	})
 	assert.False(t, pass)
 	assert.Equal(t, []string{
@@ -101,4 +102,28 @@ func TestMatchRegexRawValidatorWhenNoPattern(t *testing.T) {
 		"Error:",
 		"	expected field 'pattern' to be filled",
 	}, diff)
+}
+
+func TestMatchRegexRawValidatorWhenNoManifestFail(t *testing.T) {
+	validator := MatchRegexRawValidator{"^foo"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Expected to match:",
+		"\t^foo",
+		"Actual:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestMatchRegexRawValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := MatchRegexRawValidator{"^foo"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }
