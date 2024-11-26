@@ -1,3 +1,6 @@
+{{- /*
+reference https://helm.sh/docs/topics/library_charts/
+*/}}
 {{- define "common.configmap.tpl" -}}
 apiVersion: v1
 kind: ConfigMap
@@ -10,7 +13,7 @@ data: {}
 {{- end -}}
 
 {{- /*
-mylibchart.util.merge will merge two YAML templates and output the result.
+common.util.merge will merge two YAML templates and output the result.
 This takes an array of three values:
 - the top context
 - the template name of the overrides (destination)
