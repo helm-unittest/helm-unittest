@@ -1,0 +1,9 @@
+apiVersion: v2
+name: test-common
+description: required to test library chart
+type: application
+version: "1"
+dependencies:
+- name: common
+  version: "1.x.x"
+  repository: "file://../../../with-library-chart"
