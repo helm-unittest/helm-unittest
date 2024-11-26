@@ -125,6 +125,9 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 		{
 			testsPath: "../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/charts/with-subsubchartssubsub/tests",
 		},
+		{
+			testsPath: "../../test/data/v3/with-library-chart/tests/chart/tests/unit",
+		},
 	}
 
 	for _, tt := range tests {
