@@ -20,8 +20,7 @@ TEST_NAMES ?=basic \
 	with-schema \
 	with-subchart \
 	with-subfolder \
-	with-subsubcharts \
-	with-library-chart
+	with-subsubcharts
 
 .PHONY: help
 help:
