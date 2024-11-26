@@ -1,4 +1,4 @@
-suite: Test labels
+suite: Test annotations and names
 release:
   namespace: foo
 templates:
@@ -22,3 +22,8 @@ tests:
       - equal:
           path: metadata.namespace
           value: foo
+      - equal:
+          path: metadata.annotations
+          value:
+            meta.helm.sh/release-name: test-common
+            meta.helm.sh/release-namespace: foo
