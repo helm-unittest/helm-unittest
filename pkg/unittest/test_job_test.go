@@ -855,3 +855,28 @@ asserts:
 	assert.NoError(testResult.ExecError)
 	assert.True(testResult.Passed, testResult.AssertsResult)
 }
+
+func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should skip when not supported assert is found
+template: templates/deployment.yaml
+documentIndex: 0
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+  - notSupportedAssert:
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
+
+	a.Nil(testResult.ExecError)
+	a.Equal(1, len(testResult.AssertsResult))
+	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
+	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
+}
