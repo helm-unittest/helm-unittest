@@ -1,0 +1,8 @@
+# example https://helm.sh/docs/topics/library_charts/#use-the-simple-library-chart
+{{- include "common.configmap" (list . "thischart.configmap") -}}
+{{- define "thischart.configmap" -}}
+data:
+  myvalue:
+      - value1
+      - value2
+{{- end -}}
