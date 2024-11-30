@@ -1187,3 +1187,25 @@ tests:
 	a.Equal("1", suites[2].Tests[0].Capabilities.MajorVersion)
 	a.NotEqual(len(suites[2].Capabilities.APIVersions), len(suites[2].Tests[0].Capabilities.APIVersions))
 }
+
+func TestV3ParseTestMultipleSuitesWithNotSupportedAssert(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    asserts:
+      - notSupportedAssert:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Error(err)
+	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
+}
