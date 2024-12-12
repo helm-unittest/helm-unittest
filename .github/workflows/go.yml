@@ -120,7 +120,7 @@ jobs:
         max_attempts: 3
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
+      uses: github/codeql-action/upload-sarif@8a93837afdf1873301a68d777844b43e98cd4313 # v3.27.8
       if: always()
       with:
         sarif_file: trivy-results.sarif
