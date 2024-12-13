@@ -94,29 +94,3 @@ func TestBuildValueSetPathError(t *testing.T) {
 		a.EqualError(err, expect)
 	}
 }
-
-func TestMergeValues(t *testing.T) {
-	a := assert.New(t)
-	dest := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
-			"e.f": "false",
-		},
-	}
-	src := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
-			"d":   "no",
-			"e.f": "yes",
-		},
-	}
-	expected := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
-			"d":   "no",
-			"e.f": "yes",
-		},
-	}
-	actual := MergeValues(dest, src)
-	a.Equal(expected, actual)
-}

@@ -265,7 +265,8 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		if err := yaml.Unmarshal(bytes, &value); err != nil {
 			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
+
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, value), base)
 	}
 
 	// Merge global set values before merging the other set values
@@ -275,7 +276,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			return []byte{}, err
 		}
 
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
 
 	for path, values := range t.Set {
@@ -284,7 +285,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 			return []byte{}, err
 		}
 
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
 	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
 	return yaml.Marshal(base)

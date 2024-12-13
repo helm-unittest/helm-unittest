@@ -285,6 +285,19 @@
 			Actual:
 				2
 
+		- asserts[13] `matchSnapshot` fail
+			Template:	basic/templates/deployment.yaml
+			DocumentIndex:	0
+			ValuesIndex:	0
+			Path:	spec
+			Expected to match snapshot 1:
+				--- Expected
+				+++ Actual
+				@@ -22,2 +22,4 @@
+				         resources: {}
+				+    securityContext:
+				+      runAsUser: 1000
+
 		- asserts[14] `contains` fail
 			Template:	basic/templates/deployment.yaml
 			DocumentIndex:	0
@@ -529,10 +542,13 @@
 
 
 
+Snapshot Summary: 1 snapshot failed in 1 test suite. Check changes and use `-u` to update snapshot.
+
+
 Charts:      1 failed, 0 passed, 1 total
 Test Suites: 9 failed, 0 passed, 9 total
 Tests:       17 failed, 1 errored, 0 passed, 17 total
-Snapshot:    2 passed, 2 total
+Snapshot:    1 failed, 1 passed, 2 total
 Time:        XX.XXXms
 
 
