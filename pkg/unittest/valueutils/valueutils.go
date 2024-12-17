@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -80,6 +81,19 @@ func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 			dest[k] = v
 			continue
 		}
+		if reflect.TypeOf(v).Kind() == reflect.Slice && reflect.TypeOf(dest[k]).Kind() == reflect.Slice {
+			var result []interface{}
+			for i, item := range v.([]interface{}) {
+				if item != nil {
+					result = append(result, item)
+				} else {
+					result = append(result, dest[k].([]interface{})[i])
+				}
+			}
+			dest[k] = result
+			continue
+		}
+
 		nextMap, ok := v.(map[string]interface{})
 		// If it isn't another map, overwrite the value
 		if !ok {

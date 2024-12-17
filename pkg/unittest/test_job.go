@@ -202,7 +202,7 @@ func (t *TestJob) RunV3(
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
 	result.DisplayName = t.Name
-	userValues, err := t.getUserValues()
+	userValues, err := t.getUserValues(targetChart)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -243,11 +243,10 @@ func (t *TestJob) RunV3(
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) getUserValues() ([]byte, error) {
-	base := map[string]interface{}{}
+func (t *TestJob) getUserValues(chart *v3chart.Chart) ([]byte, error) {
+	base := chart.Values
 	routes := spliteChartRoutes(t.chartRoute)
 
-	// Load and merge values files.
 	for _, specifiedPath := range t.Values {
 		value := map[string]interface{}{}
 		var valueFilePath string
@@ -274,6 +273,9 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		if err != nil {
 			return []byte{}, err
 		}
+		for _, el := range setMap {
+			fmt.Println("EL", el, reflect.TypeOf(el))
+		}
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
@@ -296,6 +298,8 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	if err != nil {
 		return nil, false, err
 	}
+	// v, _ := v3util.MergeValues(targetChart, values)
+
 	options := *t.releaseV3Option()
 
 	// Check Release Name length

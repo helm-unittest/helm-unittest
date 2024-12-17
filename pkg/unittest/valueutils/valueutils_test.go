@@ -120,3 +120,42 @@ func TestMergeValues(t *testing.T) {
 	actual := MergeValues(dest, src)
 	a.Equal(expected, actual)
 }
+
+func TestMergeValuesWithDifferentTypes(t *testing.T) {
+	a := assert.New(t)
+	dest := map[string]interface{}{
+		"a": map[string]interface{}{
+			"hosts": []interface{}{"one", "two"},
+			"e.f":   "false",
+		},
+	}
+	src := map[string]interface{}{
+		"a": map[string]interface{}{
+			"hosts": []interface{}{nil, "three"},
+			"e.f":   "true",
+		},
+	}
+	expected := map[string]interface{}{
+		"a": map[string]interface{}{
+			"hosts": []interface{}{"one", "three"},
+			"e.f":   "true",
+		},
+	}
+	actual := MergeValues(dest, src)
+	a.Equal(expected, actual)
+}
+
+func TestMergeValuesWithArray(t *testing.T) {
+	a := assert.New(t)
+	dest := map[string]interface{}{
+		"hosts": []interface{}{"one", "two"},
+	}
+	src := map[string]interface{}{
+		"hosts": []interface{}{nil, "three"},
+	}
+	expected := map[string]interface{}{
+		"hosts": []interface{}{"one", "three"},
+	}
+	actual := MergeValues(dest, src)
+	a.Equal(expected, actual)
+}
