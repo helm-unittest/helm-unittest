@@ -75,13 +75,16 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 
 // MergeValues deeply merge values, copied from helm
 func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[string]interface{} {
+	fmt.Println(dest, src)
 	for k, v := range src {
+		fmt.Println("K:", k, "V:", v)
 		// If the key doesn't exist already, then just set the key to that value
 		if _, exists := dest[k]; !exists {
 			dest[k] = v
 			continue
 		}
-		if reflect.TypeOf(v).Kind() == reflect.Slice && reflect.TypeOf(dest[k]).Kind() == reflect.Slice {
+
+		if v != nil && reflect.TypeOf(v).Kind() == reflect.Slice && reflect.TypeOf(dest[k]).Kind() == reflect.Slice {
 			var result []interface{}
 			for i, item := range v.([]interface{}) {
 				if item != nil {

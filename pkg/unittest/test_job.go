@@ -202,7 +202,7 @@ func (t *TestJob) RunV3(
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
 	result.DisplayName = t.Name
-	userValues, err := t.getUserValues(targetChart)
+	userValues, err := t.getUserValues(targetChart.Values)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -243,8 +243,11 @@ func (t *TestJob) RunV3(
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) getUserValues(chart *v3chart.Chart) ([]byte, error) {
-	base := chart.Values
+func (t *TestJob) getUserValues(values map[string]interface{}) ([]byte, error) {
+	base := map[string]interface{}{}
+	if len(values) != 0 {
+		base = values
+	}
 	routes := spliteChartRoutes(t.chartRoute)
 
 	for _, specifiedPath := range t.Values {
@@ -273,10 +276,6 @@ func (t *TestJob) getUserValues(chart *v3chart.Chart) ([]byte, error) {
 		if err != nil {
 			return []byte{}, err
 		}
-		for _, el := range setMap {
-			fmt.Println("EL", el, reflect.TypeOf(el))
-		}
-
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 
