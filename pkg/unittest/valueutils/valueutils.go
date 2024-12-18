@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"maps"
+	"reflect"
+	"slices"
 	"strconv"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	yaml "gopkg.in/yaml.v3"
+	"helm.sh/helm/v3/pkg/strvals"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
@@ -64,6 +68,15 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 	if path == "" {
 		return nil, fmt.Errorf("set path is empty")
 	}
+	if reflect.TypeOf(val).Kind() == reflect.String {
+		return strvals.Parse(fmt.Sprintf("%s=%v", path, val))
+	}
+	if reflect.TypeOf(val).Kind() == reflect.Map {
+		t := map[string]interface{}{
+			path: map[string]interface{}{},
+		}
+		return traverseMaps(path, t, val.(map[string]interface{}))
+	}
 	tr := buildTraverser{val, nil}
 	reader := bytes.NewBufferString(path)
 	if err := traverseSetPath(reader, &tr, expectKey); err != nil {
@@ -72,14 +85,53 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 	return tr.getBuildedData(), nil
 }
 
+func traverseMaps(path string, a, b map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{}, len(a))
+	for k, v := range a {
+		out[k] = v
+	}
+	tmp := map[string]interface{}{}
+	for p, v := range b {
+		if v == nil {
+			out[path] = nil
+			continue
+		}
+		kind := reflect.TypeOf(v).Kind()
+		if kind == reflect.String {
+			k, err := strvals.Parse(fmt.Sprintf("%s=%v", p, v))
+			if err != nil {
+				return nil, err
+			}
+			keys := slices.Collect(maps.Keys(k))
+			for _, key := range keys {
+				tmp[key] = k[key]
+			}
+		} else if kind == reflect.Slice {
+			tmp[p] = v
+		} else if kind != reflect.Map {
+			tmp[p] = v
+		} else {
+			return traverseMaps(path, out, v.(map[string]interface{}))
+		}
+		out[path] = tmp
+	}
+	return out, nil
+}
+
 // MergeValues deeply merge values, copied from helm
 func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[string]interface{} {
+	// base := make(map[string]interface{})
 	for k, v := range src {
-		// If the key doesn't exist already, then just set the key to that value
+		if v == nil {
+			dest[k] = nil
+			continue
+		}
+
 		if _, exists := dest[k]; !exists {
 			dest[k] = v
 			continue
 		}
+
 		nextMap, ok := v.(map[string]interface{})
 		// If it isn't another map, overwrite the value
 		if !ok {

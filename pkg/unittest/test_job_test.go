@@ -880,3 +880,30 @@ asserts:
 	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
 }
+
+func TestV3RunJobReplaceSlice(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+set:
+ ingress:
+  hosts[1]: chart-example.suite
+asserts:
+  - exists:
+      path: spec.rules[?(@.host == "chart-example.suite")]
+    template: templates/ingress.yaml
+`
+	var tj TestJob
+	err := unmarshalJob(manifest, &tj)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
+	a.Nil(err)
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	// a.Equal(2, len(testResult.AssertsResult))
+}
+
+// job with subchart
