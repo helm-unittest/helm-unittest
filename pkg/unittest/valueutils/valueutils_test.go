@@ -1,6 +1,7 @@
 package valueutils_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -75,6 +76,55 @@ func TestBuildValueOfSetPath(t *testing.T) {
 		a.Equal(expected, actual)
 		a.Nil(err)
 	}
+}
+
+func TestBuildValueOfSetPath_V2(t *testing.T) {
+	// a := assert.New(t)
+	// data := map[string]interface{}{"foo": "bar"}
+
+	var expectionsMapping = map[string]interface{}{
+		"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+	}
+
+	for path, expected := range expectionsMapping {
+		actual, _ := BuildValueOfSetPath(expected, path)
+		fmt.Println(actual)
+		// a.Equal(expected, actual)
+		// a.Nil(err)
+	}
+}
+
+func TestBuildValueOfSetPath_V1(t *testing.T) {
+	t.Run("path is empty", func(t *testing.T) {
+		_, err := BuildValueOfSetPath(nil, "")
+		assert.Error(t, err)
+		assert.EqualError(t, err, "set path is empty")
+	})
+
+	t.Run("value is empty", func(t *testing.T) {
+		actual, err := BuildValueOfSetPath(nil, "some.path")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]interface{}{
+			"some": map[string]interface{}{
+				"path": nil,
+			},
+		}, actual)
+	})
+
+	t.Run("some path", func(t *testing.T) {
+		val := map[string]interface{}{
+			"a": 1,
+			"b": map[string]interface{}{
+				"c": 2,
+			},
+		}
+		path := "b.c"
+		expected := map[string]interface{}{"b": map[string]interface{}{"c": map[string]interface{}{"a": 1, "b": map[string]interface{}{"c": 2}}}}
+
+		result, err := BuildValueOfSetPath(val, path)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, result)
+	})
 }
 
 func TestBuildValueSetPathError(t *testing.T) {
