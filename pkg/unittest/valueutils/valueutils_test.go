@@ -342,3 +342,30 @@ a:
 		assert.YAMLEq(t, expected, out)
 	})
 }
+
+func TestGetValueOfSetPath(t *testing.T) {
+	t.Run("invalid-path", func(t *testing.T) {
+		yml := `
+kind: Deployment
+metadata:
+  name: my-deployment
+`
+		dataDst := YmlUnmarshalMap(yml, t)
+
+		actual, err := GetValueOfSetPath(dataDst, "invalid.path")
+		assert.NoError(t, err)
+		assert.Empty(t, actual)
+	})
+	t.Run("valid-path", func(t *testing.T) {
+		yml := `
+kind: Deployment
+metadata:
+  name: my-deployment
+`
+		dataDst := YmlUnmarshalMap(yml, t)
+
+		actual, err := GetValueOfSetPath(dataDst, "metadata.name")
+		assert.NoError(t, err)
+		assert.Equal(t, "my-deployment", actual)
+	})
+}
