@@ -16,9 +16,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
-
 	yaml "gopkg.in/yaml.v3"
-
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
@@ -245,9 +243,6 @@ func (t *TestJob) RunV3(
 // liberally borrows from helm-template
 func (t *TestJob) getUserValues(values map[string]interface{}) ([]byte, error) {
 	base := map[string]interface{}{}
-	if len(values) != 0 {
-		base = values
-	}
 	routes := spliteChartRoutes(t.chartRoute)
 
 	for _, specifiedPath := range t.Values {
@@ -280,15 +275,22 @@ func (t *TestJob) getUserValues(values map[string]interface{}) ([]byte, error) {
 	}
 
 	for path, values := range t.Set {
+		if values == nil {
+			continue
+		}
 		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
 			return []byte{}, err
 		}
-
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
-	return yaml.Marshal(base)
+	result, err := yaml.Marshal(base)
+	fmt.Println("getUserValues base result\n", string(result))
+	merged := valueutils.MergeMaps(values, base)
+	mmerged, err := yaml.Marshal(merged)
+	fmt.Println("getUserValues merged\n", string(mmerged))
+	return mmerged, err
 }
 
 // render the chart and return result map

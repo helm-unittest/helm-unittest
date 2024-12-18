@@ -1,6 +1,8 @@
 package valueutils_test
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -74,6 +76,37 @@ func TestBuildValueOfSetPath(t *testing.T) {
 		actual, err := BuildValueOfSetPath(data, path)
 		a.Equal(expected, actual)
 		a.Nil(err)
+	}
+}
+
+func TestBuildValueOfSetPath_V2(t *testing.T) {
+	a := assert.New(t)
+	// data := map[string]interface{}{"foo": "bar"}
+
+	var expectionsMapping = map[string]interface{}{
+		"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+	}
+
+	for path, expected := range expectionsMapping {
+		actual, err := BuildValueOfSetPath(expected, path)
+		a.Equal(expected, actual)
+		a.Nil(err)
+	}
+}
+
+func TestBuildValueOfSetPath_V1(t *testing.T) {
+	a := assert.New(t)
+	// data := map[string]interface{}{"foo": "bar"}
+
+	var expectionsMapping = map[string]interface{}{
+		"hosts[1]": map[string]interface{}{"attributes": []interface{}{nil, "example.local"}},
+	}
+
+	for path, expected := range expectionsMapping {
+		actual, err := BuildValueOfSetPath(expected, path)
+		a.Equal(expected, actual)
+		a.Nil(err)
+		fmt.Println(actual)
 	}
 }
 
@@ -158,4 +191,20 @@ func TestMergeValuesWithArray(t *testing.T) {
 	}
 	actual := MergeValues(dest, src)
 	a.Equal(expected, actual)
+}
+
+func TestMergeValuesWithPartialArray(t *testing.T) {
+	// a := assert.New(t)
+	dest := map[string]interface{}{
+		"hosts": []interface{}{"one", "two"},
+	}
+	src := map[string]interface{}{
+		"hosts[1]": "four",
+	}
+	// expected := map[string]interface{}{
+	// 	"hosts": []interface{}{"one", "four"},
+	// }
+	actual := MergeValues(dest, src)
+	fmt.Println(actual)
+	// a.Equal(expected, actual)
 }
