@@ -295,11 +295,13 @@ func (t *TestJob) getUserValues(values map[string]interface{}) ([]byte, error) {
 
 // render the chart and return result map
 func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, bool, error) {
+	fmt.Println("renderV3Chart values:", string(userValues))
 	values, err := v3util.ReadValues(userValues)
 	if err != nil {
 		return nil, false, err
 	}
-	// v, _ := v3util.MergeValues(targetChart, values)
+
+	values, _ = v3util.MergeValues(targetChart, values)
 
 	options := *t.releaseV3Option()
 
