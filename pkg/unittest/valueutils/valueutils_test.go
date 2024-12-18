@@ -6,6 +6,7 @@ import (
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -78,29 +79,12 @@ func TestBuildValueOfSetPath(t *testing.T) {
 	}
 }
 
-func TestBuildValueOfSetPath_V2(t *testing.T) {
-	// a := assert.New(t)
-	// data := map[string]interface{}{"foo": "bar"}
-
-	var expectionsMapping = map[string]interface{}{
-		"ingress": map[string]interface{}{"hosts[1]": "example.local"},
-	}
-
-	for path, expected := range expectionsMapping {
-		actual, _ := BuildValueOfSetPath(expected, path)
-		fmt.Println(actual)
-		// a.Equal(expected, actual)
-		// a.Nil(err)
-	}
-}
-
 func TestBuildValueOfSetPath_V1(t *testing.T) {
 	t.Run("path is empty", func(t *testing.T) {
 		_, err := BuildValueOfSetPath(nil, "")
 		assert.Error(t, err)
 		assert.EqualError(t, err, "set path is empty")
 	})
-
 	t.Run("value is empty", func(t *testing.T) {
 		actual, err := BuildValueOfSetPath(nil, "some.path")
 		assert.NoError(t, err)
@@ -110,8 +94,14 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 			},
 		}, actual)
 	})
-
 	t.Run("some path", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"b": map[string]interface{}{
+				"c": map[string]interface{}{
+					"a": 1,
+					"b": map[string]interface{}{
+						"c": 2,
+					}}}}
 		val := map[string]interface{}{
 			"a": 1,
 			"b": map[string]interface{}{
@@ -119,11 +109,77 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 			},
 		}
 		path := "b.c"
-		expected := map[string]interface{}{"b": map[string]interface{}{"c": map[string]interface{}{"a": 1, "b": map[string]interface{}{"c": 2}}}}
-
 		result, err := BuildValueOfSetPath(val, path)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, result)
+	})
+	t.Run("path is not in data", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"some": map[string]interface{}{
+				"path": map[string]interface{}{
+					"ingress": map[string]interface{}{
+						"hosts[1]": "example.local",
+					},
+				},
+			},
+		}
+		var data = map[string]interface{}{
+			"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+		}
+		actual, err := BuildValueOfSetPath(data, "some.path")
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("path is in values", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"hosts": map[string]interface{}{
+				"ingress": map[string]interface{}{
+					"hosts[1]": "example.local",
+				},
+			},
+		}
+		var data = map[string]interface{}{
+			"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+		}
+		actual, err := BuildValueOfSetPath(data, "hosts")
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("property testing", func(t *testing.T) {
+		data := map[string]interface{}{"foo": "bar"}
+		cases := []struct {
+			input  map[string]interface{}
+			path   string
+			exp    map[string]interface{}
+			expStr string
+		}{
+			{
+				path:   "a.b",
+				input:  map[string]interface{}{"a": map[string]interface{}{"b": data}},
+				exp:    map[string]interface{}{"a": map[string]interface{}{"b": map[string]interface{}{"a": map[string]interface{}{"b": data}}}},
+				expStr: "map[a:map[b:map[a:map[b:map[foo:bar]]]]]",
+			},
+			{
+				path:   "a[1]",
+				input:  map[string]interface{}{"a": []interface{}{nil, data}},
+				exp:    map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"a": []interface{}{interface{}(nil), data}}}},
+				expStr: "map[a:[<nil> map[a:[<nil> map[foo:bar]]]]]",
+			},
+			{
+				path:   "a[1].b",
+				input:  map[string]interface{}{"a": []interface{}{nil, map[string]interface{}{"b": data}}},
+				exp:    map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"b": map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"b": data}}}}}},
+				expStr: "map[a:[<nil> map[b:map[a:[<nil> map[b:map[foo:bar]]]]]]]",
+			},
+		}
+		for _, test := range cases {
+			t.Run(fmt.Sprintf("path %s and values '%v", test.path, test.input), func(t *testing.T) {
+				actual, err := BuildValueOfSetPath(test.input, test.path)
+				assert.NoError(t, err)
+				assert.Equal(t, test.exp, actual)
+				assert.Equal(t, test.expStr, fmt.Sprintf("%v", actual))
+			})
+		}
 	})
 }
 
@@ -169,4 +225,120 @@ func TestMergeValues(t *testing.T) {
 	}
 	actual := MergeValues(dest, src)
 	a.Equal(expected, actual)
+}
+
+func TestMergeValues_Cases(t *testing.T) {
+	t.Run("SimpleMerge", func(t *testing.T) {
+		dest := map[string]interface{}{"a": 1, "b": 2}
+		src := map[string]interface{}{"c": 3, "d": 4}
+		expected := map[string]interface{}{"a": 1, "b": 2, "c": 3, "d": 4}
+		result := MergeValues(dest, src)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("OverwriteExistingValue", func(t *testing.T) {
+		dest := map[string]interface{}{"a": 1}
+		src := map[string]interface{}{"a": 2}
+		expected := map[string]interface{}{"a": 2}
+		result := MergeValues(dest, src)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("MergeNestedMaps", func(t *testing.T) {
+		dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+		src := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
+		expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
+		result := MergeValues(dest, src)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("OverwriteNestedMap", func(t *testing.T) {
+		dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+		src := map[string]interface{}{"a": 2}
+		expected := map[string]interface{}{"a": 2}
+		result := MergeValues(dest, src)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("MergeComplexMaps", func(t *testing.T) {
+		dest := map[string]interface{}{
+			"a": 1,
+			"b": map[string]interface{}{
+				"c": 2,
+			},
+		}
+		src := map[string]interface{}{
+			"a": 3,
+			"b": map[string]interface{}{
+				"d": 4,
+			},
+			"e": 5,
+		}
+		expected := map[string]interface{}{
+			"a": 3,
+			"b": map[string]interface{}{
+				"c": 2,
+				"d": 4,
+			},
+			"e": 5,
+		}
+		result := MergeValues(dest, src)
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestMergeValues_YamlValues(t *testing.T) {
+	t.Run("first", func(t *testing.T) {
+		yamlDst := `
+a:
+  b:
+   foo: bar
+`
+		yamlSrc := `
+a:
+  hosts[0]: abrakadabra
+`
+		expected := `
+a:
+  b:
+   foo: bar
+  hosts[0]: abrakadabra
+`
+
+		dataDst := YmlUnmarshalMap(yamlDst, t)
+		dataSrc := YmlUnmarshalMap(yamlSrc, t)
+
+		output := MergeValues(dataDst, dataSrc)
+		out := YmlMarshal(&output, t)
+		assert.YAMLEq(t, expected, out)
+	})
+	t.Run("second", func(t *testing.T) {
+		yamlDst := `
+a:
+  b:
+   hosts:
+   - foo
+   - bar
+`
+		yamlSrc := `
+a:
+  b:
+   hosts[0]: abrakadabra
+`
+		expected := `
+a:
+  b:
+   hosts:
+   - foo
+   - bar
+   hosts[0]: abrakadabra
+`
+
+		dataDst := YmlUnmarshalMap(yamlDst, t)
+		dataSrc := YmlUnmarshalMap(yamlSrc, t)
+
+		output := MergeValues(dataDst, dataSrc)
+		out := YmlMarshal(&output, t)
+		assert.YAMLEq(t, expected, out)
+	})
 }
