@@ -283,7 +283,6 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 		if err != nil {
 			return []byte{}, err
 		}
-
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)

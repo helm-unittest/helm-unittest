@@ -148,7 +148,7 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 					assert.True(t, result.Valid(), fmt.Sprintf("Schema '%s' and the document '%s' is not valid!!!", fullPath, el.FilePath))
 
 					if !result.Valid() {
-						fmt.Printf("See errors:\n")
+						fmt.Printf("See errors for file%s:\n", el.FilePath)
 						for _, desc := range result.Errors() {
 							fmt.Printf("- %s\n", desc)
 						}
