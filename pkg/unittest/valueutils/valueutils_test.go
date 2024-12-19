@@ -6,7 +6,6 @@ import (
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	. "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -304,12 +303,13 @@ a:
    foo: bar
   hosts[0]: abrakadabra
 `
-
-		dataDst := YmlUnmarshalMap(yamlDst, t)
-		dataSrc := YmlUnmarshalMap(yamlSrc, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
+		var dataSrc map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
 
 		output := MergeValues(dataDst, dataSrc)
-		out := YmlMarshal(&output, t)
+		out, _ := common.YmlMarshall(&output)
 		assert.YAMLEq(t, expected, out)
 	})
 	t.Run("second", func(t *testing.T) {
@@ -333,12 +333,13 @@ a:
    - bar
    hosts[0]: abrakadabra
 `
-
-		dataDst := YmlUnmarshalMap(yamlDst, t)
-		dataSrc := YmlUnmarshalMap(yamlSrc, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
+		var dataSrc map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
 
 		output := MergeValues(dataDst, dataSrc)
-		out := YmlMarshal(&output, t)
+		out := common.YmlMarshallTestHelper(&output, t)
 		assert.YAMLEq(t, expected, out)
 	})
 }
@@ -350,7 +351,8 @@ kind: Deployment
 metadata:
   name: my-deployment
 `
-		dataDst := YmlUnmarshalMap(yml, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yml, &dataDst, t)
 
 		actual, err := GetValueOfSetPath(dataDst, "invalid.path")
 		assert.NoError(t, err)
@@ -362,7 +364,8 @@ kind: Deployment
 metadata:
   name: my-deployment
 `
-		dataDst := YmlUnmarshalMap(yml, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yml, &dataDst, t)
 
 		actual, err := GetValueOfSetPath(dataDst, "metadata.name")
 		assert.NoError(t, err)
