@@ -13,8 +13,8 @@ import (
 )
 
 // YamlNewDecoder returns a new decoder that reads from r.
-func YamlNewDecoder(s string) *yamlv3.Decoder {
-	return yamlv3.NewDecoder(strings.NewReader(s))
+func YamlNewDecoder(r io.Reader) *yamlv3.Decoder {
+	return yamlv3.NewDecoder(r)
 }
 
 // YamlNewEncoder returns a new encoder that writes to w.

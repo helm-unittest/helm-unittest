@@ -22,7 +22,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 
 	// Convert K8Manifest to yaml.Node
 	var rawManifest yaml.Node
-	yamlEncoder := yaml.NewEncoder(byteBuffer)
+	yamlEncoder := common.YamlNewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(common.YAMLINDENTION)
 
 	err := yamlEncoder.Encode(manifest)
@@ -30,7 +30,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 		return nil, err
 	}
 
-	yamlDecoder := yaml.NewDecoder(byteBuffer)
+	yamlDecoder := common.YamlNewDecoder(byteBuffer)
 
 	if err := yamlDecoder.Decode(&rawManifest); err != nil {
 		return nil, err

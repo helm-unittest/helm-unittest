@@ -74,7 +74,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	}
 
 	// Use decoder to setup strict or unstrict
-	yamlDecoder := common.YamlNewDecoder(content)
+	yamlDecoder := common.YamlNewDecoder(strings.NewReader(content))
 	yamlDecoder.KnownFields(strict)
 	if err := yamlDecoder.Decode(&suite); err != nil {
 		return &suite, err

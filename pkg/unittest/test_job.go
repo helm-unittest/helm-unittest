@@ -81,7 +81,7 @@ func parseRenderError(regexPattern, errorMessage string) (string, map[string]str
 func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
 	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
 	rendered = splitterPattern.ReplaceAllString(rendered, "\n---\n")
-	decoder := common.YamlNewDecoder(rendered)
+	decoder := common.YamlNewDecoder(strings.NewReader(rendered))
 	parsedYamls := make([]common.K8sManifest, 0)
 
 	for {
