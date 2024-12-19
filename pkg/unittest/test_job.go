@@ -17,8 +17,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 
-	yaml "gopkg.in/yaml.v3"
-
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
@@ -83,7 +81,7 @@ func parseRenderError(regexPattern, errorMessage string) (string, map[string]str
 func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
 	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
 	rendered = splitterPattern.ReplaceAllString(rendered, "\n---\n")
-	decoder := yaml.NewDecoder(strings.NewReader(rendered))
+	decoder := common.YamlNewDecoder(rendered)
 	parsedYamls := make([]common.K8sManifest, 0)
 
 	for {
@@ -208,7 +206,7 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
+	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
 
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
@@ -243,7 +241,7 @@ func (t *TestJob) RunV3(
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) getUserValues() ([]byte, error) {
+func (t *TestJob) getUserValues() (string, error) {
 	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
@@ -259,11 +257,11 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		bytes, err := os.ReadFile(valueFilePath)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 
-		if err := yaml.Unmarshal(bytes, &value); err != nil {
-			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
+		if err := common.YmlUnmarshall(string(bytes), &value); err != nil {
+			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
 	}
@@ -272,7 +270,7 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	for path, values := range t.globalSet {
 		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
@@ -281,12 +279,12 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 	for path, values := range t.Set {
 		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
 	}
 	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
-	return yaml.Marshal(base)
+	return common.YmlMarshall(base)
 }
 
 // render the chart and return result map

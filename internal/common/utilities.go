@@ -10,6 +10,11 @@ import (
 	yaml "sigs.k8s.io/yaml"
 )
 
+// YamlNewDecoder returns a new decoder that reads from r.
+func YamlNewDecoder(s string) *yamlv3.Decoder {
+	return yamlv3.NewDecoder(strings.NewReader(s))
+}
+
 // TrustedMarshalYAML marshal yaml without error returned, if an error happens it panics
 func TrustedMarshalYAML(d interface{}) string {
 	byteBuffer := new(bytes.Buffer)
