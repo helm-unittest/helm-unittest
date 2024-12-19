@@ -12,6 +12,16 @@ import (
 	yaml "sigs.k8s.io/yaml"
 )
 
+type YamlNode struct {
+	Node yamlv3.Node
+}
+
+func NewYamlNode() YamlNode {
+	return YamlNode{
+		Node: yamlv3.Node{},
+	}
+}
+
 // YamlNewDecoder returns a new decoder that reads from r.
 func YamlNewDecoder(r io.Reader) *yamlv3.Decoder {
 	return yamlv3.NewDecoder(r)
