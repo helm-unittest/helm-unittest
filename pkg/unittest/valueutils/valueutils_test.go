@@ -366,6 +366,6 @@ metadata:
 
 		actual, err := GetValueOfSetPath(dataDst, "metadata.name")
 		assert.NoError(t, err)
-		assert.Equal(t, "my-deployment", actual)
+		assert.Equal(t, []interface{}{"my-deployment"}, actual)
 	})
 }
