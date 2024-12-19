@@ -6,3 +6,6 @@ tests:
     asserts:
       - exists:
           path: spec.minAvailable
+      - greaterOrEqual:
+          path: spec.minAvailable
+          value: 2
