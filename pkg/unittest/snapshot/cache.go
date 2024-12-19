@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // CompareResult result return by Cache.Compare
@@ -39,7 +38,7 @@ func (s *Cache) RestoreFromFile() error {
 		return err
 	}
 
-	if err := yaml.Unmarshal(content, &s.cached); err != nil {
+	if err := common.YmlUnmarshal(string(content), &s.cached); err != nil {
 		return err
 	}
 	s.Existed = true
@@ -125,7 +124,7 @@ func (s *Cache) StoreToFileIfNeeded() (bool, error) {
 
 	if s.IsUpdating || s.insertedCount > 0 || s.VanishedCount() > 0 {
 		byteBuffer := new(bytes.Buffer)
-		yamlEncoder := yaml.NewEncoder(byteBuffer)
+		yamlEncoder := common.YamlNewEncoder(byteBuffer)
 		yamlEncoder.SetIndent(common.YAMLINDENTION)
 		if err := yamlEncoder.Encode(s.current); err != nil {
 			return false, err

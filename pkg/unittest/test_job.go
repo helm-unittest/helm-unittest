@@ -260,7 +260,7 @@ func (t *TestJob) getUserValues() (string, error) {
 			return "", err
 		}
 
-		if err := common.YmlUnmarshall(string(bytes), &value); err != nil {
+		if err := common.YmlUnmarshal(string(bytes), &value); err != nil {
 			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))

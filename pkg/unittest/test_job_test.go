@@ -49,7 +49,7 @@ asserts:
 		"x.y.z": "XYZ",
 	})
 	assertions := make([]*Assertion, 2)
-	assErr := common.YmlUnmarshall(`
+	assErr := common.YmlUnmarshal(`
   - equal:
       path: a.b
       value: c
@@ -838,7 +838,7 @@ asserts:
   - notSupportedAssert:
 `
 	var tj TestJob
-	common.YmlUnmarshall(manifest, &tj)
+	common.YmlUnmarshal(manifest, &tj)
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)

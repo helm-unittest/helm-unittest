@@ -19,7 +19,7 @@ import (
 // or processing fails.
 func unmarshalJobTestHelper(input string, out *TestJob, t *testing.T) {
 	t.Helper()
-	err := common.YmlUnmarshall(input, &out)
+	err := common.YmlUnmarshal(input, &out)
 	assert.NoError(t, err)
 	out.SetCapabilities()
 }
