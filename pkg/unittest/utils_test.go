@@ -3,8 +3,8 @@ package unittest_test
 import (
 	"testing"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
-	ymlutils "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ import (
 // or processing fails.
 func unmarshalJobTestHelper(input string, out *TestJob, t *testing.T) {
 	t.Helper()
-	err := ymlutils.YmlUnmarshall(input, &out)
+	err := common.YmlUnmarshall(input, &out)
 	assert.NoError(t, err)
 	out.SetCapabilities()
 }

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	ymlutils "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	v3chart "helm.sh/helm/v3/pkg/chart"
@@ -835,7 +835,7 @@ asserts:
 `
 	var tj TestJob
 	assert := assert.New(t)
-	ymlutils.YmlUnmarshalTestHelper(manifest, &tj, t)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -856,7 +856,7 @@ asserts:
   - notSupportedAssert:
 `
 	var tj TestJob
-	_ = ymlutils.YmlUnmarshall(manifest, &tj)
+	common.YmlUnmarshall(manifest, &tj)
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
