@@ -136,7 +136,7 @@ tests:
 
   - it: "should have values set from file"
     values:
-    - values/extra-values.yaml
+    - values/hosts.yaml
     asserts:
       - exists:
           path: data["my.ingress.hosts"]
