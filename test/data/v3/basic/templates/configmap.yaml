@@ -24,3 +24,7 @@ data:
   special.array:
     - phony-service.phony:graphql
   my.camelcase: {{ .Values.configTests.camelcaseValue | camelcase }}
+  {{- if .Values.ingress.hosts }}
+  my.ingress.hosts:
+  {{ toYaml .Values.ingress.hosts | indent 4 }}
+  {{- end -}}

@@ -4,6 +4,10 @@ templates:
 chart:
   appVersion: 1.0.1
   version: 0.1.0
+set:
+  # issue https://github.com/helm-unittest/helm-unittest/issues/471
+  ingress:
+    hosts[1]: override-example-global-1.local
 tests:
   - it: should NOT configure ssl params if NOT set to be exposed
     asserts:
@@ -83,3 +87,39 @@ tests:
       - equal:
           path: data["my.camelcase"]
           value: Camelcase
+
+  - it: should not override ingress hosts values
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - chart-example.local
+
+  - it: should override ingress hosts with set when array
+    set:
+      ingress:
+        hosts:
+        - override-example.local
+    asserts:
+      - matchSnapshot: {}
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - override-example.local
+
+  - it: should override ingress hosts with patch. issue https://github.com/helm-unittest/helm-unittest/issues/471
+    set:
+      ingress:
+        hosts[1]: override-example-1.local
+    asserts:
+      - matchSnapshot: {}
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - chart-example.local
