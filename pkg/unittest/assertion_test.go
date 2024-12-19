@@ -8,7 +8,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 )
 
 func validateSucceededTestAssertions(
@@ -18,10 +17,9 @@ func validateSucceededTestAssertions(
 	renderedMap map[string][]common.K8sManifest) {
 
 	assertions := make([]Assertion, assertionCount)
-	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 
 	for idx, assertion := range assertions {
 		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false)
@@ -36,7 +34,7 @@ func validateSucceededTestAssertions(
 	}
 }
 
-func TestAssertionUnmarshaledFromYAML(t *testing.T) {
+func TestAssertionUnmarshalFromYAML(t *testing.T) {
 	assertionsYAML := `
 - equal:
 - notEqual:
@@ -75,11 +73,10 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 
 	a := assert.New(t)
 	assertionsAsMap := make([]map[string]interface{}, 33)
-	mapErr := yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	a.Nil(mapErr)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertionsAsMap, t)
+
 	assertions := make([]Assertion, 33)
-	assErr := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-	a.Nil(assErr)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	for idx, assertion := range assertions {
 		_, ok := assertionsAsMap[idx][assertion.AssertType]
@@ -152,8 +149,7 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 	a := assert.New(t)
 
 	assertions := make([]Assertion, 29)
-	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-	a.Nil(err)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	for _, assertion := range assertions {
 		a.True(assertion.Not)
@@ -208,8 +204,7 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 	a := assert.New(t)
 
 	assertions := make([]Assertion, 28)
-	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-	a.Nil(err)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	for idx := 0; idx < len(assertions); idx += 2 {
 		a.Equal(assertions[idx].Not, !assertions[idx+1].Not)
@@ -335,10 +330,9 @@ template: not-existed.yaml
 equal:
 `
 	assertion := new(Assertion)
-	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 
 	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
@@ -358,10 +352,9 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	}
 	assertionYAML := "equal:"
 	assertion := new(Assertion)
-	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
@@ -384,10 +377,9 @@ documentIndex: 1
 equal:
 `
 	assertion := new(Assertion)
-	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 
 	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{

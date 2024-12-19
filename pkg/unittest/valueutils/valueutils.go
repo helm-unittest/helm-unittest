@@ -8,7 +8,6 @@ import (
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
@@ -21,8 +20,8 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	byteBuffer := new(bytes.Buffer)
 
 	// Convert K8Manifest to yaml.Node
-	var rawManifest yaml.Node
-	yamlEncoder := yaml.NewEncoder(byteBuffer)
+	node := common.NewYamlNode()
+	yamlEncoder := common.YamlNewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(common.YAMLINDENTION)
 
 	err := yamlEncoder.Encode(manifest)
@@ -30,9 +29,9 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 		return nil, err
 	}
 
-	yamlDecoder := yaml.NewDecoder(byteBuffer)
+	yamlDecoder := common.YamlNewDecoder(byteBuffer)
 
-	if err := yamlDecoder.Decode(&rawManifest); err != nil {
+	if err := yamlDecoder.Decode(&node.Node); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +42,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	}
 
 	// Search for nodes
-	manifestParts, err := yamlPath.Find(&rawManifest)
+	manifestParts, err := yamlPath.Find(&node.Node)
 	if err != nil {
 		return nil, err
 	}

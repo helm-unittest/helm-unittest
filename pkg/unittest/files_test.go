@@ -35,7 +35,7 @@ func TestGetFiles_ChartWithoutSubCharts(t *testing.T) {
 
 	actual, err := GetFiles(".", []string{"tests/*_test.yaml"}, false)
 	assert.NoError(t, err)
-	assert.Equal(t, len(actual), 11)
+	assert.Equal(t, len(actual), 12)
 }
 
 func TestGetFiles_ChartWithoutSubChartsNoDuplicates(t *testing.T) {

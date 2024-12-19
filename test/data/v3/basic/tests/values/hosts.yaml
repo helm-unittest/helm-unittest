@@ -1,0 +1,5 @@
+ingress:
+  hosts:
+    - chart-example-first.local
+    - chart-example-second.local
+    - chart-example-third.local

@@ -218,6 +218,29 @@ spec:
 	assert.Equal(t, []string{}, diff)
 }
 
+func TestEqualOrGreaterValidator_TODO(t *testing.T) {
+	var actual = `
+kind: PodDisruptionBudget
+metadata:
+  name: 'greaterorequal-test-pdb'
+spec:
+  minAvailable: 2
+  unhealthyPodEvictionPolicy: AlwaysAllow
+`
+	manifest := makeManifest(actual)
+
+	v := EqualOrGreaterValidator{
+		Path:  "spec.minAvailable",
+		Value: 1,
+	}
+	pass, _ := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: false,
+	})
+
+	assert.False(t, pass)
+}
+
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 	tests := []struct {
 		name, doc, path string

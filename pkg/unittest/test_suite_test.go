@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // Most used test files
@@ -49,32 +48,6 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 	return result
 }
 
-// writeToFile writes the provided string data to a file with the given filename.
-// It returns an error if the file cannot be created or if there is an error during writing.
-func writeToFile(data string, filename string) error {
-	err := os.MkdirAll(filepath.Dir(filename), 0755)
-	if err != nil {
-		fmt.Println("Error creating folders for file:", err)
-		return err
-	}
-
-	// Create the file with an absolute path
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(data)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return err
-	}
-
-	return nil
-}
-
 func validateTestResultAndSnapshots(
 	t *testing.T,
 	suiteResult *results.TestSuiteResult,
@@ -98,7 +71,7 @@ func validateTestResultAndSnapshots(
 }
 
 // Helper metheod for the render process
-func getExpectedRenderedTestSuites(customSnapshotIds bool) map[string]*TestSuite {
+func getExpectedRenderedTestSuites(customSnapshotIds bool, t *testing.T) map[string]*TestSuite {
 	// multiple_suites_snapshot.yaml assertions
 	createSnapshotTestYaml := func(env string) string {
 		return fmt.Sprintf(`
@@ -109,9 +82,9 @@ asserts:
     - matchSnapshot: {}`, env)
 	}
 	snapshotDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("dev")), &snapshotDevTest)
+	common.YmlUnmarshalTestHelper(createSnapshotTestYaml("dev"), &snapshotDevTest, t)
 	snapshotProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("prod")), &snapshotProdTest)
+	common.YmlUnmarshalTestHelper(createSnapshotTestYaml("prod"), &snapshotProdTest, t)
 	// multiple_test_suites.yaml assertions
 	crateMultipleTestSuitesYaml := func(env string) string {
 		return fmt.Sprintf(`
@@ -132,9 +105,9 @@ asserts:
         decodeBase64: true`, env, env)
 	}
 	multipleTestSuitesDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("dev")), &multipleTestSuitesDevTest)
+	common.YmlUnmarshalTestHelper(crateMultipleTestSuitesYaml("dev"), &multipleTestSuitesDevTest, t)
 	multipleTestSuitesProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("prod")), &multipleTestSuitesProdTest)
+	common.YmlUnmarshalTestHelper(crateMultipleTestSuitesYaml("prod"), &multipleTestSuitesProdTest, t)
 	// multiple_tests_test.yaml assertions
 	var secretNameEqualsYaml = func(env string) string {
 		return fmt.Sprintf(`
@@ -150,16 +123,16 @@ asserts:
           - secretName: %s-my-tls-secret`, env, env, env)
 	}
 	multipleTestsDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("dev")), &multipleTestsDevTest)
+	common.YmlUnmarshalTestHelper(secretNameEqualsYaml("dev"), &multipleTestsDevTest, t)
 	multipleTestsProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("prod")), &multipleTestsProdTest)
+	common.YmlUnmarshalTestHelper(secretNameEqualsYaml("prod"), &multipleTestsProdTest, t)
 	const multipleTestsFirstTestYaml = `
 it: should render nothing if not enabled
 asserts:
     - hasDocuments:
         count: 0`
 	multipleTestsFirstTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(multipleTestsFirstTestYaml), &multipleTestsFirstTest)
+	common.YmlUnmarshalTestHelper(multipleTestsFirstTestYaml, &multipleTestsFirstTest, t)
 
 	// Set up snapshotId values
 	// Note, this is completely based on the order of the yaml in a single suite template file
@@ -312,7 +285,7 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(false)
+	expectedSuites := getExpectedRenderedTestSuites(false, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -349,7 +322,7 @@ func TestV3RenderSuitesStrictFileOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(false)
+	expectedSuites := getExpectedRenderedTestSuites(false, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -368,7 +341,7 @@ func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(true)
+	expectedSuites := getExpectedRenderedTestSuites(true, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -387,8 +360,7 @@ tests:
     asserts:
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -427,8 +399,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -452,8 +423,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -489,8 +459,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -513,8 +482,7 @@ tests:
           value: Pod
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -537,8 +505,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubFolderChart, cache, true, "", &results.TestSuiteResult{})
@@ -560,8 +527,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -585,8 +551,7 @@ tests:
         pattern: "(.*-)?postgresql-1.2.3"
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 	assert.True(t, suiteResult.Passed)
@@ -606,8 +571,7 @@ tests:
       - notFailedTemplate: {}
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -637,8 +601,7 @@ tests:
           count: 0
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
@@ -664,8 +627,7 @@ tests:
           value: postgresql-0.8.3
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -693,8 +655,7 @@ tests:
           value: postgresql-0.6.3
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -724,8 +685,7 @@ tests:
           value: postgresql-0.7.1
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
@@ -748,8 +708,7 @@ tests:
           errorMessage: nameOverride cannot be longer than 20 characters
 `
 	testSuite := TestSuite{}
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
