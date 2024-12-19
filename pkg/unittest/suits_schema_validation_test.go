@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xeipuuv/gojsonschema"
-	"sigs.k8s.io/yaml"
 )
 
 const testSuiteSchemaLocal string = "../../schema/helm-testsuite.json"
@@ -133,7 +133,7 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 			assert.NoError(t, err)
 			for _, el := range content {
 				for _, content := range el.FileContents {
-					json, err := yaml.YAMLToJSON([]byte(content))
+					json, err := common.YamlToJson(content)
 
 					assert.NoError(t, err)
 					assert.NotEmpty(t, json)
