@@ -4,8 +4,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"sigs.k8s.io/yaml"
+	yaml "gopkg.in/yaml.v3"
 )
+
+func YmlUnmarshall(in string, out interface{}) error {
+	err := yaml.Unmarshal([]byte(in), out)
+	return err
+}
+
+func YmlUnmarshalTestHelper(input string, out any, t *testing.T) {
+	t.Helper()
+	err := YmlUnmarshall(input, out)
+	assert.NoError(t, err)
+}
 
 func YmlUnmarshalMap(input string, t *testing.T) map[string]interface{} {
 	t.Helper()

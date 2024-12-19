@@ -7,6 +7,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	ymlutils "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -75,11 +76,10 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 
 	a := assert.New(t)
 	assertionsAsMap := make([]map[string]interface{}, 33)
-	mapErr := yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	a.Nil(mapErr)
+	ymlutils.YmlUnmarshalTestHelper(assertionsYAML, &assertionsAsMap, t)
+
 	assertions := make([]Assertion, 33)
-	assErr := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-	a.Nil(assErr)
+	ymlutils.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	for idx, assertion := range assertions {
 		_, ok := assertionsAsMap[idx][assertion.AssertType]

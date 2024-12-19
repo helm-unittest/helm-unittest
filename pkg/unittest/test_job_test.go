@@ -11,6 +11,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	ymlutils "github.com/helm-unittest/helm-unittest/pkg/unittest/yamlutils"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	v3chart "helm.sh/helm/v3/pkg/chart"
@@ -468,15 +469,13 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
@@ -496,12 +495,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
 	a.False(testResult.Passed)
 	a.Equal(0, len(tj.Capabilities.APIVersions))
 }
@@ -519,13 +517,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
 
+	a := assert.New(t)
 	a.False(testResult.Passed)
 	a.Equal([]string{}, tj.Capabilities.APIVersions)
 	a.Equal("12", tj.Capabilities.MinorVersion)
@@ -543,14 +539,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
-	a.False(testResult.Passed)
-	a.Equal("7", tj.Capabilities.MinorVersion)
+	assert.False(t, testResult.Passed)
+	assert.Equal(t, "7", tj.Capabilities.MinorVersion)
 }
 
 func TestV3RunJobWithChartSettings(t *testing.T) {
@@ -573,14 +566,13 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
@@ -646,14 +638,13 @@ asserts:
   - failedTemplate: {}
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.NotNil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
@@ -701,8 +692,7 @@ asserts:
 `
 	var tj TestJob
 	a := assert.New(t)
-	err := unmarshalJob(manifest, &tj)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -724,15 +714,13 @@ asserts:
       pattern: "(.*-)?postgresql-0.8.3"
 `
 	var tj TestJob
-	a := assert.New(t)
-	err := unmarshalJob(manifest, &tj)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a.Nil(testResult.ExecError)
-	a.True(testResult.Passed)
-	a.Equal(1, len(testResult.AssertsResult))
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 1, len(testResult.AssertsResult))
 }
 
 func TestModifyChartMetadataVersions(t *testing.T) {
@@ -847,8 +835,7 @@ asserts:
 `
 	var tj TestJob
 	assert := assert.New(t)
-	err := yaml.Unmarshal([]byte(manifest), &tj)
-	assert.NoError(err)
+	ymlutils.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -869,8 +856,7 @@ asserts:
   - notSupportedAssert:
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
-
+	_ = ymlutils.YmlUnmarshall(manifest, &tj)
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
