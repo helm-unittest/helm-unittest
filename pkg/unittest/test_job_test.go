@@ -3,6 +3,7 @@ package unittest_test
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"testing"
 	"time"
@@ -339,32 +340,21 @@ asserts:
 `
 	a := assert.New(t)
 
-	file, fileErr := os.Create("testjob_test_TestRunJobWithValuesFile.yaml")
-	if fileErr != nil {
-		a.FailNow("Failed to create file")
-	}
-	_, writeErr := file.WriteString("nameOverride: mary-jane")
-	if writeErr != nil {
-		a.FailNow("Failed to write to file")
-	}
-	closeErr := file.Close()
-	if closeErr != nil {
-		a.FailNow("Failed to close file")
-	}
+	file := path.Join("_scratch", "testjob_test_TestRunJobWithValuesFile.yaml")
+	a.Nil(writeToFile("nameOverride: mary-jane", file))
+	defer os.RemoveAll(file)
 
 	var tj TestJob
-	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file.Name()), &tj, t)
+	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.FileExists(file.Name())
+	a.FileExists(file)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
-
-	os.Remove(file.Name())
 }
 
 func TestV3RunJobWithReleaseSettings(t *testing.T) {
@@ -847,4 +837,95 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
+}
+
+func TestV3RunJobPatchArrayValue(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should patch second element
+template: templates/configmap.yaml
+values:
+- %s
+set:
+ ingress:
+  hosts[1]: should-override-second.local
+asserts:
+  - exists:
+      path: data["my.ingress.hosts"]
+  - notEqual:
+      path: data["my.ingress.hosts"]
+      value:
+      - null
+      - should-override-second.local
+  - equal:
+      path: data["my.ingress.hosts"]
+      value:
+      - chart-example-first.local
+      - chart-example-second.local
+      - chart-example-third.local
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "test_tmp_values.yaml")
+	a.Nil(writeToFile(`
+ingress:
+  hosts:
+    - chart-example-first.local
+    - chart-example-second.local
+    - chart-example-third.local
+`, file))
+	defer os.RemoveAll(file)
+
+	var tj TestJob
+	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 3, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobPatchPointArrayValue(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should patch second element
+template: templates/configmap.yaml
+values:
+- %s
+set:
+ ingress.hosts[1]: should-override-second.local
+asserts:
+  - exists:
+      path: data["my.ingress.hosts"]
+  - equal:
+      path: data["my.ingress.hosts"]
+      value:
+      - null
+      - should-override-second.local
+  - notEqual:
+      path: data["my.ingress.hosts"]
+      value:
+      - chart-example-first.local
+      - should-override-second.local
+      - chart-example-third.local
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "test_tmp_values.yaml")
+	a.Nil(writeToFile(`
+ingress:
+  hosts:
+    - chart-example-first.local
+    - chart-example-second.local
+    - chart-example-third.local
+`, file))
+	defer os.RemoveAll(file)
+
+	var tj TestJob
+	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 3, len(testResult.AssertsResult))
 }

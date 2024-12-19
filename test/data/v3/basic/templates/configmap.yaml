@@ -26,5 +26,8 @@ data:
   my.camelcase: {{ .Values.configTests.camelcaseValue | camelcase }}
   {{- if .Values.ingress.hosts }}
   my.ingress.hosts:
-  {{ toYaml .Values.ingress.hosts | indent 4 }}
+  {{- range $host := .Values.ingress.hosts }}
+  - {{ $host }}
   {{- end -}}
+  {{- end -}}
+
