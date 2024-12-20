@@ -209,8 +209,9 @@ func TestWithDifferentPatterns(t *testing.T) {
 	}
 
 	tests := []struct {
-		pattern  []string
-		expected []string
+		pattern     []string
+		expected    []string
+		skipWindows bool
 	}{
 		{
 			pattern: []string{"**/*.yaml"},
@@ -229,6 +230,7 @@ func TestWithDifferentPatterns(t *testing.T) {
 			expected: []string{
 				"/[a-z\\.\\/]*",
 			},
+			skipWindows: true,
 		},
 		{
 			pattern: []string{"**/*.log"},
@@ -288,6 +290,9 @@ func TestWithDifferentPatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("with %s identified %d files", strings.Join(tt.pattern, ":"), len(tt.expected)), func(t *testing.T) {
+			if tt.skipWindows && runtime.GOOS == "windows" {
+				t.Skip("Skip this test on Windows")
+			}
 			files, _ := GetFiles(tmp, tt.pattern, false)
 			assert.Equal(t, len(tt.expected), len(files))
 			for _, expected := range tt.expected {
@@ -298,7 +303,6 @@ func TestWithDifferentPatterns(t *testing.T) {
 }
 
 func TestGetFiles_FilePathGlobError(t *testing.T) {
-
 	tmp := t.TempDir()
 
 	path := fmt.Sprintf("%s/%s", tmp, "./a/b/c.d/e.f")

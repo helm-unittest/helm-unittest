@@ -60,7 +60,7 @@ build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
 .PHONY: build
-build: unittest ## Compile packages and dependencies
+build: ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
@@ -105,3 +105,6 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
+
+test0: ## Execute Unit tests locally
+	@./untt -f 'tests/*.yaml' test/data/v3/basic
