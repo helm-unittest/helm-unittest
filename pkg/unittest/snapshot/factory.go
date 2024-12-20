@@ -30,7 +30,6 @@ func CreateSnapshotOfSuite(path string, isUpdating bool) (*Cache, error) {
 func ensureDir(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
-		fmt.Println(err)
 		if os.IsNotExist(err) {
 			return os.Mkdir(path, 0755)
 		}
