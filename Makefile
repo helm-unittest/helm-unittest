@@ -60,7 +60,7 @@ build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./git stcmd/helm-unittest
 
 .PHONY: build
-build: ## Compile packages and dependencies
+build: unittest ## Compile packages and dependencies
 	@go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
