@@ -94,7 +94,7 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: build-for-docker ## Build docker image
+dockerimage: build ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
