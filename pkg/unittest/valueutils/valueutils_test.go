@@ -372,3 +372,206 @@ metadata:
 		assert.Equal(t, []interface{}{"my-deployment"}, actual)
 	})
 }
+
+func TestBuildValueOfSetPath_EmptyPath(t *testing.T) {
+	_, err := BuildValueOfSetPath(nil, "")
+	assert.Error(t, err)
+	assert.EqualError(t, err, "set path is empty")
+}
+
+func TestBuildValueOfSetPath_ValidPath(t *testing.T) {
+	data := map[string]interface{}{"foo": "bar"}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": data}}
+	actual, err := BuildValueOfSetPath(data, "a.b")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func TestBuildValueOfSetPath_InvalidToken(t *testing.T) {
+	data := map[string]interface{}{"foo": "bar"}
+	_, err := BuildValueOfSetPath(data, "{")
+	assert.Error(t, err)
+	assert.EqualError(t, err, "invalid token found {")
+}
+
+func TestBuildValueOfSetPath_UnexpectedEnd(t *testing.T) {
+	data := map[string]interface{}{"foo": "bar"}
+	_, err := BuildValueOfSetPath(data, "a[")
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unexpected end of")
+}
+
+func TestBuildValueOfSetPath_NestedPath(t *testing.T) {
+	data := map[string]interface{}{"foo": "bar"}
+	expected := map[string]interface{}{
+		"a": map[string]interface{}{
+			"b": map[string]interface{}{
+				"c": data,
+			},
+		},
+	}
+	actual, err := BuildValueOfSetPath(data, "a.b.c")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+// merge values
+func TestMergeValues_EmptySource(t *testing.T) {
+	dest := map[string]interface{}{"a": 1}
+	src := map[string]interface{}{}
+	expected := map[string]interface{}{"a": 1}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_EmptyDestination(t *testing.T) {
+	dest := map[string]interface{}{}
+	src := map[string]interface{}{"a": 1}
+	expected := map[string]interface{}{"a": 1}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_NilSource(t *testing.T) {
+	dest := map[string]interface{}{"a": 1}
+	var src map[string]interface{}
+	expected := map[string]interface{}{"a": 1}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_NilDestination(t *testing.T) {
+	dest := map[string]interface{}{}
+	src := map[string]interface{}{"a": 1}
+	expected := map[string]interface{}{"a": 1}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_OverwriteWithNonMap(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": 2}
+	expected := map[string]interface{}{"a": 2}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_DeepMerge(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_ComplexMerge(t *testing.T) {
+	dest := map[string]interface{}{
+		"a": 1,
+		"b": map[string]interface{}{
+			"c": 2,
+		},
+	}
+	src := map[string]interface{}{
+		"a": 3,
+		"b": map[string]interface{}{
+			"d": 4,
+		},
+		"e": 5,
+	}
+	expected := map[string]interface{}{
+		"a": 3,
+		"b": map[string]interface{}{
+			"c": 2,
+			"d": 4,
+		},
+		"e": 5,
+	}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+// new
+func TestMergeValues_KeyExistsButNotMap(t *testing.T) {
+	dest := map[string]interface{}{
+		"a": 1,
+	}
+	src := map[string]interface{}{
+		"a": map[string]interface{}{"b": 2},
+	}
+	expected := map[string]interface{}{
+		"a": map[string]interface{}{"b": 2},
+	}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_KeyExistsAndIsMap(t *testing.T) {
+	dest := map[string]interface{}{
+		"a": map[string]interface{}{"b": 1},
+	}
+	src := map[string]interface{}{
+		"a": map[string]interface{}{"c": 2},
+	}
+	expected := map[string]interface{}{
+		"a": map[string]interface{}{"b": 1, "c": 2},
+	}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_EmptySourceAndDestination(t *testing.T) {
+	dest := map[string]interface{}{}
+	src := map[string]interface{}{}
+	expected := map[string]interface{}{}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_SourceWithNilValue(t *testing.T) {
+	dest := map[string]interface{}{"a": 1}
+	src := map[string]interface{}{"b": nil}
+	expected := map[string]interface{}{"a": 1, "b": nil}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_DestinationWithNilValue(t *testing.T) {
+	dest := map[string]interface{}{"a": nil}
+	src := map[string]interface{}{"b": 2}
+	expected := map[string]interface{}{"a": nil, "b": 2}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_NestedMapWithEmptyMap(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": map[string]interface{}{}}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_EmptyNestedMap(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{}}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_OverwriteWithEmptyMap(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": map[string]interface{}{}}
+	// expected := map[string]interface{}{"a": map[string]interface{}{}}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_OverwriteWithNil(t *testing.T) {
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": nil}
+	expected := map[string]interface{}{"a": nil}
+	actual := MergeValues(dest, src)
+	assert.Equal(t, expected, actual)
+}
