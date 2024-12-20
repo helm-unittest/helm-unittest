@@ -300,13 +300,12 @@ func TestWithDifferentPatterns(t *testing.T) {
 func TestGetFiles_FilePathGlobError(t *testing.T) {
 
 	tmp := t.TempDir()
-	// tmpfs := os.DirFS(tmp)
 
 	path := fmt.Sprintf("%s/%s", tmp, "./a/b/c.d/e.f")
 	err := os.MkdirAll(path, 0755)
 	assert.NoError(t, err)
 
-	files, err := GetFiles(path, []string{"\\"}, false)
+	files, err := GetFiles(path, []string{"\\*****"}, false)
 
 	assert.Nil(t, files)
 	assert.Error(t, err)
