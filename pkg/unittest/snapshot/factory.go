@@ -28,14 +28,11 @@ func CreateSnapshotOfSuite(path string, isUpdating bool) (*Cache, error) {
 }
 
 func ensureDir(path string) error {
-	fmt.Println("ensureDir")
 	info, err := os.Stat(path)
-	fmt.Println("ensureDir ", info, "err:", err)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return os.Mkdir(path, 0755)
 		}
-		fmt.Println("ensureDir err, ", err)
 		return err
 	}
 

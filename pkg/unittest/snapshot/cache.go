@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 // CompareResult result return by Cache.Compare
@@ -38,7 +40,7 @@ func (s *Cache) RestoreFromFile() error {
 		return err
 	}
 
-	if err := common.YmlUnmarshal(string(content), s.cached); err != nil {
+	if err := yaml.Unmarshal(content, &s.cached); err != nil {
 		return err
 	}
 	s.Existed = true
