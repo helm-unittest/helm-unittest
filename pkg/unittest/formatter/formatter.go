@@ -91,7 +91,7 @@ func NewFormatter(outputFile, outputType string) Formatter {
 			log.Fatal(err)
 		}
 
-		switch strings.ToLower(outputTypensureDire) {
+		switch strings.ToLower(outputType) {
 		case "junit":
 			return NewJUnitReportXML()
 		case "nunit":
