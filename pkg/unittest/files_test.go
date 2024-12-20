@@ -305,8 +305,7 @@ func TestGetFiles_FilePathGlobError(t *testing.T) {
 	err := os.MkdirAll(path, 0755)
 	assert.NoError(t, err)
 
-	files, err := GetFiles(path, []string{"`\\"}, false)
-	fmt.Println("FILES: ", files)
+	files, err := GetFiles(path, []string{"[**"}, false)
 	assert.Nil(t, files)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "syntax error in pattern")
