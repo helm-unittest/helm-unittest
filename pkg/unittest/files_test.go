@@ -301,6 +301,7 @@ func TestWithDifferentPatterns(t *testing.T) {
 			assert.Equal(t, len(tt.expected), len(files))
 			for _, expected := range tt.expected {
 				assert.Contains(t, files, filepath.FromSlash(expected))
+			}
 		})
 	}
 }
