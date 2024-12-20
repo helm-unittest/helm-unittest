@@ -84,10 +84,8 @@ func NewFormatter(outputFile, outputType string) Formatter {
 	if outputFile != "" {
 		// Ensure the directory of the outputFile is created
 		outputDirectory := filepath.Dir(outputFile)
-		fmt.Println("outputDirectory: ", outputDirectory)
 		err := os.MkdirAll(outputDirectory, os.ModePerm)
 		if err != nil {
-			fmt.Println("NewFormatter Error creating output directory: ", err)
 			log.Fatal(err)
 		}
 

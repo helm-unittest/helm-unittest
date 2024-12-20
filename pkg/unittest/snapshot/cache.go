@@ -38,7 +38,7 @@ func (s *Cache) RestoreFromFile() error {
 		return err
 	}
 
-	if err := common.YmlUnmarshal(string(content), &s.cached); err != nil {
+	if err := common.YmlUnmarshal(string(content), s.cached); err != nil {
 		return err
 	}
 	s.Existed = true
