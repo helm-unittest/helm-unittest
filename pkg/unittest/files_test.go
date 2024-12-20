@@ -293,7 +293,11 @@ func TestWithDifferentPatterns(t *testing.T) {
 			if tt.skipWindows && runtime.GOOS == "windows" {
 				t.Skip("Skip this test on Windows")
 			}
-			files, _ := GetFiles(tmp, tt.pattern, false)
+			var escapePattern []string
+			for _, p := range tt.pattern {
+				escapePattern = append(escapePattern, filepath.FromSlash(p))
+			}
+			files, _ := GetFiles(tmp, escapePattern, false)
 			assert.Equal(t, len(tt.expected), len(files))
 			for _, expected := range tt.expected {
 				assertArrayContainsOsAgnostic(t, files, expected)
