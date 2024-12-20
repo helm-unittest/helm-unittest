@@ -63,10 +63,6 @@ build-debug: ## Compile packages and dependencies with debug flag
 build: ## Compile packages and dependencies
 	@go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
-.PHONY: build-for-docker
-build-for-docker: ## Compile packages and dependencies
-	@GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
@@ -102,13 +98,10 @@ dockerimage: build-for-docker ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: ## Execute 'helm unittests' in container
+test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
-
-test0: ## Execute Unit tests locally
-	@./untt -f 'tests/*.yaml' test/data/v3/failing-template
