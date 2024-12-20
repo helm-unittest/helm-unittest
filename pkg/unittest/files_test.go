@@ -306,7 +306,7 @@ func TestGetFiles_FilePathGlobError(t *testing.T) {
 	assert.NoError(t, err)
 
 	files, err := GetFiles(path, []string{"`\\"}, false)
-
+	fmt.Println("FILES: ", files)
 	assert.Nil(t, files)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "syntax error in pattern")
