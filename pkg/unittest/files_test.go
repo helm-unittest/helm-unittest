@@ -300,13 +300,12 @@ func TestWithDifferentPatterns(t *testing.T) {
 			files, _ := GetFiles(tmp, escapePattern, false)
 			assert.Equal(t, len(tt.expected), len(files))
 			for _, expected := range tt.expected {
-				assertArrayContainsOsAgnostic(t, files, expected)
-			}
+				assert.Contains(t, files, filepath.FromSlash(expected))
 		})
 	}
 }
 
-func TestGetFiles_FilePathGlobError(t *testing.T) {
+func TestGetFiles_GlobError(t *testing.T) {
 	tmp := t.TempDir()
 
 	path := fmt.Sprintf("%s/%s", tmp, "./a/b/c.d/e.f")
