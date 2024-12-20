@@ -1,10 +1,13 @@
 package unittest_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+	"testing/fstest"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/stretchr/testify/assert"
@@ -157,4 +160,150 @@ func TestGetFiles_ChartWithSubChartPatternMatchingChildTests(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestWithDifferentPatterns(t *testing.T) {
+	tmp := t.TempDir()
+	path := fmt.Sprintf("%s/%s", tmp, "./a/b/c/e")
+	err := os.MkdirAll(path, 0755)
+	assert.NoError(t, err)
+
+	fs := fstest.MapFS{
+		"a/b/c/first.yaml":     {Data: []byte("hi")},
+		"a/b/c/e/second.yaml":  {Data: []byte("hi")},
+		"a/b/third.yaml":       {Data: []byte("hi")},
+		"a/b/c/third.hcl":      {Data: []byte("hi")},
+		"a/b/c/file0.txt":      {Data: []byte("hi")},
+		"a/file1.txt":          {Data: []byte("hi")},
+		"a/b/c/file2.json":     {Data: []byte("hi")},
+		"a/b/file2.json":       {Data: []byte("hi")},
+		"file3.xml":            {Data: []byte("hi")},
+		"a/b/file4_test.csv":   {Data: []byte("hi")},
+		"a/b/c/e/file5.ini":    {Data: []byte("hi")},
+		"a/b/c/e/file6.log":    {Data: []byte("hi")},
+		"a/b/c/e/file7.conf":   {Data: []byte("hi")},
+		"a/b/file6.md":         {Data: []byte("hi")},
+		"a/b/c/e/file8.md":     {Data: []byte("hi")},
+		"a/b/c/e/file9.html":   {Data: []byte("hi")},
+		"a/b/c/e/file10.css":   {Data: []byte("hi")},
+		"a/b/c/file11.js":      {Data: []byte("hi")},
+		"a/b/file12_test.go":   {Data: []byte("hi")},
+		"a/b/c/e/file13.py":    {Data: []byte("hi")},
+		"a/file14_test.rb":     {Data: []byte("hi")},
+		"a/b/c/file15.php":     {Data: []byte("hi")},
+		"a/b/file16.sh":        {Data: []byte("hi")},
+		"a/b/c/e/file17.pl":    {Data: []byte("hi")},
+		"a/b/c/e/file18.rs":    {Data: []byte("hi")},
+		"a/b/c/e/file19.kt":    {Data: []byte("hi")},
+		"a/b/c/e/file20.swift": {Data: []byte("hi")},
+	}
+
+	for path, el := range fs {
+		err := os.WriteFile(filepath.Join(tmp, path), el.Data, 0644)
+		assert.NoError(t, err)
+	}
+
+	tests := []struct {
+		pattern  []string
+		expected []string
+	}{
+		{
+			pattern: []string{"**/*.yaml"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/c/first.yaml", tmp),
+				fmt.Sprintf("%s/a/b/c/e/second.yaml", tmp),
+				fmt.Sprintf("%s/a/b/third.yaml", tmp),
+			},
+		},
+		{
+			pattern:  []string{"[a-z\\.\\/]*"},
+			expected: []string{},
+		},
+		{
+			pattern: []string{"/[a-z\\.\\/]*"},
+			expected: []string{
+				"/[a-z\\.\\/]*",
+			},
+		},
+		{
+			pattern: []string{"**/*.log"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/c/e/file6.log", tmp),
+			},
+		},
+		{
+			pattern:  []string{"**/*.(json|js|log)"},
+			expected: []string{},
+		},
+		{
+			pattern: []string{"a/*/file*.json", "a/**/file*.txt"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/file2.json", tmp),
+				fmt.Sprintf("%s/a/file1.txt", tmp),
+				fmt.Sprintf("%s/a/b/c/file0.txt", tmp),
+			},
+		},
+		{
+			pattern: []string{"**/*.xml", "**/*.csv"},
+			expected: []string{
+				fmt.Sprintf("%s/file3.xml", tmp),
+				fmt.Sprintf("%s/a/b/file4_test.csv", tmp),
+			},
+		},
+		{
+			pattern:  []string{"a/b/c/e/**.md"},
+			expected: []string{},
+		},
+		{
+			pattern: []string{"a/b/c/e/*.md"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/c/e/file8.md", tmp),
+			},
+		},
+		{
+			pattern: []string{"a/*_test.rb", "a/b/**.rb", "a/b/c/**.php"},
+			expected: []string{
+				fmt.Sprintf("%s/a/file14_test.rb", tmp),
+			},
+		},
+		{
+			pattern: []string{"a/b/*_test.go", ".*11.js"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/file12_test.go", tmp),
+			},
+		},
+		{
+			pattern: []string{fmt.Sprintf("%s/a/b/*.sh", tmp), "**/*.pl"},
+			expected: []string{
+				fmt.Sprintf("%s/a/b/*.sh", tmp),
+				fmt.Sprintf("%s/a/b/c/e/file17.pl", tmp),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("with %s identified %d files", strings.Join(tt.pattern, ":"), len(tt.expected)), func(t *testing.T) {
+			files, _ := GetFiles(tmp, tt.pattern, false)
+			assert.Equal(t, len(tt.expected), len(files))
+			for _, expected := range tt.expected {
+				assert.Contains(t, files, expected)
+			}
+		})
+	}
+}
+
+func TestGetFiles_FilePathGlobError(t *testing.T) {
+
+	tmp := t.TempDir()
+	// tmpfs := os.DirFS(tmp)
+
+	path := fmt.Sprintf("%s/%s", tmp, "./a/b/c.d/e.f")
+	err := os.MkdirAll(path, 0755)
+	assert.NoError(t, err)
+
+	files, err := GetFiles(path, []string{"\\"}, false)
+
+	assert.Nil(t, files)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "syntax error in pattern")
 }
