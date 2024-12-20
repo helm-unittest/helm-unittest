@@ -57,11 +57,11 @@ test-coverage: ## Test coverage with open report in default browser
 
 .PHONY: build-debug
 build-debug: ## Compile packages and dependencies with debug flag
-	go build -o untt-dbg -gcflags "all=-N -l" ./git stcmd/helm-unittest
+	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
 .PHONY: build
 build: unittest ## Compile packages and dependencies
-	@go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
 dist:
