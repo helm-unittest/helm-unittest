@@ -103,8 +103,8 @@ func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 }
 
 type parseTraverser interface {
-	traverseMapKey(string) error
-	traverseListIdx(int) error
+	traverseMapKey(string)
+	traverseListIdx(int)
 }
 
 type buildTraverser struct {
@@ -112,14 +112,12 @@ type buildTraverser struct {
 	cursors []interface{}
 }
 
-func (tr *buildTraverser) traverseMapKey(key string) error {
+func (tr *buildTraverser) traverseMapKey(key string) {
 	tr.cursors = append(tr.cursors, key)
-	return nil
 }
 
-func (tr *buildTraverser) traverseListIdx(idx int) error {
+func (tr *buildTraverser) traverseListIdx(idx int) {
 	tr.cursors = append(tr.cursors, idx)
-	return nil
 }
 
 func (tr buildTraverser) getBuildedData() map[string]interface{} {
@@ -168,7 +166,8 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 		if err == io.EOF {
 			switch {
 			case len(k) != 0 && state == expectKey:
-				return traverser.traverseMapKey(string(k))
+				traverser.traverseMapKey(string(k))
+				return nil
 			case len(k) == 0 && state == expectDenotation:
 				return nil
 			default:

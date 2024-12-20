@@ -20,28 +20,20 @@ func newMockTraverser() *mockTraverser {
 	}
 }
 
-func (m *mockTraverser) traverseMapKey(key string) error {
+func (m *mockTraverser) traverseMapKey(key string) {
 	m.traverseMapKeyCount++
-	err := m.buildTraverser.traverseMapKey(key)
-	if err != nil {
-		return err
-	}
+	m.buildTraverser.traverseMapKey(key)
 	if key == "key-error" {
 		m.err = fmt.Errorf("traverser error")
 	}
-	return m.err
 }
 
-func (m *mockTraverser) traverseListIdx(idx int) error {
+func (m *mockTraverser) traverseListIdx(idx int) {
 	m.traverseListIdxCount++
-	err := m.buildTraverser.traverseListIdx(idx)
-	if err != nil {
-		return err
-	}
+	m.buildTraverser.traverseListIdx(idx)
 	if idx == 6897 {
 		m.err = fmt.Errorf("traverser error")
 	}
-	return m.err
 }
 
 func TestHandleExpectIndex_ErrorCases(t *testing.T) {
@@ -66,13 +58,6 @@ func TestHandleExpectIndex_ErrorCases(t *testing.T) {
 			runes:                []rune("abc"),
 			lastRune:             ']',
 			traverseListIdxCount: 0,
-		},
-		{
-			name:                 "invalid traverser",
-			errMsg:               "traverser error",
-			runes:                []rune("6897"),
-			lastRune:             ']',
-			traverseListIdxCount: 1,
 		},
 	}
 
@@ -193,18 +178,6 @@ func TestHandleExpectKey_ErrorCases(t *testing.T) {
 			runes:       []rune("key"),
 			errorString: "invalid key a",
 		},
-		{
-			name:        "traverser error on dot token",
-			lastRune:    '.',
-			runes:       []rune("key-error"),
-			errorString: "traverser error",
-		},
-		{
-			name:        "error on error on open bracket token",
-			lastRune:    '[',
-			runes:       []rune("key-error"),
-			errorString: "traverser error",
-		},
 	}
 
 	for _, tt := range tests {
@@ -261,14 +234,5 @@ func TestHandleExpectEscaping_InvalidToken(t *testing.T) {
 	state, err := handleExpectEscaping([]rune("key"), 'a', tr)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "invalid escaping token a")
-	assert.Equal(t, -1, state)
-}
-
-func TestHandleExpectEscaping_TraverserError(t *testing.T) {
-	tr := &mockTraverser{err: fmt.Errorf("traverser error")}
-	bufferedMapKey = ""
-	state, err := handleExpectEscaping([]rune("key"), ']', tr)
-	assert.Error(t, err)
-	assert.EqualError(t, err, "traverser error")
 	assert.Equal(t, -1, state)
 }
