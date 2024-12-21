@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -385,6 +386,9 @@ tests:
 }
 
 func TestV3RunnerOkWithSkippedSuits_Output(t *testing.T) {
+	// if runtime.GOOS != "windows" {
+	// 	t.Skip("This test is not working on Windows. Please fix if you have a Windows machine.")
+	// }
 	chart := `
 apiVersion: v2
 name: basic
@@ -430,6 +434,8 @@ tests:
 
 	for path, el := range fs {
 		err := os.WriteFile(filepath.Join(tmp, path), el.Data, 0644)
+		// todo: remove
+		fmt.Println("path:", filepath.Join(tmp, path))
 		assert.NoError(t, err)
 	}
 	buffer := new(bytes.Buffer)
