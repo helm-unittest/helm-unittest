@@ -2,12 +2,14 @@
   DisplayName: (string) (len=17) "validate metadata",
   FilePath: (string) "",
   Passed: (bool) true,
+  Skipped: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
     (*results.TestJobResult)({
       DisplayName: (string) (len=24) "should pass all metadata",
       Index: (int) 0,
       Passed: (bool) true,
+      Skipped: (bool) false,
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) (len=6) {
         (*results.AssertionResult)({

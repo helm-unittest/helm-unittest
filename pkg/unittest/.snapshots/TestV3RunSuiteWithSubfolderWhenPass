@@ -2,12 +2,14 @@
   DisplayName: (string) (len=15) "test suite name",
   FilePath: (string) "",
   Passed: (bool) true,
+  Skipped: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
     (*results.TestJobResult)({
       DisplayName: (string) (len=11) "should pass",
       Index: (int) 0,
       Passed: (bool) true,
+      Skipped: (bool) false,
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) (len=2) {
         (*results.AssertionResult)({
