@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -304,6 +305,10 @@ tests:
 }
 
 func TestV3RunnerOkWithSkippedTests_Output(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// https://github.com/golang/go/issues/69159
+		t.Skip("This test is not working on Windows. Please try to fix it if you have a Windows machine.")
+	}
 	chart := `
 apiVersion: v2
 name: basic
@@ -386,9 +391,10 @@ tests:
 }
 
 func TestV3RunnerOkWithSkippedSuits_Output(t *testing.T) {
-	// if runtime.GOOS != "windows" {
-	// 	t.Skip("This test is not working on Windows. Please fix if you have a Windows machine.")
-	// }
+	if runtime.GOOS == "windows" {
+		// https://github.com/golang/go/issues/69159
+		t.Skip("This test is not working on Windows. Please try to fix it if you have a Windows machine.")
+	}
 	chart := `
 apiVersion: v2
 name: basic
