@@ -1290,3 +1290,75 @@ tests:
 		}
 	}
 }
+
+func TestV3RunSuiteWithSkipTests(t *testing.T) {
+	testSuite := TestSuite{}
+	testSuite.Tests = []*TestJob{
+		{
+			Name: "should skip",
+			Skip: struct {
+				Reason string `yaml:"reason"`
+			}{Reason: "skip me"},
+		},
+		{
+			Name: "should skip test",
+		},
+	}
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "non-empty-snapshot.yaml"), false)
+	cases := []struct {
+		failFast bool
+	}{
+		{
+			failFast: true,
+		},
+		{
+			failFast: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
+			suiteResult := testSuite.RunV3(testV3BasicChart, cache, tt.failFast, "", &results.TestSuiteResult{})
+
+			assert.False(t, suiteResult.Skipped)
+			assert.False(t, suiteResult.Passed)
+		})
+	}
+}
+
+func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
+	testSuite := TestSuite{
+		Skip: struct {
+			Reason string `yaml:"reason"`
+		}{Reason: "skip suite"},
+	}
+	testSuite.Tests = []*TestJob{
+		{
+			Name: "first. should be skipped",
+		},
+		{
+			Name: "second. should be skipped",
+		},
+	}
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "non-empty-snapshot.yaml"), false)
+
+	cases := []struct {
+		failFast bool
+	}{
+		{
+			failFast: true,
+		},
+		{
+			failFast: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
+			suiteResult := testSuite.RunV3(testV3BasicChart, cache, tt.failFast, "", &results.TestSuiteResult{})
+
+			assert.True(t, suiteResult.Skipped)
+			assert.True(t, suiteResult.Passed)
+		})
+	}
+}

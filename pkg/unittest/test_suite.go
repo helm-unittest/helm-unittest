@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -349,7 +348,6 @@ type SuiteResult struct {
 	Skip bool
 }
 
-// TODO: test this
 func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
@@ -358,13 +356,12 @@ func (s *TestSuite) runV3TestJobs(
 ) (*SuiteResult, []*results.TestJobResult) {
 	result := SuiteResult{Pass: false, Skip: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
-
 	skipped := 0
+
+	// (Re)load the chart used by this suite
+	chart, _ := v3loader.Load(chartPath)
+
 	for idx, testJob := range s.Tests {
-		// (Re)load the chart used by this suite (with logging temporarily disabled)
-		log.SetOutput(io.Discard)
-		chart, _ := v3loader.Load(chartPath)
-		log.SetOutput(os.Stdout)
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
 		if testJob.Skip.Reason != "" {
@@ -377,7 +374,6 @@ func (s *TestSuite) runV3TestJobs(
 		} else {
 			jobResult = testJob.RunV3(chart, cache, failfast, renderPath, &job)
 			jobResults[idx] = jobResult
-
 			if idx == 0 {
 				result.Pass = jobResult.Passed
 			}
