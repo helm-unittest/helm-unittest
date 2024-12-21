@@ -305,9 +305,13 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)
 }
 
+// TODO: test this
 // polishSkipSettings aims to determine the appropriate Skip reason for a given TestJob within a TestSuite
 // if the TestSuite itself has a Skip.Reason set, it takes precedence, and this reason is applied to the individual TestJob
 func (s *TestSuite) polishSkipSettings(test *TestJob) {
+	if test == nil {
+		return
+	}
 	if s.Skip.Reason != "" {
 		test.Skip.Reason = s.Skip.Reason
 	} else if s.Skip.Reason == "" {
@@ -384,7 +388,7 @@ func (s *TestSuite) runV3TestJobs(
 			result.Pass = result.Pass && jobResult.Passed
 		}
 
-		if !result.Skip && failfast {
+		if !result.Pass && failfast {
 			break
 		}
 	}

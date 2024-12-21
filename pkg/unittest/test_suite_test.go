@@ -41,7 +41,6 @@ const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-cl
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
 func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.TestSuiteResult {
-
 	for _, test := range result.TestsResult {
 		test.Duration, _ = time.ParseDuration("0s")
 	}
@@ -639,10 +638,8 @@ tests:
 	testSuite := TestSuite{}
 	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
 	assert.Nil(t, err)
-
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
-
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
