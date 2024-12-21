@@ -265,7 +265,6 @@ asserts:
 	err := yaml.Unmarshal([]byte(manifest), &tj)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{})
-	// Write Buffer
 
 	a := assert.New(t)
 	a.Nil(err)
@@ -856,7 +855,7 @@ asserts:
 	assert.True(testResult.Passed, testResult.AssertsResult)
 }
 
-func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
+func TestV3RunJobWithNotSupportedAssert(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should skip when not supported assert is found
@@ -879,4 +878,24 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
+}
+
+func TestV3RunSkippedJob(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should skip when not supported assert is found
+template: templates/deployment.yaml
+documentIndex: 0
+skip:
+ reason: "Skip this test"
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+`
+	var tj TestJob
+	_ = yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	assert.True(t, testResult.Skipped)
 }

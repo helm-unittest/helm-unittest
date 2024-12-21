@@ -173,9 +173,12 @@ type TestJob struct {
 		Version    string
 		AppVersion string `yaml:"appVersion"`
 	}
-	Capabilities       Capabilities                 `yaml:"-"`
-	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
-	Assertions         []*Assertion                 `yaml:"asserts"`
+	Capabilities       Capabilities       `yaml:"-"`
+	CapabilitiesFields CapabilitiesFields `yaml:"capabilities"`
+	Assertions         []*Assertion       `yaml:"asserts"`
+	Skip               struct {
+		Reason string `yaml:"reason"`
+	} `yaml:"skip"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
 	globalSet map[string]interface{}
@@ -229,6 +232,13 @@ func (t *TestJob) RunV3(
 
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
+
+	if t.Skip.Reason != "" {
+		result.Duration = time.Since(startTestRun)
+		result.Skipped = true
+		return result
+	}
+
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
