@@ -1209,3 +1209,87 @@ tests:
 	a.Error(err)
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
 }
+
+func TestV3MultipleSuitesWithSkip(t *testing.T) {
+	suiteDoc := `
+---
+suite: test skip on suite level
+templates:
+  - deployment.yaml
+skip:
+  reason: "This suite is not ready yet"
+tests:
+  - it: should render deployment
+    set:
+      name: first-deployment
+    asserts:
+      - exists:
+          path: metadata.labels.chart
+---
+suite: suite with single skipped test
+templates:
+  - deployment.yaml
+tests:
+  - it: should render second deployment in second suite
+    skip:
+      reason: "skip me"
+    asserts:
+      - isKind:
+          of: Deployment
+---
+suite: suite with two tests and one skipped test
+templates:
+  - deployment.yaml
+tests:
+  - it: should skip test
+    skip:
+      reason: "skip me"
+    asserts:
+      - isKind:
+          of: Deployment
+  - it: should not skip test
+    asserts:
+      - isKind:
+          of: Deployment
+---
+suite: suite without skip
+templates:
+  - secret.yaml
+tests:
+  - it: should render second deployment in second suite
+    asserts:
+      - isKind:
+          of: Secret
+`
+
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-suites-with-skip.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	assert.NoError(t, err)
+	assert.Len(t, suites, 4)
+
+	for _, s := range suites {
+		switch s.Name {
+		case "test skip on suite level":
+			assert.NotEmpty(t, s.Skip.Reason)
+		case "suite with single skipped test":
+			assert.NotEmpty(t, s.Skip.Reason)
+		case "suite with two tests and one skipped test":
+			assert.Empty(t, s.Skip.Reason)
+			for _, test := range s.Tests {
+				switch test.Name {
+				case "should skip test":
+					assert.NotEmpty(t, test.Skip.Reason)
+				default:
+					assert.Empty(t, test.Skip.Reason)
+				}
+			}
+		default:
+			assert.Empty(t, s.Skip.Reason)
+		}
+	}
+}
