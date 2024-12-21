@@ -8,6 +8,7 @@ import (
 
 	"github.com/helm-unittest/helm-unittest/internal/printer"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/results"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -173,4 +174,17 @@ func TestCalculateTestSuiteDuration_NoTests(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+// snapshots counting
+func TestCountSnapshot_AllCountsZero(t *testing.T) {
+	cache := snapshot.Cache{}
+
+	tsr := TestSuiteResult{}
+	tsr.CountSnapshot(&cache)
+
+	assert.Equal(t, uint(0), tsr.SnapshotCounting.Created)
+	assert.Equal(t, uint(0), tsr.SnapshotCounting.Failed)
+	assert.Equal(t, uint(0), tsr.SnapshotCounting.Total)
+	assert.Equal(t, uint(0), tsr.SnapshotCounting.Vanished)
 }
