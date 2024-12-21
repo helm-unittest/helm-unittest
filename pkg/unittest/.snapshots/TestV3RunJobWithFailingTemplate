@@ -2,6 +2,7 @@
   DisplayName: (string) (len=49) "should load complete chart and validate configMap",
   Index: (int) 0,
   Passed: (bool) true,
+  Skipped: (bool) false,
   ExecError: (error) <nil>,
   AssertsResult: ([]*results.AssertionResult) (len=1) {
     (*results.AssertionResult)({
