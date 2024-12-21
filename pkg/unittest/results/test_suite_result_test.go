@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/helm-unittest/helm-unittest/internal/printer"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -122,4 +123,54 @@ func TestTestSuiteResultPrint_TestSkipped(t *testing.T) {
 	test.Print(printer.NewPrinter(buffer, nil), 0)
 	assert.NotContains(t, buffer.String(), "SKIP  this-test-suite")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'second-skip-test'")
+}
+
+// calculate test suite duration
+func TestCalculateTestSuiteDuration_NoTests(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    []*TestJobResult
+		expected time.Duration
+	}{
+		{
+			name:     "no tests",
+			input:    []*TestJobResult{},
+			expected: time.Duration(0),
+		},
+		{
+			name: "single test",
+			input: []*TestJobResult{
+				{Duration: 2 * time.Millisecond},
+			},
+			expected: 2 * time.Millisecond,
+		},
+		{
+			name: "multiple tests",
+			input: []*TestJobResult{
+				{Duration: 1 * time.Millisecond},
+				{Duration: 2 * time.Millisecond},
+				{Duration: 3 * time.Millisecond},
+			},
+			expected: 6 * time.Millisecond,
+		},
+		{
+			name: "mixed durations",
+			input: []*TestJobResult{
+				{Duration: 5 * time.Millisecond},
+				{Duration: 150 * time.Millisecond},
+				{Duration: 2 * time.Microsecond},
+			},
+			expected: 155*time.Millisecond + 2*time.Microsecond,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			tsr := TestSuiteResult{
+				TestsResult: tt.input,
+			}
+			result := tsr.CalculateTestSuiteDuration()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

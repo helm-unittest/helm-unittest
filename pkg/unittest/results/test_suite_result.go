@@ -76,6 +76,5 @@ func (tsr *TestSuiteResult) CalculateTestSuiteDuration() time.Duration {
 	for _, test := range tsr.TestsResult {
 		totalDuration += test.Duration
 	}
-
 	return totalDuration
 }
