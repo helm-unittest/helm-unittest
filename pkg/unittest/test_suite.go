@@ -13,12 +13,12 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
-
-	log "github.com/sirupsen/logrus"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 // m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
@@ -40,7 +40,6 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
-		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
 		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
 			if testSuite != nil {
@@ -53,6 +52,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			}
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
+				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
 			}
 		}
@@ -74,13 +74,24 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		return &suite, err
 	}
 
-	// Use decoder to setup strict or unstrict
+	// Use decoder to setup strict or un strict
 	yamlDecoder := yaml.NewDecoder(strings.NewReader(content))
 	yamlDecoder.KnownFields(strict)
+
 	if err := yamlDecoder.Decode(&suite); err != nil {
+		// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+		// escape special characters only if unmarshall results in an error
+		if strings.Contains(err.Error(), "unknown escape character") {
+			y := common.YmlEscapeHandlers{}
+			escaped := y.Escape(content)
+			if escaped != nil {
+				if err = k8syaml.Unmarshal(escaped, &suite); err != nil {
+					return &suite, err
+				}
+			}
+		}
 		return &suite, err
 	}
-
 	err = suite.validateTestSuite()
 	if err != nil {
 		return &suite, err
