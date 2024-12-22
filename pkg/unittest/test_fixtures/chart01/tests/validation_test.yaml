@@ -7,4 +7,5 @@ tests:
     - failedTemplate:
         errorPattern: |-
           `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \(root\)
-
+    - failedTemplate:
+        errorMessage: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"

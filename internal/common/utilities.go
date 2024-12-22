@@ -63,13 +63,10 @@ func escapeBackslashes(content []byte) []byte {
 
 		if count > 1 {
 			i += count - 1
-			for j := 0; j < times; j++ {
-				result.WriteByte('\\')
-			}
-		} else {
-			for j := 0; j < times; j++ {
-				result.WriteByte('\\')
-			}
+		}
+
+		for j := 0; j < times; j++ {
+			result.WriteByte('\\')
 		}
 
 	}
