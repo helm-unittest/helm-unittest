@@ -440,8 +440,6 @@ tests:
 
 	for path, el := range fs {
 		err := os.WriteFile(filepath.Join(tmp, path), el.Data, 0644)
-		// todo: remove
-		fmt.Println("path:", filepath.Join(tmp, path))
 		assert.NoError(t, err)
 	}
 	buffer := new(bytes.Buffer)
