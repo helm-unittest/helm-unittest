@@ -1,0 +1,10 @@
+suite: Test empty template
+templates:
+  - validation.tpl
+tests:
+  - it: should validate failure message with single escape character
+    asserts:
+    - failedTemplate:
+        errorPattern: |-
+          `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \(root\)
+
