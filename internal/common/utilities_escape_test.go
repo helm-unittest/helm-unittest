@@ -43,7 +43,7 @@ func TestEscape_InputAsRunes_EscapeBackslash_Code92(t *testing.T) {
 		{
 			name:     "empty",
 			content:  []byte{},
-			expected: []byte{},
+			expected: nil,
 		},
 		{
 			name:     "Mixed Backslashes",
@@ -53,7 +53,7 @@ func TestEscape_InputAsRunes_EscapeBackslash_Code92(t *testing.T) {
 		{
 			name:     "no backslashes",
 			content:  []byte("abrakadabra"),
-			expected: []byte{},
+			expected: nil,
 		},
 		{
 			name:     "Backslashes at the end",
