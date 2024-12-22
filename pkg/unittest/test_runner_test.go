@@ -2,7 +2,6 @@ package unittest_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
