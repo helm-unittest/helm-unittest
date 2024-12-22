@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const fixtureChart01 string = "fixtures/chart01"
+const fixtureChart01 string = "test_fixtures/chart01"
 
 func TestV3RunnerOkWith_Fixture_Chart01(t *testing.T) {
 	buffer := new(bytes.Buffer)
