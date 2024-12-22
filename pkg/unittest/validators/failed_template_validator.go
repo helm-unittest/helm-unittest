@@ -49,10 +49,8 @@ func (a FailedTemplateValidator) failInfo(actual interface{}, manifestIndex, act
 func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifest, context *ValidateContext) (bool, []string) {
 	validateSuccess := true
 	validateErrors := make([]string, 0)
-	fmt.Println("I'm in required validateManifests")
 
 	for idx, manifest := range manifests {
-		fmt.Println("manifest:", manifest)
 		currentSuccess := false
 		validateSingleErrors := []string{}
 		actual := manifest[common.RAW]
@@ -64,7 +62,6 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 		}
 
 		if a.ErrorPattern != "" {
-			fmt.Println("errorPattern: [", a.ErrorPattern, "]")
 			currentSuccess, validateSingleErrors = a.validateErrorPattern(actual, idx, -1, context)
 		} else if a.ErrorMessage != "" {
 			currentSuccess, validateSingleErrors = a.validateErrorMessage(actual, idx, -1, context)

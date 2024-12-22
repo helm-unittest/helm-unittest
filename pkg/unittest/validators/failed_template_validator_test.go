@@ -310,3 +310,67 @@ func TestFailedTemplateValidatorFailFast(t *testing.T) {
 		"	A field should be required",
 	}, diff)
 }
+
+func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_OK(t *testing.T) {
+	var template = "raw: |-\n    " + "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+	manifest := makeManifest(template)
+
+	cases := []struct {
+		name    string
+		pattern string
+	}{
+		{
+			name:    "pattern with backticks and escapes",
+			pattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \\(root\\)",
+		},
+		{
+			name:    "pattern with backticks",
+			pattern: "`runAsNonRoot`",
+		},
+		{
+			name:    "pattern with escape",
+			pattern: "\\(root\\)",
+		},
+		{
+			name:    "pattern without escape",
+			pattern: "(root)",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			v := FailedTemplateValidator{ErrorPattern: tt.pattern}
+			pass, _ := v.Validate(&ValidateContext{
+				Docs: []common.K8sManifest{manifest},
+			})
+			assert.True(t, pass)
+		})
+	}
+}
+
+func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t *testing.T) {
+	var template = "raw: |-\n    " + "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+	manifest := makeManifest(template)
+
+	cases := []struct {
+		name    string
+		pattern string
+		diff    interface{}
+	}{
+		{
+			name:    "pattern with incorrect regex",
+			pattern: `\(root)`,
+			diff:    []string{"Error:", "\terror parsing regexp: unexpected ): `\\(root)`"},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			v := FailedTemplateValidator{ErrorPattern: tt.pattern}
+			_, diff := v.Validate(&ValidateContext{
+				Docs: []common.K8sManifest{manifest},
+			})
+			assert.Equal(t, diff, tt.diff)
+		})
+	}
+}
