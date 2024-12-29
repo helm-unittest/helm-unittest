@@ -85,7 +85,6 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	if err != nil {
 		return &suite, err
 	}
-
 	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
 	return &suite, nil
