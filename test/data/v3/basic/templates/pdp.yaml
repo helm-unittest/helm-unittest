@@ -1,0 +1,7 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "basic.fullname" . }}
+spec:
+  minAvailable: 2
+  unhealthyPodEvictionPolicy: AlwaysAllow

@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
@@ -21,8 +19,8 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	byteBuffer := new(bytes.Buffer)
 
 	// Convert K8Manifest to yaml.Node
-	var rawManifest yaml.Node
-	yamlEncoder := yaml.NewEncoder(byteBuffer)
+	node := common.NewYamlNode()
+	yamlEncoder := common.YamlNewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(common.YAMLINDENTION)
 
 	err := yamlEncoder.Encode(manifest)
@@ -30,9 +28,9 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 		return nil, err
 	}
 
-	yamlDecoder := yaml.NewDecoder(byteBuffer)
+	yamlDecoder := common.YamlNewDecoder(byteBuffer)
 
-	if err := yamlDecoder.Decode(&rawManifest); err != nil {
+	if err := yamlDecoder.Decode(&node.Node); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +41,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	}
 
 	// Search for nodes
-	manifestParts, err := yamlPath.Find(&rawManifest)
+	manifestParts, err := yamlPath.Find(&node.Node)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +71,8 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 }
 
 type parseTraverser interface {
-	traverseMapKey(string) error
-	traverseListIdx(int) error
+	traverseMapKey(string)
+	traverseListIdx(int)
 }
 
 type buildTraverser struct {
@@ -82,14 +80,12 @@ type buildTraverser struct {
 	cursors []interface{}
 }
 
-func (tr *buildTraverser) traverseMapKey(key string) error {
+func (tr *buildTraverser) traverseMapKey(key string) {
 	tr.cursors = append(tr.cursors, key)
-	return nil
 }
 
-func (tr *buildTraverser) traverseListIdx(idx int) error {
+func (tr *buildTraverser) traverseListIdx(idx int) {
 	tr.cursors = append(tr.cursors, idx)
-	return nil
 }
 
 func (tr buildTraverser) getBuildedData() map[string]interface{} {
@@ -138,7 +134,8 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 		if err == io.EOF {
 			switch {
 			case len(k) != 0 && state == expectKey:
-				return traverser.traverseMapKey(string(k))
+				traverser.traverseMapKey(string(k))
+				return nil
 			case len(k) == 0 && state == expectDenotation:
 				return nil
 			default:
@@ -170,68 +167,6 @@ func traverseSetPath(in io.RuneReader, traverser parseTraverser, state int) erro
 	return nil
 }
 
-func handleExpectIndex(k []rune, last rune, traverser parseTraverser) (int, error) {
-	if last != ']' {
-		return -1, fmt.Errorf("missing index value")
-	}
-	idx, idxErr := strconv.Atoi(string(k))
-	if idxErr != nil {
-		return -1, idxErr
-	}
-	if e := traverser.traverseListIdx(idx); e != nil {
-		return -1, e
-	}
-	return expectDenotation, nil
-}
-
-func handleExpectDenotation(last rune) (int, error) {
-	switch last {
-	case '.':
-		return expectKey, nil
-	case '[':
-		return expectIndex, nil
-	default:
-		return -1, fmt.Errorf("invalid denotation token %s", string(last))
-	}
-}
-
-func handleExpectKey(k []rune, last rune, traverser parseTraverser) (int, error) {
-	switch last {
-	case '.':
-		if e := traverser.traverseMapKey(string(k)); e != nil {
-			return -1, e
-		}
-		return expectKey, nil
-	case '[':
-		if len(k) == 0 {
-			bufferedMapKey = ""
-			return expectEscaping, nil
-		}
-		if e := traverser.traverseMapKey(string(k)); e != nil {
-			return -1, e
-		}
-		return expectIndex, nil
-	default:
-		return -1, fmt.Errorf("invalid key %s", string(last))
-	}
-}
-
-func handleExpectEscaping(k []rune, last rune, traverser parseTraverser) (int, error) {
-	switch last {
-	case '.':
-		bufferedMapKey += string(k) + "."
-		return expectEscaping, nil
-	case ']':
-		bufferedMapKey += string(k)
-		if e := traverser.traverseMapKey(bufferedMapKey); e != nil {
-			return -1, e
-		}
-		return expectDenotation, nil
-	default:
-		return -1, fmt.Errorf("invalid escaping token %s", string(last))
-	}
-}
-
 // copy from helm
 func runesUntil(in io.RuneReader, stop map[rune]bool) ([]rune, rune, error) {
 	v := []rune{}
@@ -241,12 +176,6 @@ func runesUntil(in io.RuneReader, stop map[rune]bool) ([]rune, rune, error) {
 			return v, r, e
 		case inMap(r, stop):
 			return v, r, nil
-		case r == '\\':
-			next, _, e := in.ReadRune()
-			if e != nil {
-				return v, next, e
-			}
-			v = append(v, next)
 		default:
 			v = append(v, r)
 		}

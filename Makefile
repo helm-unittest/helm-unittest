@@ -28,8 +28,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-  HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
-  HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+	HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+	HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 
 .PHONY: install
 install: bootstrap build plugin-dir
@@ -49,6 +49,11 @@ hookInstall: bootstrap build
 .PHONY: unittest
 unittest: ## Run unit tests
 	go test ./... -v -cover
+
+.PHONY: test-coverage
+test-coverage: ## Test coverage with open report in default browser
+	@go test -cover -coverprofile=cover.out -v ./...
+	@go tool cover -html=cover.out
 
 .PHONY: build-debug
 build-debug: ## Compile packages and dependencies with debug flag
@@ -89,7 +94,7 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: build
+dockerimage: build ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
