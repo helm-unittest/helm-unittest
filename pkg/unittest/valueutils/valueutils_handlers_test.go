@@ -1,3 +1,4 @@
+// Need to restructure to run these tests in the valueutils package
 package valueutils
 
 import (

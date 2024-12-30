@@ -63,18 +63,18 @@ func YmlUnmarshal(in string, out interface{}) error {
 	return err
 }
 
-func YmlUnmarshalTestHelper(input string, out any, t *testing.T) {
-	t.Helper()
-	err := YmlUnmarshal(input, out)
-	assert.NoError(t, err)
-}
-
 func YmlMarshall(in interface{}) (string, error) {
 	out, err := yaml.Marshal(in)
 	if err != nil {
 		return "", err
 	}
 	return string(out), nil
+}
+
+func YmlUnmarshalTestHelper(input string, out any, t *testing.T) {
+	t.Helper()
+	err := YmlUnmarshal(input, out)
+	assert.NoError(t, err)
 }
 
 func YmlMarshallTestHelper(in interface{}, t *testing.T) string {

@@ -81,11 +81,13 @@ func TestBuildValueOfSetPath(t *testing.T) {
 }
 
 func TestBuildValueOfSetPath_V1(t *testing.T) {
+
 	t.Run("path is empty", func(t *testing.T) {
 		_, err := BuildValueOfSetPath(nil, "")
 		assert.Error(t, err)
 		assert.EqualError(t, err, "set path is empty")
 	})
+
 	t.Run("value is empty", func(t *testing.T) {
 		actual, err := BuildValueOfSetPath(nil, "some.path")
 		assert.NoError(t, err)
@@ -95,6 +97,7 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 			},
 		}, actual)
 	})
+
 	t.Run("some path", func(t *testing.T) {
 		expected := map[string]interface{}{
 			"b": map[string]interface{}{
@@ -114,6 +117,7 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, result)
 	})
+
 	t.Run("path is not in data", func(t *testing.T) {
 		expected := map[string]interface{}{
 			"some": map[string]interface{}{
@@ -131,6 +135,7 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
+
 	t.Run("path is in values", func(t *testing.T) {
 		expected := map[string]interface{}{
 			"hosts": map[string]interface{}{
@@ -146,6 +151,7 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
+
 	t.Run("property testing", func(t *testing.T) {
 		data := map[string]interface{}{"foo": "bar"}
 		cases := []struct {
@@ -189,10 +195,13 @@ func TestBuildValueSetPathError(t *testing.T) {
 	data := map[string]interface{}{"foo": "bar"}
 
 	var expectionsMapping = map[string]string{
-		"":   "set path is empty",
-		"{":  "invalid token found {",
-		"[[": "invalid escaping token [",
-		"..": "unexpected end of",
+		"":         "set path is empty",
+		"{":        "invalid token found {",
+		"[[":       "invalid escaping token [",
+		"..":       "unexpected end of",
+		"foo[1.1]": "missing index value",
+		"foo[]":    "strconv.Atoi: parsing \"\": invalid syntax",
+		"foo]":     "invalid key ]",
 	}
 
 	for path, expect := range expectionsMapping {
@@ -204,13 +213,13 @@ func TestBuildValueSetPathError(t *testing.T) {
 
 func TestMergeValues(t *testing.T) {
 	a := assert.New(t)
-	dest := map[string]interface{}{
+	src := map[string]interface{}{
 		"a": map[string]interface{}{
 			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
 			"e.f": "false",
 		},
 	}
-	src := map[string]interface{}{
+	dest := map[string]interface{}{
 		"a": map[string]interface{}{
 			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
 			"d":   "no",
@@ -229,46 +238,47 @@ func TestMergeValues(t *testing.T) {
 }
 
 func TestMergeValues_Cases(t *testing.T) {
+
 	t.Run("SimpleMerge", func(t *testing.T) {
-		dest := map[string]interface{}{"a": 1, "b": 2}
-		src := map[string]interface{}{"c": 3, "d": 4}
+		src := map[string]interface{}{"a": 1, "b": 2}
+		dest := map[string]interface{}{"c": 3, "d": 4}
 		expected := map[string]interface{}{"a": 1, "b": 2, "c": 3, "d": 4}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("OverwriteExistingValue", func(t *testing.T) {
-		dest := map[string]interface{}{"a": 1}
-		src := map[string]interface{}{"a": 2}
+		src := map[string]interface{}{"a": 1}
+		dest := map[string]interface{}{"a": 2}
 		expected := map[string]interface{}{"a": 2}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("MergeNestedMaps", func(t *testing.T) {
-		dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-		src := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
+		src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+		dest := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
 		expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("OverwriteNestedMap", func(t *testing.T) {
-		dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-		src := map[string]interface{}{"a": 2}
+		src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+		dest := map[string]interface{}{"a": 2}
 		expected := map[string]interface{}{"a": 2}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("MergeComplexMaps", func(t *testing.T) {
-		dest := map[string]interface{}{
+		src := map[string]interface{}{
 			"a": 1,
 			"b": map[string]interface{}{
 				"c": 2,
 			},
 		}
-		src := map[string]interface{}{
+		dest := map[string]interface{}{
 			"a": 3,
 			"b": map[string]interface{}{
 				"d": 4,
@@ -290,12 +300,12 @@ func TestMergeValues_Cases(t *testing.T) {
 
 func TestMergeValues_YamlValues(t *testing.T) {
 	t.Run("first", func(t *testing.T) {
-		yamlDst := `
+		yamlSrc := `
 a:
   b:
    foo: bar
 `
-		yamlSrc := `
+		yamlDst := `
 a:
   hosts[0]: abrakadabra
 `
@@ -305,24 +315,25 @@ a:
    foo: bar
   hosts[0]: abrakadabra
 `
-		var dataDst map[string]interface{}
-		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 		var dataSrc map[string]interface{}
 		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
 		output := v3util.MergeTables(dataDst, dataSrc)
 		out, _ := common.YmlMarshall(&output)
 		assert.YAMLEq(t, expected, out)
 	})
+
 	t.Run("second", func(t *testing.T) {
-		yamlDst := `
+		yamlSrc := `
 a:
   b:
    hosts:
    - foo
    - bar
 `
-		yamlSrc := `
+		yamlDst := `
 a:
   b:
    hosts[0]: abrakadabra
@@ -335,10 +346,10 @@ a:
    - bar
    hosts[0]: abrakadabra
 `
-		var dataDst map[string]interface{}
-		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 		var dataSrc map[string]interface{}
 		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
+		var dataDst map[string]interface{}
+		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
 		output := v3util.MergeTables(dataDst, dataSrc)
 		out := common.YmlMarshallTestHelper(&output, t)
@@ -360,6 +371,7 @@ metadata:
 		assert.NoError(t, err)
 		assert.Empty(t, actual)
 	})
+
 	t.Run("valid-path", func(t *testing.T) {
 		yml := `
 kind: Deployment
@@ -419,61 +431,61 @@ func TestBuildValueOfSetPath_NestedPath(t *testing.T) {
 
 // merge values
 func TestMergeValues_EmptySource(t *testing.T) {
-	dest := map[string]interface{}{"a": 1}
-	src := map[string]interface{}{}
+	src := map[string]interface{}{"a": 1}
+	dest := map[string]interface{}{}
 	expected := map[string]interface{}{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_EmptyDestination(t *testing.T) {
-	dest := map[string]interface{}{}
-	src := map[string]interface{}{"a": 1}
-	expected := map[string]interface{}{"a": 1}
-	actual := v3util.MergeTables(dest, src)
-	assert.Equal(t, expected, actual)
-}
-
-func TestMergeValues_NilSource(t *testing.T) {
+	src := map[string]interface{}{}
 	dest := map[string]interface{}{"a": 1}
-	var src map[string]interface{}
 	expected := map[string]interface{}{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_NilDestination(t *testing.T) {
-	dest := map[string]interface{}{}
 	src := map[string]interface{}{"a": 1}
+	dest := map[string]interface{}{}
+	expected := map[string]interface{}{"a": 1}
+	actual := v3util.MergeTables(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
+func TestMergeValues_NilSource(t *testing.T) {
+	src := map[string]interface{}{}
+	dest := map[string]interface{}{"a": 1}
 	expected := map[string]interface{}{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_OverwriteWithNonMap(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	src := map[string]interface{}{"a": 2}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	dest := map[string]interface{}{"a": 2}
 	expected := map[string]interface{}{"a": 2}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_DeepMerge(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	src := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	dest := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
 	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_ComplexMerge(t *testing.T) {
-	dest := map[string]interface{}{
+	src := map[string]interface{}{
 		"a": 1,
 		"b": map[string]interface{}{
 			"c": 2,
 		},
 	}
-	src := map[string]interface{}{
+	dest := map[string]interface{}{
 		"a": 3,
 		"b": map[string]interface{}{
 			"d": 4,
@@ -494,10 +506,10 @@ func TestMergeValues_ComplexMerge(t *testing.T) {
 
 // new
 func TestMergeValues_KeyExistsButNotMap(t *testing.T) {
-	dest := map[string]interface{}{
+	src := map[string]interface{}{
 		"a": 1,
 	}
-	src := map[string]interface{}{
+	dest := map[string]interface{}{
 		"a": map[string]interface{}{"b": 2},
 	}
 	expected := map[string]interface{}{
@@ -508,10 +520,10 @@ func TestMergeValues_KeyExistsButNotMap(t *testing.T) {
 }
 
 func TestMergeValues_KeyExistsAndIsMap(t *testing.T) {
-	dest := map[string]interface{}{
+	src := map[string]interface{}{
 		"a": map[string]interface{}{"b": 1},
 	}
-	src := map[string]interface{}{
+	dest := map[string]interface{}{
 		"a": map[string]interface{}{"c": 2},
 	}
 	expected := map[string]interface{}{
@@ -522,57 +534,58 @@ func TestMergeValues_KeyExistsAndIsMap(t *testing.T) {
 }
 
 func TestMergeValues_EmptySourceAndDestination(t *testing.T) {
-	dest := map[string]interface{}{}
 	src := map[string]interface{}{}
+	dest := map[string]interface{}{}
 	expected := map[string]interface{}{}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
-func TestMergeValues_SourceWithNilValue(t *testing.T) {
-	dest := map[string]interface{}{"a": 1}
-	src := map[string]interface{}{"b": nil}
+func TestMergeValues_DestinationWithNilValue(t *testing.T) {
+	src := map[string]interface{}{"a": 1}
+	dest := map[string]interface{}{"b": nil}
 	expected := map[string]interface{}{"a": 1, "b": nil}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
-func TestMergeValues_DestinationWithNilValue(t *testing.T) {
-	dest := map[string]interface{}{"a": nil}
-	src := map[string]interface{}{"b": 2}
+func TestMergeValues_SourceWithNilValue(t *testing.T) {
+	src := map[string]interface{}{"a": nil}
+	dest := map[string]interface{}{"b": 2}
 	expected := map[string]interface{}{"a": nil, "b": 2}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_NestedMapWithEmptyMap(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	src := map[string]interface{}{"a": map[string]interface{}{}}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	dest := map[string]interface{}{"a": map[string]interface{}{}}
 	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_EmptyNestedMap(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{}}
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]interface{}{"a": map[string]interface{}{}}
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
 	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_OverwriteWithEmptyMap(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	src := map[string]interface{}{"a": map[string]interface{}{}}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	dest := map[string]interface{}{"a": map[string]interface{}{"b": nil}}
+	expected := map[string]interface{}{"a": map[string]interface{}{"b": nil}}
 	// expected := map[string]interface{}{"a": map[string]interface{}{}}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	// this is the expected result when v3util.CoalesceTables is used
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_OverwriteWithNil(t *testing.T) {
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	src := map[string]interface{}{"a": nil}
+	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	dest := map[string]interface{}{"a": nil}
 	expected := map[string]interface{}{"a": nil}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)

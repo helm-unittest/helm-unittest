@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.16.3
+HELM_VERSION := 3.16.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -47,11 +47,11 @@ install-dbg: bootstrap build-debug plugin-dir
 hookInstall: bootstrap build
 
 .PHONY: unittest
-unittest: ## Run unit tests
+unittest: build ## Run unit tests
 	go test ./... -v -cover
 
 .PHONY: test-coverage
-test-coverage: ## Test coverage with open report in default browser
+test-coverage: build ## Test coverage with open report in default browser
 	@go test -cover -coverprofile=cover.out -v ./...
 	@go tool cover -html=cover.out
 
@@ -60,7 +60,7 @@ build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
 .PHONY: build
-build: unittest ## Compile packages and dependencies
+build: ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
