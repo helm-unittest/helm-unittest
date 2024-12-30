@@ -28,7 +28,9 @@ RUN yum install -y git && \
     yum remove -y git && \
     rm -rf /var/cache/yum/* && \
     groupadd -r helmgroup && \
-    useradd -u 1000 -r helmuser -g helmgroup
+    useradd -u 1000 -r helmuser -g helmgroup && \
+    mkdir -p /apps && \
+    chown -R helmuser:helmgroup /apps
 
 USER helmuser
 

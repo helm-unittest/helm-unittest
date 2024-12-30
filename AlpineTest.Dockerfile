@@ -30,12 +30,13 @@ RUN apk upgrade --no-cache && \
     apk del curl git && \
     rm -f /var/cache/apk/* && \
     addgroup -S helmgroup && \
-    adduser -u 1000 -S helmuser -G helmgroup
+    adduser -u 1000 -S helmuser -G helmgroup && \
+    mkdir -p /apps && \
+    chown -R helmuser:helmgroup /apps
 
 USER helmuser
 
 WORKDIR /apps
-
 VOLUME ["/apps"] 
 
 ENTRYPOINT ["helm", "unittest"]
