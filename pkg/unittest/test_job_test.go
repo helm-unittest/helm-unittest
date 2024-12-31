@@ -943,7 +943,7 @@ asserts:
       value: Deployment
 `
 	var tj TestJob
-	_ = yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
 	assert.True(t, testResult.Skipped)
