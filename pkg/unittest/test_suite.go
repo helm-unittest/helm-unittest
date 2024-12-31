@@ -13,7 +13,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
@@ -74,7 +73,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	}
 
 	// Use decoder to setup strict or unstrict
-	yamlDecoder := yaml.NewDecoder(strings.NewReader(content))
+	yamlDecoder := common.YamlNewDecoder(strings.NewReader(content))
 	yamlDecoder.KnownFields(strict)
 
 	if err := yamlDecoder.Decode(&suite); err != nil {
