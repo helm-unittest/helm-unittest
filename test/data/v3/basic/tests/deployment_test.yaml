@@ -35,6 +35,9 @@ tests:
       - notMatchRegex:
           path: metadata.name
           pattern: ^.*-foobar$
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
       - contains:
           path: spec.template.spec.containers[?(@.name == "basic")].ports
           content:
@@ -147,3 +150,12 @@ tests:
       - notGreaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.memory
           value: "101Mi"
+
+  - it: should pass with no securityContext as runAsUser is removed
+    set:
+      runAsUser: null
+    template: templates/deployment.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext

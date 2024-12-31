@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.16.3
+HELM_VERSION := 3.16.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -28,8 +28,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-  HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
-  HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
+	HELM_3_PLUGINS := $(shell bash -c 'eval $$(helm env); echo $$HELM_PLUGINS')
+	HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest
 
 .PHONY: install
 install: bootstrap build plugin-dir
@@ -47,15 +47,20 @@ install-dbg: bootstrap build-debug plugin-dir
 hookInstall: bootstrap build
 
 .PHONY: unittest
-unittest: ## Run unit tests
+unittest: build ## Run unit tests
 	go test ./... -v -cover
+
+.PHONY: test-coverage
+test-coverage: build ## Test coverage with open report in default browser
+	@go test -cover -coverprofile=cover.out -v ./...
+	@go tool cover -html=cover.out
 
 .PHONY: build-debug
 build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
 .PHONY: build
-build: unittest ## Compile packages and dependencies
+build: ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
@@ -89,7 +94,7 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: build
+dockerimage: unittest ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
@@ -97,6 +102,6 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
-			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps \
+			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
