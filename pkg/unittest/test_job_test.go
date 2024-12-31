@@ -3,16 +3,17 @@ package unittest_test
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"testing"
 	"time"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
@@ -39,10 +40,9 @@ asserts:
       pattern: /z/
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 	a.Equal(tj.Name, "should do something")
 	a.Equal(tj.Values, []string{"values.yaml"})
 	a.Equal(tj.Set, map[string]interface{}{
@@ -50,14 +50,14 @@ asserts:
 		"x.y.z": "XYZ",
 	})
 	assertions := make([]*Assertion, 2)
-	assErr := yaml.Unmarshal([]byte(`
+	assErr := common.YmlUnmarshal(`
   - equal:
       path: a.b
       value: c
   - matchRegex:
       path: x.y
       pattern: /z/
-`), &assertions)
+`, &assertions)
 	a.Nil(assErr)
 	a.Equal(tj.Assertions, assertions)
 }
@@ -80,12 +80,11 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -112,13 +111,12 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{})
 	defer os.RemoveAll(renderPath)
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -143,12 +141,11 @@ asserts:
       pattern: -basic$
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -173,12 +170,11 @@ asserts:
       pattern: -basic
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -206,12 +202,11 @@ asserts:
       path: metadata.name
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -232,12 +227,11 @@ asserts:
       errorMessage: The externalPort is required
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -262,12 +256,11 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -292,13 +285,12 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 	// Write Buffer
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -320,12 +312,11 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -348,33 +339,21 @@ asserts:
 `
 	a := assert.New(t)
 
-	file, fileErr := os.Create("testjob_test_TestRunJobWithValuesFile.yaml")
-	if fileErr != nil {
-		a.FailNow("Failed to create file")
-	}
-	_, writeErr := file.WriteString("nameOverride: mary-jane")
-	if writeErr != nil {
-		a.FailNow("Failed to write to file")
-	}
-	closeErr := file.Close()
-	if closeErr != nil {
-		a.FailNow("Failed to close file")
-	}
+	file := path.Join("_scratch", "testjob_test_TestRunJobWithValuesFile.yaml")
+	a.Nil(writeToFile("nameOverride: mary-jane", file))
+	defer os.RemoveAll(file)
 
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
-	a.Nil(err)
+	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.FileExists(file.Name())
+	a.FileExists(file)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
-
-	os.Remove(file.Name())
 }
 
 func TestV3RunJobWithReleaseSettings(t *testing.T) {
@@ -392,12 +371,11 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -415,12 +393,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -440,12 +417,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.NotNil(testResult.ExecError)
@@ -467,15 +443,13 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
@@ -495,12 +469,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	a := assert.New(t)
 	a.False(testResult.Passed)
 	a.Equal(0, len(tj.Capabilities.APIVersions))
 }
@@ -518,13 +491,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
 
+	a := assert.New(t)
 	a.False(testResult.Passed)
 	a.Equal([]string{}, tj.Capabilities.APIVersions)
 	a.Equal("12", tj.Capabilities.MinorVersion)
@@ -542,14 +513,11 @@ asserts:
     template: templates/crd_backup.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
-
-	a := assert.New(t)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
-	a.False(testResult.Passed)
-	a.Equal("7", tj.Capabilities.MinorVersion)
+	assert.False(t, testResult.Passed)
+	assert.Equal(t, "7", tj.Capabilities.MinorVersion)
 }
 
 func TestV3RunJobWithChartSettings(t *testing.T) {
@@ -572,14 +540,13 @@ asserts:
     template: templates/deployment.yaml
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
@@ -596,12 +563,11 @@ asserts:
       errorMessage:	"error calling include: template: no template \"non-existing-named-template\" associated with template \"gotpl\""
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -619,12 +585,11 @@ asserts:
       errorMessage: "values don't meet the specifications of the schema(s) in the following chart(s):\nwith-schema:\n- (root): image is required\n"
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.NotNil(testResult.ExecError)
@@ -645,14 +610,13 @@ asserts:
   - failedTemplate: {}
 `
 	var tj TestJob
-	err := unmarshalJob(manifest, &tj)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
+	a := assert.New(t)
 	a.NotNil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
@@ -671,12 +635,11 @@ asserts:
   - notFailedTemplate: {}
 `
 	var tj TestJob
-	err := yaml.Unmarshal([]byte(manifest), &tj)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
-	a.Nil(err)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -700,8 +663,7 @@ asserts:
 `
 	var tj TestJob
 	a := assert.New(t)
-	err := unmarshalJob(manifest, &tj)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -723,15 +685,13 @@ asserts:
       pattern: "(.*-)?postgresql-0.8.3"
 `
 	var tj TestJob
-	a := assert.New(t)
-	err := unmarshalJob(manifest, &tj)
-	a.Nil(err)
+	unmarshalJobTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
-	a.Nil(testResult.ExecError)
-	a.True(testResult.Passed)
-	a.Equal(1, len(testResult.AssertsResult))
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 1, len(testResult.AssertsResult))
 }
 
 func TestModifyChartMetadataVersions(t *testing.T) {
@@ -846,8 +806,7 @@ asserts:
 `
 	var tj TestJob
 	assert := assert.New(t)
-	err := yaml.Unmarshal([]byte(manifest), &tj)
-	assert.NoError(err)
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
@@ -868,8 +827,7 @@ asserts:
   - notSupportedAssert:
 `
 	var tj TestJob
-	yaml.Unmarshal([]byte(manifest), &tj)
-
+	common.YmlUnmarshal(manifest, &tj)
 	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
 
 	a := assert.New(t)
@@ -878,4 +836,95 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
+}
+
+func TestV3RunJobPatchArrayValue(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should patch second element
+template: templates/configmap.yaml
+values:
+- %s
+set:
+ ingress:
+  hosts[1]: should-override-second.local
+asserts:
+  - exists:
+      path: data["my.ingress.hosts"]
+  - notEqual:
+      path: data["my.ingress.hosts"]
+      value:
+      - null
+      - should-override-second.local
+  - equal:
+      path: data["my.ingress.hosts"]
+      value:
+      - chart-example-first.local
+      - chart-example-second.local
+      - chart-example-third.local
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "test_tmp_values.yaml")
+	a.Nil(writeToFile(`
+ingress:
+  hosts:
+    - chart-example-first.local
+    - chart-example-second.local
+    - chart-example-third.local
+`, file))
+	defer os.RemoveAll(file)
+
+	var tj TestJob
+	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 3, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobPatchPointArrayValue(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should patch second element
+template: templates/configmap.yaml
+values:
+- %s
+set:
+ ingress.hosts[1]: should-override-second.local
+asserts:
+  - exists:
+      path: data["my.ingress.hosts"]
+  - equal:
+      path: data["my.ingress.hosts"]
+      value:
+      - null
+      - should-override-second.local
+  - notEqual:
+      path: data["my.ingress.hosts"]
+      value:
+      - chart-example-first.local
+      - should-override-second.local
+      - chart-example-third.local
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "test_tmp_values.yaml")
+	a.Nil(writeToFile(`
+ingress:
+  hosts:
+    - chart-example-first.local
+    - chart-example-second.local
+    - chart-example-third.local
+`, file))
+	defer os.RemoveAll(file)
+
+	var tj TestJob
+	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
+
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 3, len(testResult.AssertsResult))
 }

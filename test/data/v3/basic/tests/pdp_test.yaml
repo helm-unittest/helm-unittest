@@ -1,0 +1,11 @@
+suite: test pod disruption budget
+templates:
+  - templates/pdp.yaml
+tests:
+  - it: should pass all kinds of assertion
+    asserts:
+      - exists:
+          path: spec.minAvailable
+      - greaterOrEqual:
+          path: spec.minAvailable
+          value: 2

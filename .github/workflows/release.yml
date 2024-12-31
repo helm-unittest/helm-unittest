@@ -37,7 +37,7 @@ jobs:
 
     - name: publish artifacts
       # https://github.com/softprops/action-gh-release
-      uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+      uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
       with:
         files: _dist/**
 
@@ -87,7 +87,7 @@ jobs:
       - name: Docker meta
         id: meta
         # https://github.com/docker/metadata-action
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
@@ -128,7 +128,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
       
       - name: Upload digest
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -160,7 +160,7 @@ jobs:
       
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
         env:
           HELM_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_LATEST_VERSION) }}
           PLUGIN_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}

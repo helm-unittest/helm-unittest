@@ -12,14 +12,15 @@
  PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
  PASS  test override names and fullNames in Kubernetes resources	../../test/data/v3/basic/tests/namesOverride_test.yaml
+ PASS  test pod disruption budget	../../test/data/v3/basic/tests/pdp_test.yaml
  PASS  test service	../../test/data/v3/basic/tests/service_test.yaml
 	- SKIPPED 'should skip test'
  PASS  test service account	../../test/data/v3/basic/tests/serviceaccount_test.yaml
 
 
 Charts:      1 passed, 1 total
-Test Suites: 12 passed, 12 total
-Tests:       33 passed, 1 skipped, 34 total
+Test Suites: 13 passed, 13 total
+Tests:       41 passed, 41 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 

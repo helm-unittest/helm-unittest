@@ -19,7 +19,7 @@ spec:
         app: {{ template "basic.name" . }}
         release: {{ .Release.Name }}
     spec:
-      {{- if .Values.runAsUser }}
+      {{- if hasKey .Values "runAsUser" }}
       securityContext:
         runAsUser: {{ .Values.runAsUser }}
       {{- end }}

@@ -14,4 +14,4 @@ spec:
   namespaceSelector:
     matchNames:
       - prometheus
-  {{- end }}
+{{- end }}
