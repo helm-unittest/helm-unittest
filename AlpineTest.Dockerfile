@@ -35,7 +35,6 @@ RUN apk upgrade --no-cache && \
 USER helmuser
 
 WORKDIR /apps
-
 VOLUME ["/apps"] 
 
 ENTRYPOINT ["helm", "unittest"]
