@@ -51,6 +51,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			}
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
+				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
 			}
 		}
@@ -77,6 +78,17 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	yamlDecoder.KnownFields(strict)
 
 	if err := yamlDecoder.Decode(&suite); err != nil {
+		// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+		// escape special characters only if unmarshall results in an error
+		if strings.Contains(err.Error(), "unknown escape character") {
+			y := common.YmlEscapeHandlers{}
+			escaped := y.Escape(content)
+			if escaped != nil {
+				if err = k8syaml.Unmarshal(escaped, &suite); err != nil {
+					return &suite, err
+				}
+			}
+		}
 		return &suite, err
 	}
 	err = suite.validateTestSuite()
