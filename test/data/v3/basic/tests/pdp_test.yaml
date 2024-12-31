@@ -8,4 +8,4 @@ tests:
           path: spec.minAvailable
       - greaterOrEqual:
           path: spec.minAvailable
-          value: 2
+          value: 1

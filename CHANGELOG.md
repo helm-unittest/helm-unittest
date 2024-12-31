@@ -1,3 +1,12 @@
+0.7.1 / 2024-12-31
+==================
+- Move custom MergeValues to HelmCharts MergeTables to align merging values with Helm (relates #471)
+- Correct mix up test value with expectation in lessOrEqual and greaterOrEqual validators (resolves #515)
+- Refactoring for improved modules update (credits @ivankatliarchuk, relates #501)
+- Added extra tests for validation (credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update documentation
+
 0.7.0 / 2024-11-25
 ==================
 - Fix template path is translated differently (credits @ivankatliarchuk, resolves #300)
