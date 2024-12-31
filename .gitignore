@@ -17,6 +17,6 @@ _dist
 .idea
 
 .direnv
-**/.debug
 cover.out
+**/.debug
 **/Chart.lock
