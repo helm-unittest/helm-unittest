@@ -600,13 +600,8 @@ tests:
           count: 0
 `
 	testSuite := TestSuite{}
-<<<<<<< HEAD
-	err := yaml.Unmarshal([]byte(suiteDoc), &testSuite)
-	assert.Nil(t, err)
-=======
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
->>>>>>> main
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
