@@ -21,14 +21,14 @@ func TestEqualOrGreaterValidatorOk(t *testing.T) {
 			name:     "test case 1: int values",
 			doc:      "spec: 4",
 			path:     "spec",
-			value:    5,
+			value:    3,
 			expected: true,
 		},
 		{
 			name:     "test case 2: float64 values",
 			doc:      "cpu: 0.6",
 			path:     "cpu",
-			value:    0.75,
+			value:    0.5,
 			expected: true,
 		},
 		{
@@ -68,52 +68,52 @@ func TestEqualOrGreaterValidatorFail(t *testing.T) {
 			name:  "test case 1: int values",
 			doc:   "value: 25",
 			path:  "value",
-			value: 5,
+			value: 55,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tvalue",
 				"Expected to be greater then or equal to, got:",
-				"\tthe expected '5' is not greater or equal to the actual '25'",
+				"\tthe actual '25' is not greater or equal to the expected '55'",
 			},
 		},
 		{
 			name:  "test case 2: float64 values",
 			doc:   "cpu: 1.7",
 			path:  "cpu",
-			value: 1.31,
+			value: 1.91,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
-				"\tthe expected '1.31' is not greater or equal to the actual '1.7'",
+				"\tthe actual '1.7' is not greater or equal to the expected '1.91'",
 			},
 		},
 		{
 			name:  "test case 3: float64 values",
 			doc:   "cpu: 1.341",
 			path:  "cpu",
-			value: 1.338,
+			value: 1.348,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
-				"\tthe expected '1.338' is not greater or equal to the actual '1.341'",
+				"\tthe actual '1.341' is not greater or equal to the expected '1.348'",
 			},
 		},
 		{
 			name:  "test case 4: string values",
 			doc:   "cpu: 600m",
 			path:  "cpu",
-			value: "590m",
+			value: "690m",
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be greater then or equal to, got:",
-				"\tthe expected '590m' is not greater or equal to the actual '600m'",
+				"\tthe actual '600m' is not greater or equal to the expected '690m'",
 			},
 		},
 	}
@@ -216,29 +216,6 @@ spec:
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
-}
-
-func TestEqualOrGreaterValidator_TODO(t *testing.T) {
-	var actual = `
-kind: PodDisruptionBudget
-metadata:
-  name: 'greaterorequal-test-pdb'
-spec:
-  minAvailable: 2
-  unhealthyPodEvictionPolicy: AlwaysAllow
-`
-	manifest := makeManifest(actual)
-
-	v := EqualOrGreaterValidator{
-		Path:  "spec.minAvailable",
-		Value: 1,
-	}
-	pass, _ := v.Validate(&ValidateContext{
-		Docs:     []common.K8sManifest{manifest},
-		Negative: false,
-	})
-
-	assert.False(t, pass)
 }
 
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
