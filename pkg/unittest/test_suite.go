@@ -84,7 +84,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 			y := common.YmlEscapeHandlers{}
 			escaped := y.Escape(content)
 			if escaped != nil {
-				if err = k8syaml.Unmarshal(escaped, &suite); err != nil {
+				if err = common.YmlUnmarshal(string(escaped), &suite); err != nil {
 					return &suite, err
 				}
 			}
