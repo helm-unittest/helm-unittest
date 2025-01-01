@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -45,6 +44,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			if testSuite != nil {
 				for _, test := range testSuite.Tests {
 					if test != nil {
+						testSuite.polishSkipSettings(test)
 						testSuite.polishChartSettings(test)
 						testSuite.polishCapabilitiesSettings(test)
 					}
@@ -218,6 +218,9 @@ type TestSuite struct {
 	fromRender bool
 	// An identifier to append to snapshot files
 	SnapshotId string `yaml:"snapshotId"`
+	Skip       struct {
+		Reason string `yaml:"reason"`
+	} `yaml:"skip"`
 }
 
 // RunV3 runs all the test jobs defined in TestSuite.
@@ -233,12 +236,15 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	result.Passed, result.TestsResult = s.runV3TestJobs(
+	sResult, tResults := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
 		failfast,
 		renderPath,
 	)
+	result.TestsResult = tResults
+	result.Passed = sResult.Pass
+	result.Skipped = sResult.Skip
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -257,6 +263,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			s.polishCapabilitiesSettings(test)
 			s.polishKubernetesProviderSettings(test)
 			s.polishChartSettings(test)
+			s.polishSkipSettings(test)
 
 			// Make deep clone of global set
 			test.globalSet = copySet(s.Set)
@@ -296,6 +303,24 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)
 }
 
+// polishSkipSettings aims to determine the appropriate Skip reason for a given TestJob within a TestSuite
+// if the TestSuite itself has a Skip.Reason set, it takes precedence, and this reason is applied to the individual TestJob
+func (s *TestSuite) polishSkipSettings(test *TestJob) {
+	if s.Skip.Reason != "" {
+		test.Skip.Reason = s.Skip.Reason
+	} else if s.Skip.Reason == "" {
+		skipped := 0
+		for _, test := range s.Tests {
+			if test.Skip.Reason != "" {
+				skipped++
+			}
+		}
+		if skipped == len(s.Tests) {
+			s.Skip.Reason = "all tests are skipped"
+		}
+	}
+}
+
 func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 	test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
@@ -317,35 +342,49 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 	log.WithField(common.LOG_TEST_SUITE, "polish-chart-settings").Debug("test.chart '", test.Chart)
 }
 
+type SuiteResult struct {
+	Pass bool
+	Skip bool
+}
+
 func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
 	failfast bool,
 	renderPath string,
-) (bool, []*results.TestJobResult) {
-	suitePass := false
+) (*SuiteResult, []*results.TestJobResult) {
+	result := SuiteResult{Pass: false, Skip: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
+	skipped := 0
+
+	// (Re)load the chart used by this suite
+	chart, _ := v3loader.Load(chartPath)
 
 	for idx, testJob := range s.Tests {
-		// (Re)load the chart used by this suite (with logging temporarily disabled)
-		log.SetOutput(io.Discard)
-		chart, _ := v3loader.Load(chartPath)
-		log.SetOutput(os.Stdout)
-
-		jobResult := testJob.RunV3(chart, cache, failfast, renderPath, &results.TestJobResult{Index: idx})
-		jobResults[idx] = jobResult
-
-		if idx == 0 {
-			suitePass = jobResult.Passed
+		var jobResult *results.TestJobResult
+		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
+		if testJob.Skip.Reason != "" {
+			job.Skipped = true
+			skipped++
+			jobResults[idx] = &job
+			if idx == 0 {
+				result.Pass = true
+			}
+		} else {
+			jobResult = testJob.RunV3(chart, cache, failfast, renderPath, &job)
+			jobResults[idx] = jobResult
+			if idx == 0 {
+				result.Pass = jobResult.Passed
+			}
+			result.Pass = result.Pass && jobResult.Passed
 		}
 
-		suitePass = suitePass && jobResult.Passed
-
-		if !suitePass && failfast {
+		if !result.Pass && failfast {
 			break
 		}
 	}
-	return suitePass, jobResults
+	result.Skip = skipped == len(s.Tests)
+	return &result, jobResults
 }
 
 func (s *TestSuite) validateTestSuite() error {
@@ -354,7 +393,7 @@ func (s *TestSuite) validateTestSuite() error {
 	}
 
 	if s.fromRender && len(s.Name) == 0 {
-		return fmt.Errorf(("helm chart based test suites must include `suite` field"))
+		return fmt.Errorf("helm chart based test suites must include `suite` field")
 	}
 
 	for _, testJob := range s.Tests {
@@ -369,7 +408,7 @@ func (s *TestSuite) validateTestSuite() error {
 
 func (s *TestSuite) SnapshotFileUrl() string {
 	if len(s.SnapshotId) > 0 {
-		// appedn the snapshot id
+		// append the snapshot id
 		return fmt.Sprintf("%s_%s", s.definitionFile, s.SnapshotId)
 	}
 	return s.definitionFile

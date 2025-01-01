@@ -2,12 +2,14 @@
   DisplayName: (string) (len=22) "validate empty asserts",
   FilePath: (string) "",
   Passed: (bool) false,
+  Skipped: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
     (*results.TestJobResult)({
       DisplayName: (string) (len=27) "should fail with no asserts",
       Index: (int) 0,
       Passed: (bool) false,
+      Skipped: (bool) false,
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) {
       },

@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,9 +14,26 @@ import (
 
 func setupTestCmd() *cobra.Command {
 	testCmd := &cobra.Command{
-		Use: "unittest",
-		Run: RunPlugin,
+		Use:           "unittest",
+		Run:           RunPlugin,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
+	// silence tests
+	// redirect output to buffer
+	buf := new(bytes.Buffer)
+	testCmd.SetOut(buf)
+	testCmd.SetErr(buf)
+
+	// old := os.Stdout // keep backup of the real stdout
+	_, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// back to normal state
+	// w.Close()
+	// out, _ := io.ReadAll(r)
+	// os.Stdout = old // restoring the real stdout
+
 	InitPluginFlags(testCmd)
 	return testCmd
 }
