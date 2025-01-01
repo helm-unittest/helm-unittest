@@ -50,28 +50,28 @@ func (o operatorValidator) compareValues(expected, actual interface{}, compariso
 	}
 
 	if !result {
-		return false, []string{fmt.Sprintf("the expected '%s' is not %s or equal to the actual '%s'", expStr, comparisonType, actStr)}
+		return false, []string{fmt.Sprintf("the actual '%s' is not %s or equal to the expected '%s'", actStr, comparisonType, expStr)}
 	}
 
 	return true, nil
 }
 
 func (o operatorValidator) compareStringValues(expected, actual string, comparisonType string, negative bool) bool {
-	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+	if (comparisonType == "greater" && actual >= expected) || (comparisonType == "less" && actual <= expected) == negative {
 		return true
 	}
 	return false
 }
 
 func (o operatorValidator) compareIntValues(expected, actual int, comparisonType string, negative bool) bool {
-	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+	if (comparisonType == "greater" && actual >= expected) || (comparisonType == "less" && actual <= expected) == negative {
 		return true
 	}
 	return false
 }
 
 func (o operatorValidator) compareFloatValues(expected, actual float64, comparisonType string, negative bool) bool {
-	if (comparisonType == "greater" && expected >= actual) || (comparisonType == "less" && expected <= actual) == negative {
+	if (comparisonType == "greater" && actual >= expected) || (comparisonType == "less" && actual <= expected) == negative {
 		return true
 	}
 	return false

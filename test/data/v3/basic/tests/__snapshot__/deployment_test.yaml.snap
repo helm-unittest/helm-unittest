@@ -1,6 +1,6 @@
 should pass all kinds of assertion:
   1: |
-    replicas: 1
+    replicas: 2
     template:
       metadata:
         labels:
