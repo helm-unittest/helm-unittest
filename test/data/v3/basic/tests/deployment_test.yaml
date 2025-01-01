@@ -91,16 +91,16 @@ tests:
     asserts:
       - greaterOrEqual:
           path: metadata.labels.appVersion
-          value: 2.0.0
+          value: 0.0.1
       - greaterOrEqual:
           path: spec.template.spec.securityContext.runAsUser
-          value: 1286
+          value: 1000
       - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
-          value: "1540m"
+          value: "1440m"
       - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-          value: 1.11
+          value: 1.0
       - greaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
@@ -125,25 +125,25 @@ tests:
           value: 10.0.0
       - lessOrEqual:
           path: spec.template.spec.securityContext.runAsUser
-          value: 1281
+          value: 1285
       - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.limits.cpu
-          value: "1280m"
+          value: "2000m"
       - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-          value: 1.09
+          value: 1.9
       - lessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.1
       - notLessOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.0
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
+          value: 1.0
+      - notGreaterOrEqual:
+          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
           value: 1.2
-      - notGreaterOrEqual:
-          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-          value: 11.0
-      - notGreaterOrEqual:
-          path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.cpu
-          value: 0.1
       - notGreaterOrEqual:
           path: spec.template.spec.containers[?(@.name == "basic")].resources.requests.memory
           value: "1Mi"

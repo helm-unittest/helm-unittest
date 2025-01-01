@@ -21,21 +21,21 @@ func TestEqualOrLessValidatorOk(t *testing.T) {
 			name:     "Test case 1: int ok",
 			doc:      "spec: 4",
 			path:     "spec",
-			value:    3,
+			value:    5,
 			expected: true,
 		},
 		{
 			name:     "Test case 2: float64 ok",
 			doc:      "cpu: 0.6",
 			path:     "cpu",
-			value:    0.54,
+			value:    0.7,
 			expected: true,
 		},
 		{
 			name:     "Test case 3: string ok",
 			doc:      "cpu: 600m",
 			path:     "cpu",
-			value:    "580m",
+			value:    "680m",
 			expected: true,
 		},
 	}
@@ -68,39 +68,39 @@ func TestEqualOrLessValidatorFail(t *testing.T) {
 			name:  "Test case 1: int fail",
 			doc:   "value: 6",
 			path:  "value",
-			value: 7,
+			value: 5,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tvalue",
 				"Expected to be less then or equal to, got:",
-				"\tthe expected '7' is not less or equal to the actual '6'",
+				"\tthe actual '6' is not less or equal to the expected '5'",
 			},
 		},
 		{
 			name:  "Test case 2: float64 fail",
 			doc:   "cpu: 1.7",
 			path:  "cpu",
-			value: 1.71,
+			value: 1.69,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be less then or equal to, got:",
-				"\tthe expected '1.71' is not less or equal to the actual '1.7'",
+				"\tthe actual '1.7' is not less or equal to the expected '1.69'",
 			},
 		},
 		{
 			name:  "Test case 3: float64 fail",
 			doc:   "cpu: 1.341",
 			path:  "cpu",
-			value: 1.342,
+			value: 1.34,
 			errorMsg: []string{
 				"DocumentIndex:\t0",
 				"ValuesIndex:\t0",
 				"Path:\tcpu",
 				"Expected to be less then or equal to, got:",
-				"\tthe expected '1.342' is not less or equal to the actual '1.341'",
+				"\tthe actual '1.341' is not less or equal to the expected '1.34'",
 			},
 		},
 	}
@@ -211,7 +211,7 @@ a:
 
 	v := EqualOrLessValidator{
 		Path:  "a.*",
-		Value: 2,
+		Value: 0,
 	}
 	pass, diff := v.Validate(&ValidateContext{
 		FailFast: true,
@@ -224,7 +224,7 @@ a:
 		"ValuesIndex:\t0",
 		"Path:\ta.*",
 		"Expected to be less then or equal to, got:",
-		"\tthe expected '2' is not less or equal to the actual '1'",
+		"\tthe actual '1' is not less or equal to the expected '0'",
 	}, diff)
 }
 
@@ -249,7 +249,7 @@ func TestEqualOrLessValidatorWhenNoManifestFail(t *testing.T) {
 func TestEqualOrLessValidatorWhenNoManifestNegativeOk(t *testing.T) {
 	v := EqualOrLessValidator{
 		Path:  "a.*",
-		Value: 2,
+		Value: 0,
 	}
 	pass, diff := v.Validate(&ValidateContext{
 		FailFast: true,
