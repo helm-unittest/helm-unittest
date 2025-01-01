@@ -1,4 +1,4 @@
-piVersion: v2
+apiVersion: v2
 name: escape-special-characters
 version: 0.1.0
 description: simple chart to validate escape of characters
