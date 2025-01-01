@@ -18,3 +18,5 @@ _dist
 
 .direnv
 cover.out
+**/.debug
+**/Chart.lock
