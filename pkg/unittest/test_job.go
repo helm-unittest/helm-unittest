@@ -322,10 +322,8 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
 	var outputOfFiles map[string]string
-
 	// modify chart metadata before rendering
 	t.ModifyChartMetadata(targetChart)
-
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
