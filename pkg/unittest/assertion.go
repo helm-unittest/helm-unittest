@@ -231,7 +231,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if a.validator == nil {
 		for key := range assertDef {
 			if key != "template" && key != "documentIndex" && key != "not" {
-				return fmt.Errorf("assertion type `%s` is invalid", key)
+				return fmt.Errorf("Assertion type `%s` is invalid", key)
 			}
 		}
 		return fmt.Errorf("no assertion type defined")
