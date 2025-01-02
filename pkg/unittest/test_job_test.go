@@ -1,6 +1,7 @@
 package unittest_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -928,4 +929,92 @@ ingress:
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
 	assert.Equal(t, 3, len(testResult.AssertsResult))
+}
+
+func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
+	c := &v3chart.Chart{
+		Metadata: &v3chart.Metadata{
+			Name:    "moby",
+			Version: "1.2.3",
+		},
+		Templates: []*v3chart.File{},
+		Values:    map[string]interface{}{},
+	}
+
+	tests := []struct {
+		template *v3chart.File
+		error    error
+	}{
+		{
+			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			error:    errors.New("execution error at (moby/templates/validate.tpl:1:4): `root`"),
+		},
+		{
+			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
+		},
+	}
+
+	a := assert.New(t)
+
+	for _, test := range tests {
+		tj := TestJob{}
+		c.Templates = []*v3chart.File{test.template}
+		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+		a.Error(testResult.ExecError)
+		a.False(testResult.Passed)
+		a.EqualError(testResult.ExecError, test.error.Error())
+	}
+}
+
+func TestV3RunJob_TplFunction_Fail_WithAssertion(t *testing.T) {
+	c := &v3chart.Chart{
+		Metadata: &v3chart.Metadata{
+			Name:    "moby",
+			Version: "1.2.3",
+		},
+		Templates: []*v3chart.File{},
+		Values:    map[string]interface{}{},
+	}
+
+	tests := []struct {
+		template *v3chart.File
+		error    error
+		expected bool
+	}{
+		{
+			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			error:    nil,
+			expected: true,
+		},
+		{
+			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
+			expected: false,
+		},
+	}
+
+	manifest := `
+it: should validate failure message
+template: templates/validate.tpl
+asserts:
+- failedTemplate:
+    errorPattern: "` + "`root`" + `"
+`
+	var tj TestJob
+	unmarshalJobTestHelper(manifest, &tj, t)
+
+	for _, test := range tests {
+		c.Templates = []*v3chart.File{test.template}
+		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+		assert.Equal(t, test.expected, testResult.Passed)
+		if test.error != nil {
+			assert.NotNil(t, testResult.ExecError)
+			assert.False(t, testResult.Passed)
+			assert.EqualError(t, testResult.ExecError, test.error.Error())
+		} else {
+			assert.Nil(t, testResult.ExecError)
+			assert.True(t, testResult.Passed)
+		}
+	}
 }
