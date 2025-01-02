@@ -26,7 +26,6 @@ func (y *YmlEscapeHandlers) Escape(content string) []byte {
 
 // escapeBackslashes escapes backslashes in the given byte slice.
 // It ensures that an even number of backslashes are present by doubling any single backslash found.
-
 func escapeBackslashes(content []byte) []byte {
 	var result bytes.Buffer
 	i := 0
