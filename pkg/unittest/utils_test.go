@@ -1,7 +1,6 @@
 package unittest_test
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,21 +28,18 @@ func unmarshalJobTestHelper(input string, out *TestJob, t *testing.T) {
 func writeToFile(data string, filename string) error {
 	err := os.MkdirAll(filepath.Dir(filename), 0755)
 	if err != nil {
-		fmt.Println("Error creating folders for file:", err)
 		return err
 	}
 
 	// Create the file with an absolute path
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
 		return err
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(data)
 	if err != nil {
-		fmt.Println("Error writing to file:", err)
 		return err
 	}
 

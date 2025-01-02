@@ -61,7 +61,7 @@ func (a *Assertion) Assert(
 				invalidRender := "Error: rendered manifest is empty"
 				failInfo = append(failInfo, invalidRender)
 			} else {
-				emptyTemplate := []common.K8sManifest{}
+				var emptyTemplate []common.K8sManifest
 				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError, failfast)
 			}
 
@@ -95,7 +95,6 @@ func (a *Assertion) Assert(
 			singleTemplateResult[template] = rendered
 
 			selectedDocs := selectedDocsByTemplate[template]
-
 			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs, snapshotComparer, renderError, failfast)
 
 			if !validatePassed {
@@ -145,7 +144,7 @@ func (a *Assertion) getDocumentsByDefaultTemplates(templatesResult map[string][]
 }
 
 func (a *Assertion) getKeys(docs map[string][]common.K8sManifest) []string {
-	keys := []string{}
+	var keys []string
 
 	for key := range docs {
 		keys = append(keys, key)
@@ -225,7 +224,6 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			SkipEmptyTemplates: documentSelectorSkipEmptyTemplates,
 		}
 	}
-
 	if err := a.constructValidator(assertDef); err != nil {
 		return err
 	}
