@@ -151,8 +151,6 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		return false, validateErrors
 	}
 
-	// TODO: workaround for the issue that the error message is not captured in the context
-
 	if context.RenderError != nil {
 		// Validating error, when the errorSource is due to rendering errors
 		if a.ErrorPattern != "" {

@@ -34,8 +34,6 @@ tests:
         errorPattern: ".+"
     - failedTemplate:
         errorPattern: "[a-b-A-Z0-9`()].*"
-    # - failedTemplate:
-    #     errorPattern: "\\"
 
   # test_job.go line 338 outputOfFiles, err = v3engine.Render(filteredChart, vals) behavior is not as expected
   # - it: should validate failure message with meta characters '`' and with new-line '\n'

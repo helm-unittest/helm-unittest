@@ -348,29 +348,44 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_OK(t *
 	}
 }
 
-// func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t *testing.T) {
-// 	var template = "raw: |-\n    " + "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
-// 	manifest := makeManifest(template)
-//
-// 	cases := []struct {
-// 		name    string
-// 		pattern string
-// 		diff    interface{}
-// 	}{
-// 		{
-// 			name:    "pattern with incorrect regex",
-// 			pattern: `\(root)`,
-// 			diff:    []string{"Error:", "\terror parsing regexp: unexpected ): `\\(root)`"},
-// 		},
-// 	}
-//
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			v := FailedTemplateValidator{ErrorPattern: tt.pattern}
-// 			_, diff := v.Validate(&ValidateContext{
-// 				Docs: []common.K8sManifest{manifest},
-// 			})
-// 			assert.Equal(t, diff, tt.diff)
-// 		})
-// 	}
-// }
+func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t *testing.T) {
+	var template = "raw: |-\n    " + "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+	manifest := makeManifest(template)
+
+	cases := []struct {
+		name    string
+		pattern string
+		diff    interface{}
+	}{
+		{
+			name:    "pattern with incorrect regex escape",
+			pattern: `\(root)`,
+			diff:    []string{
+				"DocumentIndex:\t0",
+				"Expected to match:",
+				"\t\\(root)", "Actual:",
+				"\t`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)",
+			},
+		},
+		{
+			name:    "pattern with incorrect regex escape",
+			pattern: `\\`,
+			diff:    []string{
+				"DocumentIndex:\t0",
+				"Expected to match:",
+				"\t\\\\", "Actual:",
+				"\t`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			v := FailedTemplateValidator{ErrorPattern: tt.pattern}
+			_, diff := v.Validate(&ValidateContext{
+				Docs: []common.K8sManifest{manifest},
+			})
+			assert.Equal(t, diff, tt.diff)
+		})
+	}
+}
