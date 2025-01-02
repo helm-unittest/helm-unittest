@@ -56,7 +56,7 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 
 	for idx, manifest := range manifests {
 		currentSuccess := false
-		validateSingleErrors := []string{}
+		var validateSingleErrors []string
 		actual := manifest[common.RAW]
 
 		if a == (FailedTemplateValidator{}) && !context.Negative {

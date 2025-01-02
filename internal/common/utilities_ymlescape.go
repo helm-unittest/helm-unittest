@@ -2,19 +2,23 @@ package common
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 )
 
 const (
-	bsCode byte = byte('\\')
+	bsCode                           byte = byte('\\')
+	metaCharactersNeedsEscapePattern      = `.*[.+*?()|[\]{}^$].*`
 )
+
+var metaRegex = regexp.MustCompile(metaCharactersNeedsEscapePattern)
 
 type YmlEscapeHandlers struct{}
 
 // Escape function is required, as yaml library no longer maintained
 // yaml unmaintained library issue https://github.com/go-yaml/yaml/pull/862
 func (y *YmlEscapeHandlers) Escape(content string) []byte {
-	if !strings.Contains(content, `\`) {
+	if !strings.Contains(content, `\`) && !metaRegex.MatchString(content) {
 		return nil
 	}
 	return escapeBackslashes([]byte(content))

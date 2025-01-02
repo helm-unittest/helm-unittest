@@ -56,12 +56,17 @@ func TestEscape_InputAsRunes_EscapeBackslash_Code92(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "Backslashes at the end",
+			name:     "contains meta characters but no slashes",
+			content:  []byte("some text with [value] needs escaping"),
+			expected: []byte("some text with [value] needs escaping"),
+		},
+		{
+			name:     "backslashes at the end",
 			content:  []byte("hello world\\"),
 			expected: []byte("hello world\\\\"),
 		},
 		{
-			name:     "Backslashes in the middle",
+			name:     "backslashes in the middle",
 			content:  []byte("hello\\world\\"),
 			expected: []byte("hello\\\\world\\\\"),
 		},
