@@ -95,14 +95,12 @@ func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, manife
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
-
 	if actual != nil && p.MatchString(actual.(string)) == context.Negative {
 		if metaRegex.MatchString(a.ErrorPattern) {
 			return handleMetaCharacters(a, actual, manifestIndex, actualIndex, context)
 		}
 		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 	}
-
 	return true, []string{}
 }
 

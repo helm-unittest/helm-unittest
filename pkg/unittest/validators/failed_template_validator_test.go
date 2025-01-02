@@ -332,8 +332,16 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_OK(t *
 			pattern: "\\(root\\)",
 		},
 		{
+			name:    "pattern contains metacharacters without escape",
+			pattern: "(root)",
+		},
+		{
 			name:    "pattern without escape",
 			pattern: "(root)",
+		},
+		{
+			name:    "pattern with meta characters and no explicit escape handling",
+			pattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)",
 		},
 	}
 
@@ -360,7 +368,7 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t
 		{
 			name:    "pattern with incorrect regex escape",
 			pattern: `\(root)`,
-			diff:    []string{
+			diff: []string{
 				"DocumentIndex:\t0",
 				"Expected to match:",
 				"\t\\(root)", "Actual:",
@@ -370,7 +378,7 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t
 		{
 			name:    "pattern with incorrect regex escape",
 			pattern: `\\`,
-			diff:    []string{
+			diff: []string{
 				"DocumentIndex:\t0",
 				"Expected to match:",
 				"\t\\\\", "Actual:",
