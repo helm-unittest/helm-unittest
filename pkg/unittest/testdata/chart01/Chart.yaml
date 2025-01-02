@@ -2,3 +2,7 @@ apiVersion: v2
 name: escape-special-characters
 version: 0.1.0
 description: simple chart to validate escape of characters
+keywords:
+  - helm template case1 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case1=true
+  - helm template case2 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case2=true
+  - helm template case3 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case3=true

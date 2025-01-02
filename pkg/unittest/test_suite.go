@@ -91,11 +91,11 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 		}
 		return &suite, err
 	}
+
 	err = suite.validateTestSuite()
 	if err != nil {
 		return &suite, err
 	}
-
 	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
 	return &suite, nil
@@ -363,9 +363,8 @@ func (s *TestSuite) validateTestSuite() error {
 	if len(s.Tests) == 0 {
 		return fmt.Errorf("no tests found")
 	}
-
 	if s.fromRender && len(s.Name) == 0 {
-		return fmt.Errorf(("helm chart based test suites must include `suite` field"))
+		return fmt.Errorf("helm chart based test suites must include `suite` field")
 	}
 
 	for _, testJob := range s.Tests {

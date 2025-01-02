@@ -11,6 +11,10 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
+const metaCharactersPattern = `.*[\\.+*?()|[\]{}^$].*`
+
+var metaRegex = regexp.MustCompile(metaCharactersPattern)
+
 // FailedTemplateValidator validate whether the errorMessage equal to errorMessage
 type FailedTemplateValidator struct {
 	ErrorMessage string
@@ -87,17 +91,42 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 }
 
 func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	p, err := regexp.Compile(a.ErrorPattern)
+	p, err := compilePattern(a.ErrorPattern)
 	if err != nil {
-		errorMessage := splitInfof(errorFormat, -1, -1, err.Error())
-		return false, errorMessage
+		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 
-	if (actual != nil && p.MatchString(actual.(string))) == context.Negative {
-		errorMessage := a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
-		return false, errorMessage
+	if actual != nil && p.MatchString(actual.(string)) == context.Negative {
+		if metaRegex.MatchString(a.ErrorPattern) {
+			return handleMetaCharacters(a, actual, manifestIndex, actualIndex, context)
+		}
+		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 	}
 
+	return true, []string{}
+}
+
+func compilePattern(pattern string) (*regexp.Regexp, error) {
+	p, err := regexp.Compile(pattern)
+	if err != nil {
+		escaped := regexp.QuoteMeta(pattern)
+		log.WithField("validator", "failed_template").Debugln("fallback to escaped regex", escaped)
+		p, err = regexp.Compile(escaped)
+	}
+	return p, err
+}
+
+func handleMetaCharacters(a FailedTemplateValidator, actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	escaped := regexp.QuoteMeta(a.ErrorPattern)
+	log.WithField("validator", "failed_template").Debugln("fallback to escaped regex", escaped)
+	p, err := regexp.Compile(escaped)
+	if err != nil {
+		log.WithField("validator", "failed_template").Debugln(fmt.Sprintf("failed to regexp.Compile(%s)", escaped))
+		return false, splitInfof(errorFormat, -1, -1, err.Error())
+	}
+	if p.MatchString(actual.(string)) == context.Negative {
+		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+	}
 	return true, []string{}
 }
 
@@ -113,7 +142,6 @@ func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, manife
 // Validate implement Validatable
 func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
-
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
@@ -122,6 +150,8 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 		validateErrors = append(validateErrors, errorMessage...)
 		return false, validateErrors
 	}
+
+	// TODO: workaround for the issue that the error message is not captured in the context
 
 	if context.RenderError != nil {
 		// Validating error, when the errorSource is due to rendering errors

@@ -207,7 +207,6 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
-
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
@@ -224,7 +223,6 @@ func (t *TestJob) RunV3(
 		result.ExecError = err
 		return result
 	}
-
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
@@ -314,7 +312,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	if err != nil {
 		return nil, false, err
 	}
-
 	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
 	if len(t.defaultTemplatesToAssert) == 0 {
 		// Set all files
@@ -328,6 +325,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	// modify chart metadata before rendering
 	t.ModifyChartMetadata(targetChart)
+
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
@@ -336,10 +334,10 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
+	log.WithField(LOG_TEST_JOB, "render-v3-chart").Debug("outputOfFiles:", outputOfFiles, "renderSucceed:", renderSucceed, "err:", err)
 	if err != nil {
 		return nil, false, err
 	}
-
 	return outputOfFiles, renderSucceed, nil
 }
 
