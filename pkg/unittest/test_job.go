@@ -24,6 +24,22 @@ import (
 
 const LOG_TEST_JOB = "test-job"
 
+// Split the error into several groups.
+// those groups are required to parse the correct value.
+// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
+// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
+// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
+// (?msU)
+//
+//	--- m: Multi-line mode. ^ and $ match the start and end of each line.
+//	--- s: Dot-all mode. . matches any character, including newline.
+//	--- U: Ungreedy mode. Makes quantifiers lazy by default.
+//
+// const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+
+var regexErrorPattern = regexp.MustCompile(regexPattern)
+
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
 	routes := make([]string, len(splited)/2+1)
@@ -49,26 +65,17 @@ func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[s
 }
 
 func parseV3RenderError(errorMessage string) (string, map[string]string) {
-	// Split the error into several groups.
-	// those groups are required to parse the correct value.
-	// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
-	// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
-	// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
-	const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
-
-	filePath, content := parseRenderError(regexPattern, errorMessage)
-
+	filePath, content := parseRenderError(errorMessage)
 	return filePath, content
 }
 
-func parseRenderError(regexPattern, errorMessage string) (string, map[string]string) {
+func parseRenderError(errorMessage string) (string, map[string]string) {
 	filePath := ""
 	content := map[string]string{
 		common.RAW: "",
 	}
 
-	r := regexp.MustCompile(regexPattern)
-	result := r.FindStringSubmatch(errorMessage)
+	result := regexErrorPattern.FindStringSubmatch(errorMessage)
 
 	if len(result) == 3 {
 		filePath = result[1]

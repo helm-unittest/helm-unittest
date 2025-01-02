@@ -3,7 +3,7 @@
 {{- end }}
 
 {{- if .Values.case2 }}
-{{- fail (printf "\n`runAsNonRoot` start with new line and backtick") }}
+{{- fail (printf "\n`in-backtick` start with new line following backtick") }}
 {{- end }}
 
 {{- if .Values.case3 }}

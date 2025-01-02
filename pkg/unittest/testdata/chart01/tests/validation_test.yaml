@@ -6,9 +6,9 @@ tests:
     set:
       case1: true
     asserts:
-###    - failedTemplate:
-###        errorPattern: |-
-###          `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \(root\)
+    - failedTemplate:
+        errorPattern: |-
+          `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)
     - failedTemplate:
         errorMessage: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
     - failedTemplate:
@@ -35,17 +35,15 @@ tests:
     - failedTemplate:
         errorPattern: "[a-b-A-Z0-9`()].*"
 
-  # test_job.go line 338 outputOfFiles, err = v3engine.Render(filteredChart, vals) behavior is not as expected
-  # - it: should validate failure message with meta characters '`' and with new-line '\n'
-  #   set:
-  #     case2: true
-  #   asserts:
-  #     - failedTemplate:
-  #         errorPattern: |-
-  #           `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \(root\)
-  #     - failedTemplate:
-  #         errorMessage:
-  #           "\n`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+  - it: should validate failure message with meta characters '`' and with new-line '\n'
+    set:
+      case2: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "`in-backtick` start with new line following backtick"
+      - failedTemplate:
+          errorMessage: |-
+            `in-backtick` start with new line following backtick
 
 # case with new lines in between strings
   - it: should validate failure message with meta escape characters
