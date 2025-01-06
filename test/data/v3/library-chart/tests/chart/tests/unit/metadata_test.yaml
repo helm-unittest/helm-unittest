@@ -1,0 +1,29 @@
+suite: Test annotations and names
+release:
+  namespace: foo
+templates:
+  - pod.yaml
+tests:
+  - it: should render checks with the expected config
+    set:
+      team: test-team
+      env: staging
+      vertical: platform
+      dns:
+        host: example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Pod
+      - equal:
+          path: metadata.name
+          value: test-common
+      - equal:
+          path: metadata.namespace
+          value: foo
+      - equal:
+          path: metadata.annotations
+          value:
+            meta.helm.sh/release-name: test-common
+            meta.helm.sh/release-namespace: foo
