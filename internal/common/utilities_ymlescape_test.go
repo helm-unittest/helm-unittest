@@ -1,9 +1,14 @@
-package common
+package common_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	. "github.com/helm-unittest/helm-unittest/internal/common"
+)
+
+const (
+	bsCode byte = byte('\\')
 )
 
 func TestEscape_InputAsRunes_EscapeBackslash_Code92(t *testing.T) {
