@@ -39,7 +39,6 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
-		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
 		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
 			if testSuite != nil {
@@ -52,6 +51,7 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 			}
 			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
+				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
 			}
 		}
@@ -76,7 +76,19 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	// Use decoder to setup strict or unstrict
 	yamlDecoder := common.YamlNewDecoder(strings.NewReader(content))
 	yamlDecoder.KnownFields(strict)
+
 	if err := yamlDecoder.Decode(&suite); err != nil {
+		// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+		// escape special characters only if unmarshall results in an error
+		if strings.Contains(err.Error(), "unknown escape character") {
+			y := common.YmlEscapeHandlers{}
+			escaped := y.Escape(content)
+			if escaped != nil {
+				if err = common.YmlUnmarshal(string(escaped), &suite); err != nil {
+					return &suite, err
+				}
+			}
+		}
 		return &suite, err
 	}
 
@@ -84,7 +96,6 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	if err != nil {
 		return &suite, err
 	}
-
 	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
 	return &suite, nil
@@ -352,9 +363,8 @@ func (s *TestSuite) validateTestSuite() error {
 	if len(s.Tests) == 0 {
 		return fmt.Errorf("no tests found")
 	}
-
 	if s.fromRender && len(s.Name) == 0 {
-		return fmt.Errorf(("helm chart based test suites must include `suite` field"))
+		return fmt.Errorf("helm chart based test suites must include `suite` field")
 	}
 
 	for _, testJob := range s.Tests {
