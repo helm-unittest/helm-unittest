@@ -24,6 +24,22 @@ import (
 
 const LOG_TEST_JOB = "test-job"
 
+// Split the error into several groups.
+// those groups are required to parse the correct value.
+// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
+// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
+// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
+// (?msU)
+//
+//	--- m: Multi-line mode. ^ and $ match the start and end of each line.
+//	--- s: Dot-all mode. . matches any character, including newline.
+//	--- U: Ungreedy mode. Makes quantifiers lazy by default.
+//
+// const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+
+var regexErrorPattern = regexp.MustCompile(regexPattern)
+
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
 	routes := make([]string, len(splited)/2+1)
@@ -49,26 +65,17 @@ func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[s
 }
 
 func parseV3RenderError(errorMessage string) (string, map[string]string) {
-	// Split the error into several groups.
-	// those groups are required to parse the correct value.
-	// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
-	// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
-	// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
-	const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
-
-	filePath, content := parseRenderError(regexPattern, errorMessage)
-
+	filePath, content := parseRenderError(errorMessage)
 	return filePath, content
 }
 
-func parseRenderError(regexPattern, errorMessage string) (string, map[string]string) {
+func parseRenderError(errorMessage string) (string, map[string]string) {
 	filePath := ""
 	content := map[string]string{
 		common.RAW: "",
 	}
 
-	r := regexp.MustCompile(regexPattern)
-	result := r.FindStringSubmatch(errorMessage)
+	result := regexErrorPattern.FindStringSubmatch(errorMessage)
 
 	if len(result) == 3 {
 		filePath = result[1]
@@ -210,7 +217,6 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
-
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
@@ -227,7 +233,6 @@ func (t *TestJob) RunV3(
 		result.ExecError = err
 		return result
 	}
-
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
 
@@ -324,7 +329,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	if err != nil {
 		return nil, false, err
 	}
-
 	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
 	if len(t.defaultTemplatesToAssert) == 0 {
 		// Set all files
@@ -335,7 +339,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, targetChart)
 
 	var outputOfFiles map[string]string
-
 	// modify chart metadata before rendering
 	t.ModifyChartMetadata(targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
@@ -346,10 +349,10 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
+	log.WithField(LOG_TEST_JOB, "render-v3-chart").Debug("outputOfFiles:", outputOfFiles, "renderSucceed:", renderSucceed, "err:", err)
 	if err != nil {
 		return nil, false, err
 	}
-
 	return outputOfFiles, renderSucceed, nil
 }
 

@@ -173,7 +173,6 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		resultSuites = append(resultSuites, suites...)
 	}
 	resultSuites = append(resultSuites, renderedTestSuites...)
-
 	return resultSuites, nil
 }
 
@@ -204,7 +203,6 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 			resultSuites = append(resultSuites, subchartSuites...)
 		}
 	}
-
 	return resultSuites, nil
 }
 
@@ -221,7 +219,6 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			chartPassed = false
 			continue
 		}
-
 		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
