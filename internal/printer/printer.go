@@ -66,7 +66,7 @@ func (p *Printer) Println(content string, indentLevel int) {
 	for i := 0; i < indentLevel; i++ {
 		indent += "\t"
 	}
-	fmt.Fprintln(p.Writer, indent+content)
+	_, _ = fmt.Fprintln(p.Writer, indent+content)
 }
 
 // Success print success.
