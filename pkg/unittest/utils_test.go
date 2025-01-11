@@ -73,32 +73,51 @@ func TestV3RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
 func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
 	cases := []struct {
 		chart      string
-		chartPath  []string
 		failFast   bool
 		testFlavor string
 		expected   []string
 	}{
 		{
 			chart:      "testdata/chart-fail-fast",
-			chartPath:  []string{testV3WithFailingTemplateChart},
 			failFast:   true,
 			testFlavor: "case1",
 			expected: []string{
+				"FAIL  a fail-fast first test",
 				"Test Suites: 1 failed, 0 passed, 1 total",
 				"Tests:       1 failed, 1 passed, 2 total",
-				"FAIL  a fail-fast first test",
 			},
 		},
 		{
 			chart:      "testdata/chart-fail-fast",
-			chartPath:  []string{testV3WithFailingTemplateChart},
 			failFast:   false,
 			testFlavor: "case1",
 			expected: []string{
-				"Test Suites: 1 failed, 1 passed, 2 total",
-				"Tests:       1 failed, 4 passed, 5 total",
 				"FAIL  a fail-fast first test",
 				"PASS  b fail-fast second test",
+				"Test Suites: 1 failed, 1 passed, 2 total",
+				"Tests:       1 failed, 4 passed, 5 total",
+			},
+		},
+		{
+			chart:      "testdata/chart-fail-fast",
+			failFast:   false,
+			testFlavor: "case2",
+			expected: []string{
+				"PASS  a fail-fast first test all pass",
+				"FAIL  b fail-fast second test",
+				"Test Suites: 1 failed, 1 passed, 2 total",
+				"Tests:       1 failed, 5 passed, 6 total",
+			},
+		},
+		{
+			chart:      "testdata/chart-fail-fast",
+			failFast:   true,
+			testFlavor: "case2",
+			expected: []string{
+				"PASS  a fail-fast first test all pass",
+				"FAIL  b fail-fast second test",
+				"Test Suites: 1 failed, 1 passed, 2 total",
+				"Tests:       1 failed, 5 passed, 6 total",
 			},
 		},
 	}
