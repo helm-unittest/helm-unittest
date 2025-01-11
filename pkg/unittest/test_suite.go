@@ -244,7 +244,7 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	r, tr := s.runV3TestJobs(
+	r := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
 		failFast,
@@ -253,7 +253,7 @@ func (s *TestSuite) RunV3(
 
 	result.Passed = r.Pass
 	result.FailFast = r.FailFast
-	result.TestsResult = tr
+	result.TestsResult = r.JobResults
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -343,9 +343,8 @@ func (s *TestSuite) runV3TestJobs(
 	cache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
-) (*SuiteResult, []*results.TestJobResult) {
+) *SuiteResult {
 	result := SuiteResult{Pass: true, FailFast: false}
-	// TODO: add to SuiteResult
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
 	// (Re)load the chart used by this suite (with logging temporarily disabled)
@@ -369,7 +368,8 @@ func (s *TestSuite) runV3TestJobs(
 			break
 		}
 	}
-	return &result, jobResults
+	result.JobResults = jobResults
+	return &result
 }
 
 func (s *TestSuite) validateTestSuite() error {
