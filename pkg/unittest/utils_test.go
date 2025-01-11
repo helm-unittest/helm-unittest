@@ -68,3 +68,14 @@ func TestV3RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
 	passed := runner.RunV3([]string{"testdata/chart01"})
 	assert.True(t, passed, buffer.String())
 }
+
+func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+	}
+	runner.Failfast = true
+	_ = runner.RunV3([]string{"testdata/chart-fail-fast"})
+
+}
