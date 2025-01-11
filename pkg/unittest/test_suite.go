@@ -347,13 +347,13 @@ func (s *TestSuite) runV3TestJobs(
 	result := SuiteResult{Pass: true, FailFast: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
-	// (Re)load the chart used by this suite (with logging temporarily disabled)
-	log.SetOutput(io.Discard)
-	// TODO: is this required? As we are loading the chart in the test runner RunV3
-	chart, _ := v3loader.Load(chartPath)
-	log.SetOutput(os.Stdout)
 
 	for idx, testJob := range s.Tests {
+		// (Re)load the chart used by this suite (with logging temporarily disabled)
+		log.SetOutput(io.Discard)
+		chart, _ := v3loader.Load(chartPath)
+		log.SetOutput(os.Stdout)
+
 		jobResult := testJob.RunV3(chart, cache, failFast, renderPath, &results.TestJobResult{DisplayName: testJob.Name, Index: idx})
 		jobResults[idx] = jobResult
 
