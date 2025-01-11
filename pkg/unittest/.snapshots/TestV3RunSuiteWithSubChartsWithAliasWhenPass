@@ -2,6 +2,7 @@
   DisplayName: (string) (len=24) "test suite with subchart",
   FilePath: (string) "",
   Passed: (bool) true,
+  FailFast: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=2) {
     (*results.TestJobResult)({

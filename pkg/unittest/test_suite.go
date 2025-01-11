@@ -235,7 +235,7 @@ type TestSuite struct {
 func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
@@ -247,13 +247,13 @@ func (s *TestSuite) RunV3(
 	r, tr := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
-		failfast,
+		failFast,
 		renderPath,
 	)
 
 	result.Passed = r.Pass
 	result.FailFast = r.FailFast
-	result.TestJobResults = tr
+	result.TestsResult = tr
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -333,8 +333,8 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 }
 
 type SuiteResult struct {
-	Pass     bool
-	FailFast bool
+	Pass       bool
+	FailFast   bool
 	JobResults []*results.TestJobResult
 }
 
@@ -345,7 +345,7 @@ func (s *TestSuite) runV3TestJobs(
 	renderPath string,
 ) (*SuiteResult, []*results.TestJobResult) {
 	result := SuiteResult{Pass: true, FailFast: false}
-    // TODO: add to SuiteResult
+	// TODO: add to SuiteResult
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
 	// (Re)load the chart used by this suite (with logging temporarily disabled)

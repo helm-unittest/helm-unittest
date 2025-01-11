@@ -2,6 +2,7 @@
   DisplayName: (string) (len=36) "test cert-manager rbac with trimming",
   FilePath: (string) "",
   Passed: (bool) true,
+  FailFast: (bool) false,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
     (*results.TestJobResult)({
