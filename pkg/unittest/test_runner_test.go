@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -271,4 +272,40 @@ func TestV3RunnerOkWithSchemaValidation(t *testing.T) {
 	passed := runner.RunV3([]string{testV3WithSchemaChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	cases := []struct {
+		chartPath []string
+		failFast  bool
+	}{
+		{
+			chartPath: []string{testV3WithFailingTemplateChart},
+			failFast:  true,
+		},
+		{
+			chartPath: []string{testV3WithFailingTemplateChart},
+			failFast:  false,
+		},
+		{
+			chartPath: []string{testV3InvalidBasicChart},
+			failFast:  true,
+		},
+		{
+			chartPath: []string{testV3InvalidBasicChart},
+			failFast:  false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("chart %s fail fast: %v", tt.chartPath[0], tt.failFast), func(t *testing.T) {
+			runner.Failfast = tt.failFast
+			result := runner.RunV3([]string{testV3WithFailingTemplateChart})
+			assert.True(t, result)
+		})
+	}
 }

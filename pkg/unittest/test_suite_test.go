@@ -1168,3 +1168,80 @@ tests:
 	a.Error(err)
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
 }
+
+func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+tests:
+  - it: should execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: second suite failed test and fail fast
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail and trigger fail fast
+    asserts:
+      - hasDocuments:
+          count: 2
+---
+suite: third suite in same file with fail fast triggered in previous suite
+templates:
+  - deployment.yaml
+tests:
+  - it: should not execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "fail-fast.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Nil(err)
+	a.Len(suites, 3)
+
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.True(t, suiteResult.FailFast)
+	assert.False(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
+	testSuite := TestSuite{}
+	testSuite.Tests = []*TestJob{
+		{
+			Name: "first test that is empty",
+		},
+		{
+			Name: "second test that is empty",
+		},
+	}
+
+	cases := []struct {
+		failFast bool
+	}{
+		{
+			failFast: true,
+		},
+		{
+			failFast: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
+			suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
+			assert.False(t, suiteResult.Passed)
+			assert.True(t, len(suiteResult.TestsResult) == 2)
+		})
+	}
+}

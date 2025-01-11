@@ -1,0 +1,22 @@
+suite: b fail-fast second test
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should NOT configure ssl params if NOT set to be exposed
+    asserts:
+      - notMatchRegex:
+          path: data["my.conf"]
+          pattern: cacertfile
+      - contains:
+          path: data["my.array"]
+          content: value1
+          count: 1
+
+  - it: should run a test
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+      - equal:
+          path: metadata.name
+          value: fail-fast
