@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,12 +71,49 @@ func TestV3RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
 }
 
 func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
-	buffer := new(bytes.Buffer)
-	runner := TestRunner{
-		Printer:   printer.NewPrinter(buffer, nil),
-		TestFiles: []string{"tests/*_test.yaml"},
+	cases := []struct {
+		chart      string
+		chartPath  []string
+		failFast   bool
+		testFlavor string
+		expected   []string
+	}{
+		{
+			chart:      "testdata/chart-fail-fast",
+			chartPath:  []string{testV3WithFailingTemplateChart},
+			failFast:   true,
+			testFlavor: "case1",
+			expected: []string{
+				"Test Suites: 1 failed, 0 passed, 1 total",
+				"Tests:       1 failed, 1 passed, 2 total",
+				"FAIL  a fail-fast first test",
+			},
+		},
+		{
+			chart:      "testdata/chart-fail-fast",
+			chartPath:  []string{testV3WithFailingTemplateChart},
+			failFast:   false,
+			testFlavor: "case1",
+			expected: []string{
+				"Test Suites: 1 failed, 1 passed, 2 total",
+				"Tests:       1 failed, 4 passed, 5 total",
+				"FAIL  a fail-fast first test",
+				"PASS  b fail-fast second test",
+			},
+		},
 	}
-	runner.Failfast = true
-	_ = runner.RunV3([]string{"testdata/chart-fail-fast"})
-
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("chart %s with %s fail fast %v", tt.chart, tt.testFlavor, tt.failFast), func(t *testing.T) {
+			buffer := new(bytes.Buffer)
+			runner := TestRunner{
+				Printer:   printer.NewPrinter(buffer, nil),
+				TestFiles: []string{fmt.Sprintf("tests/*-%s_test.yaml", tt.testFlavor)},
+				Failfast:  tt.failFast,
+			}
+			_ = runner.RunV3([]string{"testdata/chart-fail-fast"})
+			for _, e := range tt.expected {
+				assert.Contains(t, buffer.String(), e)
+			}
+		})
+	}
 }
