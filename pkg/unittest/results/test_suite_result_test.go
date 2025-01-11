@@ -170,8 +170,19 @@ func TestCalculateTestSuiteDuration_NoTests(t *testing.T) {
 // snapshots counting
 func TestCountSnapshot_AllCountsZero(t *testing.T) {
 	cache := snapshot.Cache{}
-
-	tsr := TestSuiteResult{}
+	tsr := TestSuiteResult{
+		SnapshotCounting: struct {
+			Total    uint
+			Failed   uint
+			Created  uint
+			Vanished uint
+		}{
+			Total:    0,
+			Failed:   0,
+			Created:  0,
+			Vanished: 0,
+		},
+	}
 	tsr.CountSnapshot(&cache)
 
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Created)
