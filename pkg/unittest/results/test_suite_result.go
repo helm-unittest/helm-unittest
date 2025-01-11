@@ -55,6 +55,7 @@ func (tsr TestSuiteResult) Print(printer *printer.Printer, verbosity int) {
 	}
 
 	for _, result := range tsr.TestsResult {
+		// TODO: cover with tests
 		if result == nil {
 			continue
 		}

@@ -107,7 +107,6 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
-
 	}
 	err := tr.writeTestOutput()
 	if err != nil {
