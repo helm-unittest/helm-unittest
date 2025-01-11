@@ -107,6 +107,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
+
 	}
 	err := tr.writeTestOutput()
 	if err != nil {
@@ -221,7 +222,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			chartPassed = false
 		}
 
-		if !chartPassed && tr.Failfast {
+		if !chartPassed && result.FailFast {
 			break
 		}
 	}
