@@ -245,7 +245,7 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 		if params, ok := assertDef[assertName]; ok {
 			if a.validator != nil {
 				return fmt.Errorf(
-					"Assertion type `%s` and `%s` is declared duplicately",
+					"assertion type `%s` and `%s` is declared duplicately",
 					a.AssertType,
 					assertName,
 				)
