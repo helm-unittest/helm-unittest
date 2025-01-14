@@ -344,7 +344,7 @@ func (s *TestSuite) runV3TestJobs(
 	failFast bool,
 	renderPath string,
 ) *SuiteResult {
-	result := SuiteResult{Pass: true, FailFast: false}
+	result := SuiteResult{Pass: false, FailFast: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
 
