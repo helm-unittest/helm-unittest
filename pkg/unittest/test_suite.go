@@ -235,7 +235,7 @@ type TestSuite struct {
 func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
@@ -244,12 +244,16 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	result.Passed, result.TestsResult = s.runV3TestJobs(
+	r := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
-		failfast,
+		failFast,
 		renderPath,
 	)
+
+	result.Passed = r.Pass
+	result.FailFast = r.FailFast
+	result.TestsResult = r.JobResults
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -328,14 +332,21 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 	log.WithField(common.LOG_TEST_SUITE, "polish-chart-settings").Debug("test.chart '", test.Chart)
 }
 
+type SuiteResult struct {
+	Pass       bool
+	FailFast   bool
+	JobResults []*results.TestJobResult
+}
+
 func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
-) (bool, []*results.TestJobResult) {
-	suitePass := false
+) *SuiteResult {
+	result := SuiteResult{Pass: false, FailFast: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
+
 
 	for idx, testJob := range s.Tests {
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
@@ -343,20 +354,22 @@ func (s *TestSuite) runV3TestJobs(
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 
-		jobResult := testJob.RunV3(chart, cache, failfast, renderPath, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failFast, renderPath, &results.TestJobResult{DisplayName: testJob.Name, Index: idx})
 		jobResults[idx] = jobResult
 
 		if idx == 0 {
-			suitePass = jobResult.Passed
+			result.Pass = jobResult.Passed
 		}
 
-		suitePass = suitePass && jobResult.Passed
+		result.Pass = result.Pass && jobResult.Passed
 
-		if !suitePass && failfast {
+		if !result.Pass && failFast {
+			result.FailFast = true
 			break
 		}
 	}
-	return suitePass, jobResults
+	result.JobResults = jobResults
+	return &result
 }
 
 func (s *TestSuite) validateTestSuite() error {
