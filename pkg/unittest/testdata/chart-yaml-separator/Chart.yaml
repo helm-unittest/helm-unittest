@@ -1,6 +1,6 @@
 apiVersion: v2
 name: yaml-separator
 version: 0.1.0
-description: simple chart to validate yaml separator behavior
+description: chart to validate yaml separator behavior
 keywords:
-  - helm template case1 pkg/unittest/testdata/chart-yaml-separator/tests/__snapshot__ --output-dir _scratch
+  - helm template case1 pkg/unittest/testdata/chart-yaml-separator/ --output-dir _scratch
