@@ -9,6 +9,8 @@ tests:
       - isKind:
           of: Deployment
 ---
+# empty block
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/refs/heads/main/schema/helm-testsuite.json
 suite: should v2 test separator test suite
 templates:

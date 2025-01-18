@@ -10,7 +10,7 @@ tests:
       - equal:
           path: spec.replicas
           value: 3
-
+---
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/refs/heads/main/schema/helm-testsuite.json
 suite: should test separator test suite. second suite
@@ -34,3 +34,4 @@ tests:
 ---
 # no suite only comments
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/refs/heads/main/schema/helm-testsuite.json
+---
