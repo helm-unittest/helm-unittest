@@ -68,10 +68,11 @@ jobs:
         COVERAGE_REPORT=$(go tool cover -func=cover.out)
         echo "$COVERAGE_REPORT"
         COVERAGE=$($COVERAGE_REPORT | grep -Eo '[0-9]+\.[0-9]+' | tail -1)
-
+        echo "Coverage: ${COVERAGE}"
         # Scale both COVERAGE_PERCENT and THRESHOLD by 100 to work with integers
         COVERAGE_SCALED=$(echo "$COVERAGE" | awk '{print $1 * 100}')
         THRESHOLD_SCALED=$(echo "$THRESHOLD" | awk '{print $1 * 100}')
+        echo "COVERAGE_SCALED: ${COVERAGE_SCALED}"
         if [ "$COVERAGE_SCALED" -lt "$THRESHOLD_SCALED" ]; then
           echo "Coverage '${COVERAGE_SCALED}' is below threshold. Expected: ${THRESHOLD}, Actual: ${COVERAGE}"
           exit 1
