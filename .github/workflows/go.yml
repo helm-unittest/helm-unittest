@@ -54,12 +54,12 @@ jobs:
       if: github.ref_name == github.event.repository.default_branch
       run: |
         go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
-        go tool cover -func=test-results/coverage
 
     - name: Run tests on pull request
       if: github.ref_name != github.event.repository.default_branch
       run: |
-        go test -cover -covermode=atomic -v ./...
+        go test -cover -coverprofile=test-results/coverage -covermode=atomic -v ./...
+        go tool cover -func=test-results/coverage
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
