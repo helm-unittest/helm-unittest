@@ -48,8 +48,8 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 						testSuite.polishCapabilitiesSettings(test)
 					}
 				}
+				testSuites = append(testSuites, testSuite)
 			}
-			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
 				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
@@ -78,9 +78,13 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	yamlDecoder.KnownFields(strict)
 
 	if err := yamlDecoder.Decode(&suite); err != nil {
-		// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
-		// escape special characters only if unmarshall results in an error
-		if strings.Contains(err.Error(), "unknown escape character") {
+		if err.Error() == "EOF" {
+			// EOF error is not a real error, just return nil
+			// end-of-file is a condition in a OS where no more data can be read from a data source
+			return nil, nil
+		} else if strings.Contains(err.Error(), "unknown escape character") {
+			// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+			// escape special characters only if unmarshall results in an error
 			y := common.YmlEscapeHandlers{}
 			escaped := y.Escape(content)
 			if escaped != nil {
@@ -346,7 +350,6 @@ func (s *TestSuite) runV3TestJobs(
 ) *SuiteResult {
 	result := SuiteResult{Pass: false, FailFast: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
-
 
 	for idx, testJob := range s.Tests {
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
