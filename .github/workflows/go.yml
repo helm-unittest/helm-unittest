@@ -57,7 +57,9 @@ jobs:
 
     - name: Run tests on pull request
       if: github.ref_name != github.event.repository.default_branch
-      run: go test -cover -coverprofile=cover.out -v ./...
+      run: |
+        go test -cover -coverprofile=cover.out -v ./...
+        echo $PWD
 
     # https://github.com/marketplace/actions/code-coverage-summary#thresholds
     - name: Code Coverage Report
