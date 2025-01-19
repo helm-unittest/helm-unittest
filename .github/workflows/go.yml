@@ -57,30 +57,22 @@ jobs:
 
     - name: Run tests on pull request
       if: github.ref_name != github.event.repository.default_branch
+      env:
+        THRESHOLD: 85
       run: |
         go test -cover -coverprofile=cover.out -v ./...
-        echo $PWD
+        COVERAGE=$(go tool cover -func=cover.out | grep -Eo '[0-9]+\.[0-9]+' | tail -1)
 
-    # https://github.com/marketplace/actions/code-coverage-summary#thresholds
-    - name: Code Coverage Report
-      uses: irongut/CodeCoverageSummary@v1.3.0
-      with:
-        filename: cover.out
-        badge: true
-        fail_below_min: true
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: false
-        indicators: true
-        output: both
-        thresholds: '80 100'
+        echo "Coverage: ${COVERAGE}"
 
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
-      with:
-        recreate: true
-        path: code-coverage-results.md
+        # Scale both COVERAGE_PERCENT and THRESHOLD by 100 to work with integers
+        COVERAGE_SCALED=$(echo "$COVERAGE" | awk '{print $1 * 100}')
+        THRESHOLD_SCALED=$(echo "$THRESHOLD" | awk '{print $1 * 100}')
+        if [ "$COVERAGE_SCALED" -lt "$THRESHOLD_SCALED" ]; then
+          echo "Coverage '${COVERAGE_SCALED}' is below threshold. Expected: ${THRESHOLD}, Actual: ${COVERAGE}"
+          exit 1
+        fi
+
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
