@@ -57,10 +57,14 @@ jobs:
 
     - name: Run tests on pull request
       if: github.ref_name != github.event.repository.default_branch
+      run: go test -cover -coverprofile=cover.out -v ./...
+
+
+    - name: Run coverage on pull request
+      if: github.ref_name != github.event.repository.default_branch && matrix.os != 'windows-latest'
       env:
         THRESHOLD: 85
       run: |
-        go test -cover -coverprofile=cover.out -v ./...
         COVERAGE_REPORT=$(go tool cover -func=cover.out)
         echo "$COVERAGE_REPORT"
         COVERAGE=$($COVERAGE_REPORT | grep -Eo '[0-9]+\.[0-9]+' | tail -1)
@@ -72,7 +76,6 @@ jobs:
           echo "Coverage '${COVERAGE_SCALED}' is below threshold. Expected: ${THRESHOLD}, Actual: ${COVERAGE}"
           exit 1
         fi
-
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
