@@ -352,7 +352,7 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_OK(t *
 			pattern: "[[:digit:]-[:upper:]]",
 		},
 		{
-			name:    "misordered character range",
+			name:    "mis-ordered character range",
 			pattern: "[\\w-\\d]",
 		},
 	}
@@ -454,7 +454,6 @@ func TestFailedTemplateValidator_HandleMetaCharacters_InvalidRegex1(t *testing.T
 		"abc\\q",                   // Invalid escape sequence
 		"a(?<![a-z])",              // Invalid negative lookbehind (not supported in Go)
 		"a(?<=a)b(?<!c)",           // Multiple invalid lookbehind assertions
-
 		"[[.symbol.]]",             // Unsupported POSIX equivalence class
 		"(?i)a[b-Z]",               // Invalid range inside a case-insensitive group
 		"[[:alpha]abc]",            // POSIX class mixed with characters
