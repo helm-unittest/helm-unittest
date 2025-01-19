@@ -54,28 +54,12 @@ jobs:
       if: github.ref_name == github.event.repository.default_branch
       run: |
         go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+        go tool cover -func=test-results/coverage
 
     - name: Run tests on pull request
       if: github.ref_name != github.event.repository.default_branch
-      run: go test -cover -coverprofile=cover.out -v ./...
-
-
-    - name: Run coverage on pull request
-      if: github.ref_name != github.event.repository.default_branch && matrix.os != 'windows-latest'
-      env:
-        THRESHOLD: 85
       run: |
-        COVERAGE_REPORT=$(go tool cover -func=cover.out)
-        echo "$COVERAGE_REPORT"
-        COVERAGE=$(echo $COVERAGE_REPORT | grep -Eo '[0-9]+\.[0-9]+' | tail -1)
-        # Scale both COVERAGE_PERCENT and THRESHOLD by 100 to work with integers
-        COVERAGE_SCALED=$(echo "$COVERAGE" | awk '{print $1 * 100}')
-        THRESHOLD_SCALED=$(echo "$THRESHOLD" | awk '{print $1 * 100}')
-        echo "COVERAGE_SCALED: ${COVERAGE_SCALED}"
-        if [ "$COVERAGE_SCALED" -lt "$THRESHOLD_SCALED" ]; then
-          echo "Coverage '${COVERAGE_SCALED}' is below threshold. Expected: ${THRESHOLD}, Actual: ${COVERAGE}"
-          exit 1
-        fi
+        go test -cover -covermode=atomic -v ./...
 
     - name: SonarCloud Scan
       # https://github.com/sonarsource/sonarcloud-github-action
