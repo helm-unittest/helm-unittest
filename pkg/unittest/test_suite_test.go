@@ -363,6 +363,29 @@ spec:
 	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV3engine.Render>")
 }
 
+func TestV3RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	empty_manifest := ``
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	values := map[string]interface{}{
+		"key1": "value1",
+		"key2": "value2",
+	}
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, values)
+	a.Error(err)
+	a.ErrorContains(err, "file did not render a manifest")
+}
+
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
