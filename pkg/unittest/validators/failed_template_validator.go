@@ -93,12 +93,10 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	p, err := compilePattern(a.ErrorPattern)
 	if err != nil {
-		fmt.Println("BINGO covered !!!!!!!!!!")
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 	if actual != nil && p.MatchString(actual.(string)) == context.Negative {
 		if metaRegex.MatchString(a.ErrorPattern) {
-			fmt.Println("metaRegex.MatchString(a.ErrorPattern)")
 			return handleMetaCharacters(a, actual, manifestIndex, actualIndex, context)
 		}
 		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
@@ -119,14 +117,11 @@ func compilePattern(pattern string) (*regexp.Regexp, error) {
 func handleMetaCharacters(a FailedTemplateValidator, actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	escaped := regexp.QuoteMeta(a.ErrorPattern)
 	log.WithField("validator", "failed_template").Debugln("fallback to escaped regex", escaped)
-	fmt.Println("122 handleMetaCharacters")
 	p, err := regexp.Compile(escaped)
 	if err != nil {
-		fmt.Println("BINGO 123 !!!!!!!!!!")
 		log.WithField("validator", "failed_template").Debugln(fmt.Sprintf("failed to regexp.Compile(%s)", escaped))
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
-	fmt.Println("129 handleMetaCharacters")
 	if p.MatchString(actual.(string)) == context.Negative {
 		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 	}
