@@ -317,7 +317,7 @@ func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
 		"unexpectedField": true,
 	})
 	a.Error(err)
-	a.ErrorContains(err, "no such file or directory")
+	a.ErrorIs(err, os.ErrNotExist)
 }
 
 func TestV3RenderSuites_LoadError(t *testing.T) {
