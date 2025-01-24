@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 )
 

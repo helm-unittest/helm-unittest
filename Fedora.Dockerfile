@@ -27,13 +27,16 @@ RUN yum install -y git && \
     rm -rf ${TARGETOS}-${TARGETARCH} && \
     yum remove -y git && \
     rm -rf /var/cache/yum/* && \
-    groupadd -r helmgroup && \
-    useradd -u 1000 -r helmuser -g helmgroup
+    groupadd -g 1000 -r helmgroup && \
+    useradd -u 1000 -r -g helmgroup helmuser && \
+    mkdir -p /apps && \
+    chown -R 1000:1000 /apps
 
-USER helmuser
+VOLUME ["/apps"] 
+
+USER 1000:1000
 
 WORKDIR /apps
-VOLUME [ "/apps" ]
 
 ENTRYPOINT ["helm", "unittest"]
 CMD ["--help"]

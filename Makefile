@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.16.4
+HELM_VERSION := 3.17.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -95,7 +95,7 @@ dependency: ## Dependency maintanance
 
 .PHONY: dockerimage
 dockerimage: unittest ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f Alpine.Dockerfile .
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
