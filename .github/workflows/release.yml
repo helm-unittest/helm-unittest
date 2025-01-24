@@ -19,7 +19,7 @@ jobs:
     name: create distribution and upload to release
     permissions:
       contents: write # to publish assets to the release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: checkout
       # https://github.com/actions/checkout
@@ -43,7 +43,7 @@ jobs:
 
   determine-versions:
     name: determine latest version of helm and helm-unittest plugin
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - release
     outputs:
@@ -67,7 +67,7 @@ jobs:
     name: create multi-arch docker images and upload to dockerhub
     permissions:
       contents: write # to publish assets to the release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: HELMUNITTEST-RELEASE
     needs:
       - determine-versions
@@ -137,7 +137,7 @@ jobs:
           overwrite: true
 
   merge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: HELMUNITTEST-RELEASE
     needs:
       - determine-versions
