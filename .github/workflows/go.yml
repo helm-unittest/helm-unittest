@@ -70,10 +70,10 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     # Upload the original go test log as an artifact for later review.
-    - name: Upload Testlog for ${{ matrix.os }}
+    - name: Upload Testlog
       # https://github.com/EnricoMi/publish-unit-test-result-action
       uses: EnricoMi/publish-unit-test-result-action@170bf24d20d201b842d7a52403b73ed297e6645b # v2.18.0
-      if: always()
+      if: always() && matrix.os == 'ubuntu-latest'
       with:
         files: |
           test-results/go-test-report.xml
