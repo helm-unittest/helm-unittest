@@ -24,13 +24,16 @@ RUN apk upgrade --no-cache && \
     rm -rf ${TARGETOS}-${TARGETARCH} && \
     apk del curl git bash && \
     rm -f /var/cache/apk/* && \
-    addgroup -S helmgroup && \
-    adduser -u 1000 -S helmuser -G helmgroup
+    addgroup -g 1000 -S helmgroup && \
+    adduser -u 1000 -S -G helmgroup helmuser && \
+    mkdir -p /apps && \
+    chown -R 1000:1000 /apps
 
-USER helmuser
+VOLUME ["/apps"] 
+
+USER 1000:1000
 
 WORKDIR /apps
-VOLUME [ "/apps" ]
 
 ENTRYPOINT ["helm", "unittest"]
 CMD ["--help"]
