@@ -198,6 +198,11 @@ asserts:
 	}
 }
 
+func TestV3ParseTestSuite_FileNotExist(t *testing.T) {
+	_, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment.yaml", "basic", false, []string{})
+	assert.Error(t, err)
+}
+
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
@@ -306,12 +311,86 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
 }
 
+func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
+	a := assert.New(t)
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]interface{}{
+		"unexpectedField": true,
+	})
+	a.Error(err)
+	a.ErrorContains(err, "no such file or directory")
+}
+
+func TestV3RenderSuites_LoadError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+`
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	defer os.RemoveAll(chartPath)
+
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+	a.Error(err)
+	a.ErrorContains(err, "validation: chart.metadata.version is required")
+}
+
+func TestV3RenderSuites_RenderError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	deployment := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .BreakV3engine.Render }}-basic
+spec:
+  replicas: 3
+`
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(deployment, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+
+	a.Error(err)
+	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV3engine.Render>")
+}
+
+func TestV3RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	empty_manifest := ``
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	values := map[string]interface{}{
+		"key1": "value1",
+		"key2": "value2",
+	}
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, values)
+	a.Error(err)
+	a.ErrorContains(err, "file did not render a manifest")
+}
+
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"includeSuite": false,
 	})
-
 	a.NotNil(err)
 	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
 }
