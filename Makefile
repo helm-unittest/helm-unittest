@@ -47,7 +47,7 @@ install-dbg: bootstrap build-debug plugin-dir
 hookInstall: bootstrap build
 
 .PHONY: unittest
-unittest: build ## Run unit tests
+unittest: ## Run unit tests
 	go test ./... -v -cover
 
 .PHONY: test-coverage
@@ -94,8 +94,8 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: unittest ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f Alpine.Dockerfile .
+dockerimage: build ## Build docker image
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
