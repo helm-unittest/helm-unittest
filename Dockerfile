@@ -25,9 +25,7 @@ RUN apk upgrade --no-cache && \
     apk del curl git bash && \
     rm -f /var/cache/apk/* && \
     addgroup -g 1000 -S helmgroup && \
-    adduser -u 1000 -S -G helmgroup helmuser && \
-    mkdir -p /apps && \
-    chown -R 1000:1000 /apps
+    adduser -u 1000 -S -G helmgroup helmuser
 
 VOLUME ["/apps"] 
 

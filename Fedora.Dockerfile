@@ -28,9 +28,7 @@ RUN yum install -y git && \
     yum remove -y git && \
     rm -rf /var/cache/yum/* && \
     groupadd -g 1000 -r helmgroup && \
-    useradd -u 1000 -r -g helmgroup helmuser && \
-    mkdir -p /apps && \
-    chown -R 1000:1000 /apps
+    useradd -u 1000 -r -g helmgroup helmuser
 
 VOLUME ["/apps"] 
 
