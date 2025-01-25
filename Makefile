@@ -98,7 +98,7 @@ dockerimage: build ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: dockerimage ## Execute 'helm unittests' in container
+test-docker: unittest dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
