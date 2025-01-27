@@ -179,6 +179,13 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 		},
 		{
 			chart:      "testdata/chart-document-selector",
+			testFlavor: "case4-error",
+			expected: []string{
+				"Path:\tkind expected to exists",
+			},
+		},
+		{
+			chart:      "testdata/chart-document-selector",
 			testFlavor: "case1-ok",
 			expected: []string{
 				"Test Suites: 2 passed, 2 total",
