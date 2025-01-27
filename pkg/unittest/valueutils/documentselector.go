@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	log "github.com/sirupsen/logrus"
 )
 
 type DocumentSelector struct {
@@ -12,6 +13,28 @@ type DocumentSelector struct {
 	MatchMany          bool `yaml:"matchMany"`
 	Path               string
 	Value              interface{}
+}
+
+func NewDocumentSelector(documentSelector map[string]interface{}) (*DocumentSelector, error) {
+	path, ok := documentSelector["path"].(string)
+	if !ok {
+		log.WithField("selector", "document-selector").Debugln("documentSelector.path is empty")
+		return nil, errors.New("empty 'documentSelector.path' not supported")
+	}
+	value := documentSelector["value"]
+	if value == nil {
+		log.WithField("selector", "document-selector").Debugln("documentSelector.value is nil")
+		return nil, errors.New("empty 'documentSelector.value' not supported")
+	}
+	matchMany := documentSelector["matchMany"] == true
+	skipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
+
+	return &DocumentSelector{
+		Path:               path,
+		Value:              value,
+		MatchMany:          matchMany,
+		SkipEmptyTemplates: skipEmptyTemplates,
+	}, nil
 }
 
 func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
@@ -37,12 +60,11 @@ func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]comm
 			matchingDocuments[template] = filteredManifests
 		}
 	}
-
 	return matchingDocuments, nil
 }
 
 func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.K8sManifest, error) {
-	selectedDocs := []common.K8sManifest{}
+	var selectedDocs []common.K8sManifest
 
 	for _, doc := range docs {
 		var indexError error

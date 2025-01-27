@@ -179,3 +179,57 @@ func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNOk(t *testing.T) 
 	a.EqualError(err, "document not found")
 	a.Equal(expectedManifests, actualManifests)
 }
+
+func TestNewSafeDocumentSelector_Success(t *testing.T) {
+	tests := []struct {
+		name             string
+		input            map[string]interface{}
+		expectedSelector *DocumentSelector
+	}{
+		{
+			name: "all fields set",
+			input: map[string]interface{}{
+				"path":               "metadata.name",
+				"value":              "foo",
+				"matchMany":          true,
+				"skipEmptyTemplates": true,
+			},
+			expectedSelector: &DocumentSelector{
+				Path:               "metadata.name",
+				Value:              "foo",
+				MatchMany:          true,
+				SkipEmptyTemplates: true,
+			},
+		},
+		{
+			name: "only required fields set",
+			input: map[string]interface{}{
+				"path":  "metadata.name",
+				"value": "foo",
+			},
+			expectedSelector: &DocumentSelector{
+				Path:               "metadata.name",
+				Value:              "foo",
+				MatchMany:          false,
+				SkipEmptyTemplates: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualSelector, err = NewDocumentSelector(tt.input)
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expectedSelector, actualSelector)
+		})
+	}
+}
+
+func TestNewDocumentSelectorMissingPath(t *testing.T) {
+	input := map[string]interface{}{
+		"value": "foo",
+	}
+	selector, err := NewDocumentSelector(input)
+	assert.NotNil(t, err)
+	assert.Nil(t, selector)
+}

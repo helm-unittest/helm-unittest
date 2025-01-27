@@ -1,0 +1,26 @@
+suite: document selector currently working behaviour
+templates:
+  - "*"
+tests:
+  - it: assert selector to skip empty
+    asserts:
+      - exists:
+          path: kind
+        documentSelector:
+          path: kind
+          value: ConfigMap
+          skipEmptyTemplates: true
+
+---
+suite: document selector second suite
+templates:
+  - "*"
+tests:
+  - it: assert selector to skip empty
+    documentSelector:
+      path: kind
+      value: ConfigMap
+      skipEmptyTemplates: true
+    asserts:
+      - exists:
+          path: kind

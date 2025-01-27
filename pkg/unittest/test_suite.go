@@ -267,7 +267,6 @@ func (s *TestSuite) RunV3(
 func (s *TestSuite) polishTestJobsPathInfo() {
 	log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
-
 		if test != nil {
 			test.chartRoute = s.chartRoute
 			test.definitionFile = s.definitionFile

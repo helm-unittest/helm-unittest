@@ -1248,6 +1248,51 @@ tests:
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
 }
 
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInAssertIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - "*.yaml"
+tests:
+  - it: should error when not supported assert is found
+    documentSelector:
+     skipEmptyTemplates: true # this is a poison pill
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.NoError(err)
+}
+
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInTestNotIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    asserts:
+      - hasDocuments:
+          count: 1
+        documentSelector:
+          skipEmptyTemplates: true
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Error(err)
+	a.ErrorContains(err, "empty 'documentSelector.path' not supported")
+}
+
 func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata

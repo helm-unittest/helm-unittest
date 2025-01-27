@@ -1,0 +1,6 @@
+apiVersion: v2
+name: document-selector
+version: 1.0.0
+description: simple chart to validate different aspects of documentSelector
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-document-selector --output-dir _scratch
