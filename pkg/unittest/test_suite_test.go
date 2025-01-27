@@ -1248,6 +1248,30 @@ tests:
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
 }
 
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoison(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    documentSelector:
+     skipEmptyTemplates: true
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	fmt.Println(err)
+	a.NoError(err)
+	// a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
+}
+
 func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata

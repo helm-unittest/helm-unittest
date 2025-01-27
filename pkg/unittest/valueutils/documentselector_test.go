@@ -180,7 +180,7 @@ func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNOk(t *testing.T) 
 	a.Equal(expectedManifests, actualManifests)
 }
 
-func TestNewSafeDocumentSelector(t *testing.T) {
+func TestNewSafeDocumentSelector_Success(t *testing.T) {
 	tests := []struct {
 		name             string
 		input            map[string]interface{}
@@ -218,8 +218,21 @@ func TestNewSafeDocumentSelector(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actualSelector := NewSafeDocumentSelector(tt.input)
+			var err error
+			actualSelector, err := NewDocumentSelector(tt.input)
+			assert.Nil(t, err)
 			assert.Equal(t, tt.expectedSelector, actualSelector)
 		})
 	}
+}
+
+func TestNewDocumentSelectorMissingPath(t *testing.T) {
+	input := map[string]interface{}{
+		"value": "foo",
+	}
+
+	selector, err := NewDocumentSelector(input)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, selector)
 }

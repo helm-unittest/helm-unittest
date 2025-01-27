@@ -212,7 +212,11 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
-		a.DocumentSelector = valueutils.NewSafeDocumentSelector(documentSelector)
+		var err error
+		a.DocumentSelector, err = valueutils.NewDocumentSelector(documentSelector)
+		if err != nil {
+			return fmt.Errorf("documentSelector is invalid %s", err)
+		}
 	}
 
 	if err := a.constructValidator(assertDef); err != nil {
