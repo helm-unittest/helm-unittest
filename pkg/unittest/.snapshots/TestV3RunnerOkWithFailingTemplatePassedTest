@@ -1,0 +1,15 @@
+
+### Chart [ failing-template ] ../../test/data/v3/failing-template
+
+
+ PASS  Test failing template	../../test/data/v3/failing-template/tests/configMap_test.yaml
+ PASS  Test failing template validation	../../test/data/v3/failing-template/tests/validation_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 2 passed, 2 total
+Tests:       3 passed, 3 total
+Snapshot:    0 passed, 0 total
+Time:        XX.XXXms
+
+

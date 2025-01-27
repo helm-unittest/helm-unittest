@@ -1,0 +1,17 @@
+
+### Chart [ with-k8s-fake-client ] ../../test/data/v3/with-k8s-fake-client
+
+
+ PASS  	../../test/data/v3/with-k8s-fake-client/tests/lookup_crd_noprovider_test.yaml
+ PASS  	../../test/data/v3/with-k8s-fake-client/tests/lookup_crd_test.yaml
+ PASS  	../../test/data/v3/with-k8s-fake-client/tests/lookup_noprovider_test.yaml
+ PASS  	../../test/data/v3/with-k8s-fake-client/tests/lookup_test.yaml
+
+
+Charts:      1 passed, 1 total
+Test Suites: 4 passed, 4 total
+Tests:       5 passed, 5 total
+Snapshot:    4 passed, 4 total
+Time:        XX.XXXms
+
+
