@@ -1,0 +1,6 @@
+apiVersion: v2
+name: fail-fast
+version: 0.1.0
+description: simple chart to validate --failfast flag behaviour
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-fail-fast --output-dir _scratch

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -48,8 +49,8 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 						testSuite.polishCapabilitiesSettings(test)
 					}
 				}
+				testSuites = append(testSuites, testSuite)
 			}
-			testSuites = append(testSuites, testSuite)
 			if suiteErr != nil {
 				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
@@ -78,9 +79,13 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	yamlDecoder.KnownFields(strict)
 
 	if err := yamlDecoder.Decode(&suite); err != nil {
-		// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
-		// escape special characters only if unmarshall results in an error
-		if strings.Contains(err.Error(), "unknown escape character") {
+		if err.Error() == "EOF" {
+			// EOF error is not a real error, just return nil
+			// end-of-file is a condition in a OS where no more data can be read from a data source
+			return nil, nil
+		} else if strings.Contains(err.Error(), "unknown escape character") {
+			// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+			// escape special characters only if unmarshall results in an error
 			y := common.YmlEscapeHandlers{}
 			escaped := y.Escape(content)
 			if escaped != nil {
@@ -238,7 +243,7 @@ type TestSuite struct {
 func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
@@ -247,15 +252,17 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	sResult, tResults := s.runV3TestJobs(
+	r := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
-		failfast,
+		failFast,
 		renderPath,
 	)
-	result.TestsResult = tResults
-	result.Passed = sResult.Pass
-	result.Skipped = sResult.Skip
+
+	result.Passed = r.Pass
+	result.FailFast = r.FailFast
+	result.TestsResult = r.JobResults
+	result.Skipped = r.Skip
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -265,7 +272,6 @@ func (s *TestSuite) RunV3(
 func (s *TestSuite) polishTestJobsPathInfo() {
 	log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
-
 		if test != nil {
 			test.chartRoute = s.chartRoute
 			test.definitionFile = s.definitionFile
@@ -286,6 +292,24 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			if len(s.Templates) > 0 {
 				test.defaultTemplatesToAssert = s.Templates
 			}
+		}
+	}
+}
+
+// polishSkipSettings aims to determine the appropriate Skip reason for a given TestJob within a TestSuite
+// if the TestSuite itself has a Skip.Reason set, it takes precedence, and this reason is applied to the individual TestJob
+func (s *TestSuite) polishSkipSettings(test *TestJob) {
+	if s.Skip.Reason != "" {
+		test.Skip.Reason = s.Skip.Reason
+	} else if s.Skip.Reason == "" {
+		skipped := 0
+		for _, test := range s.Tests {
+			if test.Skip.Reason != "" {
+				skipped++
+			}
+		}
+		if skipped == len(s.Tests) {
+			s.Skip.Reason = "all tests are skipped"
 		}
 	}
 }
@@ -314,24 +338,6 @@ func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
 	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)
 }
 
-// polishSkipSettings aims to determine the appropriate Skip reason for a given TestJob within a TestSuite
-// if the TestSuite itself has a Skip.Reason set, it takes precedence, and this reason is applied to the individual TestJob
-func (s *TestSuite) polishSkipSettings(test *TestJob) {
-	if s.Skip.Reason != "" {
-		test.Skip.Reason = s.Skip.Reason
-	} else if s.Skip.Reason == "" {
-		skipped := 0
-		for _, test := range s.Tests {
-			if test.Skip.Reason != "" {
-				skipped++
-			}
-		}
-		if skipped == len(s.Tests) {
-			s.Skip.Reason = "all tests are skipped"
-		}
-	}
-}
-
 func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 	test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
@@ -354,26 +360,31 @@ func (s *TestSuite) polishChartSettings(test *TestJob) {
 }
 
 type SuiteResult struct {
-	Pass bool
-	Skip bool
+	Pass       bool
+	FailFast   bool
+	Skip       bool
+	JobResults []*results.TestJobResult
 }
 
 func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
-) (*SuiteResult, []*results.TestJobResult) {
-	result := SuiteResult{Pass: false, Skip: false}
+) *SuiteResult {
+	result := SuiteResult{Pass: false, FailFast: false, Skip: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 	skipped := 0
 
-	// (Re)load the chart used by this suite
+	// (Re)load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
 	chart, _ := v3loader.Load(chartPath)
+	log.SetOutput(os.Stdout)
 
 	for idx, testJob := range s.Tests {
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
+
 		if testJob.Skip.Reason != "" {
 			job.Skipped = true
 			skipped++
@@ -382,20 +393,21 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			jobResult = testJob.RunV3(chart, cache, failfast, renderPath, &job)
+			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed
 			}
 			result.Pass = result.Pass && jobResult.Passed
 		}
-
-		if !result.Pass && failfast {
+		if !result.Pass && failFast {
+			result.FailFast = true
 			break
 		}
 	}
 	result.Skip = skipped == len(s.Tests)
-	return &result, jobResults
+	result.JobResults = jobResults
+	return &result
 }
 
 func (s *TestSuite) validateTestSuite() error {

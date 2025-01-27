@@ -1,3 +1,15 @@
+0.7.2 / 2025-01-27
+==================
+- Contains fails to detect string elements in array when any is enabled (resolves #342)
+- FailedTemplate assertion fails when the error message starts with a special character (resolves #499, credits @ivankatliarchuk,)
+- Helm-unittest panics when failfast enabled and multiple suites are configured (resolves #534, credits @ivankatliarchuk)
+- Moved printer.NewPrinter to an exported package (resolves #538)
+- Valid YAML starting with document break and comment is not processed correctly (resolves #543, credits @ivankatliarchuk)
+- Helm-unittest panics on documentSelector when required fields are not filled (resolves #555, credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 0.7.1 / 2024-12-31
 ==================
 - Move custom MergeValues to HelmCharts MergeTables to align merging values with Helm (relates #471)

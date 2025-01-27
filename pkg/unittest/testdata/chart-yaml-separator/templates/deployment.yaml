@@ -1,0 +1,22 @@
+# schema https://github.com/yannh/kubernetes-json-schema/blob/master/v1.31.3/deployment.json
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      labels:
+        app: example
+    spec:
+      securityContext:
+        runAsUser: 1000
+      containers:
+        - name: test-container
+          image: nginx:1.7.9
+          ports:
+            - containerPort: 8080

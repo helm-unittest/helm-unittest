@@ -40,6 +40,7 @@ const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-cl
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
 func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.TestSuiteResult {
+
 	for _, test := range result.TestsResult {
 		test.Duration, _ = time.ParseDuration("0s")
 	}
@@ -197,6 +198,11 @@ asserts:
 	}
 }
 
+func TestV3ParseTestSuite_FileNotExist(t *testing.T) {
+	_, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment.yaml", "basic", false, []string{})
+	assert.Error(t, err)
+}
+
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
@@ -305,12 +311,86 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
 }
 
+func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
+	a := assert.New(t)
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]interface{}{
+		"unexpectedField": true,
+	})
+	a.Error(err)
+	a.ErrorIs(err, os.ErrNotExist)
+}
+
+func TestV3RenderSuites_LoadError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+`
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	defer os.RemoveAll(chartPath)
+
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+	a.Error(err)
+	a.ErrorContains(err, "validation: chart.metadata.version is required")
+}
+
+func TestV3RenderSuites_RenderError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	deployment := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .BreakV3engine.Render }}-basic
+spec:
+  replicas: 3
+`
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(deployment, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+
+	a.Error(err)
+	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV3engine.Render>")
+}
+
+func TestV3RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	empty_manifest := ``
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	values := map[string]interface{}{
+		"key1": "value1",
+		"key2": "value2",
+	}
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, values)
+	a.Error(err)
+	a.ErrorContains(err, "file did not render a manifest")
+}
+
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"includeSuite": false,
 	})
-
 	a.NotNil(err)
 	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
 }
@@ -604,6 +684,7 @@ tests:
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
@@ -1165,6 +1246,128 @@ tests:
 
 	a.Error(err)
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
+}
+
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInAssertIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - "*.yaml"
+tests:
+  - it: should error when not supported assert is found
+    documentSelector:
+     skipEmptyTemplates: true # this is a poison pill
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.NoError(err)
+}
+
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInTestNotIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    asserts:
+      - hasDocuments:
+          count: 1
+        documentSelector:
+          skipEmptyTemplates: true
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Error(err)
+	a.ErrorContains(err, "empty 'documentSelector.path' not supported")
+}
+
+func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+tests:
+  - it: should execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: second suite failed test and fail fast
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail and trigger fail fast
+    asserts:
+      - hasDocuments:
+          count: 2
+---
+suite: third suite in same file with fail fast triggered in previous suite
+templates:
+  - deployment.yaml
+tests:
+  - it: should not execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "fail-fast.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Nil(err)
+	a.Len(suites, 3)
+
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.True(t, suiteResult.FailFast)
+	assert.False(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
+	testSuite := TestSuite{}
+	testSuite.Tests = []*TestJob{
+		{
+			Name: "first test that is empty",
+		},
+		{
+			Name: "second test that is empty",
+		},
+	}
+
+	cases := []struct {
+		failFast bool
+	}{
+		{
+			failFast: true,
+		},
+		{
+			failFast: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
+			suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
+			assert.False(t, suiteResult.Passed)
+			assert.True(t, len(suiteResult.TestsResult) == 2)
+		})
+	}
 }
 
 func TestV3MultipleSuitesWithSkip(t *testing.T) {

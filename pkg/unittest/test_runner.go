@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	log "github.com/sirupsen/logrus"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
@@ -233,7 +234,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			chartPassed = false
 		}
 
-		if !chartPassed && tr.Failfast {
+		if !chartPassed && result.FailFast {
 			break
 		}
 	}
@@ -246,6 +247,12 @@ func (tr *TestRunner) handleSuiteResult(result *results.TestSuiteResult) {
 	result.Print(tr.Printer, 0)
 	tr.countSuite(result)
 	for _, testsResult := range result.TestsResult {
+		if testsResult == nil {
+			if tr.Failfast {
+				log.WithField("test-runner", "handle-suite-result").Debug("--failfast skip test")
+			}
+			continue
+		}
 		tr.countTest(testsResult)
 	}
 }

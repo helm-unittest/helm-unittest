@@ -13,6 +13,7 @@ import (
 )
 
 func setupTestCmd() *cobra.Command {
+	buf := new(bytes.Buffer)
 	testCmd := &cobra.Command{
 		Use:           "unittest",
 		Run:           RunPlugin,
@@ -21,20 +22,15 @@ func setupTestCmd() *cobra.Command {
 	}
 	// silence tests
 	// redirect output to buffer
-	buf := new(bytes.Buffer)
+	testCmd.SetIn(buf)
 	testCmd.SetOut(buf)
 	testCmd.SetErr(buf)
 
-	// old := os.Stdout // keep backup of the real stdout
 	_, w, _ := os.Pipe()
 	os.Stdout = w
 
-	// back to normal state
-	// w.Close()
-	// out, _ := io.ReadAll(r)
-	// os.Stdout = old // restoring the real stdout
-
 	InitPluginFlags(testCmd)
+	testCmd.SetArgs([]string{})
 	return testCmd
 }
 
@@ -54,12 +50,9 @@ func TestValidateUnittestColorFlags(t *testing.T) {
 		// Setup actual parameter
 		if len(colorFlag) > 0 {
 			cmd.SetArgs([]string{colorFlag})
-		} else {
-			// Empty parameter to ensure no chart is found
-			cmd.SetArgs([]string{})
 		}
 
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 		actualResult := false // Actual default outcome depends on OS
 
@@ -67,7 +60,7 @@ func TestValidateUnittestColorFlags(t *testing.T) {
 			actualResult = *runner.Printer.Colored
 		}
 
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(colorValue, actualResult)
 	}
 }
@@ -89,13 +82,10 @@ func TestValidateUnittestDebugFlags(t *testing.T) {
 		// Setup actual parameter
 		if len(debugFlag) > 0 {
 			cmd.SetArgs([]string{debugFlag})
-		} else {
-			cmd.SetArgs([]string{})
 		}
+		err := cmd.Execute()
 
-		result := cmd.Execute()
-
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(debugValue, DebugEnabled())
 	}
 }
@@ -116,14 +106,12 @@ func TestValidateUnittestStrictFlag(t *testing.T) {
 		// Setup actual parameter
 		if len(strictFlag) > 0 {
 			cmd.SetArgs([]string{strictFlag})
-		} else {
-			cmd.SetArgs([]string{})
 		}
 
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(strictFlagValue, runner.Strict)
 	}
 }
@@ -141,18 +129,14 @@ func TestValidateUnittestFailFastFlags(t *testing.T) {
 
 	for failFastFlag, failFastFlagValue := range failFastFlags {
 		cmd := setupTestCmd()
-
 		// Setup actual parameter
 		if len(failFastFlag) > 0 {
 			cmd.SetArgs([]string{failFastFlag})
-		} else {
-			cmd.SetArgs([]string{})
 		}
-
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(failFastFlagValue, runner.Failfast)
 	}
 }
@@ -170,17 +154,14 @@ func TestValidateUnittestUpdateSnapshotFlags(t *testing.T) {
 
 	for updateSnapshotFlag, updateSnapshotFlagValue := range updateSnapshotFlags {
 		cmd := setupTestCmd()
-		// Setup actual parameter
 		if len(updateSnapshotFlag) > 0 {
 			cmd.SetArgs([]string{updateSnapshotFlag})
-		} else {
-			cmd.SetArgs([]string{})
 		}
 
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(updateSnapshotFlagValue, runner.UpdateSnapshot)
 	}
 }
@@ -201,14 +182,11 @@ func TestValidateUnittestWithSnapshotFlags(t *testing.T) {
 		// Setup actual parameter
 		if len(withSubchartFlag) > 0 {
 			cmd.SetArgs([]string{withSubchartFlag})
-		} else {
-			cmd.SetArgs([]string{})
 		}
-
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 
-		a.Nil(result)
+		a.Nil(err)
 		a.Equal(withSubchartFlagValue, runner.WithSubChart)
 	}
 }
@@ -229,14 +207,12 @@ func TestValidateUnittestTestFilesFlags(t *testing.T) {
 			cmd := setupTestCmd()
 			if len(testFile) > 0 {
 				cmd.SetArgs([]string{testFileFlag, testFile})
-			} else {
-				cmd.SetArgs([]string{})
 			}
 
-			result := cmd.Execute()
+			err := cmd.Execute()
 			runner := GetTestRunner()
 
-			a.Nil(result)
+			a.Nil(err)
 			a.EqualValues(testFileValues, runner.TestFiles)
 		}
 	}
@@ -259,14 +235,12 @@ func TestValidateUnittestValuesFlags(t *testing.T) {
 			cmd := setupTestCmd()
 			if len(valuesFile) > 0 {
 				cmd.SetArgs([]string{valuesFilesFlag, valuesFile})
-			} else {
-				cmd.SetArgs([]string{})
 			}
 
-			result := cmd.Execute()
+			err := cmd.Execute()
 			runner := GetTestRunner()
 
-			a.Nil(result)
+			a.Nil(err)
 			a.EqualValues(valuesFileValues, runner.ValuesFiles)
 		}
 	}
@@ -289,14 +263,12 @@ func TestValidateUnittestOutputFileFlags(t *testing.T) {
 			cmd := setupTestCmd()
 			if len(outputFile) > 0 {
 				cmd.SetArgs([]string{outputFileFlag, outputFile})
-			} else {
-				cmd.SetArgs([]string{})
 			}
 
-			result := cmd.Execute()
+			err := cmd.Execute()
 			runner := GetTestRunner()
 
-			a.Nil(result)
+			a.Nil(err)
 			a.EqualValues(outputFileValue, runner.OutputFile)
 		}
 	}
@@ -327,10 +299,10 @@ func TestValidateUnittestOutputTypeFlags(t *testing.T) {
 				cmd.SetArgs([]string{"-o", dummyOutputFile})
 			}
 
-			result := cmd.Execute()
+			err := cmd.Execute()
 			runner := GetTestRunner()
 
-			a.Nil(result)
+			a.Nil(err)
 			a.Equal(outputTypeValue, typeofObject(runner.Formatter))
 		}
 	}
@@ -352,14 +324,11 @@ func TestValidateUnittestChartTestsPathFlag(t *testing.T) {
 		cmd := setupTestCmd()
 		if len(chartTestPath) > 0 {
 			cmd.SetArgs([]string{chartTestPathFlag, chartTestPath})
-		} else {
-			cmd.SetArgs([]string{})
 		}
-
-		result := cmd.Execute()
+		err := cmd.Execute()
 		runner := GetTestRunner()
 
-		a.Nil(result)
+		a.Nil(err)
 		a.EqualValues(chartTestPathValue, runner.ChartTestsPath)
 	}
 }

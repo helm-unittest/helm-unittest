@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.16.4
+HELM_VERSION := 3.17.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -47,7 +47,7 @@ install-dbg: bootstrap build-debug plugin-dir
 hookInstall: bootstrap build
 
 .PHONY: unittest
-unittest: build ## Run unit tests
+unittest: ## Run unit tests
 	go test ./... -v -cover
 
 .PHONY: test-coverage
@@ -94,11 +94,11 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: unittest ## Build docker image
+dockerimage: build ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: dockerimage ## Execute 'helm unittests' in container
+test-docker: unittest dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \

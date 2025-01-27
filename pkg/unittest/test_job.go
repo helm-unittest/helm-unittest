@@ -2,6 +2,7 @@ package unittest
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -125,7 +126,7 @@ func writeRenderedOutput(renderPath string, outputOfFiles map[string]string) err
 		for file, rendered := range outputOfFiles {
 			filePath := filepath.Join(renderPath, file)
 			directory := filepath.Dir(filePath)
-			if _, dirErr := os.Stat(directory); os.IsNotExist(dirErr) {
+			if _, dirErr := os.Stat(directory); errors.Is(dirErr, os.ErrNotExist) {
 				if createDirErr := os.MkdirAll(directory, 0755); createDirErr != nil {
 					return createDirErr
 				}

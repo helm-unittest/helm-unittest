@@ -16,6 +16,10 @@ Error:
 %s
 `
 
+// For multilines, remove spaces before newlines
+// And ensure all decoded content uses LF
+var regex = regexp.MustCompile(`(?m)[ ]+\r?\n`)
+
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
 	CompareToSnapshot(content interface{}) *snapshot.CompareResult
@@ -120,9 +124,6 @@ func diff(expected string, actual string) string {
 
 // uniform the content without invalid characters and correct line-endings
 func uniformContent(content interface{}) string {
-	// For multilines, remove spaces before newlines
-	// And ensure all decoded content uses LF
-	regex := regexp.MustCompile(`(?m)[ ]+\r?\n`)
 	actual := fmt.Sprintf("%v", content)
 	return regex.ReplaceAllString(actual, "\n")
 }

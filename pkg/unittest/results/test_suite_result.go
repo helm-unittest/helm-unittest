@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 )
 
@@ -16,6 +16,7 @@ type TestSuiteResult struct {
 	FilePath         string
 	Passed           bool
 	Skipped          bool
+	FailFast         bool
 	ExecError        error
 	TestsResult      []*TestJobResult
 	SnapshotCounting struct {
@@ -58,6 +59,9 @@ func (tsr *TestSuiteResult) Print(printer *printer.Printer, verbosity int) {
 	}
 
 	for _, result := range tsr.TestsResult {
+		if result == nil {
+			continue
+		}
 		result.print(printer, verbosity)
 	}
 }

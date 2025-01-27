@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
@@ -93,18 +93,7 @@ func TestTestSuiteResultPrintFailedTestAsssertion(t *testing.T) {
 	a.Equal(expectedResult, buffer.String())
 }
 
-func TestTestSuiteResultPrint_SuiteSkipped(t *testing.T) {
-	test := TestSuiteResult{
-		DisplayName: "this-test-suite",
-		Skipped:     true,
-	}
-	buffer := new(bytes.Buffer)
-	test.Print(printer.NewPrinter(buffer, nil), 0)
-	fmt.Println(buffer.String())
-	assert.Contains(t, buffer.String(), "SKIP  this-test-suite")
-}
-
-func TestTestSuiteResultPrint_TestSkipped(t *testing.T) {
+func TestTestSuiteResultPrint(t *testing.T) {
 	test := TestSuiteResult{
 		DisplayName: "this-test-suite",
 		TestsResult: []*TestJobResult{
@@ -113,17 +102,19 @@ func TestTestSuiteResultPrint_TestSkipped(t *testing.T) {
 			},
 			{
 				DisplayName: "second-skip-test",
-				Skipped:     true,
 			},
-			{
-				DisplayName: "third-test",
-			},
+			{},
+			nil,
 		},
 	}
 	buffer := new(bytes.Buffer)
 	test.Print(printer.NewPrinter(buffer, nil), 0)
-	assert.NotContains(t, buffer.String(), "SKIP  this-test-suite")
-	assert.Contains(t, buffer.String(), "- SKIPPED 'second-skip-test'")
+	for _, result := range test.TestsResult {
+		if result == nil {
+			continue
+		}
+		assert.Contains(t, buffer.String(), fmt.Sprintf("- %s", result.DisplayName))
+	}
 }
 
 // calculate test suite duration
@@ -179,12 +170,56 @@ func TestCalculateTestSuiteDuration_NoTests(t *testing.T) {
 // snapshots counting
 func TestCountSnapshot_AllCountsZero(t *testing.T) {
 	cache := snapshot.Cache{}
-
-	tsr := TestSuiteResult{}
+	tsr := TestSuiteResult{
+		SnapshotCounting: struct {
+			Total    uint
+			Failed   uint
+			Created  uint
+			Vanished uint
+		}{
+			Total:    0,
+			Failed:   0,
+			Created:  0,
+			Vanished: 0,
+		},
+	}
 	tsr.CountSnapshot(&cache)
 
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Created)
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Failed)
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Total)
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Vanished)
+}
+
+func TestTestSuiteResultPrint_SuiteSkipped(t *testing.T) {
+	test := TestSuiteResult{
+		DisplayName: "this-test-suite",
+		Skipped:     true,
+	}
+	buffer := new(bytes.Buffer)
+	test.Print(printer.NewPrinter(buffer, nil), 0)
+	fmt.Println(buffer.String())
+	assert.Contains(t, buffer.String(), "SKIP  this-test-suite")
+}
+
+func TestTestSuiteResultPrint_TestSkipped(t *testing.T) {
+	test := TestSuiteResult{
+		DisplayName: "this-test-suite",
+		TestsResult: []*TestJobResult{
+			{
+				DisplayName: "first-test",
+			},
+			{
+				DisplayName: "second-skip-test",
+				Skipped:     true,
+			},
+			{
+				DisplayName: "third-test",
+			},
+		},
+	}
+	buffer := new(bytes.Buffer)
+	test.Print(printer.NewPrinter(buffer, nil), 0)
+	assert.NotContains(t, buffer.String(), "SKIP  this-test-suite")
+	assert.Contains(t, buffer.String(), "- SKIPPED 'second-skip-test'")
 }

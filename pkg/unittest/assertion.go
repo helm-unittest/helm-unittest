@@ -41,7 +41,6 @@ func (a *Assertion) Assert(
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
 	failInfo := make([]string, 0)
-
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
@@ -212,18 +211,13 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
-		documentSelectorPath := documentSelector["path"].(string)
-		documentSelectorValue := documentSelector["value"]
-		documentSelectorMatchMany := documentSelector["matchMany"] == true
-		documentSelectorSkipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
-
-		a.DocumentSelector = &valueutils.DocumentSelector{
-			Path:               documentSelectorPath,
-			Value:              documentSelectorValue,
-			MatchMany:          documentSelectorMatchMany,
-			SkipEmptyTemplates: documentSelectorSkipEmptyTemplates,
+		s, err := valueutils.NewDocumentSelector(documentSelector)
+		if err != nil {
+			return err
 		}
+		a.DocumentSelector = s
 	}
+
 	if err := a.constructValidator(assertDef); err != nil {
 		return err
 	}
@@ -245,7 +239,7 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 		if params, ok := assertDef[assertName]; ok {
 			if a.validator != nil {
 				return fmt.Errorf(
-					"Assertion type `%s` and `%s` is declared duplicately",
+					"assertion type `%s` and `%s` is declared duplicately",
 					a.AssertType,
 					assertName,
 				)
