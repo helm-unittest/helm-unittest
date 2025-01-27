@@ -5,10 +5,10 @@
 - Helm-unittest panics when failfast enabled and multiple suites are configured (resolves #534, credits @ivankatliarchuk)
 - Moved printer.NewPrinter to an exported package (resolves #538)
 - Valid YAML starting with document break and comment is not processed correctly (resolves #543, credits @ivankatliarchuk)
+- Helm-unittest panics on documentSelector when required fields are not filled (resolves #555, credits @ivankatliarchuk)
 - Update packages to latest patch versions
 - Update pipeline actions
 - Update documentation
-
 
 0.7.1 / 2024-12-31
 ==================
