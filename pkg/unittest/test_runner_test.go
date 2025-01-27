@@ -309,3 +309,16 @@ func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 		})
 	}
 }
+
+func TestV3RunnerOkWithDocumentSelect(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	assert.True(t, passed, buffer.String())
+	fmt.Println(buffer.String())
+	assert.Contains(t, buffer.String(), "Test Suites: 7 passed, 7 total")
+	assert.Contains(t, buffer.String(), "Tests:       10 passed, 10 total")
+}

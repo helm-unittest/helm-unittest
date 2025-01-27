@@ -14,6 +14,20 @@ type DocumentSelector struct {
 	Value              interface{}
 }
 
+func NewSafeDocumentSelector(documentSelector map[string]interface{}) *DocumentSelector {
+	path := documentSelector["path"].(string)
+	value := documentSelector["value"]
+	matchMany := documentSelector["matchMany"] == true
+	skipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
+
+	return &DocumentSelector{
+		Path:               path,
+		Value:              value,
+		MatchMany:          matchMany,
+		SkipEmptyTemplates: skipEmptyTemplates,
+	}
+}
+
 func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]common.K8sManifest) (map[string][]common.K8sManifest, error) {
 
 	matchingDocuments := map[string][]common.K8sManifest{}

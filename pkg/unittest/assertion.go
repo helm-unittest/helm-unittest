@@ -212,18 +212,9 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
-		documentSelectorPath := documentSelector["path"].(string)
-		documentSelectorValue := documentSelector["value"]
-		documentSelectorMatchMany := documentSelector["matchMany"] == true
-		documentSelectorSkipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
-
-		a.DocumentSelector = &valueutils.DocumentSelector{
-			Path:               documentSelectorPath,
-			Value:              documentSelectorValue,
-			MatchMany:          documentSelectorMatchMany,
-			SkipEmptyTemplates: documentSelectorSkipEmptyTemplates,
-		}
+		a.DocumentSelector = valueutils.NewSafeDocumentSelector(documentSelector)
 	}
+
 	if err := a.constructValidator(assertDef); err != nil {
 		return err
 	}
