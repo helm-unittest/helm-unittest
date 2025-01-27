@@ -148,3 +148,54 @@ func TestV3RunnerWith_Fixture_Chart_YamlSeparator(t *testing.T) {
 	assert.Contains(t, buffer.String(), "Test Suites: 5 passed, 5 total")
 	assert.Contains(t, buffer.String(), "Tests:       6 passed, 6 total")
 }
+
+func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
+	cases := []struct {
+		chart      string
+		testFlavor string
+		expected   []string
+	}{
+		{
+			chart:      "testdata/chart-document-selector",
+			testFlavor: "case1-error",
+			expected: []string{
+				"### Error:  empty 'documentSelector.path' not supported",
+			},
+		},
+		{
+			chart:      "testdata/chart-document-selector",
+			testFlavor: "case2-error",
+			expected: []string{
+				"### Error:  empty 'documentSelector.value' not supported",
+			},
+		},
+		{
+			chart:      "testdata/chart-document-selector",
+			testFlavor: "case3-error",
+			expected: []string{
+				"Template:\tdocument-selector/templates/cfg01.yaml",
+				"Path:\tkind expected to exist",
+			},
+		},
+		{
+			chart:      "testdata/chart-document-selector",
+			testFlavor: "case1-ok",
+			expected: []string{
+				"Test Suites: 2 passed, 2 total",
+			},
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("chart %s with %s", tt.chart, tt.testFlavor), func(t *testing.T) {
+			buffer := new(bytes.Buffer)
+			runner := TestRunner{
+				Printer:   printer.NewPrinter(buffer, nil),
+				TestFiles: []string{fmt.Sprintf("tests/%s_test.yaml", tt.testFlavor)},
+			}
+			_ = runner.RunV3([]string{tt.chart})
+			for _, e := range tt.expected {
+				assert.Contains(t, buffer.String(), e)
+			}
+		})
+	}
+}

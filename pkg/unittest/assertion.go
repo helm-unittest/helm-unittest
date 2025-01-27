@@ -41,7 +41,6 @@ func (a *Assertion) Assert(
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
 	failInfo := make([]string, 0)
-
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
@@ -215,7 +214,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		var err error
 		a.DocumentSelector, err = valueutils.NewDocumentSelector(documentSelector)
 		if err != nil {
-			return fmt.Errorf("documentSelector is invalid %s", err)
+			return err
 		}
 	}
 

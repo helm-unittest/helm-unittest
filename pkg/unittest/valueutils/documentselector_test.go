@@ -218,8 +218,7 @@ func TestNewSafeDocumentSelector_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var err error
-			actualSelector, err := NewDocumentSelector(tt.input)
+			var actualSelector, err = NewDocumentSelector(tt.input)
 			assert.Nil(t, err)
 			assert.Equal(t, tt.expectedSelector, actualSelector)
 		})
@@ -230,9 +229,7 @@ func TestNewDocumentSelectorMissingPath(t *testing.T) {
 	input := map[string]interface{}{
 		"value": "foo",
 	}
-
 	selector, err := NewDocumentSelector(input)
-
 	assert.NotNil(t, err)
 	assert.Nil(t, selector)
 }

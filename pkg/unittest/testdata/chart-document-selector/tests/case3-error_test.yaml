@@ -1,0 +1,11 @@
+suite: document selector erroring
+templates:
+  - "*.yaml"
+tests:
+  - it: partial document selector in tests. documentSelector.skipEmptyTemplates is ignored
+    documentSelector:
+      skipEmptyTemplates: true
+    asserts:
+# - asserts[0] exists fail Template document-selector/templates/cfg01.yaml Path kind expected to exists
+      - exists:
+          path: kind

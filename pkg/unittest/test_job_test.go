@@ -127,33 +127,6 @@ asserts:
 	a.DirExists(renderPath)
 }
 
-func TestV3RunJobWithDocumentSelectorPoison(t *testing.T) {
-	renderPath := "testdebug"
-	c, _ := loader.Load(testV3BasicChart)
-	manifest := `
-it: should not work
-asserts:
-  - equal:
-      path: kind
-      value: Deployment
-    template: templates/deployment.yaml
-  - matchRegex:
-      path: metadata.name
-      pattern: -basic$
-    documentSelector:
-      value: RELEASE-NAME-basic
-    template: templates/deployment.yaml
-`
-	var tj TestJob
-	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{})
-	defer os.RemoveAll(renderPath)
-	fmt.Println("result:", testResult)
-	fmt.Println(testResult.Passed)
-	assert.True(t, testResult.Passed)
-}
-
 func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
