@@ -75,11 +75,11 @@ func parseRenderError(errorMessage string) (string, map[string]string) {
 		common.RAW: "",
 	}
 
-	r := regexp.MustCompile(regexPattern)
-	result := r.FindStringSubmatch(errorMessage)
+	result := regexErrorPattern.FindStringSubmatch(errorMessage)
 
 	if len(result) == 3 {
 		filePath = result[1]
+		// check where or not errorMessage is a multiline error message
 		lines := strings.SplitN(errorMessage, "\n", 2)
 		if len(lines) > 1 {
 			content[common.RAW] = lines[1]
@@ -343,7 +343,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	} else {
 		outputOfFiles, err = v3engine.Render(filteredChart, vals)
 	}
-	// the error is in outputOfFiles not in err
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
@@ -357,7 +356,6 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 // When rendering failed, due to fail or required,
 // make sure to translate the error to outputOfFiles.
 func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[string]string) (map[string]string, bool, error) {
-	// the error is here not correctly parsed
 	renderSucceed := true
 	if err != nil {
 		renderSucceed = false
