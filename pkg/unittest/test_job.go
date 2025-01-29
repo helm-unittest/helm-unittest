@@ -337,6 +337,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	} else {
 		outputOfFiles, err = v3engine.Render(filteredChart, vals)
 	}
+	// the error is in outputOfFiles not in err
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
@@ -350,6 +351,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 // When rendering failed, due to fail or required,
 // make sure to translate the error to outputOfFiles.
 func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[string]string) (map[string]string, bool, error) {
+	// the error is here not correctly parsed
 	renderSucceed := true
 	if err != nil {
 		renderSucceed = false
