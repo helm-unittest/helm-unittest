@@ -1,0 +1,28 @@
+# https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/templates/validations.yaml
+{{/* Checks that the cluster name is defined */}}
+{{- if .Values.case4 }}
+  {{- $msg := list "" "A Cluster name is required!" }}
+  {{- $msg = append $msg "Please set:" }}
+  {{- $msg = append $msg "cluster:" }}
+  {{- $msg = append $msg "  name: my-cluster-name" }}
+  {{- fail (join "\n" $msg) }}
+{{- end }}
+
+{{- if .Values.case5 }}
+  {{- $msg := list "" "No features are enabled. Please choose a feature to start monitoring. For example:" }}
+  {{- $msg = append $msg "clusterMetrics:" }}
+  {{- $msg = append $msg "  enabled: true" }}
+  {{- $msg = append $msg "" }}
+  {{- $msg = append $msg "See https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Features.md for the list of available features." }}
+  {{- fail (join "\n" $msg) }}
+{{- end }}
+
+{{- if .Values.case6 }}
+  {{- $msg := list "" "The Helm chart values appears to be from version 1.x of the k8s-monitoring Helm chart." }}
+  {{- $msg = append $msg "To continue using version 1.x, add this to your helm command:" }}
+  {{- $msg = append $msg "  --version ^1" }}
+  {{- $msg = append $msg "" }}
+  {{- $msg = append $msg "If you'd like to migrate to version 2.0, see the Migration guide:" }}
+  {{- $msg = append $msg "  https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Migration.md" }}
+  {{- fail (join "\n" $msg) }}
+{{- end }}

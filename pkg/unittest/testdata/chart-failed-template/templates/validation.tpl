@@ -13,3 +13,4 @@
 {{- if .Values.case4 }}
 {{- fail (printf "\nerror contains single \\ escape character ") }}
 {{- end }}
+
