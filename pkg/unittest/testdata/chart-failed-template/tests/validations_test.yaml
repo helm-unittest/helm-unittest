@@ -14,6 +14,8 @@ tests:
             Please set:
             cluster:
               name: my-cluster-name
+      - failedTemplate:
+          errorPattern: ".+"
 
   - it: multiline with indentations of all kind and url
     set:
@@ -26,6 +28,10 @@ tests:
               enabled: true
 
             See https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Features.md for the list of available features.
+      - failedTemplate:
+          errorPattern: "enabled: true"
+      - failedTemplate:
+          errorPattern: "https://github.com"
 
   - it: should detect different special characters and handle them correctly
     set:
@@ -39,3 +45,5 @@ tests:
 
             If you'd like to migrate to version 2.0, see the Migration guide:
               https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Migration.md
+      - failedTemplate:
+          errorPattern: ".*\\.*"
