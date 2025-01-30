@@ -32,6 +32,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
   - [DocumentSelector](#documentselector)
 - [Example](#example)
+  - [Open Source Community Examples](#open-source-community-examples)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
@@ -224,7 +225,7 @@ tests:
 
 Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart.
 
-### Community Open Source Examples
+### Open Source Community Examples
 
 > Open-source solutions that uses helm-unittest to improve helm and kubernetes experience
 
