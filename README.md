@@ -224,6 +224,16 @@ tests:
 
 Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart.
 
+### Community Open Source Examples
+
+> Open-source solutions that uses helm-unittest to improve helm and kubernetes experience
+
+- [Traefik: kubernetes ingress](https://github.com/traefik/traefik-helm-chart/tree/master/traefik/tests)
+- [Prometheus: community charts](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/unittests)
+- [Grafana: kubernetes monitoring](https://github.com/grafana/k8s-monitoring-helm/tree/main/charts/k8s-monitoring)
+- [HiveMQ: mqtt platform](https://github.com/hivemq/helm-charts/tree/develop/charts/hivemq-platform/tests)
+- [Gitlab runner](https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tree/main/tests?ref_type=heads)
+
 ## Snapshot Testing
 
 Sometimes you may just want to keep the rendered manifest not changed between changes without every details asserted. That's the reason for snapshot testing! Check the tests below:
