@@ -21,6 +21,7 @@ type testOptions struct {
 	colored        bool
 	updateSnapshot bool
 	withSubChart   bool
+	withCoverage   bool
 	testFiles      []string
 	valuesFiles    []string
 	outputFile     string
@@ -137,6 +138,11 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useStrict, "strict", false,
 		"strict parse the testsuites",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.withCoverage, "coverage", false,
+		"enable coverage report",
 	)
 
 	cmd.PersistentFlags().StringArrayVarP(
