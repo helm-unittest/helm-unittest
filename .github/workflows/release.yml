@@ -94,7 +94,7 @@ jobs:
       
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
-        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+        uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
       
       - name: Set up Docker Buildx
         # https://github.com/docker/setup-buildx-action
