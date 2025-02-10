@@ -5,6 +5,8 @@ tests:
   - it: should pass
     release:
       name: my-release
+    chart:
+      version: 0.2.1
     asserts:
       - contains:
           path: spec.ports
@@ -21,6 +23,9 @@ tests:
           value:
             app: child-chart
             release: my-release
+      - equal:
+          path: metadata.labels.chart
+          value: child-chart-0.2.1
 
   - it: should render right if values given
     set:

@@ -63,6 +63,7 @@ func TestIsSubsetValidatorWhenFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: bar bar",
@@ -88,13 +89,13 @@ a:
 		map[string]interface{}{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	d: foo bar",
@@ -112,13 +113,13 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		map[string]interface{}{"e": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  manifests,
-		Index: -1,
+		Docs: manifests,
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: foo bar",
@@ -127,6 +128,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 		"	d: foo bar",
 		"	x: baz",
 		"DocumentIndex:	1",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected to contain:",
 		"	e: foo bar",
@@ -152,6 +154,7 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Path:	a.b",
 		"Expected NOT to contain:",
 		"	d: foo bar",
@@ -159,22 +162,6 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 		"	c: hello world",
 		"	d: foo bar",
 		"	x: baz",
-	}, diff)
-}
-
-func TestIsSubsetValidatorWhenInvalidIndex(t *testing.T) {
-	manifest := makeManifest(docToTestIsSubset)
-
-	validator := IsSubsetValidator{"a.b", common.K8sManifest{"d": "foo bar"}}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
 	}, diff)
 }
 
@@ -195,6 +182,32 @@ a:
 	assert.False(t, pass)
 	assert.Equal(t, []string{
 		"DocumentIndex:	0",
+		"ValuesIndex:	0",
+		"Error:",
+		"	expect 'a.b.c' to be an object, got:",
+		"	hello world",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenNotAnObjectFailFast(t *testing.T) {
+	manifestDocNotObject := `
+a:
+  b:
+    c: hello world
+    d: foo bar
+`
+	manifest := makeManifest(manifestDocNotObject)
+
+	validator := IsSubsetValidator{"a.b.c", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"ValuesIndex:	0",
 		"Error:",
 		"	expect 'a.b.c' to be an object, got:",
 		"	hello world",
@@ -202,7 +215,7 @@ a:
 }
 
 func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[b]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -218,7 +231,7 @@ func TestIsSubsetValidatorWhenInvalidPath(t *testing.T) {
 }
 
 func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
-	manifest := makeManifest("a::error")
+	manifest := makeManifest("a: error")
 
 	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -231,4 +244,112 @@ func TestIsSubsetValidatorWhenUnknownPath(t *testing.T) {
 		"Error:",
 		"	unknown path a[5]",
 	}, diff)
+}
+
+func TestIsSubsetValidatorWhenUnknownPathNegative(t *testing.T) {
+	manifest := makeManifest("a: error")
+
+	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsSubsetValidatorWhenUnknownPathFailFast(t *testing.T) {
+	manifest := makeManifest("a: error")
+
+	validator := IsSubsetValidator{"a[5]", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	unknown path a[5]",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenInvalidPathFailFast(t *testing.T) {
+	manifest := makeManifest("a: error")
+
+	validator := IsSubsetValidator{"a[b]", common.K8sManifest{"d": "foo bar"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Error:",
+		"	invalid array index [b] before position 4: non-integer array index",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenFailFast(t *testing.T) {
+	manifest := makeManifest(docToTestIsSubset)
+
+	log.SetLevel(log.DebugLevel)
+
+	validator := IsSubsetValidator{
+		"a.b",
+		map[string]interface{}{"e": "bar bar"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"ValuesIndex:	0",
+		"Path:	a.b",
+		"Expected to contain:",
+		"	e: bar bar",
+		"Actual:",
+		"	c: hello world",
+		"	d: foo bar",
+		"	x: baz",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenNoManifestFail(t *testing.T) {
+	validator := IsSubsetValidator{
+		"a.b",
+		map[string]interface{}{"e": "bar bar"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Path:\ta.b",
+		"Expected to contain:",
+		"\te: bar bar",
+		"Actual:",
+		"\tno manifest found",
+	}, diff)
+}
+
+func TestIsSubsetValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := IsSubsetValidator{
+		"a.b",
+		map[string]interface{}{"e": "bar bar"},
+	}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

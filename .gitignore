@@ -15,3 +15,8 @@ _dist
 .DS_Store
 
 .idea
+
+.direnv
+cover.out
+**/.debug
+**/Chart.lock

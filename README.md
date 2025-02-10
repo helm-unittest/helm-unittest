@@ -1,8 +1,10 @@
 # helm unittest
 
-[![CircleCI](https://circleci.com/gh/helm-unittest/helm-unittest.svg?style=svg)](https://circleci.com/gh/helm-unittest/helm-unittest)
+[![Github Actions](https://github.com/helm-unittest/helm-unittest/actions/workflows/go.yml/badge.svg)](https://github.com/helm-unittest/helm-unittest/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9365/badge)](https://www.bestpractices.dev/projects/9365)
+[![OpenSSF](https://api.scorecard.dev/projects/github.com/helm-unittest/helm-unittest/badge)](https://scorecard.dev/viewer/?uri=github.com/helm-unittest/helm-unittest)
 
 Unit test for _helm chart_ in YAML to keep your chart consistent and robust!
 
@@ -30,6 +32,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
   - [DocumentSelector](#documentselector)
 - [Example](#example)
+  - [Open Source Community Examples](#open-source-community-examples)
 - [Snapshot Testing](#snapshot-testing)
 - [Dependent subchart Testing](#dependent-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
@@ -222,6 +225,16 @@ tests:
 
 Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of a simple chart.
 
+### Open Source Community Examples
+
+> Open-source solutions that uses helm-unittest to improve helm and kubernetes experience
+
+- [Traefik: kubernetes ingress](https://github.com/traefik/traefik-helm-chart/tree/master/traefik/tests)
+- [Prometheus: community charts](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/unittests)
+- [Grafana: kubernetes monitoring](https://github.com/grafana/k8s-monitoring-helm/tree/main/charts/k8s-monitoring)
+- [HiveMQ: mqtt platform](https://github.com/hivemq/helm-charts/tree/develop/charts/hivemq-platform/tests)
+- [Gitlab runner](https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tree/main/tests?ref_type=heads)
+
 ## Snapshot Testing
 
 Sometimes you may just want to keep the rendered manifest not changed between changes without every details asserted. That's the reason for snapshot testing! Check the tests below:
@@ -357,22 +370,4 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!
-Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.21 installed, and run:
-
-```
-git clone git@github.com:helm-unittest/helm-unittest.git
-cd helm-unittest
-```
-
-And please make CI passed when request a PR which would check following things:
-
-- `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
-- `go test ./pkg/unittest/...` passed.
-
-In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed, you need to run:
-
-```
-UPDATE_SNAPSHOTS=true go test ./...
-```
-
-This update the snapshot cache file and please add them before you commit.
+To start developing this plugin please follow the [Contribution](./CONTRIBUTING.md) guidelines.

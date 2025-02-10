@@ -85,6 +85,9 @@
           "chart": {
             "$ref": "#/definitions/chart"
           },
+          "kubernetesProvider": {
+            "$ref": "#/definitions/kubernetesProvider"
+          },
           "asserts": {
             "type": "array",
             "description": "The assertions to validate the rendered chart.",
@@ -92,32 +95,38 @@
             "items": {
               "type": "object",
               "properties": {
-                "equal": true,
-                "equalRaw": true,
-                "exists": true,
-                "notExists": true,
-                "notEqual": true,
-                "notEqualRaw": true,
-                "matchRegex": true,
-                "matchRegexRaw": true,
-                "notMatchRegex": true,
-                "notMatchRegexRaw": true,
+                "containsDocument": true,
                 "contains": true,
                 "notContains": true,
-                "isNullOrEmpty": true,
-                "isNotNullOrEmpty": true,
-                "isKind": true,
-                "isAPIVersion": true,
-                "isSubset": true,
-                "isNotSubset": true,
-                "hasDocuments": true,
-                "containsDocument": true,
-                "matchSnapshot": true,
-                "matchSnapshotRaw": true,
+                "equal": true,
+                "notEqual": true,
+                "equalRaw": true,
+                "notEqualRaw": true,
+                "exists": true,
+                "notExists": true,
                 "failedTemplate": true,
                 "notFailedTemplate": true,
+                "greaterOrEqual": true,
+                "notGreaterOrEqual": true,
+                "hasDocuments": true,
+                "lessOrEqual": true,
+                "notLessOrEqual": true,
+                "isAPIVersion": true,
+                "isKind": true,
+                "isNullOrEmpty": true,
+                "isNotNullOrEmpty": true,
+                "isSubset": true,
+                "isNotSubset": true,
+                "isType": true,
+                "isNotType": true,
                 "lengthEqual": true,
                 "notLengthEqual": true,
+                "matchRegex": true,
+                "notMatchRegex": true,
+                "matchRegexRaw": true,
+                "notMatchRegexRaw": true,
+                "matchSnapshot": true,
+                "matchSnapshotRaw": true,
                 "not": {
                   "type": "boolean",
                   "description": "Set to true to assert contrarily, default to false.",
@@ -139,268 +148,54 @@
               "oneOf": [
                 {
                   "properties": {
-                    "equal": {
+                    "containsDocument": {
                       "type": "object",
-                      "description": "Assert the value of the specified path is equal to the value.",
-                      "markdownDescription": "**equal** (object)\n\nAssert the value of the specified path is equal to the value.",
-                      "required": [
-                        "path",
-                        "value"
-                      ],
+                      "description": "Asserts the documents rendered by the kind and apiVersion specified.",
+                      "markdownDescription": "**containsDocument** (object)\n\nAsserts the documents rendered by the `kind` and `apiVersion` specified.",
                       "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        },
-                        "value": {
-                          "description": "The expected value.",
-                          "markdownDescription": "**value** (object) _requried_\n\nThe expected value."
-                        },
-                        "decodeBase64": {
-                          "type": "boolean",
-                          "description": "Decode the base64 before checking.",
-                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "equal"
-                  ]
-                },
-                {
-                  "properties": {
-                    "equalRaw": {
-                      "type": "object",
-                      "description": "Assert equal to the raw value.",
-                      "markdownDescription": "**equal** (object)\n\nAssert equal to the raw value.",
-                      "required": [
-                        "value"
-                      ],
-                      "properties": {
-                        "value": {
+                        "kind": {
                           "type": "string",
-                          "description": "Assert the expected value in a NOTES.txt file.",
-                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "equalRaw"
-                  ]
-                },
-                {
-                  "properties": {
-                    "exists": {
-                      "type": "object",
-                      "description": "Assert if the specified path exists.",
-                      "markdownDescription": "**exists** (object)\n\nAssert if the specified path `exists`.",
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "exists"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notExists": {
-                      "type": "object",
-                      "description": "Assert if the specified path NOT exists.",
-                      "markdownDescription": "**notExists** (object)\n\nAssert if the specified path NOT `exists`.",
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "notExists"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notEqual": {
-                      "type": "object",
-                      "description": "Assert the value of specified path NOT equal to the value.",
-                      "markdownDescription": "**notEqual** (object)\n\nAssert the value of specified path NOT equal to the value.",
-                      "required": [
-                        "path",
-                        "value"
-                      ],
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        },
-                        "value": {
-                          "description": "The value expected not to be.",
-                          "markdownDescription": "**value** (object) _required_\n\nThe value expected not to be."
-                        },
-                        "decodeBase64": {
-                          "type": "boolean",
-                          "description": "Decode the base64 before checking.",
-                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "notEqual"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notEqualRaw": {
-                      "type": "object",
-                      "description": "Assert equal NOT to the value.",
-                      "markdownDescription": "**notEqualRaw** (object)\n\nAssert equal NOT to the value.",
-                      "required": [
-                        "value"
-                      ],
-                      "properties": {
-                        "value": {
-                          "type": "string",
-                          "description": "Assert the expected value in a NOTES.txt file not to be.",
-                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file not to be."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "notEqualRaw"
-                  ]
-                },
-                {
-                  "properties": {
-                    "matchRegex": {
-                      "type": "object",
-                      "description": "Assert the value of specified path match pattern.",
-                      "markdownDescription": "**matchRegex** (object)\n\nAssert the value of specified path match pattern.",
-                      "required": [
-                        "path",
-                        "pattern"
-                      ],
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        },
-                        "pattern": {
-                          "type": "string",
-                          "description": "The regex pattern to match (without quoting /).",
-                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`).",
+                          "description": "Expected kind of manifest.",
+                          "markdownDescription": "**kind** (string) _required_\n\nExpected `kind` of manifest.",
                           "examples": [
-                            "-my-chart$"
+                            "Deployment"
                           ]
                         },
-                        "decodeBase64": {
-                          "type": "boolean",
-                          "description": "Decode the base64 before checking.",
-                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "matchRegex"
-                  ]
-                },
-                {
-                  "properties": {
-                    "matchRegexRaw": {
-                      "type": "object",
-                      "description": "Assert the value match pattern.",
-                      "markdownDescription": "**matchRegexRaw** (object)\n\nAssert the value match pattern.",
-                      "required": [
-                        "pattern"
-                      ],
-                      "properties": {
-                        "pattern": {
+                        "apiVersion": {
                           "type": "string",
-                          "description": "The regex pattern to match (without quoting /) in a NOTES.txt file.",
-                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "description": "Expected apiVersion of manifest.",
+                          "markdownDescription": "**apiVersion** (string) _required_\n\nExpected `apiVersion` of manifest.",
                           "examples": [
-                            "-my-notes$"
-                          ]
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "matchRegexRaw"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notMatchRegex": {
-                      "type": "object",
-                      "description": "Assert the value of specified path NOT match pattern.",
-                      "markdownDescription": "**notMatchRegex** (object)\n\nAssert the value of specified path NOT match pattern.",
-                      "required": [
-                        "path",
-                        "pattern"
-                      ],
-                      "properties": {
-                        "path": {
-                          "$ref": "#/definitions/assertion/path"
-                        },
-                        "pattern": {
-                          "type": "string",
-                          "description": "The regex pattern NOT to match (without quoting /).",
-                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`).",
-                          "examples": [
-                            "-my-chart$"
+                            "apps/v1"
                           ]
                         },
-                        "decodeBase64": {
-                          "type": "boolean",
-                          "description": "Decode the base64 before checking.",
-                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "notMatchRegex"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notMatchRegexRaw": {
-                      "type": "object",
-                      "description": "Assert the value NOT match pattern.",
-                      "markdownDescription": "**notMatchRegexRaw** (object)\n\nAssert the value NOT match pattern.",
-                      "required": [
-                        "pattern"
-                      ],
-                      "properties": {
-                        "pattern": {
+                        "name": {
                           "type": "string",
-                          "description": "The regex pattern NOT to match (without quoting /) in a NOTES.txt file.",
-                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "description": "The value of the metadata.name.",
+                          "markdownDescription": "**name** (string) _optional_\n\nThe value of the `metadata.name`.",
                           "examples": [
-                            "-my-notes$"
+                            "foo"
                           ]
+                        },
+                        "namespace": {
+                          "type": "string",
+                          "description": "The value of the metadata.namespace.",
+                          "markdownDescription": "**namespace** (string) _optional_\n\nThe value of the `metadata.namespace`.",
+                          "examples": [
+                            "bar"
+                          ]
+                        },
+                        "any": {
+                          "type": "boolean",
+                          "description": "Ignores any other documents.",
+                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other documents."
                         }
                       },
                       "additionalProperties": false
                     }
                   },
                   "required": [
-                    "notMatchRegexRaw"
+                    "containsDocument"
                   ]
                 },
                 {
@@ -472,28 +267,118 @@
                 },
                 {
                   "properties": {
-                    "isNullOrEmpty": {
+                    "equal": {
                       "type": "object",
-                      "description": "Assert the value of specified path is null or empty (null, \"\", 0, [], {}).",
-                      "markdownDescription": "**isNullOrEmpty** (object)\n\nAssert the value of specified path is null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "description": "Assert the value of the specified path is equal to the value.",
+                      "markdownDescription": "**equal** (object)\n\nAssert the value of the specified path is equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (object) _requried_\n\nThe expected value."
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false
                     }
                   },
                   "required": [
-                    "isNullOrEmpty"
+                    "equal"
                   ]
                 },
                 {
                   "properties": {
-                    "isNotNullOrEmpty": {
+                    "notEqual": {
                       "type": "object",
-                      "description": "Assert the value of specified path is NOT null or empty (null, \"\", 0, [], {}).",
-                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is NOT null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "description": "Assert the value of specified path NOT equal to the value.",
+                      "markdownDescription": "**notEqual** (object)\n\nAssert the value of specified path NOT equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The value expected not to be.",
+                          "markdownDescription": "**value** (object) _required_\n\nThe value expected not to be."
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notEqual"
+                  ]
+                },
+                {
+                  "properties": {
+                    "equalRaw": {
+                      "type": "object",
+                      "description": "Assert equal to the raw value.",
+                      "markdownDescription": "**equal** (object)\n\nAssert equal to the raw value.",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "description": "Assert the expected value in a NOTES.txt file.",
+                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "equalRaw"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notEqualRaw": {
+                      "type": "object",
+                      "description": "Assert equal NOT to the value.",
+                      "markdownDescription": "**notEqualRaw** (object)\n\nAssert equal NOT to the value.",
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "description": "Assert the expected value in a NOTES.txt file not to be.",
+                          "markdownDescription": "**value** (string) _required_\n\nAssert the expected value in a `NOTES.txt` file not to be."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notEqualRaw"
+                  ]
+                },
+                {
+                  "properties": {
+                    "exists": {
+                      "type": "object",
+                      "description": "Assert if the specified path exists.",
+                      "markdownDescription": "**exists** (object)\n\nAssert if the specified path `exists`.",
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
@@ -503,7 +388,236 @@
                     }
                   },
                   "required": [
-                    "isNotNullOrEmpty"
+                    "exists"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notExists": {
+                      "type": "object",
+                      "description": "Assert if the specified path NOT exists.",
+                      "markdownDescription": "**notExists** (object)\n\nAssert if the specified path NOT `exists`.",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notExists"
+                  ]
+                },
+                {
+                  "properties": {
+                    "failedTemplate": {
+                      "type": "object",
+                      "description": "Assert the value of errorMessage is the same as the human readable template error, or assert that a template failure occurs.",
+                      "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "errorMessage": {
+                              "type": "string",
+                              "description": "The (human readable) errorMessage that should occur.",
+                              "markdownDescription": "**errorMessage** (string) _required_\n\nThe (human readable) `errorMessage` that should occur.",
+                              "examples": [
+                                "Required value"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "errorMessage"
+                          ]
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "errorPattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the error (without quoting /).",
+                              "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match the error (without quoting `/`).",
+                              "examples": [
+                                "Required Pattern"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "errorPattern"
+                          ]
+                        },
+                        {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "description": "Assert that a failure occurs while templating",
+                          "markdownDescription": "**failedTemplate** (object)\n\nAssert that a failure occurs while templating."
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "failedTemplate"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "properties": {
+                    "notFailedTemplate": {
+                      "type": "object",
+                      "description": "Assert that no failure occurs while templating.",
+                      "markdownDescription": "**notFailedTemplate** (object)\n\nAssert that no failure occurs while templating.",
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notFailedTemplate"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "properties": {
+                    "greaterOrEqual": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is greater or equal to the value.",
+                      "markdownDescription": "**greaterOrEqual** (object)\n\nAssert the value of specified path is greater or equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "greaterOrEqual"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notGreaterOrEqual": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT greater or equal to the value.",
+                      "markdownDescription": "**notGreaterOrEqual** (object)\n\nAssert the value of specified path is NOT greater or equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notGreaterOrEqual"
+                  ]
+                },
+                {
+                  "properties": {
+                    "hasDocuments": {
+                      "type": "object",
+                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
+                      "markdownDescription": "**hasDocuments** (object)\n\nAssert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here.",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "description": "Expected count of documents rendered.",
+                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of documents rendered."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "hasDocuments"
+                  ]
+                },
+                {
+                  "properties": {
+                    "lessOrEqual": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is less or equal to the value.",
+                      "markdownDescription": "**lessOrEqual** (object)\n\nAssert the value of specified path is less or equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "lessOrEqual"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notLessOrEqual": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT less or equal to the value.",
+                      "markdownDescription": "**notLessOrEqual** (object)\n\nAssert the value of specified path is NOT less or equal to the value.",
+                      "required": [
+                        "path",
+                        "value"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "value": {
+                          "description": "The expected value.",
+                          "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notLessOrEqual"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isAPIVersion": {
+                      "type": "object",
+                      "description": "Assert the apiVersion value of manifest.",
+                      "markdownDescription": "**isAPIVersion** (object)\n\nAssert the `apiVersion` value of manifest.",
+                      "properties": {
+                        "of": {
+                          "type": "string",
+                          "description": "Expected apiVersion of manifest.",
+                          "markdownDescription": "**of** (string) _required_\n\nExpected `apiVersion` of manifest."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isAPIVersion"
                   ]
                 },
                 {
@@ -528,22 +642,38 @@
                 },
                 {
                   "properties": {
-                    "isAPIVersion": {
+                    "isNullOrEmpty": {
                       "type": "object",
-                      "description": "Assert the apiVersion value of manifest.",
-                      "markdownDescription": "**isAPIVersion** (object)\n\nAssert the `apiVersion` value of manifest.",
+                      "description": "Assert the value of specified path is null or empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isNullOrEmpty** (object)\n\nAssert the value of specified path is null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
                       "properties": {
-                        "of": {
-                          "type": "string",
-                          "description": "Expected apiVersion of manifest.",
-                          "markdownDescription": "**of** (string) _required_\n\nExpected `apiVersion` of manifest."
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
                         }
                       },
                       "additionalProperties": false
                     }
                   },
                   "required": [
-                    "isAPIVersion"
+                    "isNullOrEmpty"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isNotNullOrEmpty": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT null or empty (null, \"\", 0, [], {}).",
+                      "markdownDescription": "**isNotNullOrEmpty** (object)\n\nAssert the value of specified path is NOT null or empty (`null`, `\"\"`, `0`, `[]`, `{}`).",
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isNotNullOrEmpty"
                   ]
                 },
                 {
@@ -600,22 +730,56 @@
                 },
                 {
                   "properties": {
-                    "hasDocuments": {
+                    "isType": {
                       "type": "object",
-                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
-                      "markdownDescription": "**hasDocuments** (object)\n\nAssert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here.",
+                      "description": "Assert the value of specified path is the type.",
+                      "markdownDescription": "**isType** (object)\n\nAssert the value of specified path is the type.",
+                      "required": [
+                        "path",
+                        "type"
+                      ],
                       "properties": {
-                        "count": {
-                          "type": "integer",
-                          "description": "Expected count of documents rendered.",
-                          "markdownDescription": "**count** (integer) _required_\n\nExpected count of documents rendered."
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "The expected type.",
+                          "markdownDescription": "**type** (string) _required_\n\nThe expected type."
                         }
                       },
                       "additionalProperties": false
                     }
                   },
                   "required": [
-                    "hasDocuments"
+                    "isType"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isNotType": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT the type.",
+                      "markdownDescription": "**isNotType** (object)\n\nAssert the value of specified path is NOT the type.",
+                      "required": [
+                        "path",
+                        "type"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "The expected type.",
+                          "markdownDescription": "**type** (string) _required_\n\nThe expected type."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isNotType"
                   ]
                 },
                 {
@@ -672,54 +836,124 @@
                 },
                 {
                   "properties": {
-                    "containsDocument": {
+                    "matchRegex": {
                       "type": "object",
-                      "description": "Asserts the documents rendered by the kind and apiVersion specified.",
-                      "markdownDescription": "**containsDocument** (object)\n\nAsserts the documents rendered by the `kind` and `apiVersion` specified.",
+                      "description": "Assert the value of specified path match pattern.",
+                      "markdownDescription": "**matchRegex** (object)\n\nAssert the value of specified path match pattern.",
+                      "required": [
+                        "path",
+                        "pattern"
+                      ],
                       "properties": {
-                        "kind": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "pattern": {
                           "type": "string",
-                          "description": "Expected kind of manifest.",
-                          "markdownDescription": "**kind** (string) _required_\n\nExpected `kind` of manifest.",
+                          "description": "The regex pattern to match (without quoting /).",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`).",
                           "examples": [
-                            "Deployment"
+                            "-my-chart$"
                           ]
                         },
-                        "apiVersion": {
-                          "type": "string",
-                          "description": "Expected apiVersion of manifest.",
-                          "markdownDescription": "**apiVersion** (string) _required_\n\nExpected `apiVersion` of manifest.",
-                          "examples": [
-                            "apps/v1"
-                          ]
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "The value of the metadata.name.",
-                          "markdownDescription": "**name** (string) _optional_\n\nThe value of the `metadata.name`.",
-                          "examples": [
-                            "foo"
-                          ]
-                        },
-                        "namespace": {
-                          "type": "string",
-                          "description": "The value of the metadata.namespace.",
-                          "markdownDescription": "**namespace** (string) _optional_\n\nThe value of the `metadata.namespace`.",
-                          "examples": [
-                            "bar"
-                          ]
-                        },
-                        "any": {
+                        "decodeBase64": {
                           "type": "boolean",
-                          "description": "Ignores any other documents.",
-                          "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other documents."
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
                         }
                       },
                       "additionalProperties": false
                     }
                   },
                   "required": [
-                    "containsDocument"
+                    "matchRegex"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notMatchRegex": {
+                      "type": "object",
+                      "description": "Assert the value of specified path NOT match pattern.",
+                      "markdownDescription": "**notMatchRegex** (object)\n\nAssert the value of specified path NOT match pattern.",
+                      "required": [
+                        "path",
+                        "pattern"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        },
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern NOT to match (without quoting /).",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`).",
+                          "examples": [
+                            "-my-chart$"
+                          ]
+                        },
+                        "decodeBase64": {
+                          "type": "boolean",
+                          "description": "Decode the base64 before checking.",
+                          "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notMatchRegex"
+                  ]
+                },
+                {
+                  "properties": {
+                    "matchRegexRaw": {
+                      "type": "object",
+                      "description": "Assert the value match pattern.",
+                      "markdownDescription": "**matchRegexRaw** (object)\n\nAssert the value match pattern.",
+                      "required": [
+                        "pattern"
+                      ],
+                      "properties": {
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern to match (without quoting /) in a NOTES.txt file.",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "examples": [
+                            "-my-notes$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "matchRegexRaw"
+                  ]
+                },
+                {
+                  "properties": {
+                    "notMatchRegexRaw": {
+                      "type": "object",
+                      "description": "Assert the value NOT match pattern.",
+                      "markdownDescription": "**notMatchRegexRaw** (object)\n\nAssert the value NOT match pattern.",
+                      "required": [
+                        "pattern"
+                      ],
+                      "properties": {
+                        "pattern": {
+                          "type": "string",
+                          "description": "The regex pattern NOT to match (without quoting /) in a NOTES.txt file.",
+                          "markdownDescription": "**pattern** (string) _required_\n\nThe regex pattern NOT to match (without quoting `/`) in a `NOTES.txt` file.",
+                          "examples": [
+                            "-my-notes$"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "notMatchRegexRaw"
                   ]
                 },
                 {
@@ -751,42 +985,6 @@
                   },
                   "required": [
                     "matchSnapshotRaw"
-                  ]
-                },
-                {
-                  "properties": {
-                    "failedTemplate": {
-                      "type": "object",
-                      "description": "Assert the value of errorMessage is the same as the human readable template error.",
-                      "markdownDescription": "**failedTemplate** (object)\n\nAssert the value of `errorMessage` is the same as the human readable template error.",
-                      "properties": {
-                        "errorMessage": {
-                          "type": "string",
-                          "description": "The (human readable) errorMessage that should occur.",
-                          "markdownDescription": "**failedTemplate** (string) _required_\n\nThe (human readable) `errorMessage` that should occur.",
-                          "examples": [
-                            "Required value"
-                          ]
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "failedTemplate"
-                  ]
-                },
-                {
-                  "properties": {
-                    "notFailedTemplate": {
-                      "type": "object",
-                      "description": "Assert that no failure occurs while templating.",
-                      "markdownDescription": "**notFailedTemplate** (object)\n\nAssert that no failure occurs while templating.",
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "notFailedTemplate"
                   ]
                 }
               ]
@@ -829,7 +1027,10 @@
           "markdownDescription": "**minorVersion** (integer) _optional_\n\nThe kubernetes minor version, default to the minor version which is set by helm."
         },
         "apiVersions": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "A set of versions, default to the versionset used by the defined kubernetes version.",
           "markdownDescription": "**apiVersions** (array<string>) _optional_\n\nA set of versions, default to the versionset used by the defined kubernetes version.",
           "items": {
@@ -873,9 +1074,23 @@
           "markdownDescription": "**path** (string)\n\nThe `documentSelector` path to assert."
         },
         "value": {
-          "type": "string",
+          "type": [
+            "string",
+            "object"
+          ],
           "description": "The expected value.",
-          "markdownDescription": "**value** (any)\n\nThe expected value."
+          "markdownDescription": "**value** (string|object)\n\nThe expected value.",
+          "additionalProperties": true
+        },
+        "matchMany": {
+          "type": "boolean",
+          "description": "Set to true to allow matching multiple documents.",
+          "markdownDescription": "**matchMany** (boolean) _optional_\n\nSet to **true* to allow matching multiple documents. Defaults to **false** which means selector has to match single document across all templates."
+        },
+        "skipEmptyTemplates": {
+          "type": "boolean",
+          "description": "Set to true to skip asserting templates which didn't render any matching documents.",
+          "markdownDescription": "**skipEmptyTemplates** (boolean) _optional_\n\nSet to **true** to skip asserting templates which didn't render any matching documents. Defaults to **false* which means selector have to find at least one document in every template."
         }
       },
       "required": [
@@ -892,7 +1107,8 @@
         "scheme": {
           "type": "object",
           "description": "Define the Kubernetes schema to fake",
-          "markdownDescription": "**scheme**: (object)\n\nDefine the Kubernetes schema to fake"
+          "markdownDescription": "**scheme**: (object)\n\nDefine the Kubernetes schema to fake",
+          "additionalProperties": true
         },
         "objects": {
           "type": "array",
@@ -900,14 +1116,15 @@
           "markdownDescription": "**objects**: (array of objects)\n\nDefine the Kubernetes objects to fake",
           "minItems": 1,
           "items": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
       "required": [
-        "scheme",
         "objects"
-      ]
+      ],
+      "additionalProperties": false
     },
     "release": {
       "type": "object",

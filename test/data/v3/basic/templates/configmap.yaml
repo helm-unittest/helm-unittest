@@ -23,3 +23,11 @@ data:
     - value2
   special.array:
     - phony-service.phony:graphql
+  my.camelcase: {{ .Values.configTests.camelcaseValue | camelcase }}
+  {{- if .Values.ingress.hosts }}
+  my.ingress.hosts:
+  {{- range $host := .Values.ingress.hosts }}
+  - {{ $host }}
+  {{- end -}}
+  {{- end -}}
+

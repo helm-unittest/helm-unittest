@@ -1,0 +1,16 @@
+suite: test subchart notes.txt with yaml separators
+templates:
+  - charts/child-chart/templates/NOTES-with-separator.txt
+release:
+  name: test-notes
+  namespace: apps-notes
+tests:
+  - it: should pass all kinds of assertion
+    asserts:
+      - equalRaw:
+          value: |
+            -----
+            Platform release "test-notes" installed in namespace "apps-notes"
+
+            Documentation can be found here: https://docs.example.com/
+            -----

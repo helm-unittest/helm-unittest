@@ -7,6 +7,7 @@ excludeTemplates:
   - ingress.yaml
   - rbac.yaml
   - secret.yaml
+  - servicemonitor.yaml
 tests:
   - it: should generate metadata name based on release name and chart name
     release:

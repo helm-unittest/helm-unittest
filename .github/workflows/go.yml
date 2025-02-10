@@ -1,4 +1,4 @@
-name: go tests
+name: 'Go Build and Tests'
 
 on:
   push:
@@ -8,31 +8,121 @@ on:
     branches:
       - main
 
-jobs:
+env:
+  REGISTRY_IMAGE: helmunittest/helm-unittest
+  GO_VERSION: 1.23.x
 
+permissions:
+  contents: read
+
+jobs:
   full-test:
-    name: full sdk and tools test
+    name: Full SDK and Tools Test
+    permissions:
+      # Needed to upload the results to github dashboard.
+      checks: write
+      issues: write
+      pull-requests: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # tests for target OS
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        # tests for actively maintained Go versions.
-        go-version:
-          - 1.22.x
+        os: [ubuntu-24.04, macos-latest, windows-latest]
     steps:
-    - name: checkout
+    - name: Checkout
       # https://github.com/actions/checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+    - name: Setup Go
+      # https://github.com/actions/setup-go
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    # Make results directory
+    - name: Create test-result directory uploading testresults
+      run: |
+        mkdir -p test-results
+
+    # Install using go install
+    - name: Install JUnit plugin for uploading testresults 
+      if: github.ref_name == github.event.repository.default_branch
+      run: |
+        go install github.com/jstemmer/go-junit-report/v2@14d61e6e75e3f3c74551d757ad936e8e88014464 # v2.1.0
+
+    # Run tests with nice formatting. Save the coverage and junit test results in test-results
+    - name: Run tests with junit report
+      if: github.ref_name == github.event.repository.default_branch
+      run: |
+        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+
+    - name: Run tests on pull request
+      if: github.ref_name != github.event.repository.default_branch
+      run: |
+        go test -cover -coverprofile=test-results/coverage -covermode=atomic -v ./...
+        go tool cover -func=test-results/coverage
+
+    - name: SonarCloud Scan
+      # https://github.com/SonarSource/sonarqube-scan-action
+      uses: SonarSource/sonarqube-scan-action@bfd4e558cda28cda6b5defafb9232d191be8c203 # v4.2.1
+      if: matrix.os == 'ubuntu-24.04' && env.SONAR_TOKEN != ''
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    # Upload the original go test log as an artifact for later review.
+    - name: Upload Testlog
+      # https://github.com/EnricoMi/publish-unit-test-result-action
+      uses: EnricoMi/publish-unit-test-result-action@170bf24d20d201b842d7a52403b73ed297e6645b # v2.18.0
+      if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
+      with:
+        files: |
+          test-results/go-test-report.xml
+
+  validate_docker:
+    name: Build and Test Docker
+    permissions:
+      # Needed to upload the results to code-scanning dashboard.
+      security-events: write
+      # Needed to ensure the job is executed.
+      statuses: write
+    runs-on: ubuntu-24.04
+    needs:
+      - full-test
+    steps:
+    - name: Checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 1
 
-    - name: setup go
+    - name: Setup go
       # https://github.com/actions/setup-go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: ${{ env.GO_VERSION }}
 
-    - name: unit-tests
-      shell: bash
-      run: make unittest
+    # Run docker-tests
+    - name: Build docker-test
+      run: |
+        make test-docker
+
+    - name: Retrieve versions
+      run: |
+        helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+        echo "HELM_PLUGIN_VERSION=${helmPluginVersion}" >> $GITHUB_ENV
+
+    # Run trivy security
+    - name: Run Trivy vulnerability scanner
+      # https://github.com/aquasecurity/trivy-action
+      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+      with:
+        image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
+        format: sarif
+        output: trivy-results.sarif
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@dd746615b3b9d728a6a37ca2045b68ca76d4841a # v3.28.8
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+

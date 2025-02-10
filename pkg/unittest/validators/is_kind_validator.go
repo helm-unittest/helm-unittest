@@ -10,7 +10,7 @@ type IsKindValidator struct {
 	Of string
 }
 
-func (v IsKindValidator) failInfo(actual interface{}, index int, not bool) []string {
+func (v IsKindValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be kind"
 
@@ -20,13 +20,15 @@ func (v IsKindValidator) failInfo(actual interface{}, index int, not bool) []str
 	if not {
 		return splitInfof(
 			setFailFormat(not, false, false, false, customMessage),
-			index,
+			manifestIndex,
+			actualIndex,
 			v.Of,
 		)
 	}
 	return splitInfof(
 		setFailFormat(not, false, true, false, customMessage),
-		index,
+		manifestIndex,
+		actualIndex,
 		v.Of,
 		actualYAML,
 	)
@@ -34,23 +36,30 @@ func (v IsKindValidator) failInfo(actual interface{}, index int, not bool) []str
 
 // Validate implement Validatable
 func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for idx, manifest := range manifests {
+	for manifestIndex, manifest := range manifests {
 		if kind, ok := manifest["kind"].(string); (ok && kind == v.Of) == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(manifest["kind"], idx, context.Negative)
+			errorMessage := v.failInfo(manifest["kind"], manifestIndex, -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
+			if context.FailFast {
+				break
+			}
 			continue
 		}
 
-		validateSuccess = determineSuccess(idx, validateSuccess, true)
+		validateSuccess = determineSuccess(manifestIndex, validateSuccess, true)
+	}
+
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

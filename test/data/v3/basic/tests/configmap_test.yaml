@@ -1,6 +1,13 @@
 suite: Configmap multiline Test
 templates:
   - templates/configmap.yaml
+chart:
+  appVersion: 1.0.1
+  version: 0.1.0
+set:
+  # issue https://github.com/helm-unittest/helm-unittest/issues/471
+  ingress:
+    hosts[1]: override-example-global-1.local
 tests:
   - it: should NOT configure ssl params if NOT set to be exposed
     asserts:
@@ -27,3 +34,136 @@ tests:
       - equal:
           path: metadata.name
           value: RELEASE-NAME-basic
+
+  - it: should not override chart values
+    values:
+      - ../values.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 1.0.1
+            chart: basic-0.1.0
+            heritage: Helm
+            release: RELEASE-NAME
+
+  - it: should override chart values
+    values:
+      - ../values.yaml
+    documentIndex: 0
+    chart:
+      appVersion: 2.0.0
+      version: 0.2.0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 2.0.0
+            chart: basic-0.2.0
+            heritage: Helm
+            release: RELEASE-NAME
+
+  - it: should override chart version only
+    values:
+      - ../values.yaml
+    documentIndex: 0
+    chart:
+      version: 0.3.0
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: basic
+            appVersion: 1.0.1
+            chart: basic-0.3.0
+            heritage: Helm
+            release: RELEASE-NAME
+
+  - it: should validate camelcase function
+    asserts:
+      - equal:
+          path: data["my.camelcase"]
+          value: Camelcase
+
+  - it: should validate ingress hosts with root values
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - chart-example.local
+
+  - it: should override ingress hosts with set when array
+    set:
+      ingress:
+        hosts:
+        - override-example.local
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - override-example.local
+
+  - it: should patch ingress hosts
+    set:
+      ingress.hosts[0]: override-example-patch-0.local
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - override-example-patch-0.local
+
+# issue https://github.com/helm-unittest/helm-unittest/issues/471
+  - it: should patch ingress hosts with append.
+    set:
+      ingress.hosts[1]: override-example-patch-1.local
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - null
+            - override-example-patch-1.local
+
+  - it: "should have values set from file"
+    values:
+    - values/hosts.yaml
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - chart-example-first.local
+            - chart-example-second.local
+            - chart-example-third.local
+
+# issue https://github.com/helm-unittest/helm-unittest/issues/471
+  - it: "should have values set from file and patch second host"
+    values:
+    - values/hosts.yaml
+    set:
+      ingress.hosts[1]: override-example-patch-1.local
+    asserts:
+      - exists:
+          path: data["my.ingress.hosts"]
+      - equal:
+          path: data["my.ingress.hosts"]
+          value:
+            - null
+            - override-example-patch-1.local
+      - notEqual:
+          path: data["my.ingress.hosts"]
+          value:
+            - chart-example-first.local
+            - override-example-patch-1.local
+            - chart-example-third.local

@@ -1,0 +1,13 @@
+suite: document selector erroring second suite
+templates:
+  - "*.yaml"
+tests:
+  - it: partial document selector in asserts. documentSelector.value is missing
+    asserts:
+      - exists:
+          path: kind
+        documentSelector:
+          path: kind
+          # this throw an error as currently documentSelector require path and value
+          skipEmptyTemplates: true
+

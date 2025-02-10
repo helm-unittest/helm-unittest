@@ -7,40 +7,17 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-
-	"github.com/yargevad/filepathx"
+	log "github.com/sirupsen/logrus"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
-func getFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]string, error) {
-	filesSet := make([]string, 0)
-	for _, pattern := range filePatterns {
-		if !filepath.IsAbs(pattern) {
-			files, err := filepathx.Glob(filepath.Join(chartPath, pattern))
-			if err != nil {
-				return nil, err
-			}
-			if setAbsolute {
-				for _, file := range files {
-					file, _ = filepath.Abs(file)
-					filesSet = append(filesSet, file)
-				}
-			} else {
-				filesSet = append(filesSet, files...)
-			}
-		} else {
-			filesSet = append(filesSet, pattern)
-		}
-	}
-
-	return filesSet, nil
-}
+const LOG_TEST_RUNNER = "test-runner"
 
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
@@ -141,13 +118,20 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	return allPassed
 }
 
+// getTestSuites retrieves the list of test suites for the given chart.
+// It parses test suite files and renders test suite files from the chart's tests path (if specified).
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+//
+// It returns a slice of _TestSuite structs and an error if any occurred during processing.
 func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite, error) {
-	testFilesSet, terr := getFiles(chartPath, tr.TestFiles, false)
+	testFilesSet, terr := GetFiles(chartPath, tr.TestFiles, false)
 	if terr != nil {
 		return nil, terr
 	}
 
-	valuesFilesSet, verr := getFiles("", tr.ValuesFiles, true)
+	valuesFilesSet, verr := GetFiles("", tr.ValuesFiles, true)
 	if verr != nil {
 		return nil, verr
 	}
@@ -178,11 +162,17 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 		resultSuites = append(resultSuites, suites...)
 	}
 	resultSuites = append(resultSuites, renderedTestSuites...)
-
 	return resultSuites, nil
 }
 
-// getV3TestSuites return test files of the chart which matched patterns
+// getV3TestSuites retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
+// It recursively calls itself for each subchart dependency.
+//
+// chartPath is the file system path to the chart directory.
+// chartRoute is the route/path to the chart within the chart repository.
+// chart is the chart object representing the chart being processed.
+//
+// It returns a slice of TestSuite pointers and an error if any occurred during processing.
 func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
@@ -202,7 +192,6 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 			resultSuites = append(resultSuites, subchartSuites...)
 		}
 	}
-
 	return resultSuites, nil
 }
 
@@ -219,15 +208,21 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			chartPassed = false
 			continue
 		}
-
 		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)
 
-		snapshotCache.StoreToFileIfNeeded()
+		_, storeErr := snapshotCache.StoreToFileIfNeeded()
+		if storeErr != nil {
+			tr.handleSuiteResult(&results.TestSuiteResult{
+				FilePath:  suite.SnapshotFileUrl(),
+				ExecError: storeErr,
+			})
+			chartPassed = false
+		}
 
-		if !chartPassed && tr.Failfast {
+		if !chartPassed && result.FailFast {
 			break
 		}
 	}
@@ -240,6 +235,12 @@ func (tr *TestRunner) handleSuiteResult(result *results.TestSuiteResult) {
 	result.Print(tr.Printer, 0)
 	tr.countSuite(result)
 	for _, testsResult := range result.TestsResult {
+		if testsResult == nil {
+			if tr.Failfast {
+				log.WithField("test-runner", "handle-suite-result").Debug("--failfast skip test")
+			}
+			continue
+		}
 		tr.countTest(testsResult)
 	}
 }
@@ -274,8 +275,8 @@ func (tr *TestRunner) printChartHeader(chartName, path string) {
 `
 	header := fmt.Sprintf(
 		headerFormat,
-		tr.Printer.Highlight(chartName),
-		tr.Printer.Faint(path),
+		tr.Printer.Highlight("%s", chartName),
+		tr.Printer.Faint("%s", path),
 	)
 	tr.Printer.Println(header, 0)
 }
@@ -283,7 +284,7 @@ func (tr *TestRunner) printChartHeader(chartName, path string) {
 // printErroredChartHeader if chart has exexution error print header with error
 func (tr *TestRunner) printErroredChartHeader(err error) {
 	headerFormat := `
-### ` + tr.Printer.Danger("Error: ") + ` %s
+### ` + tr.Printer.Danger("%s", "Error: ") + ` %s
 `
 	header := fmt.Sprintf(headerFormat, err)
 	tr.Printer.Println(header, 0)
@@ -297,7 +298,7 @@ Snapshot Summary: %s`
 
 		summary := tr.Printer.Danger("%d snapshot failed", tr.snapshotCounting.failed) +
 			fmt.Sprintf(" in %d test suite.", tr.suiteCounting.snapshotFailed) +
-			tr.Printer.Faint(" Check changes and use `-u` to update snapshot.")
+			tr.Printer.Faint("%s", " Check changes and use `-u` to update snapshot.")
 
 		tr.Printer.Println(fmt.Sprintf(snapshotFormat, summary), 0)
 	}

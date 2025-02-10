@@ -25,20 +25,6 @@ func TestEqualRawValidatorWhenOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestEqualRawValidatorWhenEmptyNOk(t *testing.T) {
-	validator := EqualRawValidator{"This is a NOTES.txt document."}
-
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs: []common.K8sManifest{},
-	})
-
-	assert.False(t, pass)
-	assert.Equal(t, []string{
-		"Error:",
-		"\tdocumentIndex 0 out of range",
-	}, diff)
-}
-
 func TestEqualRawValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqualRaw)
 
@@ -80,17 +66,51 @@ func TestEqualRawValidatorWhenNegativeAndFail(t *testing.T) {
 	}, diff)
 }
 
-func TestEqualRawValidatorWhenInvalidIndex(t *testing.T) {
+func TestEqualRawValidatorWhenNegativeAndFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqualRaw)
-	validator := EqualRawValidator{"Invalid text."}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
+
+	v := EqualRawValidator{"This is a NOTES.txt document."}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true,
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
+		"Expected NOT to equal:",
+		"	This is a NOTES.txt document.",
 	}, diff)
+}
+
+func TestEqualRawValidatorWhenNoManifestFail(t *testing.T) {
+	validator := EqualRawValidator{"This is a NOTES.txt document."}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"Expected to equal:",
+		"\tThis is a NOTES.txt document.",
+		"Actual:",
+		"\tno manifest found",
+		"Diff:", "\t--- Expected",
+		"\t+++ Actual",
+		"\t@@ -1,2 +1,2 @@",
+		"\t-This is a NOTES.txt document.",
+		"\t+no manifest found"}, diff)
+}
+
+func TestEqualRawValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	validator := EqualRawValidator{"This is a NOTES.txt document."}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

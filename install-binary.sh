@@ -21,6 +21,15 @@ if [ "$SKIP_BIN_INSTALL" = "1" ]; then
   exit
 fi
 
+if [ "$SKIP_BIN_DOWNLOAD" = "1" ]; then
+  echo "Preparing to install into ${HELM_PLUGIN_PATH}"
+  cp -f plugin.yaml $HELM_PLUGIN_PATH/plugin.yaml
+  cp -f untt $HELM_PLUGIN_PATH/untt
+  chmod +x $HELM_PLUGIN_PATH/untt
+  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
+  exit 
+fi
+
 # initArch discovers the architecture for this system.
 initArch() {
   ARCH=$(uname -m)
@@ -52,7 +61,7 @@ initOS() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="linux-arm64\nlinux-amd64\nmacos-amd64\nwindows-amd64\nwindows_nt-amd64\nmacos-arm64"
+  local supported="linux-amd64\nlinux-arm64\nlinux-s390x\nmacos-amd64\nmacos-arm64\nwindows-amd64\nwindows_nt-amd64"
   if ! echo "$supported" | grep -q "$OS-$ARCH"; then
     echo "No prebuild binary for $OS-$ARCH."
     exit 1

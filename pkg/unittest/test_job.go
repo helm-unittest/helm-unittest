@@ -1,6 +1,8 @@
 package unittest
 
 import (
+	"cmp"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,12 +18,28 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 
-	yaml "gopkg.in/yaml.v3"
-
 	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
 )
+
+const LOG_TEST_JOB = "test-job"
+
+// Split the error into several groups.
+// those groups are required to parse the correct value.
+// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
+// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
+// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
+// (?msU)
+//
+//	--- m: Multi-line mode. ^ and $ match the start and end of each line.
+//	--- s: Dot-all mode. . matches any character, including newline.
+//	--- U: Ungreedy mode. Makes quantifiers lazy by default.
+//
+// const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+
+var regexErrorPattern = regexp.MustCompile(regexPattern)
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -48,26 +66,17 @@ func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[s
 }
 
 func parseV3RenderError(errorMessage string) (string, map[string]string) {
-	// Split the error into several groups.
-	// those groups are required to parse the correct value.
-	// ^.+( |\()(.+):\d+:\d+\)?:(.+:)* (.+)$
-	// (?mU)^.+(?: |\\()(.+):\\d+:\\d+\\)?:(?:.+:)* (.+)$
-	// (?mU)^(?:.+: |.+ \()(?:(.+):\d+:\d+).+(?:.+>)*: (.+)$
-	const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
-
-	filePath, content := parseRenderError(regexPattern, errorMessage)
-
+	filePath, content := parseRenderError(errorMessage)
 	return filePath, content
 }
 
-func parseRenderError(regexPattern, errorMessage string) (string, map[string]string) {
+func parseRenderError(errorMessage string) (string, map[string]string) {
 	filePath := ""
 	content := map[string]string{
 		common.RAW: "",
 	}
 
-	r := regexp.MustCompile(regexPattern)
-	result := r.FindStringSubmatch(errorMessage)
+	result := regexErrorPattern.FindStringSubmatch(errorMessage)
 
 	if len(result) == 3 {
 		filePath = result[1]
@@ -78,7 +87,9 @@ func parseRenderError(regexPattern, errorMessage string) (string, map[string]str
 }
 
 func parseYamlFile(rendered string) ([]common.K8sManifest, error) {
-	decoder := yaml.NewDecoder(strings.NewReader(rendered))
+	// Replace --- with ---\n to ensure yaml rendering is parsed correctly/
+	rendered = splitterPattern.ReplaceAllString(rendered, "\n---\n")
+	decoder := common.YamlNewDecoder(strings.NewReader(rendered))
 	parsedYamls := make([]common.K8sManifest, 0)
 
 	for {
@@ -115,7 +126,7 @@ func writeRenderedOutput(renderPath string, outputOfFiles map[string]string) err
 		for file, rendered := range outputOfFiles {
 			filePath := filepath.Join(renderPath, file)
 			directory := filepath.Dir(filePath)
-			if _, dirErr := os.Stat(directory); os.IsNotExist(dirErr) {
+			if _, dirErr := os.Stat(directory); errors.Is(dirErr, os.ErrNotExist) {
 				if createDirErr := os.MkdirAll(directory, 0755); createDirErr != nil {
 					return createDirErr
 				}
@@ -139,6 +150,15 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapsh
 	return s.cache.Compare(s.test, s.counter, content)
 }
 
+type Capabilities struct {
+	MajorVersion string   `yaml:"majorVersion"`
+	MinorVersion string   `yaml:"minorVersion"`
+	APIVersions  []string `yaml:"apiVersions"`
+}
+
+// CapabilitiesFields required to identify where or not the filed is provided, and the value is unset or not
+type CapabilitiesFields map[string]interface{}
+
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name             string `yaml:"it"`
@@ -146,7 +166,8 @@ type TestJob struct {
 	Set              map[string]interface{}
 	Template         string
 	Templates        []string
-	DocumentIndex    *int                         `yaml:"documentIndex"`
+	DocumentIndex    *int `yaml:"documentIndex"`
+	DocumentIndices  map[string][]int
 	DocumentSelector *valueutils.DocumentSelector `yaml:"documentSelector"`
 	Release          struct {
 		Name      string
@@ -158,11 +179,8 @@ type TestJob struct {
 		Version    string
 		AppVersion string `yaml:"appVersion"`
 	}
-	Capabilities struct {
-		MajorVersion string   `yaml:"majorVersion"`
-		MinorVersion string   `yaml:"minorVersion"`
-		APIVersions  []string `yaml:"apiVersions"`
-	}
+	Capabilities       Capabilities                 `yaml:"-"`
+	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	// global set values
@@ -189,17 +207,16 @@ func (t *TestJob) RunV3(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
+	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
 	result.DisplayName = t.Name
-
 	userValues, err := t.getUserValues()
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 
-	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, userValues)
-
+	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
@@ -216,17 +233,8 @@ func (t *TestJob) RunV3(
 		result.ExecError = err
 		return result
 	}
-
-	// determine documentIndex
-	indexError := t.determineDocumentIndex(manifestsOfFiles)
-	if indexError != nil {
-		result.ExecError = indexError
-		return result
-	}
-
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
-
 	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
@@ -241,7 +249,7 @@ func (t *TestJob) RunV3(
 }
 
 // liberally borrows from helm-template
-func (t *TestJob) getUserValues() ([]byte, error) {
+func (t *TestJob) getUserValues() (string, error) {
 	base := map[string]interface{}{}
 	routes := spliteChartRoutes(t.chartRoute)
 
@@ -257,35 +265,36 @@ func (t *TestJob) getUserValues() ([]byte, error) {
 
 		bytes, err := os.ReadFile(valueFilePath)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 
-		if err := yaml.Unmarshal(bytes, &value); err != nil {
-			return []byte{}, fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
+		if err := common.YmlUnmarshal(string(bytes), &value); err != nil {
+			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, value))
+
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, value), base)
 	}
 
 	// Merge global set values before merging the other set values
 	for path, values := range t.globalSet {
 		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
 
 	for path, values := range t.Set {
 		setMap, err := valueutils.BuildValueOfSetPath(values, path)
 		if err != nil {
-			return []byte{}, err
+			return "", err
 		}
 
-		base = valueutils.MergeValues(base, scopeValuesWithRoutes(routes, setMap))
+		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
-
-	return yaml.Marshal(base)
+	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
+	return common.YmlMarshall(base)
 }
 
 // render the chart and return result map
@@ -296,7 +305,7 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 	options := *t.releaseV3Option()
 
-	//Check Release Name length
+	// Check Release Name length
 	if t.Release.Name != "" {
 		err = v3util.ValidateReleaseName(t.Release.Name)
 		if err != nil {
@@ -304,26 +313,15 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 	}
 
-	// Override the chart version when version is setup in test.
-	if t.Chart.Version != "" {
-		targetChart.Metadata.Version = t.Chart.Version
-	}
-
-	// Override the chart appVErsion when version is setup in test.
-	if t.Chart.AppVersion != "" {
-		targetChart.Metadata.AppVersion = t.Chart.AppVersion
-	}
-
-	err = v3util.ProcessDependencies(targetChart, values)
+	err = v3util.ProcessDependenciesWithMerge(targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValues(targetChart, values.AsMap(), options, t.capabilitiesV3())
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
 	if err != nil {
 		return nil, false, err
 	}
-
 	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
 	if len(t.defaultTemplatesToAssert) == 0 {
 		// Set all files
@@ -333,14 +331,21 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	// Filter the files that needs to be validated
 	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, targetChart)
 
-	outputOfFiles, err := v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	var outputOfFiles map[string]string
+	// modify chart metadata before rendering
+	t.ModifyChartMetadata(targetChart)
+	if len(t.KubernetesProvider.Objects) > 0 {
+		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+	} else {
+		outputOfFiles, err = v3engine.Render(filteredChart, vals)
+	}
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
+	log.WithField(LOG_TEST_JOB, "render-v3-chart").Debug("outputOfFiles:", outputOfFiles, "renderSucceed:", renderSucceed, "err:", err)
 	if err != nil {
 		return nil, false, err
 	}
-
 	return outputOfFiles, renderSucceed, nil
 }
 
@@ -394,20 +399,21 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 	return &options
 }
 
-// get chartutil.Capabilities ready for render
+// capabilitiesV3 chartutil.Capabilities ready for render
+// function returns a v3util.Capabilities struct based on the TestJob's capabilities.
+// It overrides the KubeVersion field if majorVersion or minorVersion are set
 func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 	capabilities := v3util.DefaultCapabilities
 
-	// Override the version, when set.
-	if t.Capabilities.MajorVersion != "" && t.Capabilities.MinorVersion != "" {
-		capabilities.KubeVersion = v3util.KubeVersion{
-			Version: fmt.Sprintf("v%s.%s.0", t.Capabilities.MajorVersion, t.Capabilities.MinorVersion),
-			Major:   t.Capabilities.MajorVersion,
-			Minor:   t.Capabilities.MinorVersion,
-		}
+	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
+	minorVersion := cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor)
+
+	capabilities.KubeVersion = v3util.KubeVersion{
+		Version: fmt.Sprintf("v%s.%s.0", majorVersion, minorVersion),
+		Major:   majorVersion,
+		Minor:   minorVersion,
 	}
 
-	// Add ApiVersions when set
 	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
 
 	return capabilities
@@ -451,12 +457,16 @@ func (t *TestJob) runAssertions(
 	assertsResult := make([]*results.AssertionResult, 0)
 
 	for idx, assertion := range t.Assertions {
+		if assertion == nil {
+			continue
+		}
 		result := assertion.Assert(
 			manifestsOfFiles,
 			snapshotComparer,
 			renderSucceed,
 			renderError,
 			&results.AssertionResult{Index: idx},
+			failfast,
 		)
 
 		assertsResult = append(assertsResult, result)
@@ -480,54 +490,10 @@ func (t *TestJob) determineRenderSuccess() {
 	t.requireRenderSuccess = true
 
 	for _, assertion := range t.Assertions {
-		t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
-	}
-}
-
-func (t *TestJob) determineDocumentIndex(manifestOfFiles map[string][]common.K8sManifest) error {
-	filteredManifests := t.manifestsUnderTest(manifestOfFiles)
-	if t.DocumentSelector != nil {
-		idx, err := t.DocumentSelector.FindDocumentsIndex(filteredManifests)
-		if err != nil {
-			return err
-		} else {
-			// Update the DocumentIndex if the found idx is not -1
-			if idx != -1 {
-				t.DocumentIndex = &idx
-			}
+		if assertion != nil {
+			t.requireRenderSuccess = t.requireRenderSuccess && assertion.requireRenderSuccess
 		}
 	}
-
-	return nil
-}
-
-// manifestsUnderTest is a method of the TestJob type that filters a map of Kubernetes manifests
-// based on the user specified template or templates. It returns a new map containing only the manifests
-// that match the specified criteria.
-func (t *TestJob) manifestsUnderTest(manifests map[string][]common.K8sManifest) map[string][]common.K8sManifest {
-	log.WithField("assertion", "manifests-under-test").Debugln("total manifests", len(manifests), " and ", manifests)
-	result := make(map[string][]common.K8sManifest)
-	if t.Template != "" {
-		for key, value := range manifests {
-			if strings.Contains(key, t.Template) {
-				result[key] = value
-			}
-		}
-	}
-	if t.Templates != nil && len(t.Templates) > 0 {
-		for _, template := range t.Templates {
-			for key, value := range manifests {
-				if strings.Contains(key, template) {
-					result[key] = value
-				}
-			}
-		}
-	}
-	log.WithField("assertion", "manifests-under-test").Debugln("manifests to test against", len(result))
-	if len(result) == 0 {
-		return manifests
-	}
-	return result
 }
 
 // add prefix to Assertion.Template
@@ -537,11 +503,18 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 	}
 
 	for _, assertion := range t.Assertions {
+		if assertion == nil {
+			continue
+		}
 		prefixedChartsNameFiles := false
 		templatesToAssert := make([]string, 0)
 
 		if t.DocumentIndex != nil {
 			assertion.DocumentIndex = *t.DocumentIndex
+		}
+
+		if assertion.DocumentSelector == nil {
+			assertion.DocumentSelector = t.DocumentSelector
 		}
 
 		if assertion.Template == "" {
@@ -596,4 +569,69 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 	}
 
 	return templatesPath
+}
+
+// ModifyChartMetadata overrides the metadata of a Helm chart based on the values
+// provided in the TestJob. If a chart version is set in the TestJob (t.Chart.Version),
+// it updates the target chart's version and also propagates the same version to all
+// chart dependencies. Similarly, if an appVersion is set (t.Chart.AppVersion),
+// it updates the target chart's appVersion and also propagates it to all dependencies.
+func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
+	targetChart.Metadata.Version = cmp.Or(t.Chart.Version, targetChart.Metadata.Version)
+	targetChart.Metadata.AppVersion = cmp.Or(t.Chart.AppVersion, targetChart.Metadata.AppVersion)
+
+	updateMetadata := func(version, appVersion string) {
+		for _, dependency := range targetChart.Dependencies() {
+			dependency.Metadata.Version = cmp.Or(version, dependency.Metadata.Version)
+			dependency.Metadata.AppVersion = cmp.Or(appVersion, dependency.Metadata.AppVersion)
+		}
+	}
+	updateMetadata(t.Chart.Version, t.Chart.AppVersion)
+}
+
+// SetCapabilities populates the Capabilities struct with values from CapabilitiesFields.
+// It extracts majorVersion, minorVersion, and apiVersions fields and sets the corresponding
+// fields in Capabilities. If apiVersions is nil, it sets APIVersions to nil. If it's a slice,
+// it appends string values to APIVersions.
+func (t *TestJob) SetCapabilities() {
+	if val, ok := t.CapabilitiesFields["majorVersion"]; ok {
+		t.Capabilities.MajorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["minorVersion"]; ok {
+		t.Capabilities.MinorVersion = convertIToString(val)
+	}
+	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
+		switch v := val.(type) {
+		case []interface{}:
+			t.Capabilities.APIVersions = make([]string, 0, len(v)) // optimize slice allocation
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					t.Capabilities.APIVersions = append(t.Capabilities.APIVersions, str)
+				}
+			}
+		case nil:
+		default:
+			// key capabilities.apiVersions exists but is unset
+			t.Capabilities.APIVersions = nil
+		}
+	} else {
+		// APIVersions not set on test level
+		t.Capabilities.APIVersions = make([]string, 0)
+	}
+}
+
+// ConvertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
+// If the input value is nil, it returns an empty string.
+func convertIToString(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	switch v := val.(type) {
+	case string:
+		return v
+	case int, int8, int16, int32, int64:
+		return fmt.Sprintf("%d", val)
+	default:
+		return ""
+	}
 }

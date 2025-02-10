@@ -74,19 +74,46 @@ func TestIsKindValidatorWhenNegativeAndFail(t *testing.T) {
 	}, diff)
 }
 
-func TestIsKindValidatorWhenInvalidIndex(t *testing.T) {
+func TestIsKindValidatorWhenNegativeAndFailFast(t *testing.T) {
 	doc := "kind: Pod"
 	manifest := makeManifest(doc)
 
-	validator := IsKindValidator{"Pod"}
-	pass, diff := validator.Validate(&ValidateContext{
-		Docs:  []common.K8sManifest{manifest},
-		Index: 2,
+	v := IsKindValidator{"Pod"}
+	pass, diff := v.Validate(&ValidateContext{
+		FailFast: true,
+		Docs:     []common.K8sManifest{manifest, manifest},
+		Negative: true},
+	)
+	assert.False(t, pass)
+	assert.Equal(t, []string{
+		"DocumentIndex:	0",
+		"Expected NOT to be kind:",
+		"	Pod",
+	}, diff)
+}
+
+func TestIsKindValidatorWhenNoManifestFail(t *testing.T) {
+	v := IsKindValidator{"Service"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
 	})
 
 	assert.False(t, pass)
 	assert.Equal(t, []string{
-		"Error:",
-		"	documentIndex 2 out of range",
+		"Expected to be kind:",
+		"\tService",
+		"Actual:",
+		"\tno manifest found",
 	}, diff)
+}
+
+func TestIsKindValidatorWhenNoManifestNegativeOk(t *testing.T) {
+	v := IsKindValidator{"Service"}
+	pass, diff := v.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }

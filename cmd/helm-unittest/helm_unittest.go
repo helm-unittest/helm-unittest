@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/helm-unittest/helm-unittest/internal/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -176,7 +176,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.useFailfast, "failfast", "q", false,
-		"direct quit testing, when a test is failed",
+		"actually directly quit testing, when a test is failed",
 	)
 
 	cmd.PersistentFlags().BoolVarP(

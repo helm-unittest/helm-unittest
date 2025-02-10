@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,8 +31,8 @@ func CreateSnapshotOfSuite(path string, isUpdating bool) (*Cache, error) {
 func ensureDir(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return os.Mkdir(path, os.ModePerm)
+		if errors.Is(err, os.ErrNotExist) {
+			return os.MkdirAll(path, 0755)
 		}
 		return err
 	}

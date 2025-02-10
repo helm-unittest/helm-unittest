@@ -1,0 +1,5 @@
+-----
+Platform release "{{.Release.Name}}" installed in namespace "{{.Release.Namespace}}"
+
+Documentation can be found here: https://docs.example.com/
+-----

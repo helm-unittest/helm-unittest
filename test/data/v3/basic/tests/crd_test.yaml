@@ -28,3 +28,9 @@ tests:
           value: my-release-basic-backuppolicy
       - hasDocuments:
           count: 1
+      - isType:
+          path: apiVersion
+          type: string
+      - equal:
+          path: metadata.labels["kubeVersion.minor"]
+          value: "12"

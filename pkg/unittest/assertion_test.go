@@ -8,7 +8,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 )
 
 func validateSucceededTestAssertions(
@@ -18,13 +17,12 @@ func validateSucceededTestAssertions(
 	renderedMap map[string][]common.K8sManifest) {
 
 	assertions := make([]Assertion, assertionCount)
-	err := yaml.Unmarshal([]byte(assertionsYAML), &assertions)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 
 	for idx, assertion := range assertions {
-		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx})
+		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false)
 		a.Equal(&results.AssertionResult{
 			Index:      idx,
 			FailInfo:   []string{},
@@ -34,13 +32,16 @@ func validateSucceededTestAssertions(
 			CustomInfo: "",
 		}, result)
 	}
-
 }
 
-func TestAssertionUnmarshaledFromYAML(t *testing.T) {
+func TestAssertionUnmarshalFromYAML(t *testing.T) {
 	assertionsYAML := `
 - equal:
 - notEqual:
+- greaterOrEqual:
+- notGreaterOrEqual:
+- lessOrEqual:
+- notLessOrEqual:
 - equalRaw:
 - notEqualRaw:
 - matchRegex:
@@ -59,6 +60,8 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - isNotNullOrEmpty:
 - isKind:
 - isAPIVersion:
+- isType:
+- isNotType:
 - hasDocuments:
 - isSubset:
 - isNotSubset:
@@ -68,12 +71,13 @@ func TestAssertionUnmarshaledFromYAML(t *testing.T) {
 - lengthEqual:
 `
 
-	assertionsAsMap := make([]map[string]interface{}, 27)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertionsAsMap)
-	assertions := make([]Assertion, 27)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+	assertionsAsMap := make([]map[string]interface{}, 33)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertionsAsMap, t)
+
+	assertions := make([]Assertion, 33)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
+
 	for idx, assertion := range assertions {
 		_, ok := assertionsAsMap[idx][assertion.AssertType]
 		a.True(ok)
@@ -91,6 +95,14 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - notEqualRaw:
   not: true
+- greaterOrEqual:
+  not: true
+- notGreaterOrEqual:
+  not: true
+- lessOrEqual:
+  not: true
+- notLessOrEqual:
+  not: true
 - matchRegex:
   not: true
 - notMatchRegex:
@@ -123,6 +135,10 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
   not: true
 - isAPIVersion:
   not: true
+- isType:
+  not: true
+- isNotType:
+  not: true
 - hasDocuments:
   not: true
 - isSubset:
@@ -130,10 +146,11 @@ func TestAssertionUnmarshaledFromYAMLWithNotTrue(t *testing.T) {
 - failedTemplate:
   not: true
 `
-	assertions := make([]Assertion, 23)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+
+	assertions := make([]Assertion, 29)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
+
 	for _, assertion := range assertions {
 		a.True(assertion.Not)
 	}
@@ -147,6 +164,12 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - equalRaw:
   not: true
 - notEqualRaw:
+- greaterOrEqual:
+  not: true
+- notGreaterOrEqual:
+- lessOrEqual:
+  not: true
+- notLessOrEqual:
 - matchRegex:
   not: true
 - notMatchRegex:
@@ -171,14 +194,18 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 - isSubset:
   not: true
 - isNotSubset:
+- isType:
+  not: true
+- isNotType:
 - failedTemplate:
   not: true
 - notFailedTemplate:
 `
-	assertions := make([]Assertion, 22)
-	yaml.Unmarshal([]byte(assertionsYAML), &assertions)
-
 	a := assert.New(t)
+
+	assertions := make([]Assertion, 28)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
+
 	for idx := 0; idx < len(assertions); idx += 2 {
 		a.Equal(assertions[idx].Not, !assertions[idx+1].Not)
 	}
@@ -202,8 +229,7 @@ e:
   f: g
 x:
 `
-	manifest := common.K8sManifest{}
-	yaml.Unmarshal([]byte(manifestDoc), &manifest)
+	manifest := common.TrustedUnmarshalYAML(manifestDoc)
 	renderedMap := map[string][]common.K8sManifest{
 		"t.yaml": {manifest},
 	}
@@ -304,12 +330,11 @@ template: not-existed.yaml
 equal:
 `
 	assertion := new(Assertion)
-	err := yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	a.Nil(err)
 
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\ttemplate \"not-existed.yaml\" not exists or not selected in test suite"},
@@ -327,13 +352,39 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	}
 	assertionYAML := "equal:"
 	assertion := new(Assertion)
-	yaml.Unmarshal([]byte(assertionYAML), &assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0})
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\tassertion.template must be given if testsuite.templates is empty"},
+		Passed:     false,
+		AssertType: "equal",
+		Not:        false,
+		CustomInfo: "",
+	}, result)
+}
+
+func TestAssertionAssertWhenDocumentIndexIsOutOfRange(t *testing.T) {
+	manifest := common.K8sManifest{}
+	renderedMap := map[string][]common.K8sManifest{
+		"template.yaml": {manifest},
+	}
+	assertionYAML := `
+template: template.yaml
+documentIndex: 1
+equal:
+`
+	assertion := new(Assertion)
+	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
+
+	a := assert.New(t)
+
+	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false)
+	a.Equal(&results.AssertionResult{
+		Index:      0,
+		FailInfo:   []string{"Error:", "document index 1 is out of rage"},
 		Passed:     false,
 		AssertType: "equal",
 		Not:        false,

@@ -3,6 +3,8 @@ apiVersion: "br.dev.local/v1"
 kind: BrPolicy
 metadata:
   name: {{ template "basic.fullname" . }}-backuppolicy
+  labels:
+    kubeVersion.minor: {{ .Capabilities.KubeVersion.Minor | quote }}
 spec:
   selector:
     matchLabels:

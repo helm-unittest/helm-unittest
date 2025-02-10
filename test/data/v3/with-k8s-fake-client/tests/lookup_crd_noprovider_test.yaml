@@ -1,0 +1,10 @@
+templates:
+  - templates/lookup_crd.yaml
+tests:
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+      - isNullOrEmpty:
+          path: backup_exists
+      - isNullOrEmpty:
+          path: backup_not_exists

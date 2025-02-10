@@ -16,6 +16,10 @@ Error:
 %s
 `
 
+// For multilines, remove spaces before newlines
+// And ensure all decoded content uses LF
+var regex = regexp.MustCompile(`(?m)[ ]+\r?\n`)
+
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
 	CompareToSnapshot(content interface{}) *snapshot.CompareResult
@@ -23,25 +27,21 @@ type SnapshotComparer interface {
 
 // ValidateContext the context passed to validators
 type ValidateContext struct {
-	Docs     []common.K8sManifest
-	Index    int
-	Negative bool
+	Docs         []common.K8sManifest
+	SelectedDocs *[]common.K8sManifest
+	Negative     bool
 	SnapshotComparer
 	RenderError error
+	FailFast    bool
 }
 
-func (c *ValidateContext) getManifests() ([]common.K8sManifest, error) {
-	manifests := make([]common.K8sManifest, 0)
-	if c.Index == -1 {
-		manifests = append(manifests, c.Docs...)
-		return manifests, nil
+func (c *ValidateContext) getManifests() []common.K8sManifest {
+	// This here is for making a default for unit tests
+	if c.SelectedDocs == nil {
+		return c.Docs
+	} else {
+		return *c.SelectedDocs
 	}
-
-	if len(c.Docs) <= c.Index {
-		return nil, fmt.Errorf("documentIndex %d out of range", c.Index)
-	}
-	manifests = append(manifests, c.Docs[c.Index])
-	return manifests, nil
 }
 
 // Validatable all validators must implement Validate method
@@ -71,14 +71,14 @@ Expected` + notAnnotation + customize + `:
 	}
 	if diff {
 		result += `Diff:
-%s	
+%s
 `
 	}
 	return result
 }
 
 // splitInfof split multi line string into array of string
-func splitInfof(format string, index int, replacements ...string) []string {
+func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")
 	indentedReplacements := make([]interface{}, len(replacements))
 	for i, r := range replacements {
@@ -93,9 +93,16 @@ func splitInfof(format string, index int, replacements ...string) []string {
 		"\n",
 	)
 
-	if index >= 0 {
-		indexedString := []string{fmt.Sprintf("DocumentIndex:\t%d", index)}
-		splittedStrings = append(indexedString, splittedStrings...)
+	// Only shown multiple values are found for assertions.
+	if valuesIndex >= 0 {
+		valuesIndexString := []string{fmt.Sprintf("ValuesIndex:\t%d", valuesIndex)}
+		splittedStrings = append(valuesIndexString, splittedStrings...)
+	}
+
+	// Only shown manifest index if it is not -1
+	if manifestIndex >= 0 {
+		manifestIndexString := []string{fmt.Sprintf("DocumentIndex:\t%d", manifestIndex)}
+		splittedStrings = append(manifestIndexString, splittedStrings...)
 	}
 
 	return splittedStrings
@@ -117,9 +124,6 @@ func diff(expected string, actual string) string {
 
 // uniform the content without invalid characters and correct line-endings
 func uniformContent(content interface{}) string {
-	// For multilines, remove spaces before newlines
-	// And ensure all decoded content uses LF
-	regex := regexp.MustCompile(`(?m)[ ]+\r?\n`)
 	actual := fmt.Sprintf("%v", content)
 	return regex.ReplaceAllString(actual, "\n")
 }
@@ -128,7 +132,6 @@ func uniformContent(content interface{}) string {
 func validateSubset(actual map[string]interface{}, content map[string]interface{}) bool {
 	for key := range content {
 		if !reflect.DeepEqual(actual[key], content[key]) {
-
 			return false
 		}
 	}

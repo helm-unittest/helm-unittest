@@ -1,0 +1,61 @@
+suite: Test empty template
+templates:
+  - validation.tpl
+tests:
+  - it: should validate failure message with meta characters and without new-line
+    set:
+      case1: true
+    asserts:
+    - failedTemplate:
+        errorPattern: |-
+          `runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)
+    - failedTemplate:
+        errorMessage: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+    - failedTemplate:
+        errorPattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+    - failedTemplate:
+        errorPattern: "`runAsNonRoot`"
+    - failedTemplate:
+        errorPattern: "`runAsNonRoot` is"
+    - failedTemplate:
+        errorPattern: "is set to `0` \(root\)"
+    - failedTemplate:
+        # as a user I do not want to know about escape meta characters behavior for specific language
+        errorPattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+    - failedTemplate:
+        # escaped with double slash
+        errorPattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` \\(root\\)"
+    - failedTemplate:
+        # escaped with single slash
+        errorPattern: "`runAsNonRoot` is set to `true` but `runAsUser` is set to `0` (root)"
+    - failedTemplate:
+        errorPattern: "`runAsNonRoot`.*`runAsUser`.*(root)"
+    - failedTemplate:
+        errorPattern: ".+"
+    - failedTemplate:
+        errorPattern: "[a-b-A-Z0-9`()].*"
+
+  - it: should validate failure message with meta characters '`' and with new-line '\n'
+    set:
+      case2: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "`in-backtick` start with new line following backtick"
+      - failedTemplate:
+          errorMessage: |-
+            `in-backtick` start with new line following backtick
+
+# case with new lines in between strings
+  - it: should validate failure message with meta escape characters
+    set:
+      case3: true
+    asserts:
+      - failedTemplate:
+          errorPattern: ".*\\.*"
+
+  - it: should validate failure message with meta escape characters and new line
+    set:
+      case4: true
+    asserts:
+      - failedTemplate:
+          errorPattern: ".*\\.*"

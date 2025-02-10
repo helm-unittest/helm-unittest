@@ -48,7 +48,7 @@ func validateSonarTestCases(assert *assert.Assertions, expected, actual []SonarT
 }
 
 func TestWriteTestOutputAsSonarNoTests(t *testing.T) {
-	_assert := assert.New(t)
+	assert := assert.New(t)
 	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 
 	expected := SonarTestExecutions{
@@ -58,21 +58,18 @@ func TestWriteTestOutputAsSonarNoTests(t *testing.T) {
 	var given []*results.TestSuiteResult
 
 	sut := NewSonarReportXML()
-	byteValue := loadFormatterTestcase(_assert, outputFile, given, sut)
+	byteValue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual SonarTestExecutions
 	err := xml.Unmarshal(byteValue, &actual)
-	if err != nil {
-		_assert.Fail(err.Error())
-		return
-	}
+	assert.Nil(err)
 
-	_assert.Equal(expected.Version, actual.Version)
-	validateSonarFiles(_assert, expected.Files, actual.Files)
+	assert.Equal(expected.Version, actual.Version)
+	validateSonarFiles(assert, expected.Files, actual.Files)
 }
 
 func TestWriteTestOutputAsSonarMinimalSuccess(t *testing.T) {
-	_assert := assert.New(t)
+	assert := assert.New(t)
 	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuiteSuccess"
 	testCaseDisplayName := "TestCaseSuccessSuccess"
@@ -107,20 +104,18 @@ func TestWriteTestOutputAsSonarMinimalSuccess(t *testing.T) {
 	given[0].TestsResult[0].Duration, _ = time.ParseDuration("12s")
 
 	sut := NewSonarReportXML()
-	byteValue := loadFormatterTestcase(_assert, outputFile, given, sut)
+	byteValue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual SonarTestExecutions
 	err := xml.Unmarshal(byteValue, &actual)
-	if err != nil {
-		_assert.Fail(err.Error())
-	}
+	assert.Nil(err)
 
-	_assert.Equal(expected.Version, actual.Version)
-	validateSonarFiles(_assert, expected.Files, actual.Files)
+	assert.Equal(expected.Version, actual.Version)
+	validateSonarFiles(assert, expected.Files, actual.Files)
 }
 
 func TestWriteTestOutputAsSonarWithErrorsAndFailures(t *testing.T) {
-	_assert := assert.New(t)
+	assert := assert.New(t)
 	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuiteFailuresAndErrors"
 	testCaseDisplayNameError := "TestCaseError"
@@ -170,14 +165,12 @@ func TestWriteTestOutputAsSonarWithErrorsAndFailures(t *testing.T) {
 	given[0].TestsResult[1].Duration, _ = time.ParseDuration("456ms")
 
 	sut := NewSonarReportXML()
-	byteValue := loadFormatterTestcase(_assert, outputFile, given, sut)
+	byteValue := loadFormatterTestcase(assert, outputFile, given, sut)
 
 	var actual SonarTestExecutions
 	err := xml.Unmarshal(byteValue, &actual)
-	if err != nil {
-		_assert.Fail(err.Error())
-	}
+	assert.Nil(err)
 
-	_assert.Equal(expected.Version, actual.Version)
-	validateSonarFiles(_assert, expected.Files, actual.Files)
+	assert.Equal(expected.Version, actual.Version)
+	validateSonarFiles(assert, expected.Files, actual.Files)
 }

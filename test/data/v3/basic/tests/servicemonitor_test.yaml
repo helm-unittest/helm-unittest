@@ -1,0 +1,26 @@
+suite: Custom Resource Definition Test
+templates:
+  - servicemonitor.yaml
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1
+tests:
+  - it: with monitoring disabled, ServiceMonitor not created
+    capabilities:
+      apiVersions:
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: with monitoring, ServiceMonitor is created
+    capabilities:
+      apiVersions: []
+      minorVersion: 20
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: monitoring.coreos.com/v1
+      - equal:
+          path: metadata.labels["kubeVersion.minor"]
+          value: "20"

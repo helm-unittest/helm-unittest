@@ -1,3 +1,75 @@
+0.7.2 / 2025-01-27
+==================
+- Contains fails to detect string elements in array when any is enabled (resolves #342)
+- FailedTemplate assertion fails when the error message starts with a special character (resolves #499, credits @ivankatliarchuk,)
+- Helm-unittest panics when failfast enabled and multiple suites are configured (resolves #534, credits @ivankatliarchuk)
+- Moved printer.NewPrinter to an exported package (resolves #538)
+- Valid YAML starting with document break and comment is not processed correctly (resolves #543, credits @ivankatliarchuk)
+- Helm-unittest panics on documentSelector when required fields are not filled (resolves #555, credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
+0.7.1 / 2024-12-31
+==================
+- Move custom MergeValues to HelmCharts MergeTables to align merging values with Helm (relates #471)
+- Correct mix up test value with expectation in lessOrEqual and greaterOrEqual validators (resolves #515)
+- Refactoring for improved modules update (credits @ivankatliarchuk, relates #501)
+- Added extra tests for validation (credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update documentation
+
+0.7.0 / 2024-11-25
+==================
+- Fix template path is translated differently (credits @ivankatliarchuk, resolves #300)
+- Fix rendering with subchart alias with version override (credits @ivankatliarchuk, resolves #457)
+- Added multivalue validations (credits @Andreas02-dev, resolves #289, resolves #345, resolves #405)
+- Improved proper FailFast (credits @Andreas02-dev)
+- Update packages to latest patch versions
+- Update documentation
+
+0.6.3 / 2024-10-08
+==================
+- Fix regression on document separator for raw files (credits @ivankatliarchuk, resolves #413)
+- Fix chart object to overwritte also in subcharts (credits @ivankatliarchuk, resolves #412)
+- Update packages to latest patch versions
+- Update documentation
+
+0.6.2 / 2024-10-02
+==================
+- Fix assertion does not match when using camelcase function (resolves #359)
+- Fix templating multi document Helm file with trims break YAML parsing (resolves #403)
+- Fix lookup of resources defined in kubernetesProvider without any objects (resolves #380)
+- Fix chart object cannot be overwritten in the test job (credits @ivankatliarchuk, resolves #412)
+- Fix capabilities.apiVersions cannot be unset (resolves #413)
+- Improvement support for linux x390x (credits @dandotimujahid)
+- Update packages to latest patch versions
+- Update documentation
+
+0.6.1 / 2024-09-01
+==================
+- Fix notFailedTemplate throwing a panic when no error (resolves #400)
+
+0.6.0 / 2024-08-31
+==================
+- Added feature isType assertion (credits @rquinio1A, resolves #325)
+- Added feature GreaterThan/LessThan assertion (credits @ivankatliarchuk, resolves #294)
+- Fix lengthEqual count to use 0 (credits @ivankatliarchuk, resolves #346, resolves #368)
+- Fix run assertions when no document is rendered (resolves #363)
+- Improvement on explicitly allow documentSelector to return multiple results (credits @mszygenda, resolves #308)
+- Improvement on failedTemplate to support regexPattern (credits @ivankatliarchuk, resolves #221, resolves #349)
+- Improvement on build and release workflows to align with OpenSSF (credits @ivankatliarchuk, resolves #360)
+- Update packages to latest patch versions
+- Update documentation
+
+0.5.2 / 2024-07-23
+==================
+- Fix notLengthEqual assertion is never satisfied (credits @snorwin)
+- Improvement move build and release workflows to github actions
+- Improvement multi-architecture docker images (resolves #321)
+- Update packages to latest patch versions (resolves #353)
+- Update documentation (credits @dancer1325, @yurrriq)
+
 0.5.1 / 2024-05-11
 ==================
 - Fix parse multidocument testsuites (credits @ivankatliarchuk, resolves #329, resolves #336)

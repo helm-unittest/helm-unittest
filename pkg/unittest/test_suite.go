@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -9,9 +10,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	"gopkg.in/yaml.v3"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
@@ -20,7 +21,8 @@ import (
 )
 
 // m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
-var splitterPattern = regexp.MustCompile("(?m:^---$)")
+// helm https://github.com/helm/helm/blob/145d12f82fc7a2e39a17713340825686b661e0a1/pkg/releaseutil/manifest.go#L36
+var splitterPattern = regexp.MustCompile("(?:^|\\s*\n)---\\s*")
 
 // ParseTestSuiteFile parse a suite file that contain one or more suites at path and returns an array of TestSuite
 func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFilesSet []string) ([]*TestSuite, error) {
@@ -34,19 +36,26 @@ func ParseTestSuiteFile(suiteFilePath, chartRoute string, strict bool, valueFile
 	// The -1 passed as the third argument to Split tells it to return all parts,
 	// including the parts matched by the regular expression pattern.
 	parts := splitterPattern.Split(string(content), -1)
-	log.WithField("test-suite", "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
+	log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("suite '", suiteFilePath, "' total parts ", len(parts))
 	var testSuites []*TestSuite
 	for _, part := range parts {
-		// Ensure the part has data exclude whitespace, otherwise we can ignore the split
 		if len(strings.TrimSpace(part)) > 0 {
 			testSuite, suiteErr := createTestSuite(suiteFilePath, chartRoute, part, strict, valueFilesSet, false)
-			testSuites = append(testSuites, testSuite)
+			if testSuite != nil {
+				for _, test := range testSuite.Tests {
+					if test != nil {
+						testSuite.polishChartSettings(test)
+						testSuite.polishCapabilitiesSettings(test)
+					}
+				}
+				testSuites = append(testSuites, testSuite)
+			}
 			if suiteErr != nil {
+				log.WithField(common.LOG_TEST_SUITE, "parse-test-suite-file").Debug("error '", suiteErr.Error(), "' strict ", strict)
 				return testSuites, suiteErr
 			}
 		}
 	}
-
 	return testSuites, nil
 }
 
@@ -65,9 +74,25 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	}
 
 	// Use decoder to setup strict or unstrict
-	yamlDecoder := yaml.NewDecoder(strings.NewReader(content))
+	yamlDecoder := common.YamlNewDecoder(strings.NewReader(content))
 	yamlDecoder.KnownFields(strict)
+
 	if err := yamlDecoder.Decode(&suite); err != nil {
+		if err.Error() == "EOF" {
+			// EOF error is not a real error, just return nil
+			// end-of-file is a condition in a OS where no more data can be read from a data source
+			return nil, nil
+		} else if strings.Contains(err.Error(), "unknown escape character") {
+			// We can retry if relates to unmaintained library issue https://github.com/go-yaml/yaml/pull/862
+			// escape special characters only if unmarshall results in an error
+			y := common.YmlEscapeHandlers{}
+			escaped := y.Escape(content)
+			if escaped != nil {
+				if err = common.YmlUnmarshal(string(escaped), &suite); err != nil {
+					return &suite, err
+				}
+			}
+		}
 		return &suite, err
 	}
 
@@ -75,17 +100,14 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 	if err != nil {
 		return &suite, err
 	}
-
 	// Append the value files from command to the test suites.
 	suite.Values = append(suite.Values, valueFilesSet...)
-
 	return &suite, nil
 }
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
 func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
 	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
-
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
 		return nil, err
@@ -218,7 +240,7 @@ type TestSuite struct {
 func (s *TestSuite) RunV3(
 	chartPath string,
 	snapshotCache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
@@ -227,12 +249,16 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	result.Passed, result.TestsResult = s.runV3TestJobs(
+	r := s.runV3TestJobs(
 		chartPath,
 		snapshotCache,
-		failfast,
+		failFast,
 		renderPath,
 	)
+
+	result.Passed = r.Pass
+	result.FailFast = r.FailFast
+	result.TestsResult = r.JobResults
 
 	result.CountSnapshot(snapshotCache)
 	return result
@@ -240,25 +266,27 @@ func (s *TestSuite) RunV3(
 
 // fill file path related info of TestJob
 func (s *TestSuite) polishTestJobsPathInfo() {
-	log.WithField("test-suite", "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
+	log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("suite '", s.Name, "' total tests ", len(s.Tests))
 	for _, test := range s.Tests {
-		test.chartRoute = s.chartRoute
-		test.definitionFile = s.definitionFile
+		if test != nil {
+			test.chartRoute = s.chartRoute
+			test.definitionFile = s.definitionFile
 
-		s.polishReleaseSettings(test)
-		s.polishCapabilitiesSettings(test)
-		s.polishKubernetesProviderSettings(test)
-		s.polishChartSettings(test)
+			s.polishReleaseSettings(test)
+			s.polishCapabilitiesSettings(test)
+			s.polishKubernetesProviderSettings(test)
+			s.polishChartSettings(test)
 
-		// Make deep clone of global set
-		test.globalSet = copySet(s.Set)
-		if len(s.Values) > 0 {
-			test.Values = append(s.Values, test.Values...)
-		}
-		log.WithField("test-suite", "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
+			// Make deep clone of global set
+			test.globalSet = copySet(s.Set)
+			if len(s.Values) > 0 {
+				test.Values = append(s.Values, test.Values...)
+			}
+			log.WithField(common.LOG_TEST_SUITE, "polish-test-jobs-path-info").Debug("test '", test.Name, "' with total values ", len(test.Values), " and ", test.Values)
 
-		if len(s.Templates) > 0 {
-			test.defaultTemplatesToAssert = s.Templates
+			if len(s.Templates) > 0 {
+				test.defaultTemplatesToAssert = s.Templates
+			}
 		}
 		if len(s.ExcludeTemplates) > 0 {
 			test.defaultTemplatesToSkip = s.ExcludeTemplates
@@ -268,49 +296,32 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 
 // override release settings in testjobs when defined in testsuite
 func (s *TestSuite) polishReleaseSettings(test *TestJob) {
-	if s.Release.Name != "" {
-		if test.Release.Name == "" {
-			test.Release.Name = s.Release.Name
-		}
-	}
 
-	if s.Release.Namespace != "" {
-		if test.Release.Namespace == "" {
-			test.Release.Namespace = s.Release.Namespace
-		}
-	}
-
-	if s.Release.Revision > 0 {
-		if test.Release.Revision == 0 {
-			test.Release.Revision = s.Release.Revision
-		}
-	}
-
-	if s.Release.IsUpgrade {
-		if !test.Release.IsUpgrade {
-			test.Release.IsUpgrade = s.Release.IsUpgrade
-		}
-	}
+	test.Release.Name = cmp.Or(test.Release.Name, s.Release.Name)
+	test.Release.Namespace = cmp.Or(test.Release.Namespace, s.Release.Namespace)
+	test.Release.Revision = cmp.Or(test.Release.Revision, s.Release.Revision)
+	test.Release.IsUpgrade = cmp.Or(test.Release.IsUpgrade, s.Release.IsUpgrade)
+	log.WithField(common.LOG_TEST_SUITE, "polish-release-settings").Debug("test.release '", test.Release)
 }
 
 // override capabilities settings in testjobs when defined in testsuite
 func (s *TestSuite) polishCapabilitiesSettings(test *TestJob) {
-	if s.Capabilities.MajorVersion != "" && s.Capabilities.MinorVersion != "" {
-		if test.Capabilities.MajorVersion == "" && test.Capabilities.MinorVersion == "" {
-			test.Capabilities.MajorVersion = s.Capabilities.MajorVersion
-			test.Capabilities.MinorVersion = s.Capabilities.MinorVersion
-		}
-	}
 
-	if len(s.Capabilities.APIVersions) > 0 {
+	test.SetCapabilities()
+
+	test.Capabilities.MajorVersion = cmp.Or(test.Capabilities.MajorVersion, s.Capabilities.MajorVersion)
+	test.Capabilities.MinorVersion = cmp.Or(test.Capabilities.MinorVersion, s.Capabilities.MinorVersion)
+
+	if len(s.Capabilities.APIVersions) > 0 && test.Capabilities.APIVersions != nil {
 		test.Capabilities.APIVersions = append(test.Capabilities.APIVersions, s.Capabilities.APIVersions...)
 	}
+	log.WithField(common.LOG_TEST_SUITE, "polish-capabilities-settings").Debug("test.capabilities '", test.Capabilities)
 }
 
 func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
-	if len(s.KubernetesProvider.Objects) > 0 {
-		test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
-	}
+
+	test.KubernetesProvider.Objects = append(test.KubernetesProvider.Objects, s.KubernetesProvider.Objects...)
+
 	if len(s.KubernetesProvider.Scheme) > 0 {
 		if test.KubernetesProvider.Scheme == nil {
 			test.KubernetesProvider.Scheme = map[string]KubernetesFakeKindProps{}
@@ -323,21 +334,24 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 
 // override chart settings in testjobs when defined in testsuite
 func (s *TestSuite) polishChartSettings(test *TestJob) {
-	if s.Chart.Version != "" {
-		test.Chart.Version = s.Chart.Version
-	}
-	if s.Chart.AppVersion != "" {
-		test.Chart.AppVersion = s.Chart.AppVersion
-	}
+	test.Chart.Version = cmp.Or(test.Chart.Version, s.Chart.Version)
+	test.Chart.AppVersion = cmp.Or(test.Chart.AppVersion, s.Chart.AppVersion)
+	log.WithField(common.LOG_TEST_SUITE, "polish-chart-settings").Debug("test.chart '", test.Chart)
+}
+
+type SuiteResult struct {
+	Pass       bool
+	FailFast   bool
+	JobResults []*results.TestJobResult
 }
 
 func (s *TestSuite) runV3TestJobs(
 	chartPath string,
 	cache *snapshot.Cache,
-	failfast bool,
+	failFast bool,
 	renderPath string,
-) (bool, []*results.TestJobResult) {
-	suitePass := false
+) *SuiteResult {
+	result := SuiteResult{Pass: false, FailFast: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 
 	for idx, testJob := range s.Tests {
@@ -346,34 +360,35 @@ func (s *TestSuite) runV3TestJobs(
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 
-		jobResult := testJob.RunV3(chart, cache, failfast, renderPath, &results.TestJobResult{Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failFast, renderPath, &results.TestJobResult{DisplayName: testJob.Name, Index: idx})
 		jobResults[idx] = jobResult
 
 		if idx == 0 {
-			suitePass = jobResult.Passed
+			result.Pass = jobResult.Passed
 		}
 
-		suitePass = suitePass && jobResult.Passed
+		result.Pass = result.Pass && jobResult.Passed
 
-		if !suitePass && failfast {
+		if !result.Pass && failFast {
+			result.FailFast = true
 			break
 		}
 	}
-	return suitePass, jobResults
+	result.JobResults = jobResults
+	return &result
 }
 
 func (s *TestSuite) validateTestSuite() error {
 	if len(s.Tests) == 0 {
 		return fmt.Errorf("no tests found")
 	}
-
 	if s.fromRender && len(s.Name) == 0 {
-		return fmt.Errorf(("helm chart based test suites must include `suite` field"))
+		return fmt.Errorf("helm chart based test suites must include `suite` field")
 	}
 
 	for _, testJob := range s.Tests {
 		if len(testJob.Assertions) == 0 {
-			log.WithField("test-suite", "validate-test-suite").Debugln("no asserts found", testJob)
+			log.WithField(common.LOG_TEST_SUITE, "validate-test-suite").Debugln("no asserts found", testJob)
 			return fmt.Errorf("no asserts found")
 		}
 	}

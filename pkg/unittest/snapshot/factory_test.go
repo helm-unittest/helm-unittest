@@ -42,13 +42,17 @@ func TestCreateSnapshotOfSuiteWhenNoCacheDir(t *testing.T) {
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
+	a := assert.New(t)
+
 	dir, _ := os.MkdirTemp("", "test")
-	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
+	dirErr := os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
+	if dirErr != nil {
+		a.FailNow("Failed to create cache dir")
+	}
 	cache, _ := CreateSnapshotOfSuite(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
 
-	a := assert.New(t)
 	a.Nil(err)
 	a.True(info.IsDir())
 
@@ -60,18 +64,24 @@ func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheFileExisted(t *testing.T) {
+	a := assert.New(t)
 	dir, _ := os.MkdirTemp("", "test")
-	os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
-	os.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
+	dirErr := os.Mkdir(filepath.Join(dir, "__snapshot__"), os.ModePerm)
+	if dirErr != nil {
+		a.FailNow("Failed to create cache dir")
+	}
+	fileErr := os.WriteFile(filepath.Join(dir, "__snapshot__", "service_test.yaml.snap"), []byte(`a test:
   1: |
     a:
       b: c
 `), os.ModePerm)
+	if fileErr != nil {
+		a.FailNow("Failed to create cache file")
+	}
 	cache, _ := CreateSnapshotOfSuite(filepath.Join(dir, "service_test.yaml"), false)
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
 
-	a := assert.New(t)
 	a.Nil(err)
 	a.True(info.IsDir())
 

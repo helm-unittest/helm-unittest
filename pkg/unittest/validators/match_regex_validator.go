@@ -17,90 +17,104 @@ type MatchRegexValidator struct {
 	DecodeBase64 bool
 }
 
-func (v MatchRegexValidator) failInfo(actual string, index int, not bool) []string {
+func (v MatchRegexValidator) failInfo(actual string, manifestIndex, actualIndex int, not bool) []string {
 
 	log.WithField("validator", "match_regex").Debugln("expected pattern:", v.Pattern)
 	log.WithField("validator", "match_regex").Debugln("actual content:", actual)
 
 	return splitInfof(
 		setFailFormat(not, true, true, false, " to match"),
-		index,
+		manifestIndex,
+		actualIndex,
 		v.Path,
 		v.Pattern,
 		actual,
 	)
 }
 
+func (v MatchRegexValidator) validateSingle(actual interface{}, pattern *regexp.Regexp, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	if s, ok := actual.(string); ok {
+		if v.DecodeBase64 {
+			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
+			}
+			s = string(decodedSingleActual)
+		}
+
+		if pattern.MatchString(s) == context.Negative {
+			return false, v.failInfo(s, manifestIndex, actualIndex, context.Negative)
+		} else {
+			return true, []string{}
+		}
+	}
+
+	return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf(
+		"expect '%s' to be a string, got:\n%s",
+		v.Path,
+		common.TrustedMarshalYAML(actual),
+	))
+}
+
+func (v MatchRegexValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
+	pattern, err := regexp.Compile(v.Pattern)
+	if err != nil {
+		return false, splitInfof(errorFormat, -1, -1, err.Error())
+	}
+
+	if len(actuals) == 0 && !context.Negative {
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+	}
+
+	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
+	var validateManifestErrors []string
+
+	for actualIndex, actual := range actuals {
+		validateSingleSuccess, validateSingleErrors := v.validateSingle(actual, pattern, manifestIndex, actualIndex, context)
+		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
+		validateManifestSuccess = determineSuccess(actualIndex, validateManifestSuccess, validateSingleSuccess)
+
+		if !validateManifestSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return validateManifestSuccess, validateManifestErrors
+}
+
 // Validate implement Validatable
 func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
 	verr := validateRequiredField(v.Pattern, "pattern")
 	if verr != nil {
-		return false, splitInfof(errorFormat, -1, verr.Error())
+		return false, splitInfof(errorFormat, -1, -1, verr.Error())
 	}
 
-	manifests, err := context.getManifests()
-	if err != nil {
-		return false, splitInfof(errorFormat, -1, err.Error())
-	}
+	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	for idx, manifest := range manifests {
-		actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
+	for manifestIndex, manifest := range manifests {
+		currentSuccess, validateSingleErrors := v.validateManifest(manifest, manifestIndex, context)
 
-		p, err := regexp.Compile(v.Pattern)
-		if err != nil {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, -1, err.Error())
-			validateErrors = append(validateErrors, errorMessage...)
+		validateErrors = append(validateErrors, validateSingleErrors...)
+		validateSuccess = determineSuccess(manifestIndex, validateSuccess, currentSuccess)
+
+		if !validateSuccess && context.FailFast {
 			break
 		}
+	}
 
-		if len(actual) == 0 {
-			validateSuccess = false
-			errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unknown path %s", v.Path))
-			validateErrors = append(validateErrors, errorMessage...)
-			continue
-		}
-
-		singleActual := actual[0]
-		if s, ok := singleActual.(string); ok {
-			if v.DecodeBase64 {
-				decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
-				if err != nil {
-					validateSuccess = false
-					errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf("unable to decode base64 expected content %s", singleActual))
-					validateErrors = append(validateErrors, errorMessage...)
-					continue
-				}
-				s = string(decodedSingleActual)
-			}
-
-			if p.MatchString(s) == context.Negative {
-				validateSuccess = false
-				errorMessage := v.failInfo(s, idx, context.Negative)
-				validateErrors = append(validateErrors, errorMessage...)
-				continue
-			}
-
-			validateSuccess = determineSuccess(idx, validateSuccess, true)
-			continue
-		}
-
-		validateSuccess = false
-		errorMessage := splitInfof(errorFormat, idx, fmt.Sprintf(
-			"expect '%s' to be a string, got:\n%s",
-			v.Path,
-			common.TrustedMarshalYAML(singleActual),
-		))
+	if len(manifests) == 0 && !context.Negative {
+		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
+	} else if len(manifests) == 0 && context.Negative {
+		validateSuccess = true
 	}
 
 	return validateSuccess, validateErrors

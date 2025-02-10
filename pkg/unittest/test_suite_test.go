@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
+	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // Most used test files
@@ -49,32 +48,6 @@ func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.T
 	return result
 }
 
-// writeToFile writes the provided string data to a file with the given filename.
-// It returns an error if the file cannot be created or if there is an error during writing.
-func writeToFile(data string, filename string) error {
-	err := os.MkdirAll(filepath.Dir(filename), 0755)
-	if err != nil {
-		fmt.Println("Error creating folders for file:", err)
-		return err
-	}
-
-	// Create the file with an absolute path
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(data)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return err
-	}
-
-	return nil
-}
-
 func validateTestResultAndSnapshots(
 	t *testing.T,
 	suiteResult *results.TestSuiteResult,
@@ -98,7 +71,7 @@ func validateTestResultAndSnapshots(
 }
 
 // Helper metheod for the render process
-func getExpectedRenderedTestSuites(customSnapshotIds bool) map[string]*TestSuite {
+func getExpectedRenderedTestSuites(customSnapshotIds bool, t *testing.T) map[string]*TestSuite {
 	// multiple_suites_snapshot.yaml assertions
 	createSnapshotTestYaml := func(env string) string {
 		return fmt.Sprintf(`
@@ -109,9 +82,9 @@ asserts:
     - matchSnapshot: {}`, env)
 	}
 	snapshotDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("dev")), &snapshotDevTest)
+	common.YmlUnmarshalTestHelper(createSnapshotTestYaml("dev"), &snapshotDevTest, t)
 	snapshotProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(createSnapshotTestYaml("prod")), &snapshotProdTest)
+	common.YmlUnmarshalTestHelper(createSnapshotTestYaml("prod"), &snapshotProdTest, t)
 	// multiple_test_suites.yaml assertions
 	crateMultipleTestSuitesYaml := func(env string) string {
 		return fmt.Sprintf(`
@@ -132,9 +105,9 @@ asserts:
         decodeBase64: true`, env, env)
 	}
 	multipleTestSuitesDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("dev")), &multipleTestSuitesDevTest)
+	common.YmlUnmarshalTestHelper(crateMultipleTestSuitesYaml("dev"), &multipleTestSuitesDevTest, t)
 	multipleTestSuitesProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(crateMultipleTestSuitesYaml("prod")), &multipleTestSuitesProdTest)
+	common.YmlUnmarshalTestHelper(crateMultipleTestSuitesYaml("prod"), &multipleTestSuitesProdTest, t)
 	// multiple_tests_test.yaml assertions
 	var secretNameEqualsYaml = func(env string) string {
 		return fmt.Sprintf(`
@@ -150,16 +123,16 @@ asserts:
           - secretName: %s-my-tls-secret`, env, env, env)
 	}
 	multipleTestsDevTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("dev")), &multipleTestsDevTest)
+	common.YmlUnmarshalTestHelper(secretNameEqualsYaml("dev"), &multipleTestsDevTest, t)
 	multipleTestsProdTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(secretNameEqualsYaml("prod")), &multipleTestsProdTest)
+	common.YmlUnmarshalTestHelper(secretNameEqualsYaml("prod"), &multipleTestsProdTest, t)
 	const multipleTestsFirstTestYaml = `
 it: should render nothing if not enabled
 asserts:
     - hasDocuments:
         count: 0`
 	multipleTestsFirstTest := TestJob{}
-	_ = yaml.Unmarshal([]byte(multipleTestsFirstTestYaml), &multipleTestsFirstTest)
+	common.YmlUnmarshalTestHelper(multipleTestsFirstTestYaml, &multipleTestsFirstTest, t)
 
 	// Set up snapshotId values
 	// Note, this is completely based on the order of the yaml in a single suite template file
@@ -225,6 +198,11 @@ asserts:
 	}
 }
 
+func TestV3ParseTestSuite_FileNotExist(t *testing.T) {
+	_, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment.yaml", "basic", false, []string{})
+	assert.Error(t, err)
+}
+
 func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
@@ -270,7 +248,7 @@ func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
 	a.NotNil(err)
-	a.EqualError(err, "yaml: unmarshal errors:\n  line 7: field documents not found in type unittest.TestJob")
+	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
 	a.Len(suites, 2)
 	for _, suite := range suites {
 		a.Equal("test deployment", suite.Name)
@@ -312,7 +290,7 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(false)
+	expectedSuites := getExpectedRenderedTestSuites(false, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -333,12 +311,86 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
 }
 
+func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
+	a := assert.New(t)
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]interface{}{
+		"unexpectedField": true,
+	})
+	a.Error(err)
+	a.ErrorIs(err, os.ErrNotExist)
+}
+
+func TestV3RenderSuites_LoadError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+`
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	defer os.RemoveAll(chartPath)
+
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+	a.Error(err)
+	a.ErrorContains(err, "validation: chart.metadata.version is required")
+}
+
+func TestV3RenderSuites_RenderError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	deployment := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .BreakV3engine.Render }}-basic
+spec:
+  replicas: 3
+`
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(deployment, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
+
+	a.Error(err)
+	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV3engine.Render>")
+}
+
+func TestV3RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
+	a := assert.New(t)
+	tmp := t.TempDir()
+	chartPath := path.Join(tmp, "basic")
+	_ = os.MkdirAll(chartPath, 0755)
+	chart := `
+name: basic
+version: 1.0.0
+`
+	empty_manifest := ``
+
+	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
+	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
+	defer os.RemoveAll(chartPath)
+	values := map[string]interface{}{
+		"key1": "value1",
+		"key2": "value2",
+	}
+	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, values)
+	a.Error(err)
+	a.ErrorContains(err, "file did not render a manifest")
+}
+
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
 		"includeSuite": false,
 	})
-
 	a.NotNil(err)
 	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
 }
@@ -349,7 +401,7 @@ func TestV3RenderSuitesStrictFileOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(false)
+	expectedSuites := getExpectedRenderedTestSuites(false, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -368,7 +420,7 @@ func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 
 	a.Nil(err)
 
-	expectedSuites := getExpectedRenderedTestSuites(true)
+	expectedSuites := getExpectedRenderedTestSuites(true, t)
 
 	for _, suite := range suites {
 		a.Contains(expectedSuites, suite.Name, "Unexpected test suite"+suite.Name)
@@ -387,7 +439,7 @@ tests:
     asserts:
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -426,7 +478,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -450,7 +502,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -486,7 +538,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -509,7 +561,7 @@ tests:
           value: Pod
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -532,7 +584,7 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubFolderChart, cache, true, "", &results.TestSuiteResult{})
@@ -554,12 +606,56 @@ tests:
       - matchSnapshot: {}
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
+}
+
+func TestV3RunSuiteWithSubChartAliasAndVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with subchart and version override
+chart:
+  version: 1.2.3
+tests:
+  - it: should render subchart and alias subchart templates
+    templates:
+     - charts/another-postgresql/templates/deployment.yaml
+     - charts/postgresql/templates/deployment.yaml
+    asserts:
+     - matchRegex:
+        path: metadata.labels["chart"]
+        pattern: "(.*-)?postgresql-1.2.3"
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	assert.True(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSubChartsTrimmingWhenPass(t *testing.T) {
+	suiteDoc := `
+suite: test cert-manager rbac with trimming
+templates:
+  - charts/cert-manager/templates/rbac.yaml
+tests:
+  - it: templates
+    release:
+      name: cert-manager
+      namespace: cert-manager
+    asserts:
+      - notFailedTemplate: {}
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
+	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+
+	validateTestResultAndSnapshots(t, suiteResult, true, "test cert-manager rbac with trimming", 1, 0, 0, 0, 0)
 }
 
 func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
@@ -584,12 +680,97 @@ tests:
           count: 0
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
+}
+
+func TestV3RunSuiteWithSubChartsWithAliasWithoutChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite without subchart version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot: {}
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.8.3
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Empty(t, testSuite.Chart.Version)
+	assert.True(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSubChartsWithAliasWithSuiteChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with suite version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+chart:
+  version: 0.6.3
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.6.3
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Equal(t, testSuite.Chart.Version, "0.6.3")
+	assert.True(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSubChartsWithAliasWithJobChartVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with suite version override
+templates:
+  - charts/postgresql/templates/pvc.yaml
+chart:
+  version: 0.6.2
+tests:
+  - it: should no pvc for alias
+    set:
+      postgresql.persistence.enabled: true
+    chart:
+        version: 0.7.1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-0.7.1
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.Empty(t, testSuite.Chart.AppVersion)
+	assert.Equal(t, testSuite.Chart.Version, "0.6.2")
+	assert.True(t, suiteResult.Passed)
 }
 
 func TestV3RunSuiteNameOverrideFail(t *testing.T) {
@@ -606,7 +787,7 @@ tests:
           errorMessage: nameOverride cannot be longer than 20 characters
 `
 	testSuite := TestSuite{}
-	yaml.Unmarshal([]byte(suiteDoc), &testSuite)
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
 	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
@@ -702,4 +883,489 @@ tests:
 
 	a.Nil(err)
 	a.Len(suites, 3)
+}
+
+func TestV3ParseTestSingleSuitesWithSuiteChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+---
+suite: test suite with explicit version and appVersion
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v1
+  version: 1.0.0
+tests:
+  - it: should render deployment
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "override", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("1.0.0", suite.Chart.Version)
+		a.Equal("v1", suite.Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuiteWithTestChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with explicit version and appVersion
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v1
+  version: 1.0.0
+tests:
+  - it: should override chart.version
+    chart:
+      version: 1.0.1
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("1.0.0", suite.Chart.Version)
+		a.Equal("v1", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 1)
+		a.Equal("1.0.1", suite.Tests[0].Chart.Version)
+		a.Equal("v1", suite.Tests[0].Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuitesWithMutlipleTestChartMetadataOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite without chart metadata
+templates:
+  - deployment.yaml
+tests:
+  - it: should override chart metadata
+    chart:
+      version: 1.0.1
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+  - it: should not override chart metadata
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("", suite.Chart.Version)
+		a.Equal("", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 2)
+		a.Equal("1.0.1", suite.Tests[0].Chart.Version)
+		a.Equal("", suite.Tests[0].Chart.AppVersion)
+		a.Equal("", suite.Tests[1].Chart.Version)
+		a.Equal("", suite.Tests[1].Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuitesWithChartMetadataAndEmptyVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+chart:
+  appVersion: v3
+tests:
+  - it: should not override with empty appVersion
+    chart:
+      appVersion:
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: deployment-test
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+
+	for _, suite := range suites {
+		a.Equal("v3", suite.Chart.AppVersion)
+		a.Len(suite.Tests, 1)
+		a.Equal("v3", suite.Tests[0].Chart.AppVersion)
+	}
+}
+
+func TestV3ParseTestSingleSuitesWithKubeCapabilitiesUnset(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  apiVersions:
+    - autoscaling/v2
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      apiVersions:
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "unset-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
+	a.Equal([]string(nil), suites[0].Tests[0].Capabilities.APIVersions)
+}
+
+func TestV3ParseTestSingleSuitesWithKubeCapabilitiesOverrided(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  apiVersions:
+   - autoscaling/v2
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      apiVersions:
+       - autoscaling/v1
+       - monitoring.coreos.com/v1
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
+	a.Equal([]string{"autoscaling/v1", "monitoring.coreos.com/v1", "autoscaling/v2"}, suites[0].Tests[0].Capabilities.APIVersions)
+}
+
+func TestV3ParseTestSingleSuitesShouldNotUnsetSuiteK8sVersions(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      majorVersion:
+      minorVersion:
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.Equal(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+}
+
+func TestV3ParseTestSingleSuitesWithSuiteK8sVersionOverride(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+tests:
+  - it: should not override with empty appVersion
+    capabilities:
+      majorVersion:
+      minorVersion: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "override-test-apiversions.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 1)
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+	a.Equal("15", suites[0].Capabilities.MinorVersion)
+	a.Equal("10", suites[0].Tests[0].Capabilities.MinorVersion)
+}
+
+func TestV3ParseTestMultipleSuitesWithK8sVersionOverrides(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 15
+  apiVersions:
+   - v1
+tests:
+  - it: should keep majorVersion, minorVersion and keep apiVersions
+    capabilities:
+      majorVersion:
+      minorVersion: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: second suite in same file
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 4
+  minorVersion: 13
+tests:
+  - it: should keep majorVersion, unset apiVersion and override minorVersion
+    capabilities:
+      majorVersion:
+      minorVersion: 11
+      apiVersions:
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: third suite in same file
+templates:
+  - deployment.yaml
+capabilities:
+  majorVersion: 3
+  minorVersion: 11
+  apiVersions:
+   - v1
+tests:
+  - it: should override majorVersion, keep minorVersion and extend apiVersions
+    capabilities:
+      majorVersion: 1
+      minorVersion:
+      apiVersions:
+       - extensions/v1beta1
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "multiple-capabilities-modifications.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Nil(err)
+	a.Len(suites, 3)
+	// first
+	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
+	a.Equal(suites[0].Capabilities.APIVersions, suites[0].Tests[0].Capabilities.APIVersions)
+	a.Equal("15", suites[0].Capabilities.MinorVersion)
+	a.Equal("10", suites[0].Tests[0].Capabilities.MinorVersion)
+	// second
+	a.Equal(suites[1].Capabilities.MajorVersion, suites[1].Tests[0].Capabilities.MajorVersion)
+	a.Equal("11", suites[1].Tests[0].Capabilities.MinorVersion)
+	// third
+	a.NotEqual(suites[2].Capabilities.MajorVersion, suites[2].Tests[0].Capabilities.MajorVersion)
+	a.Equal("1", suites[2].Tests[0].Capabilities.MajorVersion)
+	a.NotEqual(len(suites[2].Capabilities.APIVersions), len(suites[2].Tests[0].Capabilities.APIVersions))
+}
+
+func TestV3ParseTestMultipleSuitesWithNotSupportedAssert(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    asserts:
+      - notSupportedAssert:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+	a.Error(err)
+	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
+}
+
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInAssertIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - "*.yaml"
+tests:
+  - it: should error when not supported assert is found
+    documentSelector:
+     skipEmptyTemplates: true # this is a poison pill
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.NoError(err)
+}
+
+func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInTestNotIgnored(t *testing.T) {
+	suiteDoc := `
+suite: test suite with assert that not supported
+templates:
+  - deployment.yaml
+tests:
+  - it: should error when not supported assert is found
+    asserts:
+      - hasDocuments:
+          count: 1
+        documentSelector:
+          skipEmptyTemplates: true
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "assert-not-supported.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Error(err)
+	a.ErrorContains(err, "empty 'documentSelector.path' not supported")
+}
+
+func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
+	suiteDoc := `
+suite: test suite with partial chart metadata
+templates:
+  - deployment.yaml
+tests:
+  - it: should execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+---
+suite: second suite failed test and fail fast
+templates:
+  - deployment.yaml
+tests:
+  - it: should fail and trigger fail fast
+    asserts:
+      - hasDocuments:
+          count: 2
+---
+suite: third suite in same file with fail fast triggered in previous suite
+templates:
+  - deployment.yaml
+tests:
+  - it: should not execute this test
+    asserts:
+      - hasDocuments:
+          count: 1
+`
+	a := assert.New(t)
+	file := path.Join("_scratch", "fail-fast.yaml")
+	a.Nil(writeToFile(suiteDoc, file))
+	defer os.RemoveAll(file)
+
+	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+	a.Nil(err)
+	a.Len(suites, 3)
+
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+
+	suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+
+	assert.True(t, suiteResult.FailFast)
+	assert.False(t, suiteResult.Passed)
+}
+
+func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
+	testSuite := TestSuite{}
+	testSuite.Tests = []*TestJob{
+		{
+			Name: "first test that is empty",
+		},
+		{
+			Name: "second test that is empty",
+		},
+	}
+
+	cases := []struct {
+		failFast bool
+	}{
+		{
+			failFast: true,
+		},
+		{
+			failFast: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
+			suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
+			assert.False(t, suiteResult.Passed)
+			assert.True(t, len(suiteResult.TestsResult) == 2)
+		})
+	}
 }

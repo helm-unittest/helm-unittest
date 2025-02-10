@@ -2,6 +2,7 @@ package unittest_test
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -9,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
-	"github.com/helm-unittest/helm-unittest/internal/printer"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -240,6 +241,17 @@ func TestV3RunnerOkWithDocumentSelector(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV3RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFailedFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	assert.False(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
 func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -249,4 +261,64 @@ func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
 	passed := runner.RunV3([]string{testV3WithFakeK8sClientChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithSchemaValidation(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithSchemaChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	cases := []struct {
+		chartPath []string
+		failFast  bool
+	}{
+		{
+			chartPath: []string{testV3WithFailingTemplateChart},
+			failFast:  true,
+		},
+		{
+			chartPath: []string{testV3WithFailingTemplateChart},
+			failFast:  false,
+		},
+		{
+			chartPath: []string{testV3InvalidBasicChart},
+			failFast:  true,
+		},
+		{
+			chartPath: []string{testV3InvalidBasicChart},
+			failFast:  false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("chart %s fail fast: %v", tt.chartPath[0], tt.failFast), func(t *testing.T) {
+			runner.Failfast = tt.failFast
+			result := runner.RunV3([]string{testV3WithFailingTemplateChart})
+			assert.True(t, result)
+		})
+	}
+}
+
+func TestV3RunnerOkWithDocumentSelect(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	assert.True(t, passed, buffer.String())
+	fmt.Println(buffer.String())
+	assert.Contains(t, buffer.String(), "Test Suites: 7 passed, 7 total")
+	assert.Contains(t, buffer.String(), "Tests:       10 passed, 10 total")
 }

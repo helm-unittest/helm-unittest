@@ -50,3 +50,12 @@ tests:
           path: spec.template.spec.containers
           content: 'foo'
           count: 1234567890 # or 6.8 or -10 or 0
+      - isType:
+          path: spec.replicas
+          type: string
+      - lengthEqual:
+          path:  spec.template.spec.containers
+          count: 10
+      - notLengthEqual:
+          path: spec.template.spec.containers
+          count: 1

@@ -5,5 +5,7 @@ tests:
   - it: template should be failing for configmap
     asserts:
       - failedTemplate:
-          errorMessage: "error calling include: template: no template \"non-existing-named-template\" associated with template \"gotpl\""
+          errorMessage: 'error calling include: template: no template "non-existing-named-template" associated with template "gotpl"'
       - failedTemplate: {} # catch any error message
+      - failedTemplate:
+          errorPattern: "calling include"

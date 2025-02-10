@@ -7,9 +7,13 @@ tests:
       - failedTemplate: {}
       - failedTemplate:
           errorMessage: "The `.Release.name`: must be <= 3 characters!"
+      - failedTemplate:
+          errorPattern: "must be <= 3 characters"
 
   - it: should not fail when value is provided
     release:
       name: xyz
     asserts:
-    - notFailedTemplate: {}
+      - notFailedTemplate: {}
+      - notFailedTemplate:
+          errorPattern: "not failed"
