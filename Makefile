@@ -11,12 +11,13 @@ TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
 	global-double-setting \
+	library-chart \
 	nested_glob \
 	with-document-select \
 	with-files \
 	with-helm-tests \
-	with-samenamesubsubcharts \
 	with-k8s-fake-client \
+	with-samenamesubsubcharts \
 	with-schema \
 	with-subchart \
 	with-subfolder \
@@ -98,7 +99,7 @@ dockerimage: build ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
-test-docker: unittest dockerimage ## Execute 'helm unittests' in container
+test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
