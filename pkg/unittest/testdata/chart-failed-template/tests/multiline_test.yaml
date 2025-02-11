@@ -1,0 +1,15 @@
+---
+suite: Test failure message
+templates:
+  - pod.yaml
+tests:
+  - it: prints an error message
+    set:
+      settings:
+        fail: "true"
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            You've set fail to true. This will cause a failure. Please set:
+            fail: false
+            and try again

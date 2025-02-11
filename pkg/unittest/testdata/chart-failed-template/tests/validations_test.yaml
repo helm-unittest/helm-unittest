@@ -1,0 +1,49 @@
+# https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/tests/validations_test.yaml
+# yamllint disable rule:document-start rule:line-length rule:trailing-spaces
+suite: test validations with multilines
+templates:
+  - validations.yaml
+tests:
+  - it: asks you to set the cluster name
+    set:
+      case4: true
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            A Cluster name is required!
+            Please set:
+            cluster:
+              name: my-cluster-name
+      - failedTemplate:
+          errorPattern: ".+"
+
+  - it: multiline with indentations of all kind and url
+    set:
+      case5: true
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            No features are enabled. Please choose a feature to start monitoring. For example:
+            clusterMetrics:
+              enabled: true
+
+            See https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Features.md for the list of available features.
+      - failedTemplate:
+          errorPattern: "enabled: true"
+      - failedTemplate:
+          errorPattern: "https://github.com"
+
+  - it: should detect different special characters and handle them correctly
+    set:
+      case6: true
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            The Helm chart values appears to be from version 1.x of the k8s-monitoring Helm chart.
+            To continue using version 1.x, add this to your helm command:
+              --version ^1
+
+            If you'd like to migrate to version 2.0, see the Migration guide:
+              https://github.com/grafana/k8s-monitoring-helm/blob/main/charts/k8s-monitoring/docs/Migration.md
+      - failedTemplate:
+          errorPattern: ".*\\.*"

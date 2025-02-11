@@ -36,7 +36,6 @@ const LOG_TEST_JOB = "test-job"
 //	--- s: Dot-all mode. . matches any character, including newline.
 //	--- U: Ungreedy mode. Makes quantifiers lazy by default.
 //
-// const regexPattern string = "(?mU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
 const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
 
 var regexErrorPattern = regexp.MustCompile(regexPattern)
@@ -80,7 +79,14 @@ func parseRenderError(errorMessage string) (string, map[string]string) {
 
 	if len(result) == 3 {
 		filePath = result[1]
-		content[common.RAW] = result[2]
+		// check where or not errorMessage is a multiline error message
+		lines := strings.SplitN(errorMessage, "\n", 2)
+		if len(lines) > 1 {
+			content[common.RAW] = lines[1]
+		} else {
+			// return error unparsed message
+			content[common.RAW] = result[2]
+		}
 	}
 
 	return filePath, content
