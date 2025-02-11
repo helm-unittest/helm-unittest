@@ -203,11 +203,12 @@ func iterateTemplates(template string, suites []*TestSuite, absPath string, char
 
 // TestSuite defines scope and templates to render and tests to run
 type TestSuite struct {
-	Name      string `yaml:"suite"`
-	Values    []string
-	Set       map[string]interface{}
-	Templates []string
-	Release   struct {
+	Name             string `yaml:"suite"`
+	Values           []string
+	Set              map[string]interface{}
+	Templates        []string
+	ExcludeTemplates []string `yaml:"excludeTemplates"`
+	Release          struct {
 		Name      string
 		Namespace string
 		Revision  int
@@ -286,6 +287,9 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			if len(s.Templates) > 0 {
 				test.defaultTemplatesToAssert = s.Templates
 			}
+		}
+		if len(s.ExcludeTemplates) > 0 {
+			test.defaultTemplatesToSkip = s.ExcludeTemplates
 		}
 	}
 }
