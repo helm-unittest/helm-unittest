@@ -1,0 +1,10 @@
+suite: test pod disruption budget
+templates:
+  - templates/pdp.yaml
+skip:
+  reason: "This test is not ready yet"
+tests:
+  - it: should be skipped
+    asserts:
+      - exists:
+          path: spec.minAvailable

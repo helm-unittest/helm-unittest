@@ -1,0 +1,19 @@
+---
+suite: "suite with multiple tests, where skip single test"
+templates:
+  - templates/configmap.yaml
+tests:
+- it: "should test paradox"
+  asserts:
+    - equal:
+        path: metadata.name
+        value: test-me
+
+- it: should validate camelcase function
+  skip:
+    reason: "This test 'validate camelcase function' is not ready yet"
+  asserts:
+    - equal:
+        path: data["special.array"]
+        value:
+        - phony-service.phony:graphql

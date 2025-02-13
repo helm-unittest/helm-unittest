@@ -206,3 +206,17 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 		})
 	}
 }
+
+func TestV3RunnerWith_Fixture_Chart_SkipTest(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    false,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-skip-test"})
+	assert.Contains(t, buffer.String(), "- SKIPPED 'should skip first test'")
+	assert.Contains(t, buffer.String(), "- SKIPPED 'should third test'")
+	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 1 skipped, 3 total")
+	assert.Contains(t, buffer.String(), "Tests:       2 passed, 4 skipped, 6 total")
+}

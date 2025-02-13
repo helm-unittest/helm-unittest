@@ -260,7 +260,6 @@ asserts:
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{})
-	// Write Buffer
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))

@@ -1,0 +1,29 @@
+suite: test skip on suite level
+templates:
+  - simple.yaml
+skip:
+  reason: "This suite is not ready yet"
+tests:
+  - it: "should skip first test"
+    set:
+      node:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: "should skip second test"
+    set:
+      node:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Service
+
+  - it: "should third test"
+    set:
+      node:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1

@@ -24,6 +24,7 @@ type testUnitCounting struct {
 	passed  uint
 	failed  uint
 	errored uint
+	skipped uint
 }
 
 // sprint returns string of counting result
@@ -36,11 +37,22 @@ func (counting testUnitCounting) sprint(printer *printer.Printer) string {
 	if counting.errored > 0 {
 		erroredLabel = fmt.Sprintf("%d errored, ", counting.errored)
 	}
-	return failedLabel + erroredLabel + fmt.Sprintf(
-		"%d passed, %d total",
-		counting.passed,
-		counting.passed+counting.failed,
-	)
+	result := failedLabel + erroredLabel
+	if counting.skipped > 0 {
+		result += fmt.Sprintf(
+			"%d passed, %d skipped, %d total",
+			counting.passed,
+			counting.skipped,
+			counting.passed+counting.failed+counting.skipped,
+		)
+	} else {
+		result += fmt.Sprintf(
+			"%d passed, %d total",
+			counting.passed,
+			counting.passed+counting.failed,
+		)
+	}
+	return result
 }
 
 // testUnitCountingWithSnapshotFailed store testUnitCounting with snapshotFailed field
@@ -304,8 +316,11 @@ Snapshot Summary: %s`
 	}
 }
 
+// countSuite count suite status and snapshot status
 func (tr *TestRunner) countSuite(suite *results.TestSuiteResult) {
-	if suite.Passed {
+	if suite.Skipped {
+		tr.suiteCounting.skipped++
+	} else if suite.Passed {
 		tr.suiteCounting.passed++
 	} else {
 		tr.suiteCounting.failed++
@@ -322,9 +337,12 @@ func (tr *TestRunner) countSuite(suite *results.TestSuiteResult) {
 	tr.snapshotCounting.vanished += suite.SnapshotCounting.Vanished
 }
 
+// countTest count test status
 func (tr *TestRunner) countTest(test *results.TestJobResult) {
 	if test.Passed {
 		tr.testCounting.passed++
+	} else if test.Skipped {
+		tr.testCounting.skipped++
 	} else {
 		tr.testCounting.failed++
 		if test.ExecError != nil {

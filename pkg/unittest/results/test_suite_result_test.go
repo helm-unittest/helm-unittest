@@ -190,3 +190,36 @@ func TestCountSnapshot_AllCountsZero(t *testing.T) {
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Total)
 	assert.Equal(t, uint(0), tsr.SnapshotCounting.Vanished)
 }
+
+func TestTestSuiteResultPrint_SuiteSkipped(t *testing.T) {
+	test := TestSuiteResult{
+		DisplayName: "this-test-suite",
+		Skipped:     true,
+	}
+	buffer := new(bytes.Buffer)
+	test.Print(printer.NewPrinter(buffer, nil), 0)
+	fmt.Println(buffer.String())
+	assert.Contains(t, buffer.String(), "SKIP  this-test-suite")
+}
+
+func TestTestSuiteResultPrint_TestSkipped(t *testing.T) {
+	test := TestSuiteResult{
+		DisplayName: "this-test-suite",
+		TestsResult: []*TestJobResult{
+			{
+				DisplayName: "first-test",
+			},
+			{
+				DisplayName: "second-skip-test",
+				Skipped:     true,
+			},
+			{
+				DisplayName: "third-test",
+			},
+		},
+	}
+	buffer := new(bytes.Buffer)
+	test.Print(printer.NewPrinter(buffer, nil), 0)
+	assert.NotContains(t, buffer.String(), "SKIP  this-test-suite")
+	assert.Contains(t, buffer.String(), "- SKIPPED 'second-skip-test'")
+}

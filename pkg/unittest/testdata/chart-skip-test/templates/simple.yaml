@@ -1,0 +1,7 @@
+{{- if .Values.node.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.node.name }}-http
+{{- end}}
+
