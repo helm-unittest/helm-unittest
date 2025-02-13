@@ -1,0 +1,17 @@
+{{- if .Values.settings.fail }}
+  {{- $msg := list "" "You've set fail to true. This will cause a failure. Please set:" }}
+  {{- $msg = append $msg "fail: false" }}
+  {{- $msg = append $msg "and try again" }}
+  {{- fail (join "\n" $msg) }}
+{{- end }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod
+  name: {{ .Values.settings.name | default "pod" }}
+spec:
+  containers:
+  - image: nginx
+    name: pod

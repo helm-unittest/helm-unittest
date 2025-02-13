@@ -66,7 +66,7 @@ func TestV3RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 	}
-	passed := runner.RunV3([]string{"testdata/chart01"})
+	passed := runner.RunV3([]string{"testdata/chart-failed-template"})
 	assert.True(t, passed, buffer.String())
 }
 

@@ -6,3 +6,6 @@ keywords:
   - helm template case1 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case1=true
   - helm template case2 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case2=true
   - helm template case3 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case3=true
+  - helm template case4 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case4=true
+  - helm template case5 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case5=true
+  - helm template case6 pkg/unittest/testdata/chart01 --output-dir _scratch --set-string case6=true
