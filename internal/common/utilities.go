@@ -83,3 +83,22 @@ func YmlMarshallTestHelper(in interface{}, t *testing.T) string {
 	assert.NoError(t, err)
 	return string(out)
 }
+
+func SplitBefore(s, sep string) (out []string) {
+	// this can be omitted if staying analogous with SplitAfter is not a requirement
+	if strings.HasPrefix(s, sep) || s == "" {
+		out = append(out, "")
+	}
+
+	for len(s) > 0 {
+		i := strings.Index(s[1:], sep)
+		if i == -1 {
+			out = append(out, s)
+			break
+		}
+
+		out = append(out, s[:i+1])
+		s = s[i+1:]
+	}
+	return out
+}

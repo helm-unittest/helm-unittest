@@ -1,13 +1,16 @@
 package unittest
 
 import (
+	"bytes"
 	"cmp"
 	"errors"
 	"fmt"
+	"helm.sh/helm/v3/pkg/postrender"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,8 +38,11 @@ const LOG_TEST_JOB = "test-job"
 //	--- m: Multi-line mode. ^ and $ match the start and end of each line.
 //	--- s: Dot-all mode. . matches any character, including newline.
 //	--- U: Ungreedy mode. Makes quantifiers lazy by default.
-//
 const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+
+// export for use in tests
+const fileKeyPrefix = "#### file:"
+const yamlFileSeparator = "---\n" + fileKeyPrefix
 
 var regexErrorPattern = regexp.MustCompile(regexPattern)
 
@@ -189,6 +195,7 @@ type TestJob struct {
 	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	PostRenderer       postrender.PostRenderer      `yaml:"postRenderer"`
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -234,7 +241,12 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
+	postRenderedManifestsOfFiles, err := t.postRender(outputOfFiles)
+	if err != nil {
+		result.ExecError = err
+	}
+
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -269,12 +281,12 @@ func (t *TestJob) getUserValues() (string, error) {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
 		}
 
-		bytes, err := os.ReadFile(valueFilePath)
+		byteArray, err := os.ReadFile(valueFilePath)
 		if err != nil {
 			return "", err
 		}
 
-		if err := common.YmlUnmarshal(string(bytes), &value); err != nil {
+		if err := common.YmlUnmarshal(string(byteArray), &value); err != nil {
 			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 
@@ -353,6 +365,76 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, false, err
 	}
 	return outputOfFiles, renderSucceed, nil
+}
+
+// merge the map into a single file, post-render it, and split it out again
+func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
+	var renderedManifests bytes.Buffer
+
+	// stable iteration order
+	orderedManifests := make([]string, 0, len(renderedManifestsMap))
+	for k := range renderedManifestsMap {
+		orderedManifests = append(orderedManifests, k)
+	}
+	sort.Strings(orderedManifests)
+
+	for _, key := range orderedManifests {
+		manifest := renderedManifestsMap[key]
+		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
+		renderedManifests.WriteString(manifest)
+	}
+
+	var modifiedManifests *bytes.Buffer
+	modifiedManifests, err := postRenderer.Run(&renderedManifests)
+	if err != nil {
+		return nil, fmt.Errorf("post-render failed: %w", err)
+	}
+	renderedManifests = *modifiedManifests
+
+	return &renderedManifests, nil
+}
+
+func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
+	postRenderedManifestsString := renderedManifests.String()
+
+	postRenderedManifestsMap := make(map[string]string)
+	re := regexp.MustCompile(fileKeyPrefix + ` (.*)`)
+
+	fileBlocks := common.SplitBefore(postRenderedManifestsString, yamlFileSeparator)
+
+	for _, block := range fileBlocks {
+		//block = strings.TrimSpace(block) // Trim whitespace from the block
+
+		if block == "" {
+			continue
+		}
+
+		match := re.FindStringSubmatch(block)
+
+		if match == nil || len(match) < 2 {
+			continue
+		}
+
+		key := match[1]
+		manifest := strings.TrimPrefix(block, fmt.Sprintf("---\n%s\n", match[0])) //+ "\n"
+		postRenderedManifestsMap[key] = manifest
+	}
+
+	return postRenderedManifestsMap
+}
+
+func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, error) {
+	if t.PostRenderer == nil {
+		return renderedManifestsMap, nil
+	}
+
+	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, t.PostRenderer)
+	if err != nil {
+		return nil, err
+	}
+
+	postRenderedManifestsMap := SplitManifests(renderedManifests)
+	return postRenderedManifestsMap, nil
 }
 
 // When rendering failed, due to fail or required,
