@@ -224,7 +224,9 @@ type TestSuite struct {
 		APIVersions  []string `yaml:"apiVersions"`
 	}
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
-	Tests              []*TestJob                   // TODO:  could every job have its own postRenderer?  that sounds like a schema addition instead of flags.
+	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
+
+	Tests []*TestJob
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
@@ -360,7 +362,7 @@ func (s *TestSuite) runV3TestJobs(
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
 
-		jobResult := testJob.RunV3(chart, cache, failFast, renderPath, &results.TestJobResult{DisplayName: testJob.Name, Index: idx})
+		jobResult := testJob.RunV3(chart, cache, failFast, renderPath, &results.TestJobResult{DisplayName: testJob.Name, Index: idx}, s.PostRendererConfig)
 		jobResults[idx] = jobResult
 
 		if idx == 0 {

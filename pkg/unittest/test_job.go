@@ -44,6 +44,11 @@ const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*:
 const fileKeyPrefix = "#### file:"
 const yamlFileSeparator = "---\n" + fileKeyPrefix
 
+type PostRendererConfig struct {
+	Cmd      string   `yaml:"cmd"`
+	ArgSlice []string `yaml:"args"`
+}
+
 var regexErrorPattern = regexp.MustCompile(regexPattern)
 
 func spliteChartRoutes(routePath string) []string {
@@ -195,12 +200,7 @@ type TestJob struct {
 	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
-	// todo i don't think this can deserialize like this.  we probably need NewExec first.
-	PostRenderer postrender.PostRenderer `yaml:"postRenderer"`
-	// todo what happens when the post-renderer doesn't neatly return files with our special key?
-	// crossplane render probably won't. should we put it in a fake annotation or something?
-	// if the post-renderer doesn't return anything with the comment on it, i suppose we just sit in a single file.
-	// but will that break parsing?  probably.
+	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
 
 	// global set values
 	globalSet map[string]interface{}
@@ -224,6 +224,7 @@ func (t *TestJob) RunV3(
 	failfast bool,
 	renderPath string,
 	result *results.TestJobResult,
+	postRendererConfig PostRendererConfig,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
@@ -233,6 +234,14 @@ func (t *TestJob) RunV3(
 	if err != nil {
 		result.ExecError = err
 		return result
+	}
+
+	// use local config if provided, else look to parent
+	var cfg PostRendererConfig
+	if t.PostRendererConfig.Cmd != "" {
+		cfg = t.PostRendererConfig
+	} else if postRendererConfig.Cmd != "" {
+		cfg = postRendererConfig
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
@@ -247,9 +256,22 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	postRenderedManifestsOfFiles, err := t.postRender(outputOfFiles)
-	if err != nil {
-		result.ExecError = err
+	// init postrendered map with current outputs in case we skip
+	var postRenderedManifestsOfFiles = outputOfFiles
+
+	// init post renderer to an exec object
+	if cfg.Cmd != "" {
+		postRenderer, renderErr := postrender.NewExec(postRendererConfig.Cmd, postRendererConfig.ArgSlice...)
+		if err != nil {
+			result.ExecError = renderErr
+			return result
+		}
+
+		postRenderedManifestsOfFiles, err = postRender(postRenderer, outputOfFiles)
+		if err != nil {
+			result.ExecError = err
+			return result
+		}
 	}
 
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), postRenderedManifestsOfFiles)
@@ -438,12 +460,8 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	return postRenderedManifestsMap
 }
 
-func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, error) {
-	if t.PostRenderer == nil {
-		return renderedManifestsMap, nil
-	}
-
-	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, t.PostRenderer)
+func postRender(postRenderer postrender.PostRenderer, renderedManifestsMap map[string]string) (map[string]string, error) {
+	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, postRenderer)
 	if err != nil {
 		return nil, err
 	}
