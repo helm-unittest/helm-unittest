@@ -1070,6 +1070,13 @@ func Test_SplitManifests(t *testing.T) {
 				"test-key": "manifest1\n\n",
 			},
 		},
+		{
+			name:  "Manifest with net-new content",
+			input: "---\nmanifest1\n",
+			expectedManifests: map[string]string{
+				"manifest.yaml": "---\nmanifest1\n",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1081,6 +1088,7 @@ func Test_SplitManifests(t *testing.T) {
 	}
 }
 
+// TODO:  add a test for what happens when the post-renderer doesn't hand back a file with our comment.
 func Test_MergeAndPostRender(t *testing.T) {
 	tests := []struct {
 		name           string

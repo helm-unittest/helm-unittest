@@ -195,7 +195,13 @@ type TestJob struct {
 	CapabilitiesFields CapabilitiesFields           `yaml:"capabilities"`
 	Assertions         []*Assertion                 `yaml:"asserts"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
-	PostRenderer       postrender.PostRenderer      `yaml:"postRenderer"`
+	// todo i don't think this can deserialize like this.  we probably need NewExec first.
+	PostRenderer postrender.PostRenderer `yaml:"postRenderer"`
+	// todo what happens when the post-renderer doesn't neatly return files with our special key?
+	// crossplane render probably won't. should we put it in a fake annotation or something?
+	// if the post-renderer doesn't return anything with the comment on it, i suppose we just sit in a single file.
+	// but will that break parsing?  probably.
+
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -402,8 +408,8 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 
 	fileBlocks := common.SplitBefore(postRenderedManifestsString, yamlFileSeparator)
 
+	var foundMatch = false
 	for _, block := range fileBlocks {
-		//block = strings.TrimSpace(block) // Trim whitespace from the block
 
 		if block == "" {
 			continue
@@ -418,6 +424,15 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 		key := match[1]
 		manifest := strings.TrimPrefix(block, fmt.Sprintf("---\n%s\n", match[0])) //+ "\n"
 		postRenderedManifestsMap[key] = manifest
+
+		foundMatch = true
+	}
+
+	if !foundMatch {
+		// if we can't do our silly comment identification (like if the post processor doesn't retain the comments)
+		// we do our best by reading the whole file as one object.  should be referenceable by DocumentIndex, etc.
+		// not our job to keep the order consistent, though.  the post-renderer should.
+		postRenderedManifestsMap["manifest.yaml"] = postRenderedManifestsString
 	}
 
 	return postRenderedManifestsMap

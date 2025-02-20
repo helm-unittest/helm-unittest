@@ -224,7 +224,7 @@ type TestSuite struct {
 		APIVersions  []string `yaml:"apiVersions"`
 	}
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
-	Tests              []*TestJob
+	Tests              []*TestJob                   // TODO:  could every job have its own postRenderer?  that sounds like a schema addition instead of flags.
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
