@@ -66,7 +66,7 @@ build: ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: build-amd64
-build: ## Compile packages and dependencies
+build: ## Compile packages and dependencies, pinned to amd64 for the docker image
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
