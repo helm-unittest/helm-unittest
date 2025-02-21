@@ -1052,6 +1052,8 @@ func Test_SplitManifests(t *testing.T) {
 			},
 		},
 		{
+			// TODO: should we treat the post-renderer handing us an empty file as "a map of one empty file?"
+			// or should we return an empty map?
 			name:  "Empty Input",
 			input: "",
 			expectedManifests: map[string]string{
