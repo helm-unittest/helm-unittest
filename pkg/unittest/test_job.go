@@ -236,14 +236,6 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	//// use local config if provided, else look to parent
-	//var cfg PostRendererConfig
-	//if t.PostRendererConfig.Cmd != "" {
-	//	cfg = t.PostRendererConfig
-	//} else if postRendererConfig.Cmd != "" {
-	//	cfg = postRendererConfig
-	//}
-
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
 	if writeError != nil {
