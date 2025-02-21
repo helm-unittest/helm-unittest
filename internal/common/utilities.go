@@ -84,7 +84,9 @@ func YmlMarshallTestHelper(in interface{}, t *testing.T) string {
 	return string(out)
 }
 
-func SplitBefore(s, sep string) (out []string) {
+func SplitBefore(s, sep string) []string {
+	var out []string
+
 	// this can be omitted if staying analogous with SplitAfter is not a requirement
 	if strings.HasPrefix(s, sep) || s == "" {
 		out = append(out, "")
