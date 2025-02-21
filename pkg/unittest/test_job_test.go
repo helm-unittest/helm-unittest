@@ -1092,7 +1092,6 @@ func Test_SplitManifests(t *testing.T) {
 	}
 }
 
-// TODO:  add a test for what happens when the post-renderer doesn't hand back a file with our comment.
 func Test_MergeAndPostRender(t *testing.T) {
 	tests := []struct {
 		name           string
