@@ -224,7 +224,7 @@ func (t *TestJob) RunV3(
 	failfast bool,
 	renderPath string,
 	result *results.TestJobResult,
-	postRendererConfig PostRendererConfig,
+	suitePostRendererConfig PostRendererConfig,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
@@ -236,13 +236,13 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	// use local config if provided, else look to parent
-	var cfg PostRendererConfig
-	if t.PostRendererConfig.Cmd != "" {
-		cfg = t.PostRendererConfig
-	} else if postRendererConfig.Cmd != "" {
-		cfg = postRendererConfig
-	}
+	//// use local config if provided, else look to parent
+	//var cfg PostRendererConfig
+	//if t.PostRendererConfig.Cmd != "" {
+	//	cfg = t.PostRendererConfig
+	//} else if postRendererConfig.Cmd != "" {
+	//	cfg = postRendererConfig
+	//}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
 	writeError := writeRenderedOutput(renderPath, outputOfFiles)
@@ -256,22 +256,10 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	// init postrendered map with current outputs in case we skip
-	var postRenderedManifestsOfFiles = outputOfFiles
-
-	// init post renderer to an exec object
-	if cfg.Cmd != "" {
-		postRenderer, renderErr := postrender.NewExec(postRendererConfig.Cmd, postRendererConfig.ArgSlice...)
-		if err != nil {
-			result.ExecError = renderErr
-			return result
-		}
-
-		postRenderedManifestsOfFiles, err = postRender(postRenderer, outputOfFiles)
-		if err != nil {
-			result.ExecError = err
-			return result
-		}
+	postRenderedManifestsOfFiles, err := t.postRender(suitePostRendererConfig, outputOfFiles)
+	if err != nil {
+		result.ExecError = err
+		return result
 	}
 
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), postRenderedManifestsOfFiles)
@@ -460,7 +448,23 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	return postRenderedManifestsMap
 }
 
-func postRender(postRenderer postrender.PostRenderer, renderedManifestsMap map[string]string) (map[string]string, error) {
+func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, renderedManifestsMap map[string]string) (map[string]string, error) {
+
+	var cfg PostRendererConfig
+	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
+	if t.PostRendererConfig.Cmd != "" {
+		cfg = t.PostRendererConfig
+	} else if suitePostRendererConfig.Cmd != "" {
+		cfg = suitePostRendererConfig
+	} else {
+		return renderedManifestsMap, nil
+	}
+
+	postRenderer, err := postrender.NewExec(cfg.Cmd, cfg.ArgSlice...)
+	if err != nil {
+		return nil, err
+	}
+
 	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, postRenderer)
 	if err != nil {
 		return nil, err
