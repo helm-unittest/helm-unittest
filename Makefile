@@ -17,6 +17,7 @@ TEST_NAMES ?=basic \
 	with-files \
 	with-helm-tests \
 	with-k8s-fake-client \
+	with-post-renderer \
 	with-samenamesubsubcharts \
 	with-schema \
 	with-subchart \
@@ -64,6 +65,10 @@ build-debug: ## Compile packages and dependencies with debug flag
 build: ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
+.PHONY: build-amd64
+build: ## Compile packages and dependencies
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
+
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
@@ -95,14 +100,15 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: build ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
+dockerimage: build-amd64 ## Build docker image
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
 test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
+		    --platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
