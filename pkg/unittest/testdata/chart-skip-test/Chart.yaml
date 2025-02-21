@@ -1,0 +1,6 @@
+apiVersion: v2
+name: skip-test
+version: 1.0.0
+description: simple chart to cover feature skip test
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-skip --output-dir _scratch

@@ -2,6 +2,7 @@
   DisplayName: (string) (len=11) "should work",
   Index: (int) 0,
   Passed: (bool) true,
+  Skipped: (bool) false,
   ExecError: (error) <nil>,
   AssertsResult: ([]*results.AssertionResult) (len=3) {
     (*results.AssertionResult)({

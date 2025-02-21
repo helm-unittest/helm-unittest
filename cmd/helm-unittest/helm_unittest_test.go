@@ -15,12 +15,20 @@ import (
 func setupTestCmd() *cobra.Command {
 	buf := new(bytes.Buffer)
 	testCmd := &cobra.Command{
-		Use: "unittest",
-		Run: RunPlugin,
+		Use:           "unittest",
+		Run:           RunPlugin,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
+	// silence tests
+	// redirect output to buffer
 	testCmd.SetIn(buf)
 	testCmd.SetOut(buf)
 	testCmd.SetErr(buf)
+
+	_, w, _ := os.Pipe()
+	os.Stdout = w
+
 	InitPluginFlags(testCmd)
 	testCmd.SetArgs([]string{})
 	return testCmd

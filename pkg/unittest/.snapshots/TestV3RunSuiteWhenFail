@@ -2,6 +2,7 @@
   DisplayName: (string) (len=15) "test suite name",
   FilePath: (string) "",
   Passed: (bool) false,
+  Skipped: (bool) false,
   FailFast: (bool) true,
   ExecError: (error) <nil>,
   TestsResult: ([]*results.TestJobResult) (len=1) {
@@ -9,6 +10,7 @@
       DisplayName: (string) (len=11) "should fail",
       Index: (int) 0,
       Passed: (bool) false,
+      Skipped: (bool) false,
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) (len=1) {
         (*results.AssertionResult)({

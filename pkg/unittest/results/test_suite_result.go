@@ -15,6 +15,7 @@ type TestSuiteResult struct {
 	DisplayName      string
 	FilePath         string
 	Passed           bool
+	Skipped          bool
 	FailFast         bool
 	ExecError        error
 	TestsResult      []*TestJobResult
@@ -26,9 +27,12 @@ type TestSuiteResult struct {
 	}
 }
 
-func (tsr TestSuiteResult) printTitle(printer *printer.Printer) {
+// printTitle print the title of the test suite.
+func (tsr *TestSuiteResult) printTitle(printer *printer.Printer) {
 	var label string
-	if tsr.Passed {
+	if tsr.Skipped {
+		label = printer.WarningLabel(" SKIP ")
+	} else if tsr.Passed {
 		label = printer.SuccessLabel(" PASS ")
 	} else {
 		label = printer.DangerLabel(" FAIL ")
@@ -45,8 +49,8 @@ func (tsr TestSuiteResult) printTitle(printer *printer.Printer) {
 	)
 }
 
-// Print printing the testresult output.
-func (tsr TestSuiteResult) Print(printer *printer.Printer, verbosity int) {
+// Print printing the test result output.
+func (tsr *TestSuiteResult) Print(printer *printer.Printer, verbosity int) {
 	tsr.printTitle(printer)
 	if tsr.ExecError != nil {
 		printer.Println(printer.Highlight("%s", "- Execution Error: "), 1)
@@ -76,6 +80,5 @@ func (tsr *TestSuiteResult) CalculateTestSuiteDuration() time.Duration {
 	for _, test := range tsr.TestsResult {
 		totalDuration += test.Duration
 	}
-
 	return totalDuration
 }

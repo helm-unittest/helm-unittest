@@ -35,6 +35,9 @@
     "capabilities": {
       "$ref": "#/definitions/capabilities"
     },
+    "skip": {
+      "$ref": "#/definitions/skip"
+    },
     "chart": {
       "$ref": "#/definitions/chart"
     },
@@ -61,6 +64,9 @@
           },
           "set": {
             "$ref": "#/definitions/set"
+          },
+          "skip": {
+            "$ref": "#/definitions/skip"
           },
           "template": {
             "type": "string",
@@ -1097,6 +1103,19 @@
         "path",
         "value"
       ],
+      "additionalProperties": false
+    },
+    "skip": {
+      "type": "object",
+      "description": "Using this flag, helm-unittest will automatically skip the 'suite' or 'test'.",
+      "markdownDescription": "**skip** (object) _optional_\n\nUsing this flag, helm-unittest will automatically skip the 'suite' or 'test'.",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "The `suite` or 'test' to skip.",
+          "markdownDescription": "**reason** (string)\n\nThe `suite` or 'test' to skip."
+        }
+      },
       "additionalProperties": false
     },
     "kubernetesProvider": {

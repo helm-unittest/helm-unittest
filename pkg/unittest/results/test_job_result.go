@@ -11,13 +11,23 @@ type TestJobResult struct {
 	DisplayName   string
 	Index         int
 	Passed        bool
+	Skipped       bool
 	ExecError     error
 	AssertsResult []*AssertionResult
 	Duration      time.Duration
 }
 
+// print the information to the console.
 func (tjr TestJobResult) print(printer *printer.Printer, verbosity int) {
 	if tjr.Passed {
+		return
+	}
+
+	if tjr.Skipped {
+		msg := printer.Highlight("- ")
+		msg += printer.WarningLabel("SKIPPED")
+		msg += printer.Warning(" '%s'", tjr.DisplayName)
+		printer.Println(msg, 1)
 		return
 	}
 
