@@ -248,7 +248,7 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	postRenderedManifestsOfFiles, err := t.postRender(suitePostRendererConfig, outputOfFiles)
+	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(suitePostRendererConfig, outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -268,6 +268,7 @@ func (t *TestJob) RunV3(
 		renderSucceed,
 		renderError,
 		failfast,
+		didPostRender,
 	)
 
 	result.Duration = time.Since(startTestRun)
@@ -435,12 +436,16 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 		// we do our best by reading the whole file as one object.  should be referenceable by DocumentIndex, etc.
 		// not our job to keep the order consistent, though.  the post-renderer should.
 		postRenderedManifestsMap["manifest.yaml"] = postRenderedManifestsString
+
+		// TODO:  what if the post renderer contains *some* net new manifests but not all?  the new manifests would get
+		// gobbled into whichever file is currently open on stdin.  this'll be an edge case we will need to be aware of
+		// but it should at least be consistent enough to assert on if our post-renderer returns consistent values.
 	}
 
 	return postRenderedManifestsMap
 }
 
-func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, renderedManifestsMap map[string]string) (map[string]string, error) {
+func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, renderedManifestsMap map[string]string) (map[string]string, bool, error) {
 
 	var cfg PostRendererConfig
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
@@ -449,21 +454,21 @@ func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, rendere
 	} else if suitePostRendererConfig.Cmd != "" {
 		cfg = suitePostRendererConfig
 	} else {
-		return renderedManifestsMap, nil
+		return renderedManifestsMap, false, nil
 	}
 
 	postRenderer, err := postrender.NewExec(cfg.Cmd, cfg.ArgSlice...)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
 	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, postRenderer)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
 	postRenderedManifestsMap := SplitManifests(renderedManifests)
-	return postRenderedManifestsMap, nil
+	return postRenderedManifestsMap, true, nil
 }
 
 // When rendering failed, due to fail or required,
@@ -569,6 +574,7 @@ func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
 	renderSucceed bool, renderError error, failfast bool,
+	didPostRender bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
@@ -584,6 +590,7 @@ func (t *TestJob) runAssertions(
 			renderError,
 			&results.AssertionResult{Index: idx},
 			failfast,
+			didPostRender,
 		)
 
 		assertsResult = append(assertsResult, result)
