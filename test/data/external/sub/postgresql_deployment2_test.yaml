@@ -1,0 +1,11 @@
+suite: external postgresql deployment
+templates:
+  - templates/deployment.yaml
+chart:
+  version: 3.6.1
+tests:
+  - it: should override subchart version when installed as a dependency
+    asserts:
+      - equal:
+          path: metadata.labels.chart
+          value: postgresql-3.6.1

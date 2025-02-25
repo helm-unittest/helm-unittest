@@ -19,6 +19,9 @@ import (
 const testSuiteTests string = "_suite_tests"
 
 const testValuesFiles = "../../test/data/services_values.yaml"
+const testExternalValuesFiles = "../../test/data/external/ns_values.yaml"
+const testExternalSubTestFiles = "../../test/data/external/*.yaml"
+const testExternalTestFiles = "../../test/data/external/tests/*.yaml"
 const testTestFiles string = "tests/*_test.yaml"
 const testTestFailedFiles string = "tests_failed/*_test.yaml"
 
@@ -31,6 +34,8 @@ const testV3WithSubSubFolderChart string = "../../test/data/v3/with-subsubcharts
 const testV3WithFilesChart string = "../../test/data/v3/with-files"
 const testV3WithFailingTemplateChart string = "../../test/data/v3/failing-template"
 const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
+const testV3WithPackagedChart string = "../../test/data/v3/with-packaged-0.1.0.tgz"
+const testV3WithPackagedSubChart string = "../../test/data/v3/with-subchart/charts/postgresql-0.8.3.tgz"
 const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
 const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
