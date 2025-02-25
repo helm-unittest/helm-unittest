@@ -14,7 +14,9 @@ func validateSucceededTestAssertions(
 	t *testing.T,
 	assertionsYAML string,
 	assertionCount int,
-	renderedMap map[string][]common.K8sManifest) {
+	renderedMap map[string][]common.K8sManifest,
+	didPostRender bool,
+) {
 
 	assertions := make([]Assertion, assertionCount)
 	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
@@ -22,7 +24,7 @@ func validateSucceededTestAssertions(
 	a := assert.New(t)
 
 	for idx, assertion := range assertions {
-		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false, false)
+		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false, didPostRender)
 		a.Equal(&results.AssertionResult{
 			Index:      idx,
 			FailInfo:   []string{},
@@ -289,7 +291,7 @@ x:
     path: c
     count: 1
 `
-	validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap)
+	validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap, false)
 }
 
 func TestAssertionRawAssertWhenOk(t *testing.T) {
@@ -317,7 +319,7 @@ func TestAssertionRawAssertWhenOk(t *testing.T) {
 - template: t.yaml
   matchSnapshot: {}
 `
-	validateSucceededTestAssertions(t, assertionsYAML, 5, renderedMap)
+	validateSucceededTestAssertions(t, assertionsYAML, 5, renderedMap, false)
 }
 
 func TestAssertionAssertWhenTemplateNotExisted(t *testing.T) {
@@ -343,6 +345,150 @@ equal:
 		Not:        false,
 		CustomInfo: "",
 	}, result)
+}
+
+func TestAssertionAssertWhenPostRendererRetainsFileSplitter(t *testing.T) {
+	manifestDoc := `
+kind: Fake
+apiVersion: v123
+a: b
+c: [d]
+e:
+  f: g
+x:
+`
+	manifest := common.TrustedUnmarshalYAML(manifestDoc)
+	renderedMap := map[string][]common.K8sManifest{
+		"t.yaml": {manifest},
+	}
+	assertionsYAML := `
+- template: t.yaml
+  equal:
+    path:  a
+    value: b
+- template: t.yaml
+  notEqual:
+    path:  a
+    value: c
+- template: t.yaml
+  matchRegex:
+    path:    a
+    pattern: b
+- template: t.yaml
+  notMatchRegex:
+    path:    a
+    pattern: c
+- template: t.yaml
+  contains:
+    path:    c
+    content: d
+- template: t.yaml
+  notContains:
+    path:    c
+    content: e
+- template: t.yaml
+  exists:
+    path: x
+- template: t.yaml
+  notExists:
+    path: g
+- template: t.yaml
+  isNotNullOrEmpty:
+    path: c
+- template: t.yaml
+  isKind:
+    of: Fake
+- template: t.yaml
+  isAPIVersion:
+    of: v123
+- template: t.yaml
+  hasDocuments:
+    count: 1
+- template: t.yaml
+  matchSnapshot: {}
+- template: t.yaml
+  isSubset:
+    path: e
+    content:
+      f: g
+- template: t.yaml
+  lengthEqual:
+    path: c
+    count: 1
+`
+	validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap, true)
+}
+
+func TestAssertionAssertWhenPostRendererDoesNotRetainFileSplitter(t *testing.T) {
+	manifestDoc := `
+kind: Fake
+apiVersion: v123
+a: b
+c: [d]
+e:
+  f: g
+x:
+`
+	manifest := common.TrustedUnmarshalYAML(manifestDoc)
+	renderedMap := map[string][]common.K8sManifest{
+		"manifest.yaml": {manifest},
+	}
+	assertionsYAML := `
+- template: t.yaml
+  equal:
+    path:  a
+    value: b
+- template: t.yaml
+  notEqual:
+    path:  a
+    value: c
+- template: t.yaml
+  matchRegex:
+    path:    a
+    pattern: b
+- template: t.yaml
+  notMatchRegex:
+    path:    a
+    pattern: c
+- template: t.yaml
+  contains:
+    path:    c
+    content: d
+- template: t.yaml
+  notContains:
+    path:    c
+    content: e
+- template: t.yaml
+  exists:
+    path: x
+- template: t.yaml
+  notExists:
+    path: g
+- template: t.yaml
+  isNotNullOrEmpty:
+    path: c
+- template: t.yaml
+  isKind:
+    of: Fake
+- template: t.yaml
+  isAPIVersion:
+    of: v123
+- template: t.yaml
+  hasDocuments:
+    count: 1
+- template: t.yaml
+  matchSnapshot: {}
+- template: t.yaml
+  isSubset:
+    path: e
+    content:
+      f: g
+- template: t.yaml
+  lengthEqual:
+    path: c
+    count: 1
+`
+	validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap, true)
 }
 
 func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {

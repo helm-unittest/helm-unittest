@@ -248,6 +248,8 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
+	// TODO:  it looks like chart parsing receives every file (rather than a filtered list based on specified templates)
+	// so we'll need to... pre-filter?
 	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(suitePostRendererConfig, outputOfFiles)
 	if err != nil {
 		result.ExecError = err
@@ -390,10 +392,10 @@ func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer pos
 	for _, key := range orderedManifests {
 		manifest := renderedManifestsMap[key]
 		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
-		renderedManifests.WriteString(manifest)
+		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
 	}
-
 	var modifiedManifests *bytes.Buffer
+
 	modifiedManifests, err := postRenderer.Run(&renderedManifests)
 	if err != nil {
 		return nil, fmt.Errorf("post-render failed: %w", err)

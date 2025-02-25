@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -43,17 +44,29 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	var selectedDocsByTemplate map[string][]common.K8sManifest
-	var indexError error
+	var templates = templatesResult
 
 	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
 	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
-	if val, ok := templatesResult["manifest.yaml"]; didPostRender && len(templatesResult) == 1 && ok {
-		println("Found non-preserving post-render of manifest.yaml only")
-		selectedDocsByTemplate["manifest.yaml"] = val
+	if didPostRender && len(templatesResult) == 1 {
+		var key string
+		for k := range templatesResult {
+			key = k
+		}
+
+		// account for pathname prefix
+		if strings.HasSuffix(key, "manifest.yaml") {
+			a.Template = key
+			templates = make(map[string][]common.K8sManifest)
+			templates[key] = templatesResult[key]
+		} else {
+			templates = a.getDocumentsByDefaultTemplates(templatesResult)
+		}
 	} else {
-		selectedDocsByTemplate, indexError = a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
+		templates = a.getDocumentsByDefaultTemplates(templatesResult)
 	}
+
+	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
 	// Sort templates to ensure a consistent output
