@@ -1,13 +1,16 @@
 package unittest
 
 import (
+	"bytes"
 	"cmp"
 	"errors"
 	"fmt"
+	"helm.sh/helm/v3/pkg/postrender"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,8 +38,16 @@ const LOG_TEST_JOB = "test-job"
 //	--- m: Multi-line mode. ^ and $ match the start and end of each line.
 //	--- s: Dot-all mode. . matches any character, including newline.
 //	--- U: Ungreedy mode. Makes quantifiers lazy by default.
-//
 const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+
+// export for use in tests
+const fileKeyPrefix = "#### file:"
+const yamlFileSeparator = "---\n" + fileKeyPrefix
+
+type PostRendererConfig struct {
+	Cmd      string   `yaml:"cmd"`
+	ArgSlice []string `yaml:"args"`
+}
 
 var regexErrorPattern = regexp.MustCompile(regexPattern)
 
@@ -192,6 +203,8 @@ type TestJob struct {
 		Reason string `yaml:"reason"`
 	} `yaml:"skip"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
+	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
+
 	// global set values
 	globalSet map[string]interface{}
 	// route indicate which chart in the dependency hierarchy
@@ -214,6 +227,7 @@ func (t *TestJob) RunV3(
 	failfast bool,
 	renderPath string,
 	result *results.TestJobResult,
+	suitePostRendererConfig PostRendererConfig,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
@@ -237,7 +251,15 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), outputOfFiles)
+	// TODO:  it looks like chart parsing receives every file (rather than a filtered list based on specified templates)
+	// so we'll need to... pre-filter?
+	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(suitePostRendererConfig, outputOfFiles)
+	if err != nil {
+		result.ExecError = err
+		return result
+	}
+
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -258,6 +280,7 @@ func (t *TestJob) RunV3(
 		renderSucceed,
 		renderError,
 		failfast,
+		didPostRender,
 	)
 
 	result.Duration = time.Since(startTestRun)
@@ -279,12 +302,12 @@ func (t *TestJob) getUserValues() (string, error) {
 			valueFilePath = filepath.Join(filepath.Dir(t.definitionFile), specifiedPath)
 		}
 
-		bytes, err := os.ReadFile(valueFilePath)
+		byteArray, err := os.ReadFile(valueFilePath)
 		if err != nil {
 			return "", err
 		}
 
-		if err := common.YmlUnmarshal(string(bytes), &value); err != nil {
+		if err := common.YmlUnmarshal(string(byteArray), &value); err != nil {
 			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 
@@ -363,6 +386,101 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		return nil, false, err
 	}
 	return outputOfFiles, renderSucceed, nil
+}
+
+// merge the map into a single file, post-render it, and split it out again
+func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
+	var renderedManifests bytes.Buffer
+
+	// stable iteration order
+	orderedManifests := make([]string, 0, len(renderedManifestsMap))
+	for k := range renderedManifestsMap {
+		orderedManifests = append(orderedManifests, k)
+	}
+	sort.Strings(orderedManifests)
+
+	for _, key := range orderedManifests {
+		manifest := renderedManifestsMap[key]
+		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
+		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
+	}
+	var modifiedManifests *bytes.Buffer
+
+	modifiedManifests, err := postRenderer.Run(&renderedManifests)
+	if err != nil {
+		return nil, fmt.Errorf("post-render failed: %w", err)
+	}
+	renderedManifests = *modifiedManifests
+
+	return &renderedManifests, nil
+}
+
+func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
+	postRenderedManifestsString := renderedManifests.String()
+
+	postRenderedManifestsMap := make(map[string]string)
+	re := regexp.MustCompile(fileKeyPrefix + ` (.*)`)
+
+	fileBlocks := common.SplitBefore(postRenderedManifestsString, yamlFileSeparator)
+
+	var foundMatch = false
+	for _, block := range fileBlocks {
+
+		if block == "" {
+			continue
+		}
+
+		match := re.FindStringSubmatch(block)
+
+		if match == nil || len(match) < 2 {
+			continue
+		}
+
+		key := match[1]
+		manifest := strings.TrimPrefix(block, fmt.Sprintf("---\n%s\n", match[0])) //+ "\n"
+		postRenderedManifestsMap[key] = manifest
+
+		foundMatch = true
+	}
+
+	if !foundMatch {
+		// if we can't do our silly comment identification (like if the post processor doesn't retain the comments)
+		// we do our best by reading the whole file as one object.  should be referenceable by DocumentIndex, etc.
+		// not our job to keep the order consistent, though.  the post-renderer should.
+		postRenderedManifestsMap["manifest.yaml"] = postRenderedManifestsString
+
+		// TODO:  what if the post renderer contains *some* net new manifests but not all?  the new manifests would get
+		// gobbled into whichever file is currently open on stdin.  this'll be an edge case we will need to be aware of
+		// but it should at least be consistent enough to assert on if our post-renderer returns consistent values.
+	}
+
+	return postRenderedManifestsMap
+}
+
+func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, renderedManifestsMap map[string]string) (map[string]string, bool, error) {
+
+	var cfg PostRendererConfig
+	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
+	if t.PostRendererConfig.Cmd != "" {
+		cfg = t.PostRendererConfig
+	} else if suitePostRendererConfig.Cmd != "" {
+		cfg = suitePostRendererConfig
+	} else {
+		return renderedManifestsMap, false, nil
+	}
+
+	postRenderer, err := postrender.NewExec(cfg.Cmd, cfg.ArgSlice...)
+	if err != nil {
+		return nil, true, err
+	}
+
+	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, postRenderer)
+	if err != nil {
+		return nil, true, err
+	}
+
+	postRenderedManifestsMap := SplitManifests(renderedManifests)
+	return postRenderedManifestsMap, true, nil
 }
 
 // When rendering failed, due to fail or required,
@@ -468,6 +586,7 @@ func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
 	renderSucceed bool, renderError error, failfast bool,
+	didPostRender bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
@@ -483,6 +602,7 @@ func (t *TestJob) runAssertions(
 			renderError,
 			&results.AssertionResult{Index: idx},
 			failfast,
+			didPostRender,
 		)
 
 		assertsResult = append(assertsResult, result)
