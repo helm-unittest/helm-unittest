@@ -448,7 +448,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 		// TODO:  what if the post renderer contains *some* net new manifests but not all?  the new manifests would get
 		// gobbled into whichever file is currently open on stdin.  this'll be an edge case we will need to be aware of
 		// but it should at least be consistent enough to assert on if our post-renderer returns consistent values.
-		// I'm not sure we can do much better with the information at hand.  
+		// I'm not sure we can do much better with the information at hand.
 	}
 
 	return postRenderedManifestsMap
