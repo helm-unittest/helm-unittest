@@ -1,8 +1,10 @@
 package unittest_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"os"
 	"path"
 
@@ -83,7 +85,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -114,7 +116,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{}, PostRendererConfig{})
 	defer os.RemoveAll(renderPath)
 
 	a := assert.New(t)
@@ -144,7 +146,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -173,7 +175,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -205,7 +207,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -230,7 +232,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -259,7 +261,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{}, PostRendererConfig{})
 	// Write Buffer
 
 	a := assert.New(t)
@@ -289,7 +291,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 	// Write Buffer
 
 	a := assert.New(t)
@@ -316,7 +318,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -348,7 +350,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -375,7 +377,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -397,7 +399,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -421,7 +423,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -447,7 +449,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -473,7 +475,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
@@ -495,7 +497,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
@@ -517,7 +519,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
 	assert.False(t, testResult.Passed)
 	assert.Equal(t, "7", tj.Capabilities.MinorVersion)
 }
@@ -544,7 +546,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -567,7 +569,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -589,7 +591,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -614,7 +616,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -639,7 +641,7 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -667,7 +669,7 @@ asserts:
 	a := assert.New(t)
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
@@ -689,7 +691,7 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -810,7 +812,7 @@ asserts:
 	assert := assert.New(t)
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	assert.NoError(testResult.ExecError)
 	assert.True(testResult.Passed, testResult.AssertsResult)
@@ -830,7 +832,7 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshal(manifest, &tj)
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	a := assert.New(t)
 
@@ -879,7 +881,7 @@ ingress:
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -924,7 +926,7 @@ ingress:
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{})
+	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -960,7 +962,7 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 	for _, test := range tests {
 		tj := TestJob{}
 		c.Templates = []*v3chart.File{test.template}
-		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 		a.Error(testResult.ExecError)
 		a.False(testResult.Passed)
 		a.EqualError(testResult.ExecError, test.error.Error())
@@ -1006,7 +1008,7 @@ asserts:
 
 	for _, test := range tests {
 		c.Templates = []*v3chart.File{test.template}
-		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{})
+		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
 		assert.Equal(t, test.expected, testResult.Passed)
 		if test.error != nil {
 			assert.NotNil(t, testResult.ExecError)
@@ -1017,4 +1019,138 @@ asserts:
 			assert.True(t, testResult.Passed)
 		}
 	}
+}
+
+const fileKeyPrefix = "#### file:"
+
+func Test_SplitManifests(t *testing.T) {
+	tests := []struct {
+		name              string
+		input             string
+		expectedManifests map[string]string
+	}{
+		{
+			name:  "Single Manifest",
+			input: "---\n" + fileKeyPrefix + " test-key\nmanifest1\n", // Literal separator
+			expectedManifests: map[string]string{
+				"test-key": "manifest1\n",
+			},
+		},
+		{
+			name:  "Multiple Manifests",
+			input: "---\n" + fileKeyPrefix + " test-key1\nmanifest1\n" + "---\n" + fileKeyPrefix + " test-key2\nmanifest2\n",
+			expectedManifests: map[string]string{
+				"test-key1": "manifest1\n",
+				"test-key2": "manifest2\n",
+			},
+		},
+		{
+			name:  "Multi-document Manifest",
+			input: "---\n" + fileKeyPrefix + " test-key\nmanifest1\n---\nmanifest2\n",
+			expectedManifests: map[string]string{
+				"test-key": "manifest1\n---\nmanifest2\n",
+			},
+		},
+		{
+			// TODO: should we treat the post-renderer handing us an empty file as "a map of one empty file?"
+			// or should we return an empty map?
+			name:  "Empty Input",
+			input: "",
+			expectedManifests: map[string]string{
+				"manifest.yaml": "",
+			},
+		},
+		{
+			name:  "Manifest with no newline",
+			input: "---\n" + fileKeyPrefix + " test-key\nmanifest1",
+			expectedManifests: map[string]string{
+				"test-key": "manifest1",
+			},
+		},
+		{
+			name:  "Manifest with multiple newlines",
+			input: "---\n" + fileKeyPrefix + " test-key\nmanifest1\n\n",
+			expectedManifests: map[string]string{
+				"test-key": "manifest1\n\n",
+			},
+		},
+		{
+			name:  "Manifest with net-new content",
+			input: "---\nmanifest1\n",
+			expectedManifests: map[string]string{
+				"manifest.yaml": "---\nmanifest1\n",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			inputBuffer := bytes.NewBufferString(test.input)
+			actualManifests := SplitManifests(inputBuffer)
+			assert.Equal(t, test.expectedManifests, actualManifests)
+		})
+	}
+}
+
+func Test_MergeAndPostRender(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputManifests map[string]string
+		expectedOutput string
+		postRenderer   *mockPostRenderer // Use the mock type
+		expectedInput  string            // Add expected input for postRenderer
+	}{
+		{
+			name: "With Post-render newlines",
+			inputManifests: map[string]string{
+				"test-key1": "manifest1\n",
+				"test-key2": "manifest2\n",
+			},
+			expectedOutput: "---\n" + fileKeyPrefix + " test-key1\nmanifest1-modified\n\n---\n" + fileKeyPrefix + " test-key2\nmanifest2-modified\n\n",
+			postRenderer:   &mockPostRenderer{},
+			expectedInput:  "---\n" + fileKeyPrefix + " test-key1\nmanifest1\n---\n" + fileKeyPrefix + " test-key2\nmanifest2\n", // Input *before* post-rendering
+		},
+		{
+			name: "With Post-render no newlines",
+			inputManifests: map[string]string{
+				"test-key1": "manifest1\n",
+				"test-key2": "manifest2\n",
+			},
+			expectedOutput: "---\n" + fileKeyPrefix + " test-key1\nmanifest1-modified\n---\n" + fileKeyPrefix + " test-key2\nmanifest2-modified",
+			postRenderer:   &mockPostRenderer{},
+			expectedInput:  "---\n" + fileKeyPrefix + " test-key1\nmanifest1\n---\n" + fileKeyPrefix + " test-key2\nmanifest2\n", // Input *before* post-rendering
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Set up the mock expectation *before* calling MergeAndPostRender
+			expectedBuffer := bytes.NewBufferString(test.expectedInput)
+			test.postRenderer.On("Run", mock.Anything).Return(bytes.NewBufferString(test.expectedOutput), nil).Run(func(args mock.Arguments) {
+				arg := args.Get(0).(*bytes.Buffer)
+				assert.Equal(t, expectedBuffer.String(), arg.String())
+			})
+
+			output, err := MergeAndPostRender(test.inputManifests, test.postRenderer)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedOutput, output.String())
+
+			test.postRenderer.AssertExpectations(t) // Verify the mock was called as expected
+
+		})
+	}
+}
+
+type mockPostRenderer struct {
+	mock.Mock
+	output string
+	err    error
+}
+
+func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	args := m.Called(renderedManifests)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*bytes.Buffer), args.Error(1)
 }

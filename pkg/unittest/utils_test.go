@@ -206,3 +206,111 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitBefore(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		separator string
+		expected  []string
+	}{
+		// This suite was constructed against a test suite for SplitAfter (to check for parity).
+		{
+			name:      "Simple Case",
+			input:     "apple-banana-cherry",
+			separator: "-",
+			expected:  []string{"apple", "-banana", "-cherry"}, // Separator at the beginning
+		},
+		{
+			name:      "No Separator",
+			input:     "apple",
+			separator: "-",
+			expected:  []string{"apple"},
+		},
+		{
+			name:      "Separator at Beginning",
+			input:     "-apple-banana",
+			separator: "-",
+			expected:  []string{"", "-apple", "-banana"}, // Separator at the beginning
+		},
+		{
+			name:      "Separator at End",
+			input:     "apple-banana-",
+			separator: "-",
+			expected:  []string{"apple", "-banana", "-"}, // Separator at the beginning
+		},
+		{
+			name:      "Consecutive Separators",
+			input:     "apple--banana",
+			separator: "-",
+			expected:  []string{"apple", "-", "-banana"}, // Separator at the beginning
+		},
+		{
+			name:      "Empty String",
+			input:     "",
+			separator: "-",
+			expected:  []string{""},
+		},
+		{
+			name:      "Special Characters",
+			input:     "one.two.three",
+			separator: ".",
+			expected:  []string{"one", ".two", ".three"},
+		},
+		{
+			name:      "Long Separator",
+			input:     "prefix-one-suffix-two",
+			separator: "-one-",
+			expected:  []string{"prefix", "-one-suffix-two"},
+		},
+		{
+			name:      "Separator and other special characters",
+			input:     "prefix.one-suffix.two",
+			separator: ".",
+			expected:  []string{"prefix", ".one-suffix", ".two"},
+		},
+		{
+			name:      "Complex Case",
+			input:     "part1-part2-SEP-part3-part4-SEP-part5",
+			separator: "SEP",
+			expected:  []string{"part1-part2-", "SEP-part3-part4-", "SEP-part5"},
+		},
+		{
+			name:      "Complex Case with SEP at beginning and end",
+			input:     "SEP-part1-part2-SEP-part3-part4-SEP",
+			separator: "SEP",
+			expected:  []string{"", "SEP-part1-part2-", "SEP-part3-part4-", "SEP"},
+		},
+		{
+			name:      "Another Complex Case",
+			input:     "before#### file: test1\nmanifest1\n#### file: test2\nmanifest2",
+			separator: "#### file:",
+			expected:  []string{"before", "#### file: test1\nmanifest1\n", "#### file: test2\nmanifest2"},
+		},
+		{
+			name:      "Empty Input with Separator at Beginning",
+			input:     "#### file:",
+			separator: "#### file:",
+			expected:  []string{"", "#### file:"},
+		},
+		{
+			name:      "Input with only Separator",
+			input:     "#### file:",
+			separator: "#### file:",
+			expected:  []string{"", "#### file:"},
+		},
+		{
+			name:      "Input with only Separator repeated",
+			input:     "#### file:#### file:",
+			separator: "#### file:",
+			expected:  []string{"", "#### file:", "#### file:"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := common.SplitBefore(test.input, test.separator)
+			assert.Equal(t, test.expected, actual, fmt.Sprintf("Test Case: %s", test.name))
+		})
+	}
+}
