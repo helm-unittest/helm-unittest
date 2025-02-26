@@ -99,7 +99,6 @@ func (a *Assertion) Assert(
 			var singleFailInfo []string
 
 			if !ok && a.requireRenderSuccess {
-
 				noFile := []string{"Error:", a.noFileErrMessage(template)}
 				failInfo = append(failInfo, noFile...)
 				assertionPassed = false

@@ -39,8 +39,6 @@ const LOG_TEST_JOB = "test-job"
 //	--- s: Dot-all mode. . matches any character, including newline.
 //	--- U: Ungreedy mode. Makes quantifiers lazy by default.
 const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
-
-// export for use in tests
 const fileKeyPrefix = "#### file:"
 const yamlFileSeparator = "---\n" + fileKeyPrefix
 
@@ -251,8 +249,6 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	// TODO:  it looks like chart parsing receives every file (rather than a filtered list based on specified templates)
-	// so we'll need to... pre-filter?
 	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(suitePostRendererConfig, outputOfFiles)
 	if err != nil {
 		result.ExecError = err
@@ -437,7 +433,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 		}
 
 		key := match[1]
-		manifest := strings.TrimPrefix(block, fmt.Sprintf("---\n%s\n", match[0])) //+ "\n"
+		manifest := strings.TrimPrefix(block, fmt.Sprintf("---\n%s\n", match[0]))
 		postRenderedManifestsMap[key] = manifest
 
 		foundMatch = true
@@ -452,6 +448,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 		// TODO:  what if the post renderer contains *some* net new manifests but not all?  the new manifests would get
 		// gobbled into whichever file is currently open on stdin.  this'll be an edge case we will need to be aware of
 		// but it should at least be consistent enough to assert on if our post-renderer returns consistent values.
+		// I'm not sure we can do much better with the information at hand.  
 	}
 
 	return postRenderedManifestsMap

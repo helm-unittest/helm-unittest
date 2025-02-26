@@ -399,7 +399,7 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job,s.PostRendererConfig)
+			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job, s.PostRendererConfig)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed
