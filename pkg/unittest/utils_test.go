@@ -221,6 +221,18 @@ func TestV3RunnerWith_Fixture_Chart_SkipTest(t *testing.T) {
 	assert.Contains(t, buffer.String(), "Tests:       2 passed, 4 skipped, 6 total")
 }
 
+func TestV3RunnerWith_Fixture_Chart_PostRenderer(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    false,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-post-renderer"})
+	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 2 total")
+	assert.Contains(t, buffer.String(), "Tests:       4 passed, 4 total")
+}
+
 func TestSplitBefore(t *testing.T) {
 	tests := []struct {
 		name      string
