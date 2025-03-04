@@ -3,8 +3,8 @@ package common_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	. "github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/stretchr/testify/assert"
 )
 
 const (

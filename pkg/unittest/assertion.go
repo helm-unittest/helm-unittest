@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -34,6 +35,7 @@ func (a *Assertion) Assert(
 	renderError error,
 	result *results.AssertionResult,
 	failfast bool,
+	didPostRender bool,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
@@ -41,7 +43,30 @@ func (a *Assertion) Assert(
 	// Ensure assertion is succeeding or failing based on templates to test.
 	assertionPassed := false
 	failInfo := make([]string, 0)
-	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(a.getDocumentsByDefaultTemplates(templatesResult))
+
+	var templates = templatesResult
+
+	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
+	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
+	if didPostRender && len(templatesResult) == 1 {
+		var key string
+		for k := range templatesResult {
+			key = k
+		}
+
+		// account for pathname prefix
+		if strings.HasSuffix(key, "manifest.yaml") {
+			a.Template = key
+			templates = make(map[string][]common.K8sManifest)
+			templates[key] = templatesResult[key]
+		} else {
+			templates = a.getDocumentsByDefaultTemplates(templatesResult)
+		}
+	} else {
+		templates = a.getDocumentsByDefaultTemplates(templatesResult)
+	}
+
+	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
 	// Sort templates to ensure a consistent output
@@ -72,6 +97,7 @@ func (a *Assertion) Assert(
 			rendered, ok := templatesResult[template]
 			var validatePassed bool
 			var singleFailInfo []string
+
 			if !ok && a.requireRenderSuccess {
 				noFile := []string{"Error:", a.noFileErrMessage(template)}
 				failInfo = append(failInfo, noFile...)

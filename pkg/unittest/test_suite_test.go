@@ -41,6 +41,7 @@ const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
 const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
 const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
 const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
+const testV3WithPostRendererChart string = "../../test/data/v3/with-post-renderer"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 
