@@ -19,8 +19,8 @@ ENV PLUGIN_URL="helm-unittest"
 # Install the plugin for all users
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
-RUN yum install -y git && \
-    curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} |tar xvz && \
+RUN yum install -y git yq && \
+    curl --proto "=https" -L ${HELM_BASE_URL}/${HELM_TAR_FILE} |tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
     helm plugin install ${PLUGIN_URL} && \

@@ -1,8 +1,10 @@
-0.8.0 / 2025-02-25
+0.8.0 / 2025-03-05
 ==================
+- Add flag to exclude certain templates from testing (resolves #169, credits @snorwin)
 - Support for test packaged helmcharts (resolves #186, resolves #250)
-- Support to allow skipping tests (resolves #504)
-- Resolve multiline errormessages (resolves #559)
+- Support to allow skipping tests (resolves #504, credits @ivankatliarchuk)
+- Resolve multiline errormessages (resolves #559, credits @ivankatliarchuk)
+- Add helm post-renderer option (resolves #574, credits @jcogilvie)
 - Update packages to latest patch versions
 - Update pipeline actions
 - Update documentation
