@@ -1,3 +1,12 @@
+0.8.0 / 2025-02-25
+==================
+- Support for test packaged helmcharts (resolves #186, resolves #250)
+- Support to allow skipping tests (resolves #504)
+- Resolve multiline errormessages (resolves #559)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 0.7.2 / 2025-01-27
 ==================
 - Contains fails to detect string elements in array when any is enabled (resolves #342)

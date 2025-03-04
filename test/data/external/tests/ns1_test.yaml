@@ -1,0 +1,10 @@
+suite: chart tests
+templates:
+  - templates/cm.yaml
+
+tests:
+  - it: should have namespace
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: testns

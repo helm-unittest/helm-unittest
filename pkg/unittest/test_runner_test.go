@@ -278,6 +278,29 @@ func TestV3RunnerOkWithSchemaValidation(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV3RunnerOkPackagedChartWithExternalUnittest(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testExternalSubTestFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithPackagedSubChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkPackagedChart(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:     printer.NewPrinter(buffer, nil),
+		TestFiles:   []string{testExternalTestFiles},
+		ValuesFiles: []string{testExternalValuesFiles},
+	}
+	passed := runner.RunV3([]string{testV3WithPackagedChart})
+	assert.True(t, passed, buffer.String())
+	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
 func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
