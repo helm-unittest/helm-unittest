@@ -225,7 +225,9 @@ type TestSuite struct {
 		APIVersions  []string `yaml:"apiVersions"`
 	}
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
-	Tests              []*TestJob
+	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
+
+	Tests []*TestJob
 	// where the test suite file located
 	definitionFile string
 	// route indicate which chart in the dependency hierarchy
@@ -397,7 +399,7 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job)
+			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job, s.PostRendererConfig)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed

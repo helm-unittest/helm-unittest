@@ -21,8 +21,8 @@ ENV HELM_DATA_HOME=/usr/local/share/helm
 
 # Ensure to have latest packages
 RUN apk upgrade --no-cache && \
-    apk add --no-cache --update ca-certificates curl git libc6-compat && \
-    curl -L ${HELM_BASE_URL}/${HELM_TAR_FILE} |tar xvz && \
+    apk add --no-cache --update ca-certificates curl git libc6-compat yq && \
+    curl --proto "=https" -L ${HELM_BASE_URL}/${HELM_TAR_FILE} |tar xvz && \
     mv ${TARGETOS}-${TARGETARCH}/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
     helm plugin install ${PLUGIN_URL} && \
@@ -32,7 +32,7 @@ RUN apk upgrade --no-cache && \
     addgroup -g 1000 -S helmgroup && \
     adduser -u 1000 -S -G helmgroup helmuser
 
-VOLUME ["/apps"] 
+VOLUME ["/apps"]
 
 USER 1000:1000
 

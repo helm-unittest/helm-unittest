@@ -47,6 +47,14 @@ kubernetesProvider:
       metadata:
         name: unittest
         namespace: default
+skip:
+    reason: "Unreleased feature"
+postRenderer:
+  cmd: "yq"
+  args:
+    - "eval"
+    - '.metadata.annotations.appended="new"'
+    - "-"
 tests:
   - it: should test something
     ...
@@ -84,6 +92,10 @@ tests:
 - **skip**: *object, optional*. Marks the test suite as having been skipped. Execution will continue at the next suite.
   - **reason**: *string, required*. Define the reason for skipping. Marks all tests as skipped.
 
+- **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.  
+  - **cmd**: *string, required*. The full path to the command to invoke, or just its name if it's on `$PATH`.
+  - **args**: *array of strings*. Command-line arguments to pass to the above `cmd`.
+
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
 ## Test Job
@@ -119,6 +131,14 @@ tests:
     chart:
       version: 1.0.0
       appVersion: 1.0.0
+    skip:
+      reason: "Unreleased feature"
+    postRenderer:
+      cmd: "yq"
+      args:
+        - "eval"
+        - '.metadata.annotations.appended="new"'
+        - "-"
     asserts:
       - equal:
           path: metadata.name
@@ -162,6 +182,10 @@ tests:
 
 - **skip**: *object, optional*. Marks the test as having been skipped. Execution will continue at the next test.
   - **reason**: *string, required*. Define the reason for skipping. If all tests skipped, marks 'suite' as skipped.
+
+- **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.
+    - **cmd**: *string, required*. The full path to the command to invoke, or just its name if it's on `$PATH`.
+    - **args**: *array of strings*. Command-line arguments to pass to the above `cmd`.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 

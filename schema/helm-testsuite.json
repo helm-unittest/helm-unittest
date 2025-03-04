@@ -38,6 +38,9 @@
     "skip": {
       "$ref": "#/definitions/skip"
     },
+    "postRenderer": {
+      "$ref": "#/definitions/postRenderer"
+    },
     "chart": {
       "$ref": "#/definitions/chart"
     },
@@ -67,6 +70,9 @@
           },
           "skip": {
             "$ref": "#/definitions/skip"
+          },
+          "postRenderer": {
+            "$ref": "#/definitions/postRenderer"
           },
           "template": {
             "type": "string",
@@ -1112,11 +1118,31 @@
       "properties": {
         "reason": {
           "type": "string",
-          "description": "The `suite` or 'test' to skip.",
-          "markdownDescription": "**reason** (string)\n\nThe `suite` or 'test' to skip."
+          "description": "The reason to skip the `suite` or 'test'.",
+          "markdownDescription": "**reason** (string)\n\nThe reason to skip the `suite` or 'test'."
         }
       },
       "additionalProperties": false
+    },
+    "postRenderer": {
+      "type": "object",
+      "description": "A helm 'post-renderer' to apply after chart rendering but before validation.",
+      "markdownDescription":"**postRenderer** (object) _optional_\n\nA helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.",
+      "properties": {
+        "cmd": {
+          "type": "string",
+          "description": "The full path to the command to invoke, or just its name if it's on `$PATH`.",
+          "markdownDescription": "**cmd** (string)\n\nThe full path to the command to invoke, or just its name if it's on '$PATH'."
+        },
+        "args": {
+          "type": "array",
+          "description": "A list of command-line arguments to pass to the 'cmd'.",
+          "markdownDescription": "**args** (array<string>)\n\nA list of command-line arguments to pass to the `cmd`.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "kubernetesProvider": {
       "type": "object",
