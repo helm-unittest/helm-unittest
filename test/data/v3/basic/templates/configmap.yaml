@@ -21,6 +21,7 @@ data:
   my.array:
     - value1
     - value2
+  empty.value:
   special.array:
     - phony-service.phony:graphql
   my.camelcase: {{ .Values.configTests.camelcaseValue | camelcase }}

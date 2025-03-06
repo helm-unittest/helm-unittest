@@ -1,0 +1,12 @@
+{{- if .Values.configmap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: test
+data:
+  one: two
+{{- if .Values.subchart.enabled }}
+  subchart: "{{ include "subchart.name" . }}"
+{{- end }}
+{{- end -}}

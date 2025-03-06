@@ -127,6 +127,8 @@
                 "isKind": true,
                 "isNullOrEmpty": true,
                 "isNotNullOrEmpty": true,
+                "isEmpty": true,
+                "isNotEmpty": true,
                 "isSubset": true,
                 "isNotSubset": true,
                 "isType": true,
@@ -792,6 +794,48 @@
                   },
                   "required": [
                     "isNotType"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isNotEmpty": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT empty.",
+                      "markdownDescription": "**isNotEmpty** (object)\n\nAssert the value of specified path is NOT empty.",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isNotEmpty"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isEmpty": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is empty.",
+                      "markdownDescription": "**isEmpty** (object)\n\nAssert the value of specified path is empty.",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isEmpty"
                   ]
                 },
                 {

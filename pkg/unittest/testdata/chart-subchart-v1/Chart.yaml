@@ -1,0 +1,13 @@
+apiVersion: v2
+name: with-subchart
+description: simple chart to cover subchart case
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+keywords:
+  - helm template test pkg/unittest/testdata/chart-subchart-v1 --output-dir _scratch
+
+dependencies:
+- name: subchart
+  version: 0.1.0
+  condition: subchart.enabled

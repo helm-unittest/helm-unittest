@@ -1,0 +1,28 @@
+suite: reproducer
+templates:
+- configmap.yaml
+release:
+  name: test
+  revision: 1
+chart:
+  version: 1.0.0
+  appVersion: 4.0.0
+
+tests:
+- it: requires a first test to be fail
+  set:
+    configmap:
+      enabled: true
+  asserts:
+  - hasDocuments:
+      count: 1
+
+- it: should not fail if there is a preceding test with subchart.enabled=false
+  set:
+    configmap:
+      enabled: true
+    subchart:
+      enabled: true
+  asserts:
+  - exists:
+      path: data.subchart

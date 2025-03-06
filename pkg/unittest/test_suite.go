@@ -382,12 +382,13 @@ func (s *TestSuite) runV3TestJobs(
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 	skipped := 0
 
-	// (Re)load the chart used by this suite (with logging temporarily disabled)
-	log.SetOutput(io.Discard)
-	chart, _ := v3loader.Load(chartPath)
-	log.SetOutput(os.Stdout)
-
 	for idx, testJob := range s.Tests {
+
+		// (Re)load the chart used by this suite (with logging temporarily disabled)
+		log.SetOutput(io.Discard)
+		chart, _ := v3loader.Load(chartPath)
+		log.SetOutput(os.Stdout)
+
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
 

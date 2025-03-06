@@ -1,0 +1,20 @@
+suite: without disabled subchart
+templates:
+- configmap.yaml
+release:
+  name: test
+  revision: 1
+chart:
+  version: 1.0.0
+  appVersion: 4.0.0
+
+tests:
+- it: works with enabled subchart
+  set:
+    configmap:
+      enabled: true
+    subchart:
+      enabled: true
+  asserts:
+  - exists:
+      path: data.subchart
