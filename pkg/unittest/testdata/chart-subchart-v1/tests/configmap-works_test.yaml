@@ -9,7 +9,7 @@ chart:
   appVersion: 4.0.0
 
 tests:
-- it: works correctly
+- it: works with enabled subchart
   set:
     configmap:
       enabled: true

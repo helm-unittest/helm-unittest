@@ -9,7 +9,7 @@ chart:
   appVersion: 4.0.0
 
 tests:
-- it: requires a first test to fail
+- it: requires a first test to be fail
   set:
     configmap:
       enabled: true
@@ -17,7 +17,7 @@ tests:
   - hasDocuments:
       count: 1
 
-- it: fails if there is a preceding test with subchart.enabled=false
+- it: should not fail if there is a preceding test with subchart.enabled=false
   set:
     configmap:
       enabled: true
