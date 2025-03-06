@@ -31,6 +31,8 @@ tests:
       - containsDocument:
           kind: ConfigMap
           apiVersion: v1
+      - isNotEmpty:
+          path: metadata.labels
       - equal:
           path: metadata.name
           value: RELEASE-NAME-basic
@@ -48,6 +50,8 @@ tests:
             chart: basic-0.1.0
             heritage: Helm
             release: RELEASE-NAME
+      - isEmpty:
+          path: data["empty.value"]
 
   - it: should override chart values
     values:

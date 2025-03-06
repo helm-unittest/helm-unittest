@@ -234,6 +234,7 @@ Check [`test/data/v3/basic/`](./test/data/v3/basic) for some basic use cases of 
 - [Grafana: kubernetes monitoring](https://github.com/grafana/k8s-monitoring-helm/tree/main/charts/k8s-monitoring)
 - [HiveMQ: mqtt platform](https://github.com/hivemq/helm-charts/tree/develop/charts/hivemq-platform/tests)
 - [Gitlab runner](https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tree/main/tests?ref_type=heads)
+- [External DNS: kubernetes-sigs/external-dns](https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns/tests)
 
 ## Snapshot Testing
 
