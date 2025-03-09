@@ -39,6 +39,12 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
 
+    # Install yq on windows machine
+    - name: Create test-result directory uploading testresults
+      if: matrix.os == 'windows-latest'
+      run: |
+        winget install -e --disable-interactivity --scope user --id MikeFarah.yq
+
     # Make results directory
     - name: Create test-result directory uploading testresults
       run: |
