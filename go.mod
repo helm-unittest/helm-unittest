@@ -1,6 +1,6 @@
 module github.com/helm-unittest/helm-unittest
 
-go 1.23.5
+go 1.24.0
 
 require (
 	github.com/bradleyjkemp/cupaloy/v2 v2.8.0
