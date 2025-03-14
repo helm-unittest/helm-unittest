@@ -4,11 +4,34 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 )
+
+// quotePath correctly quotes YAML Path keys with spaces while preserving valid structure
+func quotePath(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	parts := strings.Split(path, ".")
+
+	for i, part := range parts {
+		if strings.Contains(part, " ") {
+			parts[i] = `["` + part + `"]`
+		}
+	}
+
+	quotedPath := strings.TrimPrefix(strings.Join(parts, "."), ".")
+	re := regexp.MustCompile(`\.(\["[^"]+"\])`)
+	quotedPath = re.ReplaceAllString(quotedPath, "$1")
+
+	return quotedPath
+}
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
 func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{}, error) {
@@ -34,9 +57,10 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	if err := yamlDecoder.Decode(&node.Node); err != nil {
 		return nil, err
 	}
-
+	quotedPath := quotePath(path)
 	// Set Path
-	yamlPath, err := yamlpath.NewPath(path)
+
+	yamlPath, err := yamlpath.NewPath(quotedPath)
 	if err != nil {
 		return nil, err
 	}
