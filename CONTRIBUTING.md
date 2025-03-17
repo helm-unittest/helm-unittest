@@ -4,14 +4,14 @@ Issues and PRs are welcome!
 
 ## Issues and Improvements
 
-When you find an Issue or Improvement, please chech first if it already occurs 
+When you find an Issue or Improvement, please chech first if it already occurs
 otherwise create a [New Issue](https://github.com/helm-unittest/helm-unittest/issues/new/choose)
 
 If you have a Issue related to security, please follow our [Security Policy](./SECURITY.md)
 
 ## Developing
 
-Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.23 installed, and run:
+Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.24 installed, and run:
 
 ```
 git clone git@github.com:helm-unittest/helm-unittest.git
