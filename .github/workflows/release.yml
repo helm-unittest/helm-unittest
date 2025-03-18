@@ -12,7 +12,7 @@ env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
-  GO_VERSION: 1.23.x
+  GO_VERSION: 1.24.x
 
 jobs:
   release:
@@ -62,7 +62,7 @@ jobs:
           pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
-          
+
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
     permissions:
@@ -83,7 +83,7 @@ jobs:
           platform=${{ matrix.platform }}
           version=${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
           echo "PLATFORM_PAIR=${version}-${platform//\//-}" >> $GITHUB_ENV
-      
+
       - name: Docker meta
         id: meta
         # https://github.com/docker/metadata-action
@@ -91,22 +91,22 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
-      
+
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
-      
+
       - name: Set up Docker Buildx
         # https://github.com/docker/setup-buildx-action
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-      
+
       - name: Login to Docker Hub
         # https://github.com/docker/login-action
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build and push by digest
         id: build
         # https://github.com/docker/build-push-action
@@ -120,13 +120,13 @@ jobs:
           provenance: mode=max
           sbom: true
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
-      
+
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
-      
+
       - name: Upload digest
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
@@ -154,10 +154,10 @@ jobs:
           path: /tmp/digests
           pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
           merge-multiple: true
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-      
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
@@ -169,19 +169,19 @@ jobs:
           tags: |
             ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
             type=raw,value=latest,enable=${{ (matrix.helmVersion == env.HELM_LATEST) && (matrix.pluginVersion == env.PLUGIN_LATEST) }}
-      
+
       - name: Login to Docker Hub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
-      
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}          
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
