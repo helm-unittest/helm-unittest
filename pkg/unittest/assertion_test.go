@@ -30,7 +30,6 @@ func validateSucceededTestAssertions(
 			RenderSucceed:    true,
 			DidPostRender:    didPostRender,
 		}
-		// result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false, didPostRender)
 		assertion.WithConfig(cfg.Build())
 		result := assertion.Assert(&results.AssertionResult{Index: idx})
 		a.Equal(&results.AssertionResult{
@@ -349,8 +348,7 @@ equal:
 		SnapshotComparer: fakeSnapshotComparer(true),
 		RenderSucceed:    true,
 	}
-
-	// cfg := NewAssertionConfig(renderedMap, fakeSnapshotComparer(true), true, false, false, nil)
+	
 	assertion.WithConfig(cfg.Build())
 	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
