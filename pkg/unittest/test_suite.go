@@ -400,7 +400,13 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job, s.PostRendererConfig)
+			cfg := NewTestConfig(chart, cache,
+				WithRenderPath(renderPath),
+				WithFailFast(failFast),
+				WithPostRendererConfig(s.PostRendererConfig),
+			)
+			testJob.WithConfig(*cfg)
+			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed
