@@ -249,7 +249,7 @@ func (tr *TestRunner) handleSuiteResult(result *results.TestSuiteResult) {
 	for _, testsResult := range result.TestsResult {
 		if testsResult == nil {
 			if tr.Failfast {
-				log.WithField("test-runner", "handle-suite-result").Debug("--failfast skip test")
+				log.WithField("test-runner", "handle-suite-result").Debug("--failFast skip test")
 			}
 			continue
 		}
