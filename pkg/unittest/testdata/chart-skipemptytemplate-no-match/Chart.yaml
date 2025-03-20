@@ -1,0 +1,6 @@
+apiVersion: v2
+name: skipemptytemplate-no-match
+version: 1.0.0
+description: simple chart to cover skipemptytemplate when no matches found
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-skipemptytemplate-no-match --output-dir _scratch

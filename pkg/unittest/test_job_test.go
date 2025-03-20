@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/mock"
 	"os"
 	"path"
+
+	"github.com/stretchr/testify/mock"
 
 	"testing"
 	"time"
@@ -85,7 +86,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -116,7 +118,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, renderPath, &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 	defer os.RemoveAll(renderPath)
 
 	a := assert.New(t)
@@ -146,7 +149,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -175,7 +179,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -207,7 +212,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -232,7 +238,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -261,7 +268,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, false, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", false, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -290,8 +298,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
-	// Write Buffer
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", false, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -317,7 +325,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -349,7 +358,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -376,7 +386,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -398,7 +409,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -422,7 +434,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -448,7 +461,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -474,7 +488,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
@@ -496,7 +511,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
@@ -518,7 +534,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 	assert.False(t, testResult.Passed)
 	assert.Equal(t, "7", tj.Capabilities.MinorVersion)
 }
@@ -545,7 +562,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -568,7 +586,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -590,7 +609,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -615,7 +635,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -640,7 +661,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -668,7 +690,8 @@ asserts:
 	a := assert.New(t)
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
@@ -690,7 +713,8 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -811,7 +835,8 @@ asserts:
 	assert := assert.New(t)
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	assert.NoError(testResult.ExecError)
 	assert.True(testResult.Passed, testResult.AssertsResult)
@@ -831,7 +856,8 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshal(manifest, &tj)
-	testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	a := assert.New(t)
 
@@ -880,7 +906,8 @@ ingress:
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -925,7 +952,8 @@ ingress:
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
 
-	testResult := tj.RunV3(c, nil, true, "", &results.TestJobResult{}, PostRendererConfig{})
+	cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+	testResult := tj.RunV3(cfg, &results.TestJobResult{})
 
 	assert.Nil(t, testResult.ExecError)
 	assert.True(t, testResult.Passed)
@@ -961,7 +989,8 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 	for _, test := range tests {
 		tj := TestJob{}
 		c.Templates = []*v3chart.File{test.template}
-		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+		cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+		testResult := tj.RunV3(cfg, &results.TestJobResult{})
 		a.Error(testResult.ExecError)
 		a.False(testResult.Passed)
 		a.EqualError(testResult.ExecError, test.error.Error())
@@ -1007,7 +1036,8 @@ asserts:
 
 	for _, test := range tests {
 		c.Templates = []*v3chart.File{test.template}
-		testResult := tj.RunV3(c, &snapshot.Cache{}, true, "", &results.TestJobResult{}, PostRendererConfig{})
+		cfg := NewTestJobConfig(c, &snapshot.Cache{}, "", true, false, PostRendererConfig{})
+		testResult := tj.RunV3(cfg, &results.TestJobResult{})
 		assert.Equal(t, test.expected, testResult.Passed)
 		if test.error != nil {
 			assert.NotNil(t, testResult.ExecError)

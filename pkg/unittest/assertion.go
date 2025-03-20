@@ -35,6 +35,7 @@ func (a *Assertion) Assert(
 	renderError error,
 	result *results.AssertionResult,
 	failfast bool,
+	isEmptyTemplatesSkipped bool,
 	didPostRender bool,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
@@ -45,6 +46,8 @@ func (a *Assertion) Assert(
 	failInfo := make([]string, 0)
 
 	var templates = templatesResult
+
+	fmt.Println("In Assert")
 
 	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
 	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
@@ -76,6 +79,12 @@ func (a *Assertion) Assert(
 		invalidDocumentIndex := []string{"Error:", indexError.Error()}
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
+
+		if isEmptyTemplatesSkipped && len(selectedTemplates) == 0 {
+			result.Skipped = true
+			return result
+		}
+
 		// Check for failed templates when no documents are found
 		if len(selectedTemplates) == 0 {
 			var validatePassed bool
