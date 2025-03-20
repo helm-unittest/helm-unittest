@@ -5,7 +5,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"helm.sh/helm/v3/pkg/postrender"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -218,15 +219,32 @@ type TestJob struct {
 	requireRenderSuccess bool
 }
 
+type TestJobConfig struct {
+	targetChart             *v3chart.Chart
+	cache                   *snapshot.Cache
+	renderPath              string
+	failFast                bool
+	isEmptyTemplatesSkipped bool
+	postRendererConfig      PostRendererConfig
+}
+
+func NewTestJobConfig(chart *v3chart.Chart, cache *snapshot.Cache, renderPath string, failFast, isEmptyTemplatesSkipped bool, postRenderer PostRendererConfig) TestJobConfig {
+	return TestJobConfig{
+		targetChart:             chart,
+		cache:                   cache,
+		renderPath:              renderPath,
+		failFast:                failFast,
+		isEmptyTemplatesSkipped: isEmptyTemplatesSkipped,
+		postRendererConfig:      postRenderer,
+	}
+}
+
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
-	targetChart *v3chart.Chart,
-	cache *snapshot.Cache,
-	failfast bool,
-	renderPath string,
+	cfg TestJobConfig,
 	result *results.TestJobResult,
-	suitePostRendererConfig PostRendererConfig,
 ) *results.TestJobResult {
+	fmt.Println("RUN actual job", t.Name)
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
@@ -237,8 +255,8 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(targetChart, []byte(userValues))
-	writeError := writeRenderedOutput(renderPath, outputOfFiles)
+	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(cfg.targetChart, []byte(userValues))
+	writeError := writeRenderedOutput(cfg.renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
 		return result
@@ -249,19 +267,19 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(suitePostRendererConfig, outputOfFiles)
+	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(cfg.postRendererConfig, outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(targetChart.Name(), postRenderedManifestsOfFiles)
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(cfg.targetChart.Name(), postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
-	t.polishAssertionsTemplate(targetChart.Name(), outputOfFiles)
+	t.polishAssertionsTemplate(cfg.targetChart.Name(), outputOfFiles)
 
 	if t.Skip.Reason != "" {
 		result.Duration = time.Since(startTestRun)
@@ -269,13 +287,15 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	snapshotComparer := &orderedSnapshotComparer{cache: cache, test: t.Name}
+	fmt.Println("line 274 postRenderedManifestsOfFiles:")
+	snapshotComparer := &orderedSnapshotComparer{cache: cfg.cache, test: t.Name}
 	result.Passed, result.AssertsResult = t.runAssertions(
 		manifestsOfFiles,
 		snapshotComparer,
 		renderSucceed,
 		renderError,
-		failfast,
+		cfg.failFast,
+		cfg.isEmptyTemplatesSkipped,
 		didPostRender,
 	)
 
@@ -583,15 +603,19 @@ func (t *TestJob) runAssertions(
 	manifestsOfFiles map[string][]common.K8sManifest,
 	snapshotComparer validators.SnapshotComparer,
 	renderSucceed bool, renderError error, failfast bool,
+	isEmptyTemplatesSkipped bool,
 	didPostRender bool,
 ) (bool, []*results.AssertionResult) {
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
 
+	fmt.Println("RUN assertions")
+
 	for idx, assertion := range t.Assertions {
 		if assertion == nil {
 			continue
 		}
+		fmt.Println("RUN assertion:", assertion.AssertType)
 		result := assertion.Assert(
 			manifestsOfFiles,
 			snapshotComparer,
@@ -599,6 +623,7 @@ func (t *TestJob) runAssertions(
 			renderError,
 			&results.AssertionResult{Index: idx},
 			failfast,
+			isEmptyTemplatesSkipped,
 			didPostRender,
 		)
 

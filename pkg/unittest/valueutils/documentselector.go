@@ -2,6 +2,7 @@ package valueutils
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -60,6 +61,7 @@ func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]comm
 			matchingDocuments[template] = filteredManifests
 		}
 	}
+	fmt.Println("line 63 SelectDocuments:", matchingDocumentsCount)
 	return matchingDocuments, nil
 }
 

@@ -382,12 +382,20 @@ func (s *TestSuite) runV3TestJobs(
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 	skipped := 0
 
+	fmt.Println("In the job", len(s.Tests))
+
 	for idx, testJob := range s.Tests {
 
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
 		log.SetOutput(io.Discard)
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
+
+		isEmptyTemplatesSkipped := false
+
+		if testJob.DocumentSelector != nil {
+			isEmptyTemplatesSkipped = testJob.DocumentSelector.SkipEmptyTemplates
+		}
 
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
@@ -400,7 +408,15 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			jobResult = testJob.RunV3(chart, cache, failFast, renderPath, &job, s.PostRendererConfig)
+			cfg := TestJobConfig{
+				targetChart:             chart,
+				cache:                   cache,
+				failFast:                failFast,
+				renderPath:              renderPath,
+				isEmptyTemplatesSkipped: isEmptyTemplatesSkipped,
+			}
+			jobResult = testJob.RunV3(cfg, &job)
+			fmt.Println("POST runV3 execution METHOD", jobResult)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed

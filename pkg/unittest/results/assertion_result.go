@@ -11,6 +11,7 @@ type AssertionResult struct {
 	Index      int
 	FailInfo   []string
 	Passed     bool
+	Skipped    bool
 	AssertType string
 	Not        bool
 	CustomInfo string
