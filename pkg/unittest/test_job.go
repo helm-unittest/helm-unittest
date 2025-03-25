@@ -223,6 +223,18 @@ func (t *TestJob) WithConfig(config TestConfig) {
 	t.config = config
 }
 
+func (t *TestJob) configOrDefault() TestConfig {
+	if t.config.targetChart == nil {
+		t.config.targetChart = &v3chart.Chart{
+			Metadata: &v3chart.Metadata{},
+		}
+	}
+	if t.config.cache == nil {
+		t.config.cache = &snapshot.Cache{}
+	}
+	return t.config
+}
+
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	result *results.TestJobResult,
@@ -238,7 +250,7 @@ func (t *TestJob) RunV3(
 	}
 
 	outputOfFiles, renderSucceed, renderError := t.renderV3Chart([]byte(userValues))
-	writeError := writeRenderedOutput(t.config.renderPath, outputOfFiles)
+	writeError := writeRenderedOutput(t.configOrDefault().renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
 		return result
@@ -262,7 +274,7 @@ func (t *TestJob) RunV3(
 		return result
 	}
 	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
-	t.polishAssertionsTemplate(t.config.targetChart.Name(), outputOfFiles)
+	t.polishAssertionsTemplate(t.configOrDefault().targetChart.Name(), outputOfFiles)
 
 	if t.Skip.Reason != "" {
 		result.Duration = time.Since(startTestRun)
@@ -270,13 +282,13 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	snapshotComparer := &orderedSnapshotComparer{cache: t.config.cache, test: t.Name}
+	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
 		templatesResult:  manifestsOfFiles,
 		snapshotComparer: snapshotComparer,
 		renderSucceed:    renderSucceed,
-		failFast:         t.config.failFast,
+		failFast:         t.configOrDefault().failFast,
 		didPostRender:    didPostRender,
 		renderError:      renderError,
 	}
@@ -352,12 +364,12 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 		}
 	}
 
-	err = v3util.ProcessDependenciesWithMerge(t.config.targetChart, values)
+	err = v3util.ProcessDependenciesWithMerge(t.configOrDefault().targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.config.targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
 	if err != nil {
 		return nil, false, err
 	}
@@ -368,11 +380,11 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(t.chartRoute, t.config.targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.config.targetChart)
+	filteredChart := CopyV3Chart(t.chartRoute, t.configOrDefault().targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.configOrDefault().targetChart)
 
 	var outputOfFiles map[string]string
 	// modify chart metadata before rendering
-	t.ModifyChartMetadata(t.config.targetChart)
+	t.ModifyChartMetadata(t.configOrDefault().targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
@@ -464,8 +476,8 @@ func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
 	if t.PostRendererConfig.Cmd != "" {
 		cfg = t.PostRendererConfig
-	} else if t.config.postRenderer.Cmd != "" {
-		cfg = t.config.postRenderer
+	} else if t.configOrDefault().postRenderer.Cmd != "" {
+		cfg = t.configOrDefault().postRenderer
 	} else {
 		return renderedManifestsMap, false, nil
 	}
@@ -562,8 +574,8 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
-		if !strings.HasPrefix(file, t.config.targetChart.Name()) {
-			file = filepath.ToSlash(filepath.Join(t.config.targetChart.Name(), file))
+		if !strings.HasPrefix(file, t.configOrDefault().targetChart.Name()) {
+			file = filepath.ToSlash(filepath.Join(t.configOrDefault().targetChart.Name(), file))
 		}
 
 		switch filepath.Ext(file) {

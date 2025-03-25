@@ -348,7 +348,7 @@ equal:
 		SnapshotComparer: fakeSnapshotComparer(true),
 		RenderSucceed:    true,
 	}
-	
+
 	assertion.WithConfig(cfg.Build())
 	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
