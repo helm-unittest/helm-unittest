@@ -1,5 +1,5 @@
 - id: helm-unittest
-  name: helm-unittest
+  name: helm unittest
   language: docker_image
   entry: helmunittest/helm-unittest:3.17.1-0.8.0
   pass_filenames: false
