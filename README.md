@@ -343,7 +343,9 @@ Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferen
 
 ## Pre Commit
 
-You can use the `pre-commit` hook declared in this repo as follows:
+You can run `helm unittest` as a [`pre-commit`](https://pre-commit.com/) hook.
+
+For example, if your repo has a helm chart in `./charts/my-chart`, you might configure `pre-commit` as follows:
 
 ```yaml
 # .pre-commit-config.yaml
@@ -352,9 +354,10 @@ repos:
     rev: v0.8.0
     hooks:
       - id: helm-unittest
+        files: ^charts/my-chart/.*$
         args:
-          # pre-commit will be able to access your repo under the /src/ path
-          - /src/<path>/<to>/<chart>
+          # this hook will mount your repo under /src/
+          - /src/charts/my-chart
 ```
 
 ## Frequently Asked Questions
