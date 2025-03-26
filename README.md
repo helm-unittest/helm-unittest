@@ -37,6 +37,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 - [Dependent subchart Testing](#dependent-subchart-testing)
 - [Tests within subchart](#tests-within-subchart)
 - [Test suite code completion and validation](#test-suite-code-completion-and-validation)
+- [Pre Commit](#pre-commit)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Related Projects / Commands](#related-projects--commands)
 - [Contributing](#contributing)
@@ -339,6 +340,22 @@ Alternatively, you can add the schema globally to the IDE, using a well defined 
 Similar to VSCode, IntelliJ allows mapping file patterns to schemas via preferences: Languages & Frameworks -> Schemas and DTDs -> JSON Schema Mappings
 
 ![Add Json Schema](./.images/testsuite-yaml-addschema-intellij.png)
+
+## Pre Commit
+
+You can use the `pre-commit` hook declared in this repo as follows:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/helm-unittest/helm-unittest
+    rev: v0.8.0
+    hooks:
+      - id: helm-unittest
+        args:
+          # pre-commit will be able to access your repo under the /src/ path
+          - /src/<path>/<to>/<chart>
+```
 
 ## Frequently Asked Questions
 
