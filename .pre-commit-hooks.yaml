@@ -8,5 +8,5 @@
   name: helm unittest
   description: Runs Helm unit tests using `helm unittest` directly.
   language: script
-  entry: helm unittest
+  entry: /usr/bin/env helm
   pass_filenames: false
