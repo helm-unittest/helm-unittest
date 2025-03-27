@@ -353,11 +353,19 @@ repos:
   - repo: https://github.com/helm-unittest/helm-unittest
     rev: v0.8.0
     hooks:
-      - id: helm-unittest
+      # if you have docker available in your environment
+      - id: helm-unittest-docker
         files: ^charts/my-chart/.*$
         args:
           # this hook will mount your repo under /src/
           - /src/charts/my-chart
+      # if you have helm and unittest in your environment
+      - id: helm-unittest-script
+        files: ^charts/my-chart/.*$
+        args:
+          # first argument has to be `unittest`
+          - unittest
+          - charts/my-chart
 ```
 
 ## Frequently Asked Questions

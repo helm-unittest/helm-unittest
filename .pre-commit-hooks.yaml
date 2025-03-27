@@ -1,5 +1,12 @@
-- id: helm-unittest
+- id: helm-unittest-docker
   name: helm unittest
+  description: Runs Helm unit tests using the `helmunittest/helm-unittest` docker image.
   language: docker_image
   entry: helmunittest/helm-unittest:3.17.1-0.8.0
+  pass_filenames: false
+- id: helm-unittest-script
+  name: helm unittest
+  description: Runs Helm unit tests using `helm unittest` directly.
+  language: script
+  entry: helm unittest
   pass_filenames: false
