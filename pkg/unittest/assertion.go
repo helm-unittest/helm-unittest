@@ -25,17 +25,23 @@ type Assertion struct {
 	requireRenderSuccess bool
 	antonym              bool
 	defaultTemplates     []string
+	config               AssertionConfig
+}
+
+func (a *Assertion) WithConfig(config AssertionConfig) {
+	a.config = config
+}
+
+func (a *Assertion) configOrDefault() AssertionConfig {
+	if a.config.templatesResult == nil {
+		a.config.templatesResult = make(map[string][]common.K8sManifest)
+	}
+	return a.config
 }
 
 // Assert validate the rendered manifests with validator
 func (a *Assertion) Assert(
-	templatesResult map[string][]common.K8sManifest,
-	snapshotComparer validators.SnapshotComparer,
-	renderSucceed bool,
-	renderError error,
 	result *results.AssertionResult,
-	failfast bool,
-	didPostRender bool,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
@@ -44,13 +50,13 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	var templates = templatesResult
+	var templates = a.configOrDefault().templatesResult
 
 	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
 	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
-	if didPostRender && len(templatesResult) == 1 {
+	if a.configOrDefault().didPostRender && len(a.configOrDefault().templatesResult) == 1 {
 		var key string
-		for k := range templatesResult {
+		for k := range a.configOrDefault().templatesResult {
 			key = k
 		}
 
@@ -58,12 +64,12 @@ func (a *Assertion) Assert(
 		if strings.HasSuffix(key, "manifest.yaml") {
 			a.Template = key
 			templates = make(map[string][]common.K8sManifest)
-			templates[key] = templatesResult[key]
+			templates[key] = a.configOrDefault().templatesResult[key]
 		} else {
-			templates = a.getDocumentsByDefaultTemplates(templatesResult)
+			templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
 		}
 	} else {
-		templates = a.getDocumentsByDefaultTemplates(templatesResult)
+		templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
 	}
 
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
@@ -81,12 +87,12 @@ func (a *Assertion) Assert(
 			var validatePassed bool
 			var singleFailInfo []string
 
-			if a.requireRenderSuccess != renderSucceed {
+			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
 				invalidRender := "Error: rendered manifest is empty"
 				failInfo = append(failInfo, invalidRender)
 			} else {
 				var emptyTemplate []common.K8sManifest
-				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError, failfast)
+				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate)
 			}
 
 			assertionPassed = validatePassed
@@ -94,7 +100,7 @@ func (a *Assertion) Assert(
 		}
 
 		for idx, template := range selectedTemplates {
-			rendered, ok := templatesResult[template]
+			rendered, ok := a.configOrDefault().templatesResult[template]
 			var validatePassed bool
 			var singleFailInfo []string
 
@@ -105,7 +111,7 @@ func (a *Assertion) Assert(
 				break
 			}
 
-			if a.requireRenderSuccess != renderSucceed {
+			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
 				invalidRender := ""
 				if len(rendered) > 0 {
 					invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
@@ -120,7 +126,7 @@ func (a *Assertion) Assert(
 			singleTemplateResult[template] = rendered
 
 			selectedDocs := selectedDocsByTemplate[template]
-			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs, snapshotComparer, renderError, failfast)
+			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs)
 
 			if !validatePassed {
 				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
@@ -142,7 +148,7 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest, snapshotComparer validators.SnapshotComparer, renderError error, failfast bool) (bool, []string) {
+func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest) (bool, []string) {
 	var validatePassed bool
 	var singleFailInfo []string
 
@@ -150,9 +156,9 @@ func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs
 		Docs:             rendered,
 		SelectedDocs:     &selectedDocs,
 		Negative:         a.Not != a.antonym,
-		SnapshotComparer: snapshotComparer,
-		RenderError:      renderError,
-		FailFast:         failfast,
+		SnapshotComparer: a.configOrDefault().snapshotComparer,
+		RenderError:      a.configOrDefault().renderError,
+		FailFast:         a.configOrDefault().failFast,
 	})
 
 	return validatePassed, singleFailInfo
