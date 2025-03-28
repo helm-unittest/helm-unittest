@@ -18,7 +18,6 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 
@@ -217,6 +216,23 @@ type TestJob struct {
 	defaultTemplatesToSkip []string
 	// requireSuccess
 	requireRenderSuccess bool
+	config               TestConfig
+}
+
+func (t *TestJob) WithConfig(config TestConfig) {
+	t.config = config
+}
+
+func (t *TestJob) configOrDefault() TestConfig {
+	if t.config.targetChart == nil {
+		t.config.targetChart = &v3chart.Chart{
+			Metadata: &v3chart.Metadata{},
+		}
+	}
+	if t.config.cache == nil {
+		t.config.cache = &snapshot.Cache{}
+	}
+	return t.config
 }
 
 type TestJobConfig struct {
@@ -241,7 +257,6 @@ func NewTestJobConfig(chart *v3chart.Chart, cache *snapshot.Cache, renderPath st
 
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
-	cfg TestJobConfig,
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	fmt.Println("RUN actual job", t.Name)
@@ -255,8 +270,8 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, renderSucceed, renderError := t.renderV3Chart(cfg.targetChart, []byte(userValues))
-	writeError := writeRenderedOutput(cfg.renderPath, outputOfFiles)
+	outputOfFiles, renderSucceed, renderError := t.renderV3Chart([]byte(userValues))
+	writeError := writeRenderedOutput(t.configOrDefault().renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
 		return result
@@ -267,19 +282,19 @@ func (t *TestJob) RunV3(
 		// Continue to enable matching error via failedTemplate assert
 	}
 
-	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(cfg.postRendererConfig, outputOfFiles)
+	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(outputOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(cfg.targetChart.Name(), postRenderedManifestsOfFiles)
+	// TODO: this is a bit of a hack.  we should be able to pass the chart name in the config
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
-	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
-	t.polishAssertionsTemplate(cfg.targetChart.Name(), outputOfFiles)
+	t.polishAssertionsTemplate(t.configOrDefault().targetChart.Name(), outputOfFiles)
 
 	if t.Skip.Reason != "" {
 		result.Duration = time.Since(startTestRun)
@@ -287,17 +302,18 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	fmt.Println("line 274 postRenderedManifestsOfFiles:")
-	snapshotComparer := &orderedSnapshotComparer{cache: cfg.cache, test: t.Name}
-	result.Passed, result.AssertsResult = t.runAssertions(
-		manifestsOfFiles,
-		snapshotComparer,
-		renderSucceed,
-		renderError,
-		cfg.failFast,
-		cfg.isEmptyTemplatesSkipped,
-		didPostRender,
-	)
+	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
+
+	assertionsConfig := AssertionConfig{
+		templatesResult:  manifestsOfFiles,
+		snapshotComparer: snapshotComparer,
+		renderSucceed:    renderSucceed,
+		failFast:         t.configOrDefault().failFast,
+		didPostRender:    didPostRender,
+		renderError:      renderError,
+	}
+
+	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
 
 	result.Duration = time.Since(startTestRun)
 	return result
@@ -353,7 +369,7 @@ func (t *TestJob) getUserValues() (string, error) {
 }
 
 // render the chart and return result map
-func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (map[string]string, bool, error) {
+func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, error) {
 	values, err := v3util.ReadValues(userValues)
 	if err != nil {
 		return nil, false, err
@@ -368,12 +384,12 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 		}
 	}
 
-	err = v3util.ProcessDependenciesWithMerge(targetChart, values)
+	err = v3util.ProcessDependenciesWithMerge(t.configOrDefault().targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
 	if err != nil {
 		return nil, false, err
 	}
@@ -384,11 +400,11 @@ func (t *TestJob) renderV3Chart(targetChart *v3chart.Chart, userValues []byte) (
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(t.chartRoute, targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, targetChart)
+	filteredChart := CopyV3Chart(t.chartRoute, t.configOrDefault().targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.configOrDefault().targetChart)
 
 	var outputOfFiles map[string]string
 	// modify chart metadata before rendering
-	t.ModifyChartMetadata(targetChart)
+	t.ModifyChartMetadata(t.configOrDefault().targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
@@ -474,14 +490,14 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	return postRenderedManifestsMap
 }
 
-func (t *TestJob) postRender(suitePostRendererConfig PostRendererConfig, renderedManifestsMap map[string]string) (map[string]string, bool, error) {
+func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, bool, error) {
 
 	var cfg PostRendererConfig
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
 	if t.PostRendererConfig.Cmd != "" {
 		cfg = t.PostRendererConfig
-	} else if suitePostRendererConfig.Cmd != "" {
-		cfg = suitePostRendererConfig
+	} else if t.configOrDefault().postRenderer.Cmd != "" {
+		cfg = t.configOrDefault().postRenderer
 	} else {
 		return renderedManifestsMap, false, nil
 	}
@@ -571,15 +587,15 @@ func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 }
 
 // parse rendered manifest if it's yaml
-func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, outputOfFiles map[string]string) (
+func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
 	map[string][]common.K8sManifest,
 	error,
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
 	for file, rendered := range outputOfFiles {
-		if !strings.HasPrefix(file, targetChartName) {
-			file = filepath.ToSlash(filepath.Join(targetChartName, file))
+		if !strings.HasPrefix(file, t.configOrDefault().targetChart.Name()) {
+			file = filepath.ToSlash(filepath.Join(t.configOrDefault().targetChart.Name(), file))
 		}
 
 		switch filepath.Ext(file) {
@@ -600,11 +616,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(targetChartName string, output
 
 // run Assert of all assertions of test
 func (t *TestJob) runAssertions(
-	manifestsOfFiles map[string][]common.K8sManifest,
-	snapshotComparer validators.SnapshotComparer,
-	renderSucceed bool, renderError error, failfast bool,
-	isEmptyTemplatesSkipped bool,
-	didPostRender bool,
+	cfg AssertionConfig,
 ) (bool, []*results.AssertionResult) {
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
@@ -615,16 +627,10 @@ func (t *TestJob) runAssertions(
 		if assertion == nil {
 			continue
 		}
-		fmt.Println("RUN assertion:", assertion.AssertType)
+
+		assertion.WithConfig(cfg)
 		result := assertion.Assert(
-			manifestsOfFiles,
-			snapshotComparer,
-			renderSucceed,
-			renderError,
 			&results.AssertionResult{Index: idx},
-			failfast,
-			isEmptyTemplatesSkipped,
-			didPostRender,
 		)
 
 		assertsResult = append(assertsResult, result)
@@ -635,7 +641,7 @@ func (t *TestJob) runAssertions(
 
 		testPass = testPass && result.Passed
 
-		if !testPass && failfast {
+		if !testPass && cfg.failFast {
 			break
 		}
 	}

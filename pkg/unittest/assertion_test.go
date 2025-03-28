@@ -24,7 +24,14 @@ func validateSucceededTestAssertions(
 	a := assert.New(t)
 
 	for idx, assertion := range assertions {
-		result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: idx}, false, false, didPostRender)
+		cfg := AssertionConfigBuilder{
+			TemplatesResult:  renderedMap,
+			SnapshotComparer: fakeSnapshotComparer(true),
+			RenderSucceed:    true,
+			DidPostRender:    didPostRender,
+		}
+		assertion.WithConfig(cfg.Build())
+		result := assertion.Assert(&results.AssertionResult{Index: idx})
 		a.Equal(&results.AssertionResult{
 			Index:      idx,
 			FailInfo:   []string{},
@@ -336,7 +343,13 @@ equal:
 
 	a := assert.New(t)
 
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false, false, false)
+	cfg := AssertionConfigBuilder{
+		TemplatesResult:  renderedMap,
+		SnapshotComparer: fakeSnapshotComparer(true),
+		RenderSucceed:    true,
+	}
+	assertion.WithConfig(cfg.Build())
+	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\ttemplate \"not-existed.yaml\" not exists or not selected in test suite"},
@@ -501,7 +514,13 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false, false, false)
+	cfg := AssertionConfigBuilder{
+		TemplatesResult:  renderedMap,
+		SnapshotComparer: fakeSnapshotComparer(true),
+		RenderSucceed:    true,
+	}
+	assertion.WithConfig(cfg.Build())
+	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "\tassertion.template must be given if testsuite.templates is empty"},
@@ -526,8 +545,13 @@ equal:
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-
-	result := assertion.Assert(renderedMap, fakeSnapshotComparer(true), true, nil, &results.AssertionResult{Index: 0}, false, false, false)
+	cfg := AssertionConfigBuilder{
+		TemplatesResult:  renderedMap,
+		SnapshotComparer: fakeSnapshotComparer(true),
+		RenderSucceed:    true,
+	}
+	assertion.WithConfig(cfg.Build())
+	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
 		FailInfo:   []string{"Error:", "document index 1 is out of rage"},

@@ -108,7 +108,12 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
-		    --platform linux/amd64 \
+			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
+
+.PHONY: go-lint
+go-lint: ## Execute golang linters
+	gofmt -l -s -w .
+	golangci-lint run --timeout=30m --fix ./...

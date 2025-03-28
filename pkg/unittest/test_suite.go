@@ -408,15 +408,13 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			cfg := TestJobConfig{
-				targetChart:             chart,
-				cache:                   cache,
-				failFast:                failFast,
-				renderPath:              renderPath,
-				isEmptyTemplatesSkipped: isEmptyTemplatesSkipped,
-			}
-			jobResult = testJob.RunV3(cfg, &job)
-			fmt.Println("POST runV3 execution METHOD", jobResult)
+			cfg := NewTestConfig(chart, cache,
+				WithRenderPath(renderPath),
+				WithFailFast(failFast),
+				WithPostRendererConfig(s.PostRendererConfig),
+			)
+			testJob.WithConfig(*cfg)
+			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed
