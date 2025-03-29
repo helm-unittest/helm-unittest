@@ -112,6 +112,8 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
+      - isKind:
+          of: ThisKindShouldNotBeAsserted
 
   - it: should not skip assertion if enabled
     set:
