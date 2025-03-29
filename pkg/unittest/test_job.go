@@ -302,7 +302,6 @@ func (t *TestJob) RunV3(
 
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
-	fmt.Println("PREPARE ASSERTIONS config")
 	assertionsConfig := AssertionConfig{
 		templatesResult:         manifestsOfFiles,
 		snapshotComparer:        snapshotComparer,

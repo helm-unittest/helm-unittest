@@ -53,7 +53,7 @@ func (a *Assertion) Assert(
 
 	var templates = a.computeTemplatesWithPostRender()
 
-	// TODO: This could be optimised and computed outside of the Assert function
+	// TODO: This could be optimised and computed once for the test suite
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
