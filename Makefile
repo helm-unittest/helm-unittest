@@ -72,6 +72,8 @@ build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docke
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
