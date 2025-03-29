@@ -348,7 +348,6 @@ equal:
 		SnapshotComparer: fakeSnapshotComparer(true),
 		RenderSucceed:    true,
 	}
-
 	assertion.WithConfig(cfg.Build())
 	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
@@ -515,7 +514,6 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-
 	cfg := AssertionConfigBuilder{
 		TemplatesResult:  renderedMap,
 		SnapshotComparer: fakeSnapshotComparer(true),
@@ -547,7 +545,6 @@ equal:
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-
 	cfg := AssertionConfigBuilder{
 		TemplatesResult:  renderedMap,
 		SnapshotComparer: fakeSnapshotComparer(true),

@@ -8,20 +8,22 @@ import (
 )
 
 type TestConfig struct {
-	targetChart  *v3chart.Chart
-	cache        *snapshot.Cache
-	renderPath   string
-	failFast     bool
-	postRenderer PostRendererConfig
+	targetChart             *v3chart.Chart
+	cache                   *snapshot.Cache
+	renderPath              string
+	failFast                bool
+	isEmptyTemplatesSkipped bool
+	postRenderer            PostRendererConfig
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
 	config := &TestConfig{
-		targetChart:  chart,
-		cache:        cache,
-		renderPath:   "",
-		failFast:     false,
-		postRenderer: PostRendererConfig{},
+		targetChart:             chart,
+		cache:                   cache,
+		renderPath:              "",
+		failFast:                false,
+		isEmptyTemplatesSkipped: false,
+		postRenderer:            PostRendererConfig{},
 	}
 	for _, option := range options {
 		option(config)
@@ -49,13 +51,20 @@ func WithPostRendererConfig(config PostRendererConfig) LoadTestOptionsFunc {
 	}
 }
 
+func WithEmtpyTemplatesSkipped(config bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.isEmptyTemplatesSkipped = config
+	}
+}
+
 type AssertionConfig struct {
-	templatesResult  map[string][]common.K8sManifest
-	snapshotComparer validators.SnapshotComparer
-	renderSucceed    bool
-	failFast         bool
-	didPostRender    bool
-	renderError      error
+	templatesResult         map[string][]common.K8sManifest
+	snapshotComparer        validators.SnapshotComparer
+	renderSucceed           bool
+	failFast                bool
+	didPostRender           bool
+	renderError             error
+	isEmptyTemplatesSkipped bool
 }
 
 // AssertionConfigBuilder Required to simplify tests

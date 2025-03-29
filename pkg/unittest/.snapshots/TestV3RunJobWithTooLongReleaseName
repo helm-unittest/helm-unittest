@@ -12,6 +12,8 @@
         (string) (len=84) "\ttemplate \"basic/templates/crd_backup.yaml\" not exists or not selected in test suite"
       },
       Passed: (bool) false,
+      Skipped: (bool) false,
+      SkipReason: (string) "",
       AssertType: (string) (len=12) "hasDocuments",
       Not: (bool) false,
       CustomInfo: (string) ""

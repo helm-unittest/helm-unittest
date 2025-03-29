@@ -103,3 +103,25 @@ tests:
       - hasDocuments:
           count: 0
       - matchSnapshot: {}
+
+  - it: should skip assertion if not enabled
+    documentSelector:
+      path: kind
+      value: Ingress
+      skipEmptyTemplates: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ThisKindShouldNotBeAsserted
+
+  - it: should not skip assertion if enabled
+    set:
+      ingress.enabled: true
+    documentSelector:
+      path: kind
+      value: Ingress
+      skipEmptyTemplates: true
+    asserts:
+      - hasDocuments:
+          count: 1

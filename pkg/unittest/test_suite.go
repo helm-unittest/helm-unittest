@@ -383,11 +383,16 @@ func (s *TestSuite) runV3TestJobs(
 	skipped := 0
 
 	for idx, testJob := range s.Tests {
-
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
 		log.SetOutput(io.Discard)
 		chart, _ := v3loader.Load(chartPath)
 		log.SetOutput(os.Stdout)
+
+		isEmptyTemplatesSkipped := false
+
+		if testJob.DocumentSelector != nil {
+			isEmptyTemplatesSkipped = testJob.DocumentSelector.SkipEmptyTemplates
+		}
 
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
@@ -404,6 +409,7 @@ func (s *TestSuite) runV3TestJobs(
 				WithRenderPath(renderPath),
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
+				WithEmtpyTemplatesSkipped(isEmptyTemplatesSkipped),
 			)
 			testJob.WithConfig(*cfg)
 			jobResult = testJob.RunV3(&job)

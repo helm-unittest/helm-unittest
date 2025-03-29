@@ -235,6 +235,26 @@ func (t *TestJob) configOrDefault() TestConfig {
 	return t.config
 }
 
+type TestJobConfig struct {
+	targetChart             *v3chart.Chart
+	cache                   *snapshot.Cache
+	renderPath              string
+	failFast                bool
+	isEmptyTemplatesSkipped bool
+	postRendererConfig      PostRendererConfig
+}
+
+func NewTestJobConfig(chart *v3chart.Chart, cache *snapshot.Cache, renderPath string, failFast, isEmptyTemplatesSkipped bool, postRenderer PostRendererConfig) TestJobConfig {
+	return TestJobConfig{
+		targetChart:             chart,
+		cache:                   cache,
+		renderPath:              renderPath,
+		failFast:                failFast,
+		isEmptyTemplatesSkipped: isEmptyTemplatesSkipped,
+		postRendererConfig:      postRenderer,
+	}
+}
+
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	result *results.TestJobResult,
@@ -267,13 +287,11 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	// TODO: this is a bit of a hack.  we should be able to pass the chart name in the config
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
-	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(t.configOrDefault().targetChart.Name(), outputOfFiles)
 
 	if t.Skip.Reason != "" {
@@ -285,12 +303,13 @@ func (t *TestJob) RunV3(
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
-		templatesResult:  manifestsOfFiles,
-		snapshotComparer: snapshotComparer,
-		renderSucceed:    renderSucceed,
-		failFast:         t.configOrDefault().failFast,
-		didPostRender:    didPostRender,
-		renderError:      renderError,
+		templatesResult:         manifestsOfFiles,
+		snapshotComparer:        snapshotComparer,
+		renderSucceed:           renderSucceed,
+		failFast:                t.configOrDefault().failFast,
+		didPostRender:           didPostRender,
+		renderError:             renderError,
+		isEmptyTemplatesSkipped: t.configOrDefault().isEmptyTemplatesSkipped,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
@@ -601,6 +620,8 @@ func (t *TestJob) runAssertions(
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
 
+	fmt.Println("RUN assertions")
+
 	for idx, assertion := range t.Assertions {
 		if assertion == nil {
 			continue
@@ -610,6 +631,10 @@ func (t *TestJob) runAssertions(
 		result := assertion.Assert(
 			&results.AssertionResult{Index: idx},
 		)
+
+		if result.Skipped {
+			testPass = true
+		}
 
 		assertsResult = append(assertsResult, result)
 

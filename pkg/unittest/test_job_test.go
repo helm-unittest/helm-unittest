@@ -253,7 +253,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	cfg := NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	)
@@ -321,7 +320,6 @@ asserts:
 		WithFailFast(true),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
-	// Write Buffer
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -381,7 +379,6 @@ asserts:
 
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -436,7 +433,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	cfg := NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	)
@@ -628,7 +624,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -686,7 +681,6 @@ asserts:
 		WithFailFast(true),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
-
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
@@ -765,7 +759,6 @@ asserts:
 `
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -1251,3 +1244,38 @@ func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, 
 	}
 	return args.Get(0).(*bytes.Buffer), args.Error(1)
 }
+
+// func TestV3RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
+// 	c, _ := loader.Load(testV3BasicChart)
+// 	manifest := `
+// it: should work
+// set:
+//   image.tag: ""
+// chart:
+//   version: 9.9.9+test
+//   appVersion: 9999
+// template: templates/deployment.yaml
+// documentSelector:
+//   path: kind
+//   value: SomeKind
+//   skipEmptyTemplate: true
+// asserts:
+//   - equal:
+//       path: metadata.labels.chart
+//       value: basic-9.9.9_test
+//   - equal:
+//       path: spec.template.spec.containers[0].image
+//       value: nginx:9999
+// `
+// 	var tj TestJob
+// 	unmarshalJobTestHelper(manifest, &tj, t)
+//
+// 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}, WithEmtpyTemplatesSkipped(true)))
+// 	testResult := tj.RunV3(&results.TestJobResult{})
+//
+// 	a := assert.New(t)
+// 	a.Nil(testResult.ExecError)
+// 	a.True(testResult.Passed)
+// 	fmt.Println(testResult.Passed)
+// 	a.Equal(2, len(testResult.AssertsResult))
+// }

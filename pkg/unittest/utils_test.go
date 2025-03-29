@@ -352,3 +352,16 @@ func TestSplitBefore(t *testing.T) {
 		})
 	}
 }
+
+func TestV3RunnerWith_Fixture_Chart_SkipEmptyTemplateWhenEmpty(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    true,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-skipemptytemplate-no-match"})
+
+	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
+	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
+}
