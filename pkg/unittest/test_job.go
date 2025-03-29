@@ -235,25 +235,6 @@ func (t *TestJob) configOrDefault() TestConfig {
 	return t.config
 }
 
-type TestJobConfig struct {
-	targetChart             *v3chart.Chart
-	cache                   *snapshot.Cache
-	renderPath              string
-	failFast                bool
-	isEmptyTemplatesSkipped bool
-	postRendererConfig      PostRendererConfig
-}
-
-func NewTestJobConfig(chart *v3chart.Chart, cache *snapshot.Cache, renderPath string, failFast, isEmptyTemplatesSkipped bool, postRenderer PostRendererConfig) TestJobConfig {
-	return TestJobConfig{
-		targetChart:             chart,
-		cache:                   cache,
-		renderPath:              renderPath,
-		failFast:                failFast,
-		isEmptyTemplatesSkipped: isEmptyTemplatesSkipped,
-		postRendererConfig:      postRenderer,
-	}
-}
 
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
@@ -303,17 +284,16 @@ func (t *TestJob) RunV3(
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
-		templatesResult:         manifestsOfFiles,
-		snapshotComparer:        snapshotComparer,
-		renderSucceed:           renderSucceed,
-		failFast:                t.configOrDefault().failFast,
-		didPostRender:           didPostRender,
-		renderError:             renderError,
-		isEmptyTemplatesSkipped: t.configOrDefault().isEmptyTemplatesSkipped,
+		templatesResult:     manifestsOfFiles,
+		snapshotComparer:    snapshotComparer,
+		renderSucceed:       renderSucceed,
+		failFast:            t.configOrDefault().failFast,
+		didPostRender:       didPostRender,
+		renderError:         renderError,
+		isSkipEmptyTemplate: t.configOrDefault().isEmptyTemplatesSkipped,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
-
 	result.Duration = time.Since(startTestRun)
 	return result
 }
@@ -619,8 +599,6 @@ func (t *TestJob) runAssertions(
 ) (bool, []*results.AssertionResult) {
 	testPass := false
 	assertsResult := make([]*results.AssertionResult, 0)
-
-	fmt.Println("RUN assertions")
 
 	for idx, assertion := range t.Assertions {
 		if assertion == nil {

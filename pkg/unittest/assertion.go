@@ -65,7 +65,7 @@ func (a *Assertion) Assert(
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
 
-		if a.config.isEmptyTemplatesSkipped && len(selectedTemplates) == 0 {
+		if a.config.isSkipEmptyTemplate && len(selectedTemplates) == 0 {
 			result.Skipped = true
 			result.SkipReason = "skipped as 'documentSelector.skipEmptyTemplates: true' and 'selectedTemplates: empty'"
 			result.Passed = true

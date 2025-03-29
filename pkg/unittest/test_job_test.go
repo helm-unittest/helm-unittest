@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/mock"
 
 	"testing"
@@ -1245,37 +1246,35 @@ func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, 
 	return args.Get(0).(*bytes.Buffer), args.Error(1)
 }
 
-// func TestV3RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
-// 	c, _ := loader.Load(testV3BasicChart)
-// 	manifest := `
-// it: should work
-// set:
-//   image.tag: ""
-// chart:
-//   version: 9.9.9+test
-//   appVersion: 9999
-// template: templates/deployment.yaml
-// documentSelector:
-//   path: kind
-//   value: SomeKind
-//   skipEmptyTemplate: true
-// asserts:
-//   - equal:
-//       path: metadata.labels.chart
-//       value: basic-9.9.9_test
-//   - equal:
-//       path: spec.template.spec.containers[0].image
-//       value: nginx:9999
-// `
-// 	var tj TestJob
-// 	unmarshalJobTestHelper(manifest, &tj, t)
-//
-// 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}, WithEmtpyTemplatesSkipped(true)))
-// 	testResult := tj.RunV3(&results.TestJobResult{})
-//
-// 	a := assert.New(t)
-// 	a.Nil(testResult.ExecError)
-// 	a.True(testResult.Passed)
-// 	fmt.Println(testResult.Passed)
-// 	a.Equal(2, len(testResult.AssertsResult))
-// }
+func TestV3RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+release:
+  name: my-release
+  namespace: test
+documentSelector:
+  path: kind
+  value: SomeKind
+  skipEmptyTemplates: true
+asserts:
+  - equal:
+      path: metadata.name
+      value: my-release-basic
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+		WithSkipEmptyTemplate(true),
+		WithDocumentSelector(&valueutils.DocumentSelector{
+			SkipEmptyTemplates: true,
+		}),
+	))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 1, len(testResult.AssertsResult))
+}

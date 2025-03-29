@@ -5,6 +5,7 @@ import (
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
 	v3chart "helm.sh/helm/v3/pkg/chart"
 )
@@ -45,6 +46,16 @@ func TestWithPostRendererConfig(t *testing.T) {
 	config := NewTestConfig(chart, cache, WithPostRendererConfig(postRendererConfig))
 
 	assert.Equal(t, postRendererConfig, config.postRenderer)
+}
+
+func TestWithDocumentSelector(t *testing.T) {
+	chart := &v3chart.Chart{}
+	config := NewTestConfig(chart, nil, WithDocumentSelector(&valueutils.DocumentSelector{
+		SkipEmptyTemplates: true,
+	}))
+	assert.True(t, config.isEmptyTemplatesSkipped)
+	config = NewTestConfig(chart, nil, WithDocumentSelector(nil))
+	assert.False(t, config.isEmptyTemplatesSkipped)
 }
 
 func TestAssertionConfigBuilder(t *testing.T) {
