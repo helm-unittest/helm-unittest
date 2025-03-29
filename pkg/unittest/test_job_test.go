@@ -1234,8 +1234,6 @@ func Test_MergeAndPostRender(t *testing.T) {
 
 type mockPostRenderer struct {
 	mock.Mock
-	output string
-	err    error
 }
 
 func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {

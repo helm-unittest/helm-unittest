@@ -284,28 +284,23 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 }
 
 func (a *Assertion) computeTemplatesWithPostRender() map[string][]common.K8sManifest {
-	templates := a.configOrDefault().templatesResult
-
 	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
 	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
-	if a.configOrDefault().didPostRender && len(a.configOrDefault().templatesResult) == 1 {
-		var key string
-		for k := range a.configOrDefault().templatesResult {
-			key = k
-		}
-
-		// account for pathname prefix
-		if strings.HasSuffix(key, "manifest.yaml") {
-			a.Template = key
-			templates = make(map[string][]common.K8sManifest)
-			templates[key] = a.configOrDefault().templatesResult[key]
-		} else {
-			templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
+	var templates map[string][]common.K8sManifest
+	templatesResult := a.configOrDefault().templatesResult
+	if a.configOrDefault().didPostRender && len(templatesResult) == 1 {
+		for key := range templatesResult {
+			if strings.HasSuffix(key, "manifest.yaml") {
+				a.Template = key
+				templates = map[string][]common.K8sManifest{key: templatesResult[key]}
+			} else {
+				templates = a.getDocumentsByDefaultTemplates(templatesResult)
+			}
+			break
 		}
 	} else {
-		templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
+		templates = a.getDocumentsByDefaultTemplates(templatesResult)
 	}
-
 	return templates
 }
 

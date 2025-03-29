@@ -235,7 +235,6 @@ func (t *TestJob) configOrDefault() TestConfig {
 	return t.config
 }
 
-
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	result *results.TestJobResult,
@@ -290,7 +289,7 @@ func (t *TestJob) RunV3(
 		failFast:            t.configOrDefault().failFast,
 		didPostRender:       didPostRender,
 		renderError:         renderError,
-		isSkipEmptyTemplate: t.configOrDefault().isEmptyTemplatesSkipped,
+		isSkipEmptyTemplate: t.configOrDefault().isSkipEmptyTemplate,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
@@ -443,7 +442,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 
 		match := re.FindStringSubmatch(block)
 
-		if match == nil || len(match) < 2 {
+		if len(match) < 2 {
 			continue
 		}
 

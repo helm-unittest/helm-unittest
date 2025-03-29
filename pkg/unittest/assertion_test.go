@@ -588,7 +588,6 @@ x:
     path:  a
     value: c
 `
-	// validateSucceededTestAssertions(t, assertionsYAML, 15, renderedMap, true)
 	assertions := make([]Assertion, 2)
 	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
 

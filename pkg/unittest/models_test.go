@@ -53,9 +53,9 @@ func TestWithDocumentSelector(t *testing.T) {
 	config := NewTestConfig(chart, nil, WithDocumentSelector(&valueutils.DocumentSelector{
 		SkipEmptyTemplates: true,
 	}))
-	assert.True(t, config.isEmptyTemplatesSkipped)
+	assert.True(t, config.isSkipEmptyTemplate)
 	config = NewTestConfig(chart, nil, WithDocumentSelector(nil))
-	assert.False(t, config.isEmptyTemplatesSkipped)
+	assert.False(t, config.isSkipEmptyTemplate)
 }
 
 func TestAssertionConfigBuilder(t *testing.T) {

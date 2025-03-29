@@ -9,22 +9,22 @@ import (
 )
 
 type TestConfig struct {
-	targetChart             *v3chart.Chart
-	cache                   *snapshot.Cache
-	renderPath              string
-	failFast                bool
-	isEmptyTemplatesSkipped bool
-	postRenderer            PostRendererConfig
+	targetChart         *v3chart.Chart
+	cache               *snapshot.Cache
+	renderPath          string
+	failFast            bool
+	isSkipEmptyTemplate bool
+	postRenderer        PostRendererConfig
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
 	config := &TestConfig{
-		targetChart:             chart,
-		cache:                   cache,
-		renderPath:              "",
-		failFast:                false,
-		isEmptyTemplatesSkipped: false,
-		postRenderer:            PostRendererConfig{},
+		targetChart:         chart,
+		cache:               cache,
+		renderPath:          "",
+		failFast:            false,
+		isSkipEmptyTemplate: false,
+		postRenderer:        PostRendererConfig{},
 	}
 	for _, option := range options {
 		option(config)
@@ -49,9 +49,9 @@ func WithRenderPath(path string) LoadTestOptionsFunc {
 func WithDocumentSelector(selector *valueutils.DocumentSelector) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		if selector != nil {
-			c.isEmptyTemplatesSkipped = selector.SkipEmptyTemplates
+			c.isSkipEmptyTemplate = selector.SkipEmptyTemplates
 		} else {
-			c.isEmptyTemplatesSkipped = false
+			c.isSkipEmptyTemplate = false
 		}
 	}
 }
@@ -64,7 +64,7 @@ func WithPostRendererConfig(config PostRendererConfig) LoadTestOptionsFunc {
 
 func WithSkipEmptyTemplate(config bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
-		c.isEmptyTemplatesSkipped = config
+		c.isSkipEmptyTemplate = config
 	}
 }
 
