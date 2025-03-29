@@ -12,6 +12,7 @@ type AssertionResult struct {
 	FailInfo   []string
 	Passed     bool
 	Skipped    bool
+	SkipReason string
 	AssertType string
 	Not        bool
 	CustomInfo string

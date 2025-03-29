@@ -259,7 +259,6 @@ func NewTestJobConfig(chart *v3chart.Chart, cache *snapshot.Cache, renderPath st
 func (t *TestJob) RunV3(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
-	fmt.Println("RUN actual job", t.Name)
 	startTestRun := time.Now()
 	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
@@ -288,7 +287,6 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	// TODO: this is a bit of a hack.  we should be able to pass the chart name in the config
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
@@ -304,13 +302,15 @@ func (t *TestJob) RunV3(
 
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
+	fmt.Println("PREPARE ASSERTIONS config")
 	assertionsConfig := AssertionConfig{
-		templatesResult:  manifestsOfFiles,
-		snapshotComparer: snapshotComparer,
-		renderSucceed:    renderSucceed,
-		failFast:         t.configOrDefault().failFast,
-		didPostRender:    didPostRender,
-		renderError:      renderError,
+		templatesResult:         manifestsOfFiles,
+		snapshotComparer:        snapshotComparer,
+		renderSucceed:           renderSucceed,
+		failFast:                t.configOrDefault().failFast,
+		didPostRender:           didPostRender,
+		renderError:             renderError,
+		isEmptyTemplatesSkipped: t.configOrDefault().isEmptyTemplatesSkipped,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
@@ -632,6 +632,10 @@ func (t *TestJob) runAssertions(
 		result := assertion.Assert(
 			&results.AssertionResult{Index: idx},
 		)
+
+		if result.Skipped {
+			testPass = true
+		}
 
 		assertsResult = append(assertsResult, result)
 

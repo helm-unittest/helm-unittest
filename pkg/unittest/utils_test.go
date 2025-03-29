@@ -361,7 +361,7 @@ func TestV3RunnerWith_Fixture_Chart_SkipEmptyTemplateWhenEmpty(t *testing.T) {
 		Strict:    true,
 	}
 	_ = runner.RunV3([]string{"testdata/chart-skipemptytemplate-no-match"})
-	fmt.Println(buffer.String())
-	// assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 2 total")
-	// assert.Contains(t, buffer.String(), "Tests:       3 passed, 3 total")
+
+	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
+	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
 }

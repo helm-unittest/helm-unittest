@@ -382,10 +382,7 @@ func (s *TestSuite) runV3TestJobs(
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
 	skipped := 0
 
-	fmt.Println("In the job", len(s.Tests))
-
 	for idx, testJob := range s.Tests {
-
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
 		log.SetOutput(io.Discard)
 		chart, _ := v3loader.Load(chartPath)
@@ -412,6 +409,7 @@ func (s *TestSuite) runV3TestJobs(
 				WithRenderPath(renderPath),
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
+				WithEmtpyTemplatesSkipped(isEmptyTemplatesSkipped),
 			)
 			testJob.WithConfig(*cfg)
 			jobResult = testJob.RunV3(&job)
