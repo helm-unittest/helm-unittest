@@ -42,12 +42,15 @@ const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*:
 const fileKeyPrefix = "#### file:"
 const yamlFileSeparator = "---\n" + fileKeyPrefix
 
+var (
+	regexPostRenderPattern = regexp.MustCompile(fileKeyPrefix + ` (.*)`)
+	regexErrorPattern      = regexp.MustCompile(regexPattern)
+)
+
 type PostRendererConfig struct {
 	Cmd      string   `yaml:"cmd"`
 	ArgSlice []string `yaml:"args"`
 }
-
-var regexErrorPattern = regexp.MustCompile(regexPattern)
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -398,7 +401,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 	return outputOfFiles, renderSucceed, nil
 }
 
-// merge the map into a single file, post-render it, and split it out again
+// MergeAndPostRender merge the map into a single file, post-render it, and split it out again
 func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
 	var renderedManifests bytes.Buffer
 
@@ -429,20 +432,21 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	postRenderedManifestsString := renderedManifests.String()
 
 	postRenderedManifestsMap := make(map[string]string)
-	re := regexp.MustCompile(fileKeyPrefix + ` (.*)`)
 
 	fileBlocks := common.SplitBefore(postRenderedManifestsString, yamlFileSeparator)
 
 	var foundMatch = false
 	for _, block := range fileBlocks {
 
+		fmt.Println("TEST JOB BLOCK: ", block)
+
 		if block == "" {
 			continue
 		}
 
-		match := re.FindStringSubmatch(block)
+		match := regexPostRenderPattern.FindStringSubmatch(block)
 
-		if len(match) < 2 {
+		if match == nil || len(match) < 2 {
 			continue
 		}
 
