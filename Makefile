@@ -72,6 +72,8 @@ build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docke
 .PHONY: dist
 dist:
 	mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt README.md LICENSE plugin.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
@@ -108,7 +110,12 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
-		    --platform linux/amd64 \
+			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
 			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
 	done
+
+.PHONY: go-lint
+go-lint: ## Execute golang linters
+	gofmt -l -s -w .
+	golangci-lint run --timeout=30m --fix ./...

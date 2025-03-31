@@ -32,6 +32,8 @@
             (string) (len=12) "\t+Deployment"
           },
           Passed: (bool) false,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=5) "equal",
           Not: (bool) false,
           CustomInfo: (string) ""

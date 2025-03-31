@@ -18,6 +18,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=14) "failedTemplate",
           Not: (bool) false,
           CustomInfo: (string) ""

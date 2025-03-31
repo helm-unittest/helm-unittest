@@ -9,11 +9,12 @@
  PASS  Document Selector to match any template	../../test/data/v3/with-document-select/tests/any_template_test.yaml
  PASS  Document Selector using expression	../../test/data/v3/with-document-select/tests/foo_rbac_test.yaml
  PASS  Document Selector validation with object validation	../../test/data/v3/with-document-select/tests/top_level_test.yaml
+ PASS  skipEmptyTemplates correctly handle 'true' case	../../test/data/v3/with-document-select/tests/external-secrets_test.yaml
 
 
 Charts:      1 passed, 1 total
-Test Suites: 7 passed, 7 total
-Tests:       10 passed, 10 total
+Test Suites: 8 passed, 8 total
+Tests:       13 passed, 13 total
 Snapshot:    1 passed, 1 total
 Time:        XX.XXXms
 

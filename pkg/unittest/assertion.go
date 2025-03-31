@@ -12,6 +12,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 
 	"github.com/mitchellh/mapstructure"
+	log "github.com/sirupsen/logrus"
 )
 
 // Assertion defines target and metrics to validate rendered result
@@ -25,17 +26,23 @@ type Assertion struct {
 	requireRenderSuccess bool
 	antonym              bool
 	defaultTemplates     []string
+	config               AssertionConfig
+}
+
+func (a *Assertion) WithConfig(config AssertionConfig) {
+	a.config = config
+}
+
+func (a *Assertion) configOrDefault() AssertionConfig {
+	if a.config.templatesResult == nil {
+		a.config.templatesResult = make(map[string][]common.K8sManifest)
+	}
+	return a.config
 }
 
 // Assert validate the rendered manifests with validator
 func (a *Assertion) Assert(
-	templatesResult map[string][]common.K8sManifest,
-	snapshotComparer validators.SnapshotComparer,
-	renderSucceed bool,
-	renderError error,
 	result *results.AssertionResult,
-	failfast bool,
-	didPostRender bool,
 ) *results.AssertionResult {
 	result.AssertType = a.AssertType
 	result.Not = a.Not
@@ -44,28 +51,9 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	var templates = templatesResult
+	var templates = a.computeTemplatesWithPostRender()
 
-	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
-	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
-	if didPostRender && len(templatesResult) == 1 {
-		var key string
-		for k := range templatesResult {
-			key = k
-		}
-
-		// account for pathname prefix
-		if strings.HasSuffix(key, "manifest.yaml") {
-			a.Template = key
-			templates = make(map[string][]common.K8sManifest)
-			templates[key] = templatesResult[key]
-		} else {
-			templates = a.getDocumentsByDefaultTemplates(templatesResult)
-		}
-	} else {
-		templates = a.getDocumentsByDefaultTemplates(templatesResult)
-	}
-
+	// TODO: This could be optimised and computed once for the test suite
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
@@ -76,17 +64,26 @@ func (a *Assertion) Assert(
 		invalidDocumentIndex := []string{"Error:", indexError.Error()}
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
+
+		if a.configOrDefault().isSkipEmptyTemplate && len(selectedTemplates) == 0 {
+			result.Skipped = true
+			result.SkipReason = "skipped as 'documentSelector.skipEmptyTemplates: true' and 'selectedTemplates: empty'"
+			result.Passed = true
+			log.WithField(common.LOG_TEST_ASSERTION, "assert").Debugln("skip assertion", result.SkipReason)
+			return result
+		}
+
 		// Check for failed templates when no documents are found
 		if len(selectedTemplates) == 0 {
 			var validatePassed bool
 			var singleFailInfo []string
 
-			if a.requireRenderSuccess != renderSucceed {
+			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
 				invalidRender := "Error: rendered manifest is empty"
 				failInfo = append(failInfo, invalidRender)
 			} else {
 				var emptyTemplate []common.K8sManifest
-				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate, snapshotComparer, renderError, failfast)
+				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate)
 			}
 
 			assertionPassed = validatePassed
@@ -94,7 +91,7 @@ func (a *Assertion) Assert(
 		}
 
 		for idx, template := range selectedTemplates {
-			rendered, ok := templatesResult[template]
+			rendered, ok := a.configOrDefault().templatesResult[template]
 			var validatePassed bool
 			var singleFailInfo []string
 
@@ -105,7 +102,7 @@ func (a *Assertion) Assert(
 				break
 			}
 
-			if a.requireRenderSuccess != renderSucceed {
+			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
 				invalidRender := ""
 				if len(rendered) > 0 {
 					invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
@@ -120,7 +117,7 @@ func (a *Assertion) Assert(
 			singleTemplateResult[template] = rendered
 
 			selectedDocs := selectedDocsByTemplate[template]
-			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs, snapshotComparer, renderError, failfast)
+			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs)
 
 			if !validatePassed {
 				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
@@ -142,7 +139,7 @@ func (a *Assertion) Assert(
 	return result
 }
 
-func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest, snapshotComparer validators.SnapshotComparer, renderError error, failfast bool) (bool, []string) {
+func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest) (bool, []string) {
 	var validatePassed bool
 	var singleFailInfo []string
 
@@ -150,9 +147,9 @@ func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs
 		Docs:             rendered,
 		SelectedDocs:     &selectedDocs,
 		Negative:         a.Not != a.antonym,
-		SnapshotComparer: snapshotComparer,
-		RenderError:      renderError,
-		FailFast:         failfast,
+		SnapshotComparer: a.configOrDefault().snapshotComparer,
+		RenderError:      a.configOrDefault().renderError,
+		FailFast:         a.configOrDefault().failFast,
 	})
 
 	return validatePassed, singleFailInfo
@@ -284,6 +281,27 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 		}
 	}
 	return nil
+}
+
+func (a *Assertion) computeTemplatesWithPostRender() map[string][]common.K8sManifest {
+	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
+	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
+	var templates map[string][]common.K8sManifest
+	templatesResult := a.configOrDefault().templatesResult
+	if a.configOrDefault().didPostRender && len(templatesResult) == 1 {
+		for key := range templatesResult {
+			if strings.HasSuffix(key, "manifest.yaml") {
+				a.Template = key
+				templates = map[string][]common.K8sManifest{key: templatesResult[key]}
+			} else {
+				templates = a.getDocumentsByDefaultTemplates(templatesResult)
+			}
+			break
+		}
+	} else {
+		templates = a.getDocumentsByDefaultTemplates(templatesResult)
+	}
+	return templates
 }
 
 type assertTypeDef struct {
