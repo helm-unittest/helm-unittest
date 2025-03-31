@@ -356,9 +356,9 @@ func TestV3RunnerOkWithDocumentSelect(t *testing.T) {
 	}
 	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
 	assert.True(t, passed, buffer.String())
-	fmt.Println(buffer.String())
-	assert.Contains(t, buffer.String(), "Test Suites: 7 passed, 7 total")
-	assert.Contains(t, buffer.String(), "Tests:       10 passed, 10 total")
+
+	assert.Contains(t, buffer.String(), "Test Suites: 8 passed, 8 total")
+	assert.Contains(t, buffer.String(), "Tests:       13 passed, 13 total")
 }
 
 func TestV3RunnerOkWithTestSkipped(t *testing.T) {

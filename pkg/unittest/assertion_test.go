@@ -7,6 +7,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -78,6 +79,8 @@ func TestAssertionUnmarshalFromYAML(t *testing.T) {
 - notFailedTemplate:
 - containsDocument:
 - lengthEqual:
+- matchSnapshot:
+- matchSnapshotRaw:
 `
 
 	a := assert.New(t)
@@ -348,7 +351,6 @@ equal:
 		SnapshotComparer: fakeSnapshotComparer(true),
 		RenderSucceed:    true,
 	}
-
 	assertion.WithConfig(cfg.Build())
 	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
@@ -515,7 +517,6 @@ func TestAssertionAssertWhenTemplateNotSpecifiedAndNoDefault(t *testing.T) {
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-
 	cfg := AssertionConfigBuilder{
 		TemplatesResult:  renderedMap,
 		SnapshotComparer: fakeSnapshotComparer(true),
@@ -547,7 +548,6 @@ equal:
 	common.YmlUnmarshalTestHelper(assertionYAML, &assertion, t)
 
 	a := assert.New(t)
-
 	cfg := AssertionConfigBuilder{
 		TemplatesResult:  renderedMap,
 		SnapshotComparer: fakeSnapshotComparer(true),
@@ -563,4 +563,51 @@ equal:
 		Not:        false,
 		CustomInfo: "",
 	}, result)
+}
+
+func TestAssertionWithSkippedDocument(t *testing.T) {
+	manifestDoc := `
+kind: Fake
+apiVersion: v123
+a: b
+e:
+  f: g
+x:
+`
+	manifest := common.TrustedUnmarshalYAML(manifestDoc)
+	renderedMap := map[string][]common.K8sManifest{
+		"t.yaml": {manifest},
+	}
+	assertionsYAML := `
+- template: t.yaml
+  equal:
+    path:  a
+    value: b
+- template: t.yaml
+  notEqual:
+    path:  a
+    value: c
+`
+	assertions := make([]Assertion, 2)
+	common.YmlUnmarshalTestHelper(assertionsYAML, &assertions, t)
+
+	ds := &valueutils.DocumentSelector{
+		Path:               "kind",
+		Value:              "NotExist",
+		SkipEmptyTemplates: true,
+	}
+	cfg := AssertionConfigBuilder{
+		TemplatesResult:     renderedMap,
+		SnapshotComparer:    fakeSnapshotComparer(true),
+		RenderSucceed:       true,
+		IsSkipEmptyTemplate: ds.SkipEmptyTemplates,
+	}
+	for _, assertion := range assertions {
+		assertion.DocumentSelector = ds
+		assertion.WithConfig(cfg.Build())
+
+		result := assertion.Assert(&results.AssertionResult{Index: 0})
+		assert.True(t, result.Passed)
+		assert.True(t, result.Skipped)
+	}
 }

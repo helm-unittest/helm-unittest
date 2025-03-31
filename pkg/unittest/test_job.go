@@ -42,12 +42,15 @@ const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*:
 const fileKeyPrefix = "#### file:"
 const yamlFileSeparator = "---\n" + fileKeyPrefix
 
+var (
+	regexPostRenderPattern = regexp.MustCompile(fileKeyPrefix + ` (.*)`)
+	regexErrorPattern      = regexp.MustCompile(regexPattern)
+)
+
 type PostRendererConfig struct {
 	Cmd      string   `yaml:"cmd"`
 	ArgSlice []string `yaml:"args"`
 }
-
-var regexErrorPattern = regexp.MustCompile(regexPattern)
 
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
@@ -267,13 +270,11 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	// TODO: this is a bit of a hack.  we should be able to pass the chart name in the config
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles)
 	if err != nil {
 		result.ExecError = err
 		return result
 	}
-	// Setup Assertion Templates based on the chartname, documentIndex and outputOfFiles
 	t.polishAssertionsTemplate(t.configOrDefault().targetChart.Name(), outputOfFiles)
 
 	if t.Skip.Reason != "" {
@@ -285,16 +286,16 @@ func (t *TestJob) RunV3(
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
-		templatesResult:  manifestsOfFiles,
-		snapshotComparer: snapshotComparer,
-		renderSucceed:    renderSucceed,
-		failFast:         t.configOrDefault().failFast,
-		didPostRender:    didPostRender,
-		renderError:      renderError,
+		templatesResult:     manifestsOfFiles,
+		snapshotComparer:    snapshotComparer,
+		renderSucceed:       renderSucceed,
+		failFast:            t.configOrDefault().failFast,
+		didPostRender:       didPostRender,
+		renderError:         renderError,
+		isSkipEmptyTemplate: t.configOrDefault().isSkipEmptyTemplate,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
-
 	result.Duration = time.Since(startTestRun)
 	return result
 }
@@ -400,7 +401,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 	return outputOfFiles, renderSucceed, nil
 }
 
-// merge the map into a single file, post-render it, and split it out again
+// MergeAndPostRender merge the map into a single file, post-render it, and split it out again
 func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
 	var renderedManifests bytes.Buffer
 
@@ -431,7 +432,6 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	postRenderedManifestsString := renderedManifests.String()
 
 	postRenderedManifestsMap := make(map[string]string)
-	re := regexp.MustCompile(fileKeyPrefix + ` (.*)`)
 
 	fileBlocks := common.SplitBefore(postRenderedManifestsString, yamlFileSeparator)
 
@@ -442,7 +442,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 			continue
 		}
 
-		match := re.FindStringSubmatch(block)
+		match := regexPostRenderPattern.FindStringSubmatch(block)
 
 		if match == nil || len(match) < 2 {
 			continue
@@ -610,6 +610,10 @@ func (t *TestJob) runAssertions(
 		result := assertion.Assert(
 			&results.AssertionResult{Index: idx},
 		)
+
+		if result.Skipped {
+			testPass = true
+		}
 
 		assertsResult = append(assertsResult, result)
 

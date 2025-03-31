@@ -383,7 +383,6 @@ func (s *TestSuite) runV3TestJobs(
 	skipped := 0
 
 	for idx, testJob := range s.Tests {
-
 		// (Re)load the chart used by this suite (with logging temporarily disabled)
 		log.SetOutput(io.Discard)
 		chart, _ := v3loader.Load(chartPath)
@@ -400,12 +399,12 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			cfg := NewTestConfig(chart, cache,
+			testJob.WithConfig(*NewTestConfig(chart, cache,
 				WithRenderPath(renderPath),
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
-			)
-			testJob.WithConfig(*cfg)
+				WithDocumentSelector(testJob.DocumentSelector),
+			))
 			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult
 			if idx == 0 {

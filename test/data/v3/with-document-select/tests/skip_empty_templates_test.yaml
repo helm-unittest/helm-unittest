@@ -12,3 +12,14 @@ tests:
       - matchRegex:
           path: metadata.name
           pattern: -deployment$
+
+  - it: should skip assertion when skipEmptyTemplates is true and no templates found
+    documentSelector:
+      path: kind
+      value: SomeKind
+      skipEmptyTemplates: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ThisKindShouldNotBeAsserted

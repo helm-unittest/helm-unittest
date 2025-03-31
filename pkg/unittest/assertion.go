@@ -12,6 +12,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 
 	"github.com/mitchellh/mapstructure"
+	log "github.com/sirupsen/logrus"
 )
 
 // Assertion defines target and metrics to validate rendered result
@@ -50,28 +51,9 @@ func (a *Assertion) Assert(
 	assertionPassed := false
 	failInfo := make([]string, 0)
 
-	var templates = a.configOrDefault().templatesResult
+	var templates = a.computeTemplatesWithPostRender()
 
-	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
-	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
-	if a.configOrDefault().didPostRender && len(a.configOrDefault().templatesResult) == 1 {
-		var key string
-		for k := range a.configOrDefault().templatesResult {
-			key = k
-		}
-
-		// account for pathname prefix
-		if strings.HasSuffix(key, "manifest.yaml") {
-			a.Template = key
-			templates = make(map[string][]common.K8sManifest)
-			templates[key] = a.configOrDefault().templatesResult[key]
-		} else {
-			templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
-		}
-	} else {
-		templates = a.getDocumentsByDefaultTemplates(a.configOrDefault().templatesResult)
-	}
-
+	// TODO: This could be optimised and computed once for the test suite
 	selectedDocsByTemplate, indexError := a.selectDocumentsForAssertion(templates)
 	selectedTemplates := a.getKeys(selectedDocsByTemplate)
 
@@ -82,6 +64,15 @@ func (a *Assertion) Assert(
 		invalidDocumentIndex := []string{"Error:", indexError.Error()}
 		failInfo = append(failInfo, invalidDocumentIndex...)
 	} else {
+
+		if a.configOrDefault().isSkipEmptyTemplate && len(selectedTemplates) == 0 {
+			result.Skipped = true
+			result.SkipReason = "skipped as 'documentSelector.skipEmptyTemplates: true' and 'selectedTemplates: empty'"
+			result.Passed = true
+			log.WithField(common.LOG_TEST_ASSERTION, "assert").Debugln("skip assertion", result.SkipReason)
+			return result
+		}
+
 		// Check for failed templates when no documents are found
 		if len(selectedTemplates) == 0 {
 			var validatePassed bool
@@ -290,6 +281,27 @@ func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
 		}
 	}
 	return nil
+}
+
+func (a *Assertion) computeTemplatesWithPostRender() map[string][]common.K8sManifest {
+	// If we PostRendered, there's no guarantee the post-renderer will preserve our file mapping.  If it doesn't, the
+	// parser just puts the whole manifest in one "manifest.yaml" so handle that case:
+	var templates map[string][]common.K8sManifest
+	templatesResult := a.configOrDefault().templatesResult
+	if a.configOrDefault().didPostRender && len(templatesResult) == 1 {
+		for key := range templatesResult {
+			if strings.HasSuffix(key, "manifest.yaml") {
+				a.Template = key
+				templates = map[string][]common.K8sManifest{key: templatesResult[key]}
+			} else {
+				templates = a.getDocumentsByDefaultTemplates(templatesResult)
+			}
+			break
+		}
+	} else {
+		templates = a.getDocumentsByDefaultTemplates(templatesResult)
+	}
+	return templates
 }
 
 type assertTypeDef struct {

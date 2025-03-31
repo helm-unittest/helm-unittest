@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/mock"
 
 	"testing"
@@ -253,7 +254,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	cfg := NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	)
@@ -321,7 +321,6 @@ asserts:
 		WithFailFast(true),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
-	// Write Buffer
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -381,7 +380,6 @@ asserts:
 
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -436,7 +434,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	cfg := NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	)
@@ -628,7 +625,6 @@ asserts:
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -686,7 +682,6 @@ asserts:
 		WithFailFast(true),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
-
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
@@ -765,7 +760,6 @@ asserts:
 `
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
-
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
@@ -1240,8 +1234,6 @@ func Test_MergeAndPostRender(t *testing.T) {
 
 type mockPostRenderer struct {
 	mock.Mock
-	output string
-	err    error
 }
 
 func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
@@ -1250,4 +1242,37 @@ func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, 
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*bytes.Buffer), args.Error(1)
+}
+
+func TestV3RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+release:
+  name: my-release
+  namespace: test
+documentSelector:
+  path: kind
+  value: SomeKind
+  skipEmptyTemplates: true
+asserts:
+  - equal:
+      path: metadata.name
+      value: my-release-basic
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+		WithSkipEmptyTemplate(true),
+		WithDocumentSelector(&valueutils.DocumentSelector{
+			SkipEmptyTemplates: true,
+		}),
+	))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	assert.Nil(t, testResult.ExecError)
+	assert.True(t, testResult.Passed)
+	assert.Equal(t, 1, len(testResult.AssertsResult))
 }

@@ -18,6 +18,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=10) "matchRegex",
           Not: (bool) false,
           CustomInfo: (string) ""
@@ -27,6 +29,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=5) "equal",
           Not: (bool) false,
           CustomInfo: (string) ""
@@ -36,6 +40,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=10) "matchRegex",
           Not: (bool) false,
           CustomInfo: (string) ""
@@ -45,6 +51,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=5) "equal",
           Not: (bool) false,
           CustomInfo: (string) ""
@@ -54,6 +62,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=5) "equal",
           Not: (bool) false,
           CustomInfo: (string) ""
@@ -63,6 +73,8 @@
           FailInfo: ([]string) {
           },
           Passed: (bool) true,
+          Skipped: (bool) false,
+          SkipReason: (string) "",
           AssertType: (string) (len=13) "matchSnapshot",
           Not: (bool) false,
           CustomInfo: (string) ""
