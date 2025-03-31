@@ -438,8 +438,6 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	var foundMatch = false
 	for _, block := range fileBlocks {
 
-		fmt.Println("TEST JOB BLOCK: ", block)
-
 		if block == "" {
 			continue
 		}
