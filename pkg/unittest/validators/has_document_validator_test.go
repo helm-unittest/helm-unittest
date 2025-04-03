@@ -12,9 +12,22 @@ import (
 func TestHasDocumentsValidatorOk(t *testing.T) {
 	data := common.K8sManifest{}
 
-	validator := HasDocumentsValidator{2}
+	validator := HasDocumentsValidator{2, false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{data, data},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestHasDocumentsValidatorWithSelectorOk(t *testing.T) {
+	data := common.K8sManifest{}
+
+	validator := HasDocumentsValidator{1, true}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:         []common.K8sManifest{data, data},
+		SelectedDocs: &[]common.K8sManifest{data},
 	})
 
 	assert.True(t, pass)
@@ -24,7 +37,7 @@ func TestHasDocumentsValidatorOk(t *testing.T) {
 func TestHasDocumentsValidatorWhenNegativeAndOk(t *testing.T) {
 	data := common.K8sManifest{}
 
-	validator := HasDocumentsValidator{2}
+	validator := HasDocumentsValidator{2, false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{data},
 		Negative: true,
@@ -39,7 +52,7 @@ func TestHasDocumentsValidatorWhenFail(t *testing.T) {
 
 	log.SetLevel(log.DebugLevel)
 
-	validator := HasDocumentsValidator{1}
+	validator := HasDocumentsValidator{1, false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{data, data},
 	})
@@ -56,7 +69,7 @@ func TestHasDocumentsValidatorWhenFail(t *testing.T) {
 func TestHasDocumentsValidatorWhenNegativeAndFail(t *testing.T) {
 	data := common.K8sManifest{}
 
-	validator := HasDocumentsValidator{2}
+	validator := HasDocumentsValidator{2, false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{data, data},
 		Negative: true,

@@ -546,13 +546,21 @@
                   "properties": {
                     "hasDocuments": {
                       "type": "object",
-                      "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
-                      "markdownDescription": "**hasDocuments** (object)\n\nAssert the documents count rendered by the `template` specified. The `documentIndex` option is ignored here.",
+                      "description": "Assert the documents count rendered by the template specified. The documentIndex or documentSelector option is by default ignored here.",
+                      "markdownDescription": "**hasDocuments** (object)\n\nAssert the documents count rendered by the `template` specified. The `documentIndex` or `documentSelector` option is by default ignored here.",
+                      "required": [
+                        "count"
+                      ],
                       "properties": {
                         "count": {
                           "type": "integer",
                           "description": "Expected count of documents rendered.",
                           "markdownDescription": "**count** (integer) _required_\n\nExpected count of documents rendered."
+                        },
+                        "filterAware": {
+                          "type": "boolean",
+                          "description": "When true documentIndex or documentSelector is taken into account.",
+                          "markdownDescription": "**filterAware** (boolean) _optional_\n\nWhen true `documentIndex` or `documentSelector` is taken into account."
                         }
                       },
                       "additionalProperties": false
@@ -1171,7 +1179,7 @@
     "postRenderer": {
       "type": "object",
       "description": "A helm 'post-renderer' to apply after chart rendering but before validation.",
-      "markdownDescription":"**postRenderer** (object) _optional_\n\nA helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.",
+      "markdownDescription": "**postRenderer** (object) _optional_\n\nA helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.",
       "properties": {
         "cmd": {
           "type": "string",
