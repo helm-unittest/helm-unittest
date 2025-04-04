@@ -31,11 +31,6 @@ func assertArrayPathOsAgnostic(t *testing.T, expected, actual []string) {
 	assert.Equal(t, want, actual)
 }
 
-func assertArrayContainsOsAgnostic(t *testing.T, actual []string, expected string) {
-	t.Helper()
-	assert.Contains(t, actual, filepath.FromSlash(expected))
-}
-
 func TestGetFiles_ChartWithoutSubCharts(t *testing.T) {
 	filesHelper(t)
 	err := os.Chdir("../../test/data/v3/basic")

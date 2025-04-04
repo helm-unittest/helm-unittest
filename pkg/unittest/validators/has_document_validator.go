@@ -6,7 +6,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// HasDocumentsValidator validate whether the count of manifests rendered form template is Count
+// HasDocumentsValidator is a validator that checks if the number of documents
+// in the context matches the expected count. It can also be aware of filters
+// applied to the documents like documentIndex or documentSelectors.
 type HasDocumentsValidator struct {
 	Count       int
 	FilterAware bool
