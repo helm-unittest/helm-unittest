@@ -1,0 +1,6 @@
+apiVersion: v2
+name: special-characters
+version: 0.1.0
+description: simple chart to validate documents with special characters
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-special-characters --output-dir _scratch

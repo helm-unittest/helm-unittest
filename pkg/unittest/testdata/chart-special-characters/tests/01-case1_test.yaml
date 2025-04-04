@@ -1,0 +1,10 @@
+suite: a special characters first test
+templates:
+  - $.yaml
+tests:
+  - it: should have a valid assertion when loading file with special characters
+    asserts:
+      - contains:
+          path: data["my.array"]
+          content: value1
+          count: 1

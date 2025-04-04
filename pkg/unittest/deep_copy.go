@@ -36,7 +36,9 @@ func getTemplateFileName(fileName string) string {
 func getTemplateFileNamePattern(fileName string) string {
 	pattern := strings.ReplaceAll(fileName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
 	pattern = strings.ReplaceAll(pattern, singleWildcard, "[0-9a-zA-Z_\\-_/\\.]*")
-	pattern = strings.ReplaceAll(pattern, ".", "\\.")
+	// replace all regex special characters with their escaped version
+	pattern = regexp.QuoteMeta(pattern)
+
 	return pattern
 }
 
