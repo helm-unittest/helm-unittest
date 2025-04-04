@@ -444,7 +444,8 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 
 		match := regexPostRenderPattern.FindStringSubmatch(block)
 
-		if match == nil || len(match) < 2 {
+		// if match is nil, len(match) is zero
+		if len(match) < 2 {
 			continue
 		}
 
@@ -652,32 +653,36 @@ func (t *TestJob) polishAssertionsTemplate(targetChartName string, outputOfFiles
 		if assertion == nil {
 			continue
 		}
-		prefixedChartsNameFiles := false
-		templatesToAssert := make([]string, 0)
 
-		if t.DocumentIndex != nil {
-			assertion.DocumentIndex = *t.DocumentIndex
-		}
-
-		if assertion.DocumentSelector == nil {
-			assertion.DocumentSelector = t.DocumentSelector
-		}
-
-		if assertion.Template == "" {
-			if len(t.Templates) > 0 {
-				templatesToAssert = append(templatesToAssert, t.Templates...)
-			} else if t.Template == "" {
-				templatesToAssert, prefixedChartsNameFiles = t.resolveDefaultTemplatesToAssert(outputOfFiles)
-			} else {
-				templatesToAssert = append(templatesToAssert, t.Template)
-			}
-		} else {
-			templatesToAssert = append(templatesToAssert, assertion.Template)
-		}
-
-		// map the file name to the path of helm rendered result
+		t.updateAssertionDocumentFilters(assertion)
+		templatesToAssert, prefixedChartsNameFiles := t.determineTemplatesToAssert(assertion, outputOfFiles)
 		assertion.defaultTemplates = t.prefixTemplatesToAssert(templatesToAssert, prefixedChartsNameFiles)
 	}
+}
+
+func (t *TestJob) updateAssertionDocumentFilters(assertion *Assertion) {
+	if t.DocumentIndex != nil {
+		assertion.DocumentIndex = *t.DocumentIndex
+	}
+	if assertion.DocumentSelector == nil {
+		assertion.DocumentSelector = t.DocumentSelector
+	}
+}
+
+func (t *TestJob) determineTemplatesToAssert(assertion *Assertion, outputOfFiles map[string]string) ([]string, bool) {
+	if assertion.Template != "" {
+		return []string{assertion.Template}, false
+	}
+
+	if len(t.Templates) > 0 {
+		return t.Templates, false
+	}
+
+	if t.Template == "" {
+		return t.resolveDefaultTemplatesToAssert(outputOfFiles)
+	}
+
+	return []string{t.Template}, false
 }
 
 func (t *TestJob) resolveDefaultTemplatesToAssert(outputOfFiles map[string]string) ([]string, bool) {
