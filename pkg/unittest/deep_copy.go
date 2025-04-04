@@ -34,9 +34,22 @@ func getTemplateFileName(fileName string) string {
 // getTemplateFileNamePattern,
 // converts a template file name to a regular expression pattern
 func getTemplateFileNamePattern(fileName string) string {
-	pattern := strings.ReplaceAll(fileName, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
+	// escape all other regex special characters except for the ones that are already used
+	pattern := strings.ReplaceAll(fileName, ".", "\\.")
+	pattern = strings.ReplaceAll(pattern, "+", "\\+")
+	pattern = strings.ReplaceAll(pattern, "[", "\\[")
+	pattern = strings.ReplaceAll(pattern, "]", "\\]")
+	pattern = strings.ReplaceAll(pattern, multiWildcard, "[0-9a-zA-Z_\\-/\\.]+")
 	pattern = strings.ReplaceAll(pattern, singleWildcard, "[0-9a-zA-Z_\\-_/\\.]*")
-	pattern = strings.ReplaceAll(pattern, ".", "\\.")
+	pattern = strings.ReplaceAll(pattern, "?", "\\?")
+	pattern = strings.ReplaceAll(pattern, "(", "\\(")
+	pattern = strings.ReplaceAll(pattern, ")", "\\)")
+	pattern = strings.ReplaceAll(pattern, "|", "\\|")
+	pattern = strings.ReplaceAll(pattern, "{", "\\{")
+	pattern = strings.ReplaceAll(pattern, "}", "\\}")
+	pattern = strings.ReplaceAll(pattern, "^", "\\^")
+	pattern = strings.ReplaceAll(pattern, "$", "\\$")
+
 	return pattern
 }
 

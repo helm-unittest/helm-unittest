@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: special-characters
+data:
+  my.array:
+    - value1
+    - value2
