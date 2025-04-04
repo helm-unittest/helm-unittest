@@ -6,9 +6,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// HasDocumentsValidator validate whether the count of manifests rendered form template is Count
+// HasDocumentsValidator is a validator that checks if the number of documents
+// in the context matches the expected count. It can also be aware of filters
+// applied to the documents like documentIndex or documentSelectors.
 type HasDocumentsValidator struct {
-	Count int
+	Count       int
+	FilterAware bool
 }
 
 func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
@@ -38,8 +41,12 @@ func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
 
 // Validate implement Validatable
 func (v HasDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
-	if len(context.Docs) == v.Count != context.Negative {
+	documentsLength := len(context.Docs)
+	if v.FilterAware {
+		documentsLength = len(context.getManifests())
+	}
+	if documentsLength == v.Count != context.Negative {
 		return true, []string{}
 	}
-	return false, v.failInfo(len(context.Docs), context.Negative)
+	return false, v.failInfo(documentsLength, context.Negative)
 }

@@ -1,3 +1,15 @@
+0.8.1 / 2025-04-03
+==================
+- Fix special characters in template filename (resolves #619)
+- Fix tests with conditional sub-charts fail to find templates since 0.8.0 (resolves #588, credits @ivankatliarchuk)
+- Fix skipEmptyTemplate fails when no matching templates are found (resolves #609, credits @ivankatliarchuk)
+- Improvement enable documentSelector for hasDocument asserts (resolves #590)- 
+- Improvement by supporting ppc64le (credits @Vaibhav-Nazare)
+- Improvement refactoring configs for jobs and assertions (credits credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation (credits @bogdan-deac)
+
 0.8.0 / 2025-03-05
 ==================
 - Add flag to exclude certain templates from testing (resolves #169, credits @snorwin)

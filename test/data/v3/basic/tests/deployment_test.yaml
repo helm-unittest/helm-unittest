@@ -62,6 +62,9 @@ tests:
           of: extensions/v1beta1
       - hasDocuments:
           count: 2
+      - hasDocuments:
+          count: 1
+          filterAware: true
       - matchSnapshot:
           path: spec
       - isType:
