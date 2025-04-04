@@ -26,21 +26,11 @@ func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 	basePath := chartPath + "/" // Prepend chartPath with slash
 
 	for _, pattern := range slices.Compact(filePatterns) {
-		if filepath.IsAbs(pattern) {
-			filesSet = append(filesSet, pattern) // Append absolute paths directly
-		} else {
-			var filePath string
-			if strings.Contains(pattern, basePath) {
-				filePath = pattern
-			} else {
-				filePath = filepath.Join(basePath, pattern)
-			}
-			files, err := filepathx.Glob(filePath)
-			if err != nil {
-				return nil, err
-			}
-			filesSet = append(filesSet, files...) // Append all files (relative)
+		matchedFiles, err := processPattern(pattern, basePath)
+		if err != nil {
+			return nil, err
 		}
+		filesSet = append(filesSet, matchedFiles...)
 	}
 
 	if setAbsolute {
@@ -54,4 +44,24 @@ func GetFiles(chartPath string, filePatterns []string, setAbsolute bool) ([]stri
 	}
 	log.WithField(LOG_FILES, "get-files").Debugln("chart-path:", chartPath, "fileset:", filesSet)
 	return filesSet, nil
+}
+
+// processPattern processes a single file pattern and returns the matched files.
+func processPattern(pattern, basePath string) ([]string, error) {
+	if filepath.IsAbs(pattern) {
+		return []string{pattern}, nil // Return absolute paths directly
+	}
+
+	var filePath string
+	if strings.Contains(pattern, basePath) {
+		filePath = pattern
+	} else {
+		filePath = filepath.Join(basePath, pattern)
+	}
+
+	files, err := filepathx.Glob(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }

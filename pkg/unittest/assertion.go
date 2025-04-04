@@ -47,10 +47,6 @@ func (a *Assertion) Assert(
 	result.AssertType = a.AssertType
 	result.Not = a.Not
 
-	// Ensure assertion is succeeding or failing based on templates to test.
-	assertionPassed := false
-	failInfo := make([]string, 0)
-
 	var templates = a.computeTemplatesWithPostRender()
 
 	// TODO: This could be optimised and computed once for the test suite
@@ -61,85 +57,124 @@ func (a *Assertion) Assert(
 	sort.Strings(selectedTemplates)
 
 	if indexError != nil {
-		invalidDocumentIndex := []string{"Error:", indexError.Error()}
-		failInfo = append(failInfo, invalidDocumentIndex...)
+		return a.handleIndexError(result, indexError)
+	}
+
+	if a.shouldSkipAssertion(selectedTemplates) {
+		return a.skipAssertion(result)
+	}
+
+	if len(selectedTemplates) == 0 {
+		return a.evaluateEmptyTemplates(result)
+	}
+
+	return a.evaluateTemplates(result, selectedTemplates, selectedDocsByTemplate)
+}
+
+// handleIndexError handles the error when the document index is out of range
+// It sets the assertion result to failed and includes the error message
+func (a *Assertion) handleIndexError(result *results.AssertionResult, indexError error) *results.AssertionResult {
+	result.Passed = false
+	result.FailInfo = []string{"Error:", indexError.Error()}
+	return result
+}
+
+// shouldSkipAssertion checks if the assertion should be skipped based on the configuration
+func (a *Assertion) shouldSkipAssertion(selectedTemplates []string) bool {
+	return a.configOrDefault().isSkipEmptyTemplate && len(selectedTemplates) == 0
+}
+
+// skipAssertion marks the assertion as skipped and sets the reason
+// It returns the assertion result with the skip status and reason
+func (a *Assertion) skipAssertion(result *results.AssertionResult) *results.AssertionResult {
+	result.Skipped = true
+	result.SkipReason = "skipped as 'documentSelector.skipEmptyTemplates: true' and 'selectedTemplates: empty'"
+	result.Passed = true
+	log.WithField(common.LOG_TEST_ASSERTION, "assert").Debugln("skip assertion", result.SkipReason)
+	return result
+}
+
+// evaluateEmptyTemplates evaluates the assertion when there are no selected templates
+// It returns the assertion result with the validation status and failure information
+func (a *Assertion) evaluateEmptyTemplates(
+	result *results.AssertionResult,
+) *results.AssertionResult {
+	validatePassed := false
+	failInfo := make([]string, 0)
+
+	if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
+		invalidRender := "Error: rendered manifest is empty"
+		failInfo = append(failInfo, invalidRender)
 	} else {
+		var emptyTemplate []common.K8sManifest
+		_, validatePassed, failInfo = a.validateTemplate(emptyTemplate, emptyTemplate)
+	}
 
-		if a.configOrDefault().isSkipEmptyTemplate && len(selectedTemplates) == 0 {
-			result.Skipped = true
-			result.SkipReason = "skipped as 'documentSelector.skipEmptyTemplates: true' and 'selectedTemplates: empty'"
-			result.Passed = true
-			log.WithField(common.LOG_TEST_ASSERTION, "assert").Debugln("skip assertion", result.SkipReason)
-			return result
+	result.Passed = validatePassed
+	result.FailInfo = failInfo
+	return result
+}
+
+// evaluateTemplates evaluates the assertion for each selected template
+// It processes the templates and validates them using the configured validator
+// It returns the assertion result with the validation status and failure information
+func (a *Assertion) evaluateTemplates(
+	result *results.AssertionResult,
+	selectedTemplates []string,
+	selectedDocsByTemplate map[string][]common.K8sManifest,
+) *results.AssertionResult {
+	assertionPassed := false
+	failInfo := make([]string, 0)
+
+	for idx, template := range selectedTemplates {
+		addTemplate, validatePassed, singleFailInfo := a.processTemplate(template, selectedDocsByTemplate[template])
+		if !validatePassed {
+			if addTemplate {
+				failInfo = append(failInfo, fmt.Sprintf("Template:\t%s", template))
+			}
+			failInfo = append(failInfo, singleFailInfo...)
 		}
 
-		// Check for failed templates when no documents are found
-		if len(selectedTemplates) == 0 {
-			var validatePassed bool
-			var singleFailInfo []string
-
-			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
-				invalidRender := "Error: rendered manifest is empty"
-				failInfo = append(failInfo, invalidRender)
-			} else {
-				var emptyTemplate []common.K8sManifest
-				validatePassed, singleFailInfo = a.validateTemplate(emptyTemplate, emptyTemplate)
-			}
-
+		if idx == 0 {
 			assertionPassed = validatePassed
-			failInfo = append(failInfo, singleFailInfo...)
 		}
-
-		for idx, template := range selectedTemplates {
-			rendered, ok := a.configOrDefault().templatesResult[template]
-			var validatePassed bool
-			var singleFailInfo []string
-
-			if !ok && a.requireRenderSuccess {
-				noFile := []string{"Error:", a.noFileErrMessage(template)}
-				failInfo = append(failInfo, noFile...)
-				assertionPassed = false
-				break
-			}
-
-			if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
-				invalidRender := ""
-				if len(rendered) > 0 {
-					invalidRender = fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])
-				} else {
-					invalidRender = "Error: rendered manifest is empty"
-				}
-				failInfo = append(failInfo, invalidRender)
-				break
-			}
-
-			singleTemplateResult := make(map[string][]common.K8sManifest)
-			singleTemplateResult[template] = rendered
-
-			selectedDocs := selectedDocsByTemplate[template]
-			validatePassed, singleFailInfo = a.validateTemplate(rendered, selectedDocs)
-
-			if !validatePassed {
-				failInfoTemplate := []string{fmt.Sprintf("Template:\t%s", template)}
-				singleFailInfo = append(failInfoTemplate, singleFailInfo...)
-			}
-
-			if idx == 0 {
-				assertionPassed = validatePassed
-			}
-
-			assertionPassed = assertionPassed && validatePassed
-			failInfo = append(failInfo, singleFailInfo...)
-		}
+		assertionPassed = assertionPassed && validatePassed
 	}
 
 	result.Passed = assertionPassed
 	result.FailInfo = failInfo
-
 	return result
 }
 
-func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest) (bool, []string) {
+// processTemplate processes the template and validates it using the configured validator
+// It returns a boolean indicating if the template needs to be added in the failure information,
+// a boolean indicating if the validation passed, and a slice of failure information
+func (a *Assertion) processTemplate(template string, selectedDocs []common.K8sManifest) (bool, bool, []string) {
+	rendered, ok := a.configOrDefault().templatesResult[template]
+	if !ok && a.requireRenderSuccess {
+		return false, false, []string{"Error:", a.noFileErrMessage(template)}
+	}
+
+	if a.requireRenderSuccess != a.configOrDefault().renderSucceed {
+		return true, false, a.handleRenderError(rendered)
+	}
+
+	return a.validateTemplate(rendered, selectedDocs)
+}
+
+// handleRenderError handles the error when the rendered manifest is empty
+// It returns a slice of failure information
+func (a *Assertion) handleRenderError(rendered []common.K8sManifest) []string {
+	if len(rendered) > 0 {
+		return []string{fmt.Sprintf("Error: Invalid rendering: %s", rendered[0][common.RAW])}
+	}
+	return []string{"Error: rendered manifest is empty"}
+}
+
+// validateTemplate validates the rendered template using the configured validator
+// It returns a boolean indicating if the template needs to be added in the failure information,
+// a boolean indicating if the template is valid and a slice of failure information
+func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs []common.K8sManifest) (bool, bool, []string) {
 	var validatePassed bool
 	var singleFailInfo []string
 
@@ -152,7 +187,7 @@ func (a *Assertion) validateTemplate(rendered []common.K8sManifest, selectedDocs
 		FailFast:         a.configOrDefault().failFast,
 	})
 
-	return validatePassed, singleFailInfo
+	return true, validatePassed, singleFailInfo
 }
 
 func (a *Assertion) getDocumentsByDefaultTemplates(templatesResult map[string][]common.K8sManifest) map[string][]common.K8sManifest {
@@ -212,13 +247,31 @@ func (a *Assertion) noFileErrMessage(template string) string {
 	return "\tassertion.template must be given if testsuite.templates is empty"
 }
 
-// UnmarshalYAML implement yaml.Unmalshaler, construct validator according to the assert type
+// UnmarshalYAML implements yaml.Unmarshaler, constructing the validator according to the assert type.
 func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	assertDef := make(map[string]interface{})
 	if err := unmarshal(&assertDef); err != nil {
 		return err
 	}
 
+	a.parseBasicFields(assertDef)
+	if err := a.parseDocumentSelector(assertDef); err != nil {
+		return err
+	}
+
+	if err := a.constructValidator(assertDef); err != nil {
+		return err
+	}
+
+	if a.validator == nil {
+		return a.validateAssertionType(assertDef)
+	}
+
+	return nil
+}
+
+// parseBasicFields parses basic fields like documentIndex, not, and template.
+func (a *Assertion) parseBasicFields(assertDef map[string]interface{}) {
 	if documentIndex, ok := assertDef["documentIndex"].(int); ok {
 		a.DocumentIndex = documentIndex
 	} else {
@@ -232,7 +285,10 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if template, ok := assertDef["template"].(string); ok {
 		a.Template = template
 	}
+}
 
+// parseDocumentSelector parses the documentSelector field if present.
+func (a *Assertion) parseDocumentSelector(assertDef map[string]interface{}) error {
 	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
 		s, err := valueutils.NewDocumentSelector(documentSelector)
 		if err != nil {
@@ -240,21 +296,17 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 		a.DocumentSelector = s
 	}
-
-	if err := a.constructValidator(assertDef); err != nil {
-		return err
-	}
-
-	if a.validator == nil {
-		for key := range assertDef {
-			if key != "template" && key != "documentIndex" && key != "not" {
-				return fmt.Errorf("Assertion type `%s` is invalid", key)
-			}
-		}
-		return fmt.Errorf("no assertion type defined")
-	}
-
 	return nil
+}
+
+// validateAssertionType validates the assertion type and ensures at least one is defined.
+func (a *Assertion) validateAssertionType(assertDef map[string]interface{}) error {
+	for key := range assertDef {
+		if key != "template" && key != "documentIndex" && key != "not" {
+			return fmt.Errorf("Assertion type `%s` is invalid", key)
+		}
+	}
+	return fmt.Errorf("no assertion type defined")
 }
 
 func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {

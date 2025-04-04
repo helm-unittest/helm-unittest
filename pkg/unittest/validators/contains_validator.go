@@ -41,29 +41,37 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 	validateFoundCount := 0
 
 	for _, ele := range actual {
-		valueArray := false
-		// When any enabled, only the key is validated
-		if v.Any {
-			subset, subsetOk := ele.(map[string]interface{})
-			content, contentOk := v.Content.(map[string]interface{})
-			if subsetOk && contentOk {
-				if validateSubset(subset, content) {
-					found = true
-					validateFoundCount++
-				}
-			} else {
-				// The value is a array of values, so the Any can be ignored
-				valueArray = true
-			}
+		isArray, isSubmatch := v.isArrayOrSubsetMatch(ele)
+		if isSubmatch {
+			found = true
+			validateFoundCount++
 		}
 
-		if (!v.Any || valueArray) && reflect.DeepEqual(ele, v.Content) {
+		if v.isExactMatch(isArray, ele) {
 			found = true
 			validateFoundCount++
 		}
 	}
 
 	return found, validateFoundCount
+}
+
+func (v ContainsValidator) isArrayOrSubsetMatch(ele interface{}) (bool, bool) {
+	if v.Any {
+		subset, subsetOk := ele.(map[string]interface{})
+		content, contentOk := v.Content.(map[string]interface{})
+		if subsetOk && contentOk {
+			return false, validateSubset(subset, content)
+		} else {
+			return true, false
+		}
+	}
+
+	return false, false
+}
+
+func (v ContainsValidator) isExactMatch(isArray bool, ele interface{}) bool {
+	return (!v.Any || isArray) && reflect.DeepEqual(ele, v.Content)
 }
 
 func (v ContainsValidator) validateFoundCount(validateFoundCount int) bool {
