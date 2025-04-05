@@ -1,0 +1,67 @@
+suite: version test
+templates:
+  - showit.yaml
+  - charts/subchart/templates/subchart-showit.yaml
+tests:
+  - it: without overridden chart values
+    template: showit.yaml
+    asserts:
+      - equal:
+          path: showit
+          value: "chart-subchart-v1-0.0.0"
+
+  - it: without overridden chart values and subchart enabled
+    set:
+      subchart:
+        enabled: true
+    asserts:
+      - equal:
+          path: showit
+          value: "chart-subchart-v1-0.0.0"
+        template: showit.yaml
+      - equal:
+          path: showit
+          value: "subchart-0.0.90"
+        template: charts/subchart/templates/subchart-showit.yaml
+
+  - it: with overridden chart values
+    template: showit.yaml
+    chart:
+      version: 0.1.0
+    asserts:
+      - equal:
+          path: showit
+          value: "chart-subchart-v1-0.1.0"
+
+  - it: with overridden chart values and subchart enabled
+    set:
+      subchart:
+        enabled: true
+    chart:
+      version: 0.1.0
+    asserts:
+      - equal:
+          path: showit
+          value: "chart-subchart-v1-0.1.0"
+        template: showit.yaml
+      - equal:
+          path: showit
+          value: "subchart-0.1.0"
+        template: charts/subchart/templates/subchart-showit.yaml
+
+  - it: without overridden chart values should not fail
+    template: showit.yaml
+    asserts:
+      - equal:
+          path: showit
+          value: "chart-subchart-v1-0.0.0"
+
+  - it: without overridden chart values for subchart should not fail
+    template: charts/subchart/templates/subchart-showit.yaml
+    set:
+      subchart:
+        enabled: true
+    asserts:
+      - equal:
+          path: showit
+          value: "subchart-0.0.90"
