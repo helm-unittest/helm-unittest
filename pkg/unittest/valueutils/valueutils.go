@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -69,6 +70,14 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 		return nil, err
 	}
 	return tr.getBuildedData(), nil
+}
+
+func MatchesPattern(input, pattern string) (bool, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return false, err
+	}
+	return re.MatchString(input), nil
 }
 
 type parseTraverser interface {

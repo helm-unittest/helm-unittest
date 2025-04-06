@@ -378,3 +378,16 @@ func TestV3RunnerWith_Fixture_Chart_SpecialCharacters(t *testing.T) {
 	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 total")
 }
+
+func TestV3RunnerWith_Fixture_Chart_WithSnapshot(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    true,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+	fmt.Println(buffer.String())
+
+	assert.Contains(t, buffer.String(), "Snapshot:    4 passed, 4 total")
+}
