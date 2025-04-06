@@ -252,6 +252,16 @@ tests:
   - it: manifest should match snapshot
     asserts:
       - matchSnapshot: {}
+  - it: manifest should match snapshot and pattern
+    asserts:
+      - matchSnapshot:
+          matchRegex:
+            pattern: .*app.*
+  - it: manifest should match snapshot not match pattern
+    asserts:
+      - matchSnapshot:
+          notMatchRegex:
+            pattern: .*bcde.*
 ```
 
 The `matchSnapshot` assertion validate the content rendered the same as cached last time. It fails if the content changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
