@@ -241,8 +241,9 @@ func TestV3RunnerWith_Fixture_Chart_WithSubchartV1(t *testing.T) {
 		Strict:    true,
 	}
 	_ = runner.RunV3([]string{"testdata/chart-subchart-v1"})
-	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 2 total")
-	assert.Contains(t, buffer.String(), "Tests:       3 passed, 3 total")
+
+	assert.Contains(t, buffer.String(), "Test Suites: 3 passed, 3 total")
+	assert.Contains(t, buffer.String(), "Tests:       9 passed, 9 total")
 }
 
 func TestSplitBefore(t *testing.T) {
