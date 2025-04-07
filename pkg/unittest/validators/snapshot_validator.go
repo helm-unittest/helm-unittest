@@ -90,7 +90,6 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 	for actualIndex, singleActual := range actual {
 		validateSingleSuccess := false
 		var validateSingleErrors []string
-		fmt.Println(singleActual)
 		result := context.CompareToSnapshot(singleActual)
 
 		if result.Passed == context.Negative {
