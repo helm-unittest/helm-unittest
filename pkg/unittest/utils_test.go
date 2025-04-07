@@ -388,5 +388,6 @@ func TestV3RunnerWith_Fixture_Chart_WithSnapshot(t *testing.T) {
 	}
 	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
 
-	assert.Contains(t, buffer.String(), "Snapshot:    4 passed, 4 total")
+	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
+	assert.Contains(t, buffer.String(), "Snapshot:    5 passed, 5 total")
 }

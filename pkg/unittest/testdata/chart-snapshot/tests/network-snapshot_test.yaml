@@ -16,3 +16,14 @@ tests:
       - matchSnapshot:
           notMatchRegex:
             pattern: .*app\.kubernetes\.io/version-wrong.*
+
+  - it: should render snapshot and assert in single matcher
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot:
+          path: metadata.labels
+          matchRegex:
+            pattern: .*app.*
+          notMatchRegex:
+            pattern: .*app\.kubernetes\.io/version-wrong.*

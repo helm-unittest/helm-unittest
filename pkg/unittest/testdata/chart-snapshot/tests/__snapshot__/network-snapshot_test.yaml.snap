@@ -23,3 +23,14 @@ should render snapshot:
       labels:
         app: test-cluster
         app.kubernetes.io/version: null
+should render snapshot and assert in single matcher:
+  1: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      labels:
+        app: test-cluster
+        app.kubernetes.io/version: null
+  2: |
+    app: test-cluster
+    app.kubernetes.io/version: null
