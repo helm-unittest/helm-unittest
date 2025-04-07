@@ -2,5 +2,5 @@ apiVersion: v2
 name: subchart
 description: subchart for testing with library like behaviour
 type: application
-version: 0.1.0
+version: 0.0.90
 appVersion: "1.16.0"
