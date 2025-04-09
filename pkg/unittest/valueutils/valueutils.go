@@ -79,7 +79,7 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 func MatchesPattern(input, pattern string) (bool, error) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to compile regex pattern %s: %v", pattern, err)
 	}
 	return re.MatchString(input), nil
 }

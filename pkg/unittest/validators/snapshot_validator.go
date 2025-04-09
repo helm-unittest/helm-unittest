@@ -33,13 +33,20 @@ type NotMatchRegex struct {
 	Pattern string
 }
 
-func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manifestIndex, actualIndex int, not bool, val snapshotValidation) []string {
+func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manifestIndex, actualIndex int, not bool) []string {
 	log.WithField("validator", "snapshot").Debugln("expected content:", compared.CachedSnapshot)
 	log.WithField("validator", "snapshot").Debugln("actual content:", compared.NewSnapshot)
 
 	var result []string
 
-	if val == pathValidation {
+	if compared.Msg != "" {
+		result = splitInfof(
+			setFailFormat(not, false, false, false, compared.Msg),
+			manifestIndex,
+			actualIndex,
+			compared.CachedSnapshot,
+		)
+	} else {
 		msg := fmt.Sprintf(" to match snapshot %s", strconv.Itoa(int(compared.Index)))
 		var infoToShow string
 		if not {
@@ -53,22 +60,6 @@ func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manif
 			actualIndex,
 			v.Path,
 			infoToShow,
-		)
-	} else if val == matchRegexValidation {
-		msg := fmt.Sprintf(" pattern '%s' not found in snapshot", v.MatchRegex.Pattern)
-		result = splitInfof(
-			setFailFormat(not, false, false, false, msg),
-			manifestIndex,
-			actualIndex,
-			compared.CachedSnapshot,
-		)
-	} else if val == notMatchRegexValidation {
-		msg := fmt.Sprintf(" pattern '%s' should not be in snapshot", v.NotMatchRegex.Pattern)
-		result = splitInfof(
-			setFailFormat(not, false, false, false, msg),
-			manifestIndex,
-			actualIndex,
-			compared.CachedSnapshot,
 		)
 	}
 	return result
@@ -90,10 +81,22 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 	for actualIndex, singleActual := range actual {
 		validateSingleSuccess := false
 		var validateSingleErrors []string
-		result := context.CompareToSnapshot(singleActual)
+		withMatchRegex := snapshot.WithMatchRegexPattern("")
+		withNotMatchRegex := snapshot.WithNotMatchRegexPattern("")
+		if v.MatchRegex != nil && v.MatchRegex.Pattern != "" {
+			withMatchRegex = snapshot.WithMatchRegexPattern(v.MatchRegex.Pattern)
+		}
+		if v.NotMatchRegex != nil && v.NotMatchRegex.Pattern != "" {
+			withNotMatchRegex = snapshot.WithNotMatchRegexPattern(v.NotMatchRegex.Pattern)
+		}
+		result := context.CompareToSnapshot(singleActual, withMatchRegex, withNotMatchRegex)
+
+		if result.Err != nil {
+			return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("%v", err))
+		}
 
 		if result.Passed == context.Negative {
-			validateSingleErrors = v.failInfo(result, manifestIndex, actualIndex, context.Negative, pathValidation)
+			validateSingleErrors = v.failInfo(result, manifestIndex, actualIndex, context.Negative)
 		} else {
 			validateSingleSuccess = true
 		}
@@ -103,28 +106,6 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 
 		if !validateManifestSuccess && context.FailFast {
 			break
-		}
-
-		if validateManifestSuccess && v.MatchRegex != nil {
-			if matches, err := valueutils.MatchesPattern(manifest.ToString(), v.MatchRegex.Pattern); err != nil {
-				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("failed to compile regex pattern %s: %v", v.MatchRegex.Pattern, err))
-			} else if !matches {
-				validateManifestSuccess = false
-				result.Passed = false
-				validateSingleErrors = v.failInfo(result, manifestIndex, actualIndex, context.Negative, matchRegexValidation)
-				validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
-			}
-		}
-
-		if validateManifestSuccess && v.NotMatchRegex != nil {
-			if matches, err := valueutils.MatchesPattern(manifest.ToString(), v.NotMatchRegex.Pattern); err != nil {
-				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("failed to compile regex pattern %s: %v", v.MatchRegex.Pattern, err))
-			} else if matches {
-				validateManifestSuccess = false
-				result.Passed = false
-				validateSingleErrors = v.failInfo(result, manifestIndex, actualIndex, context.Negative, notMatchRegexValidation)
-				validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
-			}
 		}
 	}
 	return validateManifestSuccess, validateManifestErrors

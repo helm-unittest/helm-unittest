@@ -225,7 +225,7 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 
 type fakeSnapshotComparer bool
 
-func (c fakeSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
+func (c fakeSnapshotComparer) CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	return &snapshot.CompareResult{
 		Passed: bool(c),
 	}

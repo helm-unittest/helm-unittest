@@ -41,6 +41,12 @@ var contentNew = map[string]interface{}{
 	},
 }
 
+var contentForRegex = map[string]interface{}{
+	"x": map[string]string{
+		"y": "abrakadabra",
+	},
+}
+
 func createCache(assert *assert.Assertions, existed bool) *Cache {
 	dir, _ := os.MkdirTemp("", "test")
 	cacheFile := filepath.Join(dir, "cache_test.yaml")
@@ -342,4 +348,35 @@ func TestCacheWhenNewOneAtMiddleIfIsUpdating(t *testing.T) {
     d:
       e: f
 `, string(bytes))
+}
+
+func TestCacheWhenRegexMatch(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, true)
+	err := cache.RestoreFromFile()
+
+	a.Nil(err)
+
+	result := cache.Compare(cache_before, 1, content1, WithMatchRegexPattern("b: c"))
+	a.True(result.Passed)
+
+	result = cache.Compare(cache_before, 1, content1, WithMatchRegexPattern("bcd"))
+	a.False(result.Passed)
+	a.Contains(result.Msg, "pattern 'bcd' not found in snapshot")
+}
+
+func TestCacheWhenNotRegexMatch(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, true)
+	err := cache.RestoreFromFile()
+
+	a.Nil(err)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
+
+	result := cache.Compare(cache_before, 1, content1, WithNotMatchRegexPattern("not-exist"))
+	a.True(result.Passed)
+
+	result = cache.Compare(cache_before, 1, content1, WithNotMatchRegexPattern("b: c"))
+	a.False(result.Passed)
+	a.Contains(result.Msg, "pattern 'b: c' should not be in snapshot")
 }
