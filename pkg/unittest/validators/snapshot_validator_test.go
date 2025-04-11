@@ -1,7 +1,6 @@
 package validators_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -265,9 +264,10 @@ func TestSnapshotValidatorWhenMatchRegexFail(t *testing.T) {
 	cached := "a: abrakadabra"
 	mockComparer := new(mockSnapshotComparer)
 	mockComparer.On("CompareToSnapshot", manifest).Return(&snapshot.CompareResult{
-		Passed:         true,
+		Passed:         false,
 		CachedSnapshot: cached,
 		NewSnapshot:    cached,
+		Msg:            " pattern 'hello' not found in snapshot",
 	})
 
 	validator := MatchSnapshotValidator{MatchRegex: &MatchRegex{Pattern: "hello"}}
@@ -276,11 +276,8 @@ func TestSnapshotValidatorWhenMatchRegexFail(t *testing.T) {
 		SnapshotComparer: mockComparer,
 	})
 
-	fmt.Println("pass:", pass)
-	fmt.Println(diff)
-
-	// assert.False(t, pass)
-	// assert.Equal(t, []string{"DocumentIndex:\t0", "ValuesIndex:\t0", "Expected pattern 'hello' not found in snapshot:", "\ta: abrakadabra"}, diff)
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "ValuesIndex:\t0", "Expected pattern 'hello' not found in snapshot:", "\ta: abrakadabra"}, diff)
 }
 
 func TestSnapshotValidatorWheNotMatchRegexSuccess(t *testing.T) {
