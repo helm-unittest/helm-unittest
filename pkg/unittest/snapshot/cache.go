@@ -216,42 +216,6 @@ func (s *Cache) VanishedCount() uint {
 	return count
 }
 
-// MatchesPattern checks if the input string matches the given regex pattern.
-// This method is useful for validating input against a specific format or structure when pattern is only provided at runtime.
-// Note: Compiling a regex pattern each time this function is called can be a performance hit.
-// To improve performance, consider compiling the regex once and reusing it if the pattern is constant.
-// func (s *Cache) MatchesPattern(input, pattern string) (bool, error) {
-// 	re, err := regexp.Compile(pattern)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return re.MatchString(input), nil
-// }
-
-func (s *Cache) MatchesPattern(test string, idx uint, pattern string) *CompareResult {
-	s.currentCount++
-	cached, exsisted := s.getCached(test, idx)
-	if !exsisted {
-		s.insertedCount++
-	}
-
-	fmt.Println("MatchesPattern", cached)
-	match := true
-	// newSnapshot := common.TrustedMarshalYAML(content)
-	// if exsisted && newSnapshot != cached {
-	// 	match = false
-	// 	s.updatedCount++
-	// }
-
-	return &CompareResult{
-		Passed:         match,
-		Test:           test,
-		Index:          idx,
-		CachedSnapshot: cached,
-		NewSnapshot:    cached,
-	}
-}
-
 // CacheOptions is a type alias for CacheOptions functional option
 type CacheOptionsFunc func(*CacheOptions) error
 
