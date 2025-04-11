@@ -104,7 +104,6 @@ func (s *Cache) Compare(test string, idx uint, content interface{}, optFns ...fu
 	if options.NotMatchRegexPattern != "" && match {
 		var noMatch bool
 		noMatch, err = valueutils.MatchesPattern(newSnapshot, options.NotMatchRegexPattern)
-		fmt.Println("match:", match, "noMatch:", noMatch)
 		if noMatch {
 			match = false
 			msg = fmt.Sprintf(" pattern '%s' should not be in snapshot", options.NotMatchRegexPattern)

@@ -92,7 +92,6 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 		TestFiles: []string{testTestFiles},
 	}
 	passed := runner.RunV3([]string{testV3BasicChart})
-	fmt.Println(passed)
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
