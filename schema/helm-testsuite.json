@@ -1029,6 +1029,30 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "matchRegex": {
+                          "type": "object",
+                          "description": "Assert the value of regex is the same as snapshotted last time. ",
+                          "markdownDescription": "**matchRegex** (object)\n\nAssert the value of `regex` is the same as snapshotted last time.",
+                          "properties": {
+                            "pattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the snapshot.",
+                              "markdownDescription": "**pattern** (string) _required_ The regex pattern to match the snapshot."
+                            }
+                          }
+                        },
+                        "notMatchRegex": {
+                          "type": "object",
+                          "description": "Assert the value of regex is not as snapshotted last time. ",
+                          "markdownDescription": "**matchRegex** (object)\n\nAssert the value of `regex` is no assnapshotted last time.",
+                          "properties": {
+                            "pattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the snapshot.",
+                              "markdownDescription": "**pattern** (string) _required_ The regex pattern to match the snapshot."
+                            }
+                          }
                         }
                       },
                       "additionalProperties": false

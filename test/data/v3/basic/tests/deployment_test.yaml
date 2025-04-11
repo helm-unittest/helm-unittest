@@ -67,6 +67,11 @@ tests:
           filterAware: true
       - matchSnapshot:
           path: spec
+      - matchSnapshot:
+          matchRegex:
+            pattern: .*imagePullPolicy.*
+          notMatchRegex:
+            pattern: .*NetworkPolicy.*
       - isType:
           path: metadata.name
           type: string

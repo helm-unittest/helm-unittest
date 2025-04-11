@@ -236,3 +236,89 @@ func TestSnapshotValidatorWhenNoManifestNegativeFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
+
+func TestSnapshotValidatorWhenMatchRegexSuccess(t *testing.T) {
+	manifest := makeManifest("a: abrakadabra")
+
+	cached := "a: abrakadabra"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", manifest).Return(&snapshot.CompareResult{
+		Passed:         true,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+	})
+
+	validator := MatchSnapshotValidator{MatchRegex: &MatchRegex{Pattern: "abrakadabra"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestSnapshotValidatorWhenMatchRegexFail(t *testing.T) {
+	manifest := makeManifest("a: abrakadabra")
+
+	cached := "a: abrakadabra"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", manifest).Return(&snapshot.CompareResult{
+		Passed:         false,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+		Msg:            " pattern 'hello' not found in snapshot",
+	})
+
+	validator := MatchSnapshotValidator{MatchRegex: &MatchRegex{Pattern: "hello"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "ValuesIndex:\t0", "Expected pattern 'hello' not found in snapshot:", "\ta: abrakadabra"}, diff)
+}
+
+func TestSnapshotValidatorWheNotMatchRegexSuccess(t *testing.T) {
+	manifest := makeManifest("a: abrakadabra")
+
+	cached := "a: abrakadabra"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", manifest).Return(&snapshot.CompareResult{
+		Passed:         true,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+	})
+
+	validator := MatchSnapshotValidator{NotMatchRegex: &NotMatchRegex{Pattern: "one-two-three"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestSnapshotValidatorWheNotMatchRegexFail(t *testing.T) {
+	manifest := makeManifest("a: abrakadabra")
+
+	cached := "a: abrakadabra"
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshot", manifest).Return(&snapshot.CompareResult{
+		Passed:         false,
+		CachedSnapshot: cached,
+		NewSnapshot:    cached,
+		Msg:            " pattern '.*abra.*' should not be in snapshot",
+	})
+
+	validator := MatchSnapshotValidator{NotMatchRegex: &NotMatchRegex{Pattern: ".*abra.*"}}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{manifest},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.False(t, pass)
+	assert.Equal(t, []string{"DocumentIndex:\t0", "ValuesIndex:\t0", "Expected pattern '.*abra.*' should not be in snapshot:", "\ta: abrakadabra"}, diff)
+}
