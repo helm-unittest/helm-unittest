@@ -1531,3 +1531,142 @@ func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
 		})
 	}
 }
+
+func TestVersionMeetsMinimum(t *testing.T) {
+	tests := []struct {
+		name           string
+		currentVersion string
+		minimumVersion string
+		expected       bool
+	}{
+		{
+			name:           "equal versions",
+			currentVersion: "0.8.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current greater than minimum",
+			currentVersion: "0.9.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current less than minimum",
+			currentVersion: "0.7.0",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "current with patch higher",
+			currentVersion: "0.8.1",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current with patch lower",
+			currentVersion: "0.8.0",
+			minimumVersion: "0.8.1",
+			expected:       false,
+		},
+		{
+			name:           "invalid current version",
+			currentVersion: "invalid",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "invalid minimum version",
+			currentVersion: "0.8.0",
+			minimumVersion: "invalid",
+			expected:       false,
+		},
+		{
+			name:           "unknown current version with defined minimum",
+			currentVersion: "0.0.0",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "with v prefix",
+			currentVersion: "v0.8.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := VersionMeetsMinimum(tt.currentVersion, tt.minimumVersion)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestSuiteWithMinimumVersion(t *testing.T) {
+	tests := []struct {
+		name         string
+		suiteContent string
+		expectError  bool
+		errorMessage string
+	}{
+		{
+			name: "valid minimum version",
+			suiteContent: `
+suite: minimumVersion test
+minimumVersion: 0.0.1
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectError: false,
+		},
+		{
+			name: "minimum version too high",
+			suiteContent: `
+suite: minimumVersion test
+minimumVersion: 99.0.0
+tests:
+  - it: should fail
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectError:  true,
+			errorMessage: "test suite requires minimum unittest plugin version 99.0.0",
+		},
+		{
+			name: "no minimum version",
+			suiteContent: `
+suite: minimumVersion test
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a temporary file with the test suite content
+			file := path.Join("_scratch", fmt.Sprintf("minimum-version-%s.yaml", tt.name))
+			assert.Nil(t, writeToFile(tt.suiteContent, file))
+			defer os.RemoveAll(file)
+
+			suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMessage)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, suites)
+			}
+		})
+	}
+}
