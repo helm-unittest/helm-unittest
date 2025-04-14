@@ -469,8 +469,8 @@ func GetPluginVersion() string {
 	return "0.0.0"
 }
 
-// check if currentVersion meets the minimumVersion requirement
-func versionMeetsMinimum(currentVersion, minimumVersion string) bool {
+// VersionMeetsMinimum check if currentVersion meets the minimumVersion requirement
+func VersionMeetsMinimum(currentVersion, minimumVersion string) bool {
 	current, err := semver.NewVersion(currentVersion)
 	if err != nil {
 		log.WithField(common.LOG_TEST_SUITE, "version-comparison").Debugln("failed to parse current version:", err)
@@ -497,7 +497,7 @@ func (s *TestSuite) validateTestSuite() error {
 	// Check minimum version if specified
 	if len(s.MinimumVersion) > 0 {
 		pluginVersion := GetPluginVersion()
-		if !versionMeetsMinimum(pluginVersion, s.MinimumVersion) {
+		if !VersionMeetsMinimum(pluginVersion, s.MinimumVersion) {
 			return fmt.Errorf("test suite requires minimum unittest plugin version %s, but current version is %s",
 				s.MinimumVersion, pluginVersion)
 		}
