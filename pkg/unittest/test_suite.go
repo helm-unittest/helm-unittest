@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
@@ -205,6 +206,7 @@ func iterateTemplates(template string, suites []*TestSuite, absPath string, char
 // TestSuite defines scope and templates to render and tests to run
 type TestSuite struct {
 	Name             string `yaml:"suite"`
+	MinimumVersion   string `yaml:"minimumVersion"`
 	Values           []string
 	Set              map[string]interface{}
 	Templates        []string
@@ -422,12 +424,83 @@ func (s *TestSuite) runV3TestJobs(
 	return &result
 }
 
+// we only define the relevant fields of plugin.yaml
+type pluginYaml struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+}
+
+// GetPluginVersion returns the current version of the plugin
+func GetPluginVersion() string {
+	// try multiple possible locations for plugin.yaml
+	possiblePaths := []string{
+		"plugin.yaml",
+		filepath.Join("..", "plugin.yaml"),
+		filepath.Join("..", "..", "plugin.yaml"),
+	}
+
+	// Get HELM_PLUGIN_DIR if available (set by Helm when running as a plugin)
+	if helmPluginDir := os.Getenv("HELM_PLUGIN_DIR"); helmPluginDir != "" {
+		possiblePaths = append(possiblePaths, filepath.Join(helmPluginDir, "plugin.yaml"))
+	}
+
+	// Try the current executable's directory
+	if executable, err := os.Executable(); err == nil {
+		possiblePaths = append(possiblePaths,
+			filepath.Join(filepath.Dir(executable), "plugin.yaml"),
+			filepath.Join(filepath.Dir(filepath.Dir(executable)), "plugin.yaml"))
+	}
+
+	// Try to find and read plugin.yaml from any of the possible paths
+	for _, path := range possiblePaths {
+		content, err := os.ReadFile(path)
+		if err == nil {
+			var plugin pluginYaml
+			if err := common.YmlUnmarshal(string(content), &plugin); err == nil {
+				log.WithField(common.LOG_TEST_SUITE, "get-plugin-version").Debugln("found plugin.yaml at:", path)
+				return plugin.Version
+			}
+		}
+	}
+
+	// If we got here, we couldn't find or parse plugin.yaml
+	log.WithField(common.LOG_TEST_SUITE, "get-plugin-version").Debugln("couldn't find plugin.yaml in any expected location")
+
+	return "0.0.0"
+}
+
+// check if currentVersion meets the minimumVersion requirement
+func versionMeetsMinimum(currentVersion, minimumVersion string) bool {
+	current, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		log.WithField(common.LOG_TEST_SUITE, "version-comparison").Debugln("failed to parse current version:", err)
+		return false
+	}
+
+	minimum, err := semver.NewVersion(minimumVersion)
+	if err != nil {
+		log.WithField(common.LOG_TEST_SUITE, "version-comparison").Debugln("failed to parse minimum version:", err)
+		return false
+	}
+
+	return current.Compare(minimum) >= 0
+}
+
 func (s *TestSuite) validateTestSuite() error {
 	if len(s.Tests) == 0 {
 		return fmt.Errorf("no tests found")
 	}
 	if s.fromRender && len(s.Name) == 0 {
 		return fmt.Errorf("helm chart based test suites must include `suite` field")
+	}
+
+	// Check minimum version if specified
+	if len(s.MinimumVersion) > 0 {
+		pluginVersion := GetPluginVersion()
+		if !versionMeetsMinimum(pluginVersion, s.MinimumVersion) {
+			return fmt.Errorf("test suite requires minimum unittest plugin version %s, but current version is %s",
+				s.MinimumVersion, pluginVersion)
+		}
 	}
 
 	for _, testJob := range s.Tests {

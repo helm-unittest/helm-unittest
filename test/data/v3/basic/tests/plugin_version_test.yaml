@@ -1,0 +1,9 @@
+suite: test minimum plugin version
+templates:
+  - plugin_version.yaml
+minimumVersion: 0.8.0
+tests:
+  - it: should pass if plugin version is high enough
+    asserts:
+      - exists:
+          path: metadata.name

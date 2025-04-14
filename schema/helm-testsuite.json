@@ -12,6 +12,11 @@
       "description": "The suite name to show on test result output.",
       "markdownDescription": "**suite** (string) _optional_\n\nThe suite name to show on test result output."
     },
+    "minimumVersion": {
+      "type": "string",
+      "description": "The minimum version of helm-unittest plugin required to run this test suite.",
+      "markdownDescription": "**minimumVersion** (string) _optional_\n\nThe minimum version of helm-unittest plugin required to run this test suite."
+    },
     "snapshotId": {
       "type": "string",
       "description": "A suffix to your snapshot file for the tests.  Ideal for helm tests.",
