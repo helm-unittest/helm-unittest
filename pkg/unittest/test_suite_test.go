@@ -1426,6 +1426,17 @@ tests:
     asserts:
       - isKind:
           of: Secret
+---
+suite: test skip with minimumVersion on suite level
+templates:
+  - deployment.yaml
+skip:
+  minimumVersion: "99.0.0"
+tests:
+  - it: should be skipped due to minimumVersion
+    asserts:
+      - exists:
+          path: metadata.labels.chart
 `
 
 	a := assert.New(t)
@@ -1436,7 +1447,7 @@ tests:
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
 	assert.NoError(t, err)
-	assert.Len(t, suites, 4)
+	assert.Len(t, suites, 5)
 
 	for _, s := range suites {
 		switch s.Name {
@@ -1454,9 +1465,116 @@ tests:
 					assert.Empty(t, test.Skip.Reason)
 				}
 			}
+		case "test skip with minimumVersion on suite level":
+			assert.NotEmpty(t, s.Skip.Reason)
+			assert.Contains(t, s.Skip.Reason, "Test suite requires minimum unittest plugin version 99.0.0")
+			// Verify that the Skip.Reason is propagated to all tests
+			for _, test := range s.Tests {
+				assert.Equal(t, s.Skip.Reason, test.Skip.Reason)
+			}
 		default:
 			assert.Empty(t, s.Skip.Reason)
 		}
+	}
+}
+
+func TestSkipReasonPropagation(t *testing.T) {
+	testCases := []struct {
+		name         string
+		suiteContent string
+		expectReason string
+	}{
+		{
+			name: "explicit skip reason",
+			suiteContent: `
+suite: Test Suite with Skip Reason
+templates:
+  - deployment.yaml
+skip:
+  reason: "Explicitly skipped"
+tests:
+  - it: should test something
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`,
+			expectReason: "Explicitly skipped",
+		},
+		{
+			name: "minimum version too high",
+			suiteContent: `
+suite: Test Suite with High MinimumVersion
+templates:
+  - deployment.yaml
+skip:
+  minimumVersion: 99.0.0
+tests:
+  - it: should test something
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`,
+			expectReason: "Test suite requires minimum unittest plugin version 99.0.0",
+		},
+		{
+			name: "both reason and minimum version",
+			suiteContent: `
+suite: Test Suite with Both Skip Conditions
+templates:
+  - deployment.yaml
+skip:
+  reason: "Should skip regardless of minimum version"
+  minimumVersion: 0.0.1
+tests:
+  - it: should test something
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`,
+			expectReason: "Should skip regardless of minimum version",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a temporary file with the test suite content
+			file := path.Join("_scratch", fmt.Sprintf("skip-reason-%s.yaml", tc.name))
+			err := writeToFile(tc.suiteContent, file)
+			assert.Nil(t, err)
+			defer os.RemoveAll(file)
+
+			// Parse the test suite file
+			suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+			assert.NoError(t, err)
+			assert.Len(t, suites, 1)
+
+			// Check if the skip reason propagates correctly
+			testSuite := suites[0]
+
+			// Run the suite
+			cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, fmt.Sprintf("skip-reason-snapshot-%s.yaml", tc.name)), false)
+			suiteResult := testSuite.RunV3(testV3BasicChart, cache, false, "", &results.TestSuiteResult{})
+
+			// Verify skipped status
+			assert.True(t, suiteResult.Skipped)
+			assert.True(t, suiteResult.Passed) // Skipped suites should pass
+
+			// Check test jobs have the expected skip reason
+			for _, testJob := range testSuite.Tests {
+				assert.Contains(t, testJob.Skip.Reason, tc.expectReason)
+			}
+
+			// Verify all test results are marked as skipped
+			for _, testResult := range suiteResult.TestsResult {
+				assert.True(t, testResult.Skipped)
+			}
+		})
 	}
 }
 
@@ -1498,8 +1616,9 @@ func TestV3RunSuiteWithSkipTests(t *testing.T) {
 func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
 	testSuite := TestSuite{
 		Skip: struct {
-			Reason string `yaml:"reason"`
-		}{Reason: "skip suite"},
+			Reason         string `yaml:"reason"`
+			MinimumVersion string `yaml:"minimumVersion"`
+		}{Reason: "skip suite", MinimumVersion: ""},
 	}
 	testSuite.Tests = []*TestJob{
 		{
@@ -1528,6 +1647,206 @@ func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
 
 			assert.True(t, suiteResult.Skipped)
 			assert.True(t, suiteResult.Passed)
+		})
+	}
+}
+
+func TestVersionMeetsMinimum(t *testing.T) {
+	tests := []struct {
+		name           string
+		currentVersion string
+		minimumVersion string
+		expected       bool
+	}{
+		{
+			name:           "equal versions",
+			currentVersion: "0.8.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current greater than minimum",
+			currentVersion: "0.9.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current less than minimum",
+			currentVersion: "0.7.0",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "current with patch higher",
+			currentVersion: "0.8.1",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "current with patch lower",
+			currentVersion: "0.8.0",
+			minimumVersion: "0.8.1",
+			expected:       false,
+		},
+		{
+			name:           "invalid current version",
+			currentVersion: "invalid",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "invalid minimum version",
+			currentVersion: "0.8.0",
+			minimumVersion: "invalid",
+			expected:       false,
+		},
+		{
+			name:           "unknown current version with defined minimum",
+			currentVersion: "0.0.0",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+		{
+			name:           "with v prefix",
+			currentVersion: "v0.8.0",
+			minimumVersion: "0.8.0",
+			expected:       true,
+		},
+		{
+			name:           "empty minimum version",
+			currentVersion: "0.8.0",
+			minimumVersion: "",
+			expected:       false, // Current implementation returns false for empty minimum version
+		},
+		{
+			name:           "empty current version",
+			currentVersion: "",
+			minimumVersion: "0.8.0",
+			expected:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := VersionMeetsMinimum(tt.currentVersion, tt.minimumVersion)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestSuiteWithMinimumVersion(t *testing.T) {
+	tests := []struct {
+		name         string
+		suiteContent string
+		expectSkip   bool
+		skipReason   string
+	}{
+		{
+			name: "valid minimum version",
+			suiteContent: `
+suite: minimumVersion test
+skip:
+  minimumVersion: 0.0.1
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: false,
+		},
+		{
+			name: "minimum version too high",
+			suiteContent: `
+suite: minimumVersion test
+skip:
+  minimumVersion: 99.0.0
+tests:
+  - it: should fail
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: true,
+			skipReason: "Test suite requires minimum unittest plugin version 99.0.0",
+		},
+		{
+			name: "no minimum version",
+			suiteContent: `
+suite: minimumVersion test
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: false,
+		},
+		{
+			name: "empty minimum version",
+			suiteContent: `
+suite: minimumVersion test
+skip:
+  minimumVersion: ""
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: false,
+		},
+		{
+			name: "invalid version format",
+			suiteContent: `
+suite: minimumVersion test
+skip:
+  minimumVersion: "not-a-valid-version"
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: true, // Invalid version formats will also trigger skip
+			skipReason: "Test suite requires minimum unittest plugin version not-a-valid-version",
+		},
+		{
+			name: "both reason and minimumVersion specified",
+			suiteContent: `
+suite: minimumVersion test
+skip:
+  reason: "Custom skip reason"
+  minimumVersion: 0.0.1
+tests:
+  - it: should pass
+    asserts:
+      - isKind:
+          of: Deployment
+`,
+			expectSkip: true,
+			skipReason: "Custom skip reason",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a temporary file with the test suite content
+			file := path.Join("_scratch", fmt.Sprintf("minimum-version-%s.yaml", tt.name))
+			assert.Nil(t, writeToFile(tt.suiteContent, file))
+			defer os.RemoveAll(file)
+
+			suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
+			assert.NoError(t, err)
+			assert.NotEmpty(t, suites)
+
+			// Check if suite was skipped correctly
+			if tt.expectSkip {
+				assert.NotEmpty(t, suites[0].Skip.Reason)
+				assert.Contains(t, suites[0].Skip.Reason, tt.skipReason)
+			} else {
+				assert.Empty(t, suites[0].Skip.Reason)
+			}
 		})
 	}
 }

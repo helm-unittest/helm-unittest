@@ -8,11 +8,16 @@
  PASS  Custom Resource Definition Test	../../test/data/v3/basic/tests/servicemonitor_test.yaml
  SKIP  test pod disruption budget	../../test/data/v3/basic/tests/skip_this_suite_test.yaml
 	- SKIPPED 'should be skipped'
+ PASS  Minimum version lower than plugin version	../../test/data/v3/basic/tests/minimum_version_lower_test.yaml
+ SKIP  Minimum version ignored	../../test/data/v3/basic/tests/minimum_version_skipped_test.yaml
+	- SKIPPED 'should be skipped because a reason was provided'
  PASS  Secret Test	../../test/data/v3/basic/tests/secret_test.yaml
  PASS  spark-operator	../../test/data/v3/basic/tests/rbac_test.yaml
  PASS  test deployment	../../test/data/v3/basic/tests/deployment_test.yaml
  PASS  test generate names in Kubernetes resources	../../test/data/v3/basic/tests/generateNames_test.yaml
  PASS  test ingress	../../test/data/v3/basic/tests/ingress_test.yaml
+ SKIP  Minimum version higher than plugin version	../../test/data/v3/basic/tests/minimum_version_high_test.yaml
+	- SKIPPED 'should be skipped because minimum plugin version is too high'
  PASS  test notes	../../test/data/v3/basic/tests/notes_test.yaml
  PASS  test override names and fullNames in Kubernetes resources	../../test/data/v3/basic/tests/namesOverride_test.yaml
  PASS  test pod disruption budget	../../test/data/v3/basic/tests/pdp_test.yaml
@@ -22,8 +27,8 @@
 
 
 Charts:      1 passed, 1 total
-Test Suites: 14 passed, 1 skipped, 15 total
-Tests:       44 passed, 2 skipped, 46 total
+Test Suites: 15 passed, 3 skipped, 18 total
+Tests:       45 passed, 4 skipped, 49 total
 Snapshot:    4 passed, 4 total
 Time:        XX.XXXms
 
