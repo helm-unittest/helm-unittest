@@ -1,0 +1,10 @@
+suite: Minimum version higher than plugin version
+templates:
+  - plugin_version.yaml
+skip:
+  minimumVersion: 99.99.99
+tests:
+  - it: should be skipped because minimum plugin version is too high
+    asserts:
+      - exists:
+          path: metadata.name

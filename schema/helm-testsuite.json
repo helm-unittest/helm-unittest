@@ -1172,6 +1172,11 @@
           "type": "string",
           "description": "The reason to skip the `suite` or 'test'.",
           "markdownDescription": "**reason** (string)\n\nThe reason to skip the `suite` or 'test'."
+        },
+        "minimumVersion": {
+          "type": "string",
+          "description": "The minimum version of helm-unittest plugin required to run this test suite. Do not set **minimumVersion** if you set this.",
+          "markdownDescription": "**minimumVersion** (string) _optional_\n\nThe minimum version of helm-unittest plugin required to run this test suite. If set, do not set reason, otherwise the test suite will be skipped regardless of the version."
         }
       },
       "additionalProperties": false

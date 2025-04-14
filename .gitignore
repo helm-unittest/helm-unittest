@@ -11,6 +11,7 @@ untt-dbg
 untt.exe
 untt-dbg.exe
 _dist
+plugin.yaml
 
 .DS_Store
 

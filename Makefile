@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 HELM_VERSION := 3.17.2
-VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+VERSION := $(shell grep -o 'PluginVersion = ".*"' pkg/unittest/version.go | cut -d'"' -f2)
 DIST := ./_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
@@ -61,16 +61,21 @@ test-coverage: build ## Test coverage with open report in default browser
 build-debug: ## Compile packages and dependencies with debug flag
 	go build -o untt-dbg -gcflags "all=-N -l" ./cmd/helm-unittest
 
+.PHONY: plugin-yaml
+plugin-yaml: ## Write plugin version to plugin.yaml
+	sed "s/__VERSION__/${VERSION}/g" plugin-tpl.yaml > plugin.yaml
+
+
 .PHONY: build
-build: ## Compile packages and dependencies
+build: plugin-yaml ## Compile packages and dependencies
 	go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: build-amd64
-build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docker image
+build-amd64: plugin-yaml ## Compile packages and dependencies, pinned to amd64 for the docker image
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
-dist:
+dist: plugin-yaml
 	mkdir -p $(DIST)
 	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt README.md LICENSE plugin.yaml
@@ -102,7 +107,7 @@ dependency: ## Dependency maintanance
 	go mod tidy
 
 .PHONY: dockerimage
-dockerimage: build-amd64 ## Build docker image
+dockerimage: build-amd64 plugin-yaml ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
 .PHONY: test-docker
