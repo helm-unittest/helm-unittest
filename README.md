@@ -198,7 +198,7 @@ The test job or assertion can also specify a documentSelector rather than a docu
 
 The `path` in the documentSelector has Yaml JsonPath Support, using JsonPath expressions it is possible to filter on multiple fields.
 
-The `value` in the documentSelector can validate complete yaml objects.
+The `value` in the documentSelector can validate complete yaml objects and is optional. 
 
 ```yaml
 ...
