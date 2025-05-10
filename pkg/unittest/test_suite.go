@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
@@ -238,7 +239,10 @@ type TestSuite struct {
 	// An identifier to append to snapshot files
 	SnapshotId string `yaml:"snapshotId"`
 	Skip       struct {
+		// The reason for skipping the test suite
 		Reason string `yaml:"reason"`
+		// If the plugin version is less than the minimum version, skip the test suite
+		MinimumVersion string `yaml:"minimumVersion"`
 	} `yaml:"skip"`
 }
 
@@ -422,12 +426,37 @@ func (s *TestSuite) runV3TestJobs(
 	return &result
 }
 
+// VersionMeetsMinimum check if currentVersion meets the minimumVersion requirement
+func VersionMeetsMinimum(currentVersion, minimumVersion string) bool {
+	current, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		log.WithField(common.LOG_TEST_SUITE, "version-comparison").Debugln("failed to parse current version:", err)
+		return false
+	}
+
+	minimum, err := semver.NewVersion(minimumVersion)
+	if err != nil {
+		log.WithField(common.LOG_TEST_SUITE, "version-comparison").Debugln("failed to parse minimum version:", err)
+		return false
+	}
+
+	return current.Compare(minimum) >= 0
+}
+
 func (s *TestSuite) validateTestSuite() error {
 	if len(s.Tests) == 0 {
 		return fmt.Errorf("no tests found")
 	}
 	if s.fromRender && len(s.Name) == 0 {
 		return fmt.Errorf("helm chart based test suites must include `suite` field")
+	}
+
+	// Check minimum version if specified
+	if len(s.Skip.MinimumVersion) > 0 {
+		if !VersionMeetsMinimum(PluginVersion, s.Skip.MinimumVersion) {
+			s.Skip.Reason = fmt.Sprintf("Test suite requires minimum unittest plugin version %s, but current version is %s",
+				s.Skip.MinimumVersion, PluginVersion)
+		}
 	}
 
 	for _, testJob := range s.Tests {

@@ -209,5 +209,5 @@ func TestCopyHelmChartWithExcludedTemplatesFilter(t *testing.T) {
 
 	// Validate loaded chart
 	assert.NotNil(t, sut)
-	assert.Equal(t, 9, templatesCount)
+	assert.Equal(t, 10, templatesCount)
 }
