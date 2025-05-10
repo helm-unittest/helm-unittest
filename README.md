@@ -353,15 +353,15 @@ This plugin is inspired by [helm-template](https://github.com/technosophos/helm-
 
 And there are some other helm commands you might want to use:
 
-- [`helm template`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_template.md): render the chart and print the output.
+- [`helm template`](https://helm.sh/docs/helm/helm_template/): render the chart and print the output.
 
-- [`helm lint`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_lint.md): examines a chart for possible issues, useful to validate chart dependencies.
+- [`helm lint`](https://helm.sh/docs/helm/helm_lint/): examines a chart for possible issues, useful to validate chart dependencies.
 
-- [`helm test`](https://github.com/kubernetes/helm/blob/master/docs/helm/helm_test.md): test a release with testing pod defined in chart. Note this does create resources on your cluster to verify if your release is correct. Check the [doc](https://github.com/helm/helm/blob/main/pkg/chart/v2/chart_test.go).
+- [`helm test`](https://helm.sh/docs/helm/helm_test/): test a release with testing pod defined in chart. Note this does create resources on your cluster to verify if your release is correct. Check the [doc](https://github.com/helm/helm/blob/main/pkg/chart/v2/chart_test.go).
 
 Alternatively, you can also use generic tests frameworks:
 
-- [Python](https://github.com/apache/airflow/issues/11657)
+- Python - [pytest-helm-charts](https://pypi.org/project/pytest-helm-charts/)
 
 - Go - [terratest](https://blog.gruntwork.io/automated-testing-for-kubernetes-and-helm-charts-using-terratest-a4ddc4e67344)
 
