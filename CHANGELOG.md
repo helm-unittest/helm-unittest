@@ -1,4 +1,4 @@
-0.8.1 / 2025-05-10
+0.8.2 / 2025-05-11
 ==================
 - Fix broken links (credits @Lubov66)
 - Add badge and license link (credits @Lubov66)
