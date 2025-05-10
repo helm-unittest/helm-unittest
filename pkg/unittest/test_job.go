@@ -163,9 +163,9 @@ type orderedSnapshotComparer struct {
 	counter uint
 }
 
-func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}) *snapshot.CompareResult {
+func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	s.counter++
-	return s.cache.Compare(s.test, s.counter, content)
+	return s.cache.Compare(s.test, s.counter, content, optFns...)
 }
 
 type Capabilities struct {

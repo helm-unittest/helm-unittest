@@ -24,3 +24,41 @@ should pass all kinds of assertion:
             resources: {}
         securityContext:
           runAsUser: 1000
+  2: |
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    metadata:
+      annotations:
+        checksum/health: 5bde893f09313c69274774e2d93a68c7b5aa97256ea073a96832016c749b3f63
+      labels:
+        app: basic
+        appVersion: 9.9.9
+        chart: basic-9.9.9_test
+        heritage: Helm
+        release: RELEASE-NAME
+      name: RELEASE-NAME-basic
+    spec:
+      replicas: 2
+      template:
+        metadata:
+          labels:
+            app: basic
+            release: RELEASE-NAME
+        spec:
+          containers:
+            - image: apache:latest
+              imagePullPolicy: Always
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+              name: basic
+              ports:
+                - containerPort: 8080
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+              resources: {}
+          securityContext:
+            runAsUser: 1000
