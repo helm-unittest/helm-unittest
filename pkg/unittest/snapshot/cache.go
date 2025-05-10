@@ -71,44 +71,47 @@ func (s *Cache) Compare(test string, idx uint, content interface{}, optFns ...fu
 	}
 
 	s.currentCount++
-	cached, exsisted := s.getCached(test, idx)
-	if !exsisted {
+	cached, existed := s.getCached(test, idx)
+	if !existed {
 		s.insertedCount++
 	}
 
 	match := true
+
 	newSnapshot := common.TrustedMarshalYAML(content)
-	if exsisted && newSnapshot != cached {
-		match = false
-		s.updatedCount++
+
+	if len(optFns) > 0 {
+		if options.MatchRegexPattern != "" {
+			match, err = valueutils.MatchesPattern(newSnapshot, options.MatchRegexPattern)
+			if !match {
+				msg = fmt.Sprintf(" pattern '%s' not found in snapshot", options.MatchRegexPattern)
+			}
+		}
+
+		if options.NotMatchRegexPattern != "" && match {
+			var noMatch bool
+			noMatch, err = valueutils.MatchesPattern(newSnapshot, options.NotMatchRegexPattern)
+			if noMatch {
+				match = false
+				msg = fmt.Sprintf(" pattern '%s' should not be in snapshot", options.NotMatchRegexPattern)
+			}
+		}
+	} else {
+		if existed && newSnapshot != cached {
+			match = false
+			s.updatedCount++
+		}
 	}
 
 	var snapshotToSave string
-	if s.IsUpdating || !exsisted {
+	if s.IsUpdating || !existed {
 		snapshotToSave = newSnapshot
 	} else {
 		snapshotToSave = cached
 	}
-
 	s.setNewSnapshot(test, idx, snapshotToSave)
 
 	match = s.IsUpdating || match
-
-	if options.MatchRegexPattern != "" && match {
-		match, err = valueutils.MatchesPattern(newSnapshot, options.MatchRegexPattern)
-		if !match {
-			msg = fmt.Sprintf(" pattern '%s' not found in snapshot", options.MatchRegexPattern)
-		}
-	}
-
-	if options.NotMatchRegexPattern != "" && match {
-		var noMatch bool
-		noMatch, err = valueutils.MatchesPattern(newSnapshot, options.NotMatchRegexPattern)
-		if noMatch {
-			match = false
-			msg = fmt.Sprintf(" pattern '%s' should not be in snapshot", options.NotMatchRegexPattern)
-		}
-	}
 
 	return &CompareResult{
 		Passed:         match,
