@@ -110,7 +110,7 @@ jobs:
       - name: Build and push by digest
         id: build
         # https://github.com/docker/build-push-action
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
         with:
           build-args: |
             HELM_VERSION=${{ matrix.helmVersion }}
@@ -149,7 +149,7 @@ jobs:
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
       - name: Download digests
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/digests
           pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
