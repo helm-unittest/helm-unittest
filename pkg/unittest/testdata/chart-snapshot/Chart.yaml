@@ -1,0 +1,8 @@
+apiVersion: v2
+name: snapshot
+description: simple chart to cover snapshot behavior
+type: application
+version: 0.0.0
+appVersion: "1.0.0"
+keywords:
+  - helm template test pkg/unittest/testdata/chart-snapshot --output-dir _scratch

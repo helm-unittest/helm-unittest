@@ -59,8 +59,7 @@ func YamlToJson(in string) ([]byte, error) {
 }
 
 func YmlUnmarshal(in string, out interface{}) error {
-	err := yamlv3.Unmarshal([]byte(in), out)
-	return err
+	return yamlv3.Unmarshal([]byte(in), out)
 }
 
 func YmlMarshall(in interface{}) (string, error) {

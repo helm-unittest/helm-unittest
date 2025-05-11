@@ -1,0 +1,29 @@
+suite: test ingress
+templates:
+  - templates/network.yaml
+
+tests:
+  - it: should render snapshot
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot: {}
+      - matchSnapshot:
+          path: metadata.labels
+      - matchSnapshot:
+          matchRegex:
+            pattern: .*app.*
+      - matchSnapshot:
+          notMatchRegex:
+            pattern: .*app\.kubernetes\.io/version-wrong.*
+
+  - it: should render snapshot and assert in single matcher
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot:
+          path: metadata.labels
+          matchRegex:
+            pattern: .*app.*
+          notMatchRegex:
+            pattern: .*app\.kubernetes\.io/version-wrong.*

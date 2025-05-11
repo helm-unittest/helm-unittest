@@ -1,0 +1,4 @@
+should fail as pattern not found:
+  1: |
+    app: test-cluster
+    app.kubernetes.io/version: null
