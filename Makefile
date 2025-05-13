@@ -4,7 +4,7 @@
 HELM_VERSION := 3.17.3
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
-LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
+LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
 TEST_NAMES ?=basic \

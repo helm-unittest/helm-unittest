@@ -50,6 +50,8 @@ kubernetesProvider:
         namespace: default
 skip:
     reason: "Unreleased feature"
+    # optional minimum version of the plugin required to run this test
+    minimumVersion: 0.8.0
 postRenderer:
   cmd: "yq"
   args:
@@ -91,7 +93,8 @@ tests:
   - **objects**: *array of objects*. Define the Kubernetes objects to fake
 
 - **skip**: *object, optional*. Marks the test suite as having been skipped. Execution will continue at the next suite.
-  - **reason**: *string, required*. Define the reason for skipping. Marks all tests as skipped.
+  - **reason**: *string, required*. Define the reason for skipping. Marks all tests as skipped. Do not set **minimumVersion** if you set this.
+  - **minimumVersion**: *string, optional*. Define a minimum version of the plugin required to run this test. If set, do not set reason, otherwise the test suite will be skipped regardless of the version.
 
 - **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.  
   - **cmd**: *string, required*. The full path to the command to invoke, or just its name if it's on `$PATH`.

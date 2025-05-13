@@ -31,4 +31,4 @@ UPDATE_SNAPSHOTS=true go test ./...
 
 This update the snapshot cache file and please add them before you commit.
 
-In order to run the post-render tests succesfull, make sure the tool yq is installed on the path.
+In order to run the post-render tests successful, make sure the tool yq is installed on the path.
