@@ -557,7 +557,7 @@ equal:
 	result := assertion.Assert(&results.AssertionResult{Index: 0})
 	a.Equal(&results.AssertionResult{
 		Index:      0,
-		FailInfo:   []string{"Error:", "document index 1 is out of rage"},
+		FailInfo:   []string{"Error:", "document index 1 is out of range"},
 		Passed:     false,
 		AssertType: "equal",
 		Not:        false,
