@@ -198,7 +198,7 @@ func TestTestSuiteResultPrint_SuiteSkipped(t *testing.T) {
 	}
 	buffer := new(bytes.Buffer)
 	test.Print(printer.NewPrinter(buffer, nil), 0)
-	fmt.Println(buffer.String())
+
 	assert.Contains(t, buffer.String(), "SKIP  this-test-suite")
 }
 

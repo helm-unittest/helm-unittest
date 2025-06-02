@@ -590,3 +590,31 @@ func TestMergeValues_OverwriteWithNil(t *testing.T) {
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
+
+func TestMatchesPattern(t *testing.T) {
+	tests := []struct {
+		input    string
+		pattern  string
+		expected bool
+		hasError bool
+	}{
+		{"example123", `^[a-z]+[0-9]+$`, true, false},
+		{"example", `^[a-z]+[0-9]+$`, false, false},
+		{"123example", `^[a-z]+[0-9]+$`, false, false},
+		{"example123", `[a-z]+`, true, false},
+		{"example123", `\d+`, true, false},
+		{"example123", `(`, false, true}, // Invalid regex pattern
+	}
+
+	for _, test := range tests {
+		t.Run(test.input+"_"+test.pattern, func(t *testing.T) {
+			result, err := MatchesPattern(test.input, test.pattern)
+			if test.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expected, result)
+			}
+		})
+	}
+}

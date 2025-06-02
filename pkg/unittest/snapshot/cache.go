@@ -2,10 +2,11 @@ package snapshot
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
-	yaml "sigs.k8s.io/yaml"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
 // CompareResult result return by Cache.Compare
@@ -15,6 +16,8 @@ type CompareResult struct {
 	Index          uint
 	NewSnapshot    string
 	CachedSnapshot string
+	Msg            string
+	Err            error
 }
 
 // Cache manage snapshot caching
@@ -39,7 +42,7 @@ func (s *Cache) RestoreFromFile() error {
 		return err
 	}
 
-	if err := yaml.Unmarshal(content, &s.cached); err != nil {
+	if err := common.YmlUnmarshal(string(content), &s.cached); err != nil {
 		return err
 	}
 	s.Existed = true
@@ -55,35 +58,69 @@ func (s *Cache) getCached(test string, idx uint) (string, bool) {
 	return "", false
 }
 
-// Compare compare content to cached last time, return CompareResult
-func (s *Cache) Compare(test string, idx uint, content interface{}) *CompareResult {
+// Compare content to cached last time, return CompareResult
+func (s *Cache) Compare(test string, idx uint, content interface{}, optFns ...func(options *CacheOptions) error) *CompareResult {
+	var options CacheOptions
+	var err error
+	var msg string
+
+	for _, optFn := range optFns {
+		if err = optFn(&options); err != nil {
+			options = CacheOptions{}
+		}
+	}
+
 	s.currentCount++
-	cached, exsisted := s.getCached(test, idx)
-	if !exsisted {
+	cached, existed := s.getCached(test, idx)
+	if !existed {
 		s.insertedCount++
 	}
 
 	match := true
+
 	newSnapshot := common.TrustedMarshalYAML(content)
-	if exsisted && newSnapshot != cached {
-		match = false
-		s.updatedCount++
+
+	if len(optFns) > 0 {
+		if options.MatchRegexPattern != "" {
+			match, err = valueutils.MatchesPattern(newSnapshot, options.MatchRegexPattern)
+			if !match {
+				msg = fmt.Sprintf(" pattern '%s' not found in snapshot", options.MatchRegexPattern)
+			}
+		}
+
+		if options.NotMatchRegexPattern != "" && match {
+			var noMatch bool
+			noMatch, err = valueutils.MatchesPattern(newSnapshot, options.NotMatchRegexPattern)
+			if noMatch {
+				match = false
+				msg = fmt.Sprintf(" pattern '%s' should not be in snapshot", options.NotMatchRegexPattern)
+			}
+		}
+	} else {
+		if existed && newSnapshot != cached {
+			match = false
+			s.updatedCount++
+		}
 	}
 
 	var snapshotToSave string
-	if s.IsUpdating || !exsisted {
+	if s.IsUpdating || !existed {
 		snapshotToSave = newSnapshot
 	} else {
 		snapshotToSave = cached
 	}
-
 	s.setNewSnapshot(test, idx, snapshotToSave)
+
+	match = s.IsUpdating || match
+
 	return &CompareResult{
-		Passed:         s.IsUpdating || match,
+		Passed:         match,
 		Test:           test,
 		Index:          idx,
 		CachedSnapshot: cached,
 		NewSnapshot:    newSnapshot,
+		Msg:            msg,
+		Err:            err,
 	}
 }
 
@@ -179,4 +216,26 @@ func (s *Cache) VanishedCount() uint {
 		}
 	}
 	return count
+}
+
+// CacheOptions is a type alias for CacheOptions functional option
+type CacheOptionsFunc func(*CacheOptions) error
+
+type CacheOptions struct {
+	MatchRegexPattern    string
+	NotMatchRegexPattern string
+}
+
+func WithMatchRegexPattern(pattern string) CacheOptionsFunc {
+	return func(c *CacheOptions) error {
+		c.MatchRegexPattern = pattern
+		return nil
+	}
+}
+
+func WithNotMatchRegexPattern(pattern string) CacheOptionsFunc {
+	return func(c *CacheOptions) error {
+		c.NotMatchRegexPattern = pattern
+		return nil
+	}
 }
