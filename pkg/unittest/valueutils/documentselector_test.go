@@ -233,3 +233,21 @@ func TestNewDocumentSelectorMissingPath(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Nil(t, selector)
 }
+
+func TestFindDocumentIndicesMatchManyAndSkipEmptyTemplatesWithoutValueOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := map[string][]common.K8sManifest{
+		"secondTemplate": {parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
+	}
+
+	selector := DocumentSelector{
+		Path:               "metadata[?(@.namespace == 'foo')]",
+		MatchMany:          true,
+		SkipEmptyTemplates: true,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createMultiTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
+}
