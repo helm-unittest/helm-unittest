@@ -227,7 +227,7 @@ func (a *Assertion) selectDocumentsByIndex(index int, docs map[string][]common.K
 
 	for template, manifests := range docs {
 		if index >= len(manifests) {
-			return map[string][]common.K8sManifest{}, fmt.Errorf("document index %d is out of rage", a.DocumentIndex)
+			return map[string][]common.K8sManifest{}, fmt.Errorf("document index %d is out of range", a.DocumentIndex)
 		}
 
 		selectedDocs[template] = []common.K8sManifest{manifests[index]}
