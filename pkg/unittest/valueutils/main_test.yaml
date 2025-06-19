@@ -1,0 +1,52 @@
+suite: a fail-fast first test
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should NOT configure ssl params if NOT set to be exposed
+    asserts:
+      - notMatchRegex:
+          path: data["my.conf"]
+          pattern: cacertfile
+      - contains:
+          path: data["my.array"]
+          content: value1
+          count: 1
+
+  - it: should not fail
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+
+  - it: should run a test
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+      - equal:
+          path: metadata.name
+          value: benchmark-configmap
+
+  - it: should validate values
+    values:
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+      - isNotEmpty:
+          path: metadata.labels
+      - equal:
+          path: metadata.name
+          value: benchmark-configmap
+
+  - it: should validate metadata labels
+    values:
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app: my-app
+            appVersion: ""
+            chart: benchmark-0.1.0
+            heritage: Helm
+            release: RELEASE-NAME
