@@ -22,10 +22,6 @@ func NewDocumentSelector(documentSelector map[string]interface{}) (*DocumentSele
 		return nil, errors.New("empty 'documentSelector.path' not supported")
 	}
 	value := documentSelector["value"]
-	if value == nil {
-		log.WithField("selector", "document-selector").Debugln("documentSelector.value is nil")
-		return nil, errors.New("empty 'documentSelector.value' not supported")
-	}
 	matchMany := documentSelector["matchMany"] == true
 	skipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
 
@@ -95,7 +91,7 @@ func (ds DocumentSelector) isMatchingSelector(doc common.K8sManifest) (bool, err
 	}
 
 	for _, manifestValue := range manifestValues {
-		if reflect.DeepEqual(ds.Value, manifestValue) {
+		if ds.Value == nil || reflect.DeepEqual(ds.Value, manifestValue) {
 			return true, nil
 		}
 	}
