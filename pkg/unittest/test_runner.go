@@ -220,7 +220,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chartPath string) 
 			chartPassed = false
 			continue
 		}
-		result := suite.RunV3(chartPath, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
+		result := suite.RunV3(chartPath, snapshotCache, tr.TestFiles, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)

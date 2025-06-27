@@ -1,0 +1,6 @@
+apiVersion: v2
+name: benchmark
+version: 0.1.0
+description: simple chart to execute benchmark tests
+keywords:
+  - helm template test  pkg/unittest/testdata/chart-benchmark --output-dir _scratch
