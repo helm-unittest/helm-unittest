@@ -12,6 +12,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -1735,6 +1736,9 @@ func TestVersionMeetsMinimum(t *testing.T) {
 }
 
 func TestSuiteWithMinimumVersion(t *testing.T) {
+	// Enable debug logging
+	log.SetLevel(log.DebugLevel)
+
 	tests := []struct {
 		name         string
 		suiteContent string

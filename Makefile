@@ -112,7 +112,7 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION) -d -f tests/*.yaml .;\
 	done
 
 .PHONY: go-lint
