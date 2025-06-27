@@ -1,3 +1,11 @@
+0.8.2 / 2025-05-11
+==================
+- Fix broken links (credits @Lubov66)
+- Add badge and license link (credits @Lubov66)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 0.8.1 / 2025-04-03
 ==================
 - Fix special characters in template filename (resolves #619)

@@ -22,7 +22,7 @@ var regex = regexp.MustCompile(`(?m)[ ]+\r?\n`)
 
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
-	CompareToSnapshot(content interface{}) *snapshot.CompareResult
+	CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
 }
 
 // ValidateContext the context passed to validators

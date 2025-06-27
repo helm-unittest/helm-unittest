@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM alpine:3@sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a
+FROM --platform=$BUILDPLATFORM alpine:3@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
 
 # variable "HELM_VERSION" and "PLUGIN_VERSION" must be passed as docker environment variables during the image build
 # docker buildx build --no-cache --platform linux/amd64,linux/arm64 --build-arg HELM_VERSION=3.10.0 --build-arg PLUGIN_VERSION=0.3.0 -t alpine/helm-unittest:3.10.0-0.3.0 .

@@ -1029,6 +1029,30 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "matchRegex": {
+                          "type": "object",
+                          "description": "Assert the value of regex is the same as snapshotted last time. ",
+                          "markdownDescription": "**matchRegex** (object)\n\nAssert the value of `regex` is the same as snapshotted last time.",
+                          "properties": {
+                            "pattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the snapshot.",
+                              "markdownDescription": "**pattern** (string) _required_ The regex pattern to match the snapshot."
+                            }
+                          }
+                        },
+                        "notMatchRegex": {
+                          "type": "object",
+                          "description": "Assert the value of regex is not as snapshotted last time. ",
+                          "markdownDescription": "**matchRegex** (object)\n\nAssert the value of `regex` is no assnapshotted last time.",
+                          "properties": {
+                            "pattern": {
+                              "type": "string",
+                              "description": "The regex pattern to match the snapshot.",
+                              "markdownDescription": "**pattern** (string) _required_ The regex pattern to match the snapshot."
+                            }
+                          }
                         }
                       },
                       "additionalProperties": false
@@ -1172,6 +1196,11 @@
           "type": "string",
           "description": "The reason to skip the `suite` or 'test'.",
           "markdownDescription": "**reason** (string)\n\nThe reason to skip the `suite` or 'test'."
+        },
+        "minimumVersion": {
+          "type": "string",
+          "description": "The minimum version of helm-unittest plugin required to run this test suite. Do not set **minimumVersion** if you set this.",
+          "markdownDescription": "**minimumVersion** (string) _optional_\n\nThe minimum version of helm-unittest plugin required to run this test suite. If set, do not set reason, otherwise the test suite will be skipped regardless of the version."
         }
       },
       "additionalProperties": false

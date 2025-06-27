@@ -1,0 +1,13 @@
+suite: test ingress
+templates:
+  - templates/network.yaml
+
+tests:
+  - it: should fail as pattern not found
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchSnapshot:
+          path: metadata.labels
+          matchRegex:
+            pattern: .*not-in-snapshot.*
