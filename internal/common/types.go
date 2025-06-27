@@ -1,6 +1,6 @@
 package common
 
-// K8sManifest type for rendered manifest unmarshaled to
+// K8sManifest type for rendered manifest unmarshalled to
 type K8sManifest map[string]interface{}
 
 // RAW the key value for making content parsable as K8sManifest

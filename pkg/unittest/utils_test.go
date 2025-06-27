@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -378,4 +379,41 @@ func TestV3RunnerWith_Fixture_Chart_SpecialCharacters(t *testing.T) {
 
 	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 total")
+}
+
+func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Success(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/success/*_test.yaml"},
+		Strict:    true,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+
+	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
+	assert.Contains(t, buffer.String(), "Snapshot:    5 passed, 5 total")
+}
+
+func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Failed(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/failed/*_test.yaml"},
+		Strict:    true,
+	}
+	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+
+	failMsg := `
+Template:	snapshot/templates/network.yaml
+DocumentIndex:	0
+ValuesIndex:	0
+Expected pattern '.*not-in-snapshot.*' not found in snapshot:
+	app: test-cluster
+	app.kubernetes.io/version: null
+`
+
+	assert.Contains(t, strings.Join(strings.Fields(buffer.String()), ""), strings.Join(strings.Fields(failMsg), ""))
+
+	assert.Contains(t, buffer.String(), "Tests:       1 failed, 0 passed, 1 total")
+	assert.Contains(t, buffer.String(), "Snapshot:    1 passed, 1 total")
 }

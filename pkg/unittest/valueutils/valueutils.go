@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -69,6 +70,18 @@ func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, 
 		return nil, err
 	}
 	return tr.getBuildedData(), nil
+}
+
+// MatchesPattern checks if the input string matches the given regex pattern.
+// This method is useful for validating input against a specific format or structure when pattern is only provided at runtime.
+// Note: Compiling a regex pattern each time this function is called can be a performance hit.
+// To improve performance, consider compiling the regex once and reusing it if the pattern is constant.
+func MatchesPattern(input, pattern string) (bool, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return false, fmt.Errorf("failed to compile regex pattern %s: %v", pattern, err)
+	}
+	return re.MatchString(input), nil
 }
 
 type parseTraverser interface {
