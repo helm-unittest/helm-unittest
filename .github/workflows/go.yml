@@ -78,7 +78,7 @@ jobs:
     # Upload the original go test log as an artifact for later review.
     - name: Upload Testlog
       # https://github.com/EnricoMi/publish-unit-test-result-action
-      uses: EnricoMi/publish-unit-test-result-action@afb2984f4d89672b2f9d9c13ae23d53779671984 # v2.19.0
+      uses: EnricoMi/publish-unit-test-result-action@3a74b2957438d0b6e2e61d67b05318aa25c9e6c6 # v2.20.0
       if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
       with:
         files: |
