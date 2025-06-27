@@ -1,0 +1,11 @@
+suite: Minimum version ignored
+templates:
+  - plugin_version.yaml
+skip:
+  minimumVersion: 99.99.99
+  reason: "A custom reason overrides minimum version"
+tests:
+  - it: should be skipped because a reason was provided
+    asserts:
+      - exists:
+          path: metadata.name
