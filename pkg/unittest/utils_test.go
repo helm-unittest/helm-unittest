@@ -417,3 +417,27 @@ Expected pattern '.*not-in-snapshot.*' not found in snapshot:
 	assert.Contains(t, buffer.String(), "Tests:       1 failed, 0 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Snapshot:    1 passed, 1 total")
 }
+
+func TestV3RunnerWith_Fixture_Chart_WithAddedTests(t *testing.T) {
+	files, err := copyFile("testdata/chart-benchmark/tests", "main_test.yaml", 3)
+	assert.NoError(t, err)
+
+	t.Cleanup(func() {
+		for _, file := range files {
+			err := os.Remove(file)
+			assert.NoError(t, err)
+		}
+	})
+
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    true,
+	}
+
+	_ = runner.RunV3([]string{"testdata/chart-benchmark"})
+
+	assert.Contains(t, buffer.String(), "Test Suites: 4 passed, 4 total")
+	assert.Contains(t, buffer.String(), "Tests:       20 passed, 20 total")
+}
