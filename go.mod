@@ -17,7 +17,12 @@ require (
 	helm.sh/helm/v3 v3.18.4
 	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.33.2
-	sigs.k8s.io/yaml v1.4.0
+	sigs.k8s.io/yaml v1.6.0
+)
+
+require (
+	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v3 v3.0.3 // indirect
 )
 
 require (
