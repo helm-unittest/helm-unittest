@@ -1,6 +1,6 @@
 1.0.0 / 2025-31-07
 ==================
-- Fix failedTemplate assertion to work with NOTES.txt (resolves #652)
+- Fix failedTemplate assertion to work with NOTES.txt (resolves #652, resolves #183)
 - Fix failedTemplate jsonSchema validation (resolves #700)
 - Added support for regex matching in snapshots (resolves #280, credits @ivankatliarchuk)
 - Making the value field optional in the documentSelector (resolves #707, credits @dragonpil)
