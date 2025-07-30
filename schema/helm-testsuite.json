@@ -1153,21 +1153,21 @@
     },
     "documentSelector": {
       "type": "object",
-      "description": "The path of the key to be match and the match value to assert. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.",
+      "description": "The path of the key to find and the value to match. Using this information, helm-unittest will automatically discover the documentIndex. Generally you can ignored this field if the template file render only one document.",
       "markdownDescription": "**documentSelector** (object) _optional_\n\nThe path of the key to be match and the match value to assert.\n\nUsing this information, helm-unittest will automatically discover the documentIndex.\n\nGenerally you can ignored this field if the template file render only one document.",
       "properties": {
         "path": {
           "type": "string",
-          "description": "The `documentSelector` path to assert.",
-          "markdownDescription": "**path** (string)\n\nThe `documentSelector` path to assert."
+          "description": "The `documentSelector` path to find.",
+          "markdownDescription": "**path** (string)\n\nThe `documentSelector` path to find."
         },
         "value": {
           "type": [
             "string",
             "object"
           ],
-          "description": "The expected value.",
-          "markdownDescription": "**value** (string|object)\n\nThe expected value.",
+          "description": "When set, filter on value to match. When not set, filters on all documents where the path is found.",
+          "markdownDescription": "**value** (string|object) _optional_\n\nWhen set, filter on value to match. When not set, filters on all documents where the path is found.",
           "additionalProperties": true
         },
         "matchMany": {
@@ -1182,8 +1182,7 @@
         }
       },
       "required": [
-        "path",
-        "value"
+        "path"
       ],
       "additionalProperties": false
     },

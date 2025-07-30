@@ -128,6 +128,21 @@ func TestFindDocumentIndicesMultiAllowedIndexOk(t *testing.T) {
 	a.Equal(expectedManifests, actualManifests)
 }
 
+func TestFindDocumentIndicesMultiAllowedIndexWithoutValueOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := createSingleTemplateMultiManifest()
+
+	selector := DocumentSelector{
+		Path:      "metadata.name",
+		MatchMany: true,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createSingleTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
+}
+
 func TestFindDocumentIndexNoDocumentNOk(t *testing.T) {
 	a := assert.New(t)
 	expectedManifests := map[string][]common.K8sManifest{}
@@ -204,12 +219,11 @@ func TestNewSafeDocumentSelector_Success(t *testing.T) {
 		{
 			name: "only required fields set",
 			input: map[string]interface{}{
-				"path":  "metadata.name",
-				"value": "foo",
+				"path": "metadata.name",
 			},
 			expectedSelector: &DocumentSelector{
 				Path:               "metadata.name",
-				Value:              "foo",
+				Value:              nil,
 				MatchMany:          false,
 				SkipEmptyTemplates: false,
 			},
@@ -226,10 +240,26 @@ func TestNewSafeDocumentSelector_Success(t *testing.T) {
 }
 
 func TestNewDocumentSelectorMissingPath(t *testing.T) {
-	input := map[string]interface{}{
-		"value": "foo",
-	}
+	input := map[string]interface{}{}
 	selector, err := NewDocumentSelector(input)
 	assert.NotNil(t, err)
 	assert.Nil(t, selector)
+}
+
+func TestFindDocumentIndicesMatchManyAndSkipEmptyTemplatesWithoutValueOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := map[string][]common.K8sManifest{
+		"secondTemplate": {parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
+	}
+
+	selector := DocumentSelector{
+		Path:               "metadata[?(@.namespace == 'foo')]",
+		MatchMany:          true,
+		SkipEmptyTemplates: true,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createMultiTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
 }

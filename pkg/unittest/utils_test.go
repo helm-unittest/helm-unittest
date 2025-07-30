@@ -167,7 +167,7 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 			chart:      "testdata/chart-document-selector",
 			testFlavor: "case2-error",
 			expected: []string{
-				"### Error:  empty 'documentSelector.value' not supported",
+				"Path:\tkind expected to exists",
 			},
 		},
 		{
@@ -176,13 +176,6 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 			expected: []string{
 				"Template:\tdocument-selector/templates/cfg01.yaml",
 				"Path:\tkind expected to exist",
-			},
-		},
-		{
-			chart:      "testdata/chart-document-selector",
-			testFlavor: "case4-error",
-			expected: []string{
-				"Path:\tkind expected to exists",
 			},
 		},
 		{

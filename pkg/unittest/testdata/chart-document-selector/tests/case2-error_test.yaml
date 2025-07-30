@@ -7,7 +7,6 @@ tests:
       - exists:
           path: kind
         documentSelector:
-          path: kind
-          # this throw an error as currently documentSelector require path and value
-          skipEmptyTemplates: true
+          # document selector is empty and ignored
+          # current error is "Path: kind expected to exists"
 
