@@ -33,7 +33,7 @@ func YamlNewEncoder(w io.Writer) *yamlv3.Encoder {
 }
 
 // TrustedMarshalYAML marshal yaml without error returned, if an error happens it panics
-func TrustedMarshalYAML(d interface{}) string {
+func TrustedMarshalYAML(d any) string {
 	byteBuffer := new(bytes.Buffer)
 	yamlEncoder := yamlv3.NewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(YAMLINDENTION)
@@ -45,7 +45,7 @@ func TrustedMarshalYAML(d interface{}) string {
 }
 
 // TrustedUnmarshalYAML unmarshal yaml without error returned, if an error happens it panics
-func TrustedUnmarshalYAML(d string) map[string]interface{} {
+func TrustedUnmarshalYAML(d string) map[string]any {
 	parsedYaml := K8sManifest{}
 	yamlDecoder := yamlv3.NewDecoder(strings.NewReader(d))
 	if err := yamlDecoder.Decode(&parsedYaml); err != nil {
@@ -58,11 +58,11 @@ func YamlToJson(in string) ([]byte, error) {
 	return yaml.YAMLToJSON([]byte(in))
 }
 
-func YmlUnmarshal(in string, out interface{}) error {
+func YmlUnmarshal(in string, out any) error {
 	return yamlv3.Unmarshal([]byte(in), out)
 }
 
-func YmlMarshall(in interface{}) (string, error) {
+func YmlMarshall(in any) (string, error) {
 	out, err := yaml.Marshal(in)
 	if err != nil {
 		return "", err
@@ -76,7 +76,7 @@ func YmlUnmarshalTestHelper(input string, out any, t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func YmlMarshallTestHelper(in interface{}, t *testing.T) string {
+func YmlMarshallTestHelper(in any, t *testing.T) string {
 	t.Helper()
 	out, err := yaml.Marshal(in)
 	assert.NoError(t, err)

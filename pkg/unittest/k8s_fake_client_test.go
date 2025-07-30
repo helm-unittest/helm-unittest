@@ -11,11 +11,11 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 )
 
-func newMap(apiVersion, kind, namespace, name string) map[string]interface{} {
-	return map[string]interface{}{
+func newMap(apiVersion, kind, namespace, name string) map[string]any {
+	return map[string]any{
 		"apiVersion": apiVersion,
 		"kind":       kind,
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"namespace": namespace,
 			"name":      name,
 		},
@@ -25,7 +25,7 @@ func newMap(apiVersion, kind, namespace, name string) map[string]interface{} {
 func TestKubernetesFakeClientProvider(t *testing.T) {
 	k := KubernetesFakeClientProvider{
 		Scheme:  map[string]KubernetesFakeKindProps{"v1/Pod": {ShouldErr: nil, Gvr: schema.GroupVersionResource{Resource: "pods", Version: "v1"}, Namespaced: true}},
-		Objects: []map[string]interface{}{newMap("v1", "Pod", "default", "unittest")},
+		Objects: []map[string]any{newMap("v1", "Pod", "default", "unittest")},
 	}
 
 	client, namespaced, err := k.GetClientFor("v1", "Pod")

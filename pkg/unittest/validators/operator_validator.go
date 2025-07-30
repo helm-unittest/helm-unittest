@@ -13,7 +13,7 @@ import (
 // internal struct, not exposed to end user
 type operatorValidator struct {
 	Path           string
-	Value          interface{}
+	Value          any
 	ComparisonType string
 }
 
@@ -33,7 +33,7 @@ func (o operatorValidator) failInfo(msg, comparisonType string, manifestIndex, a
 // ensuring that they are of compatible types and that the actual value is greater, less than or equal to the expected value.
 // If successful, it returns true along with a nil error slice. If unsuccessful, it returns false
 // along with an error slice containing information about the validation failure.
-func (o operatorValidator) compareValues(expected, actual interface{}, comparisonType string, negative bool) (bool, []string) {
+func (o operatorValidator) compareValues(expected, actual any, comparisonType string, negative bool) (bool, []string) {
 	expStr := fmt.Sprintf("%v", expected)
 	actStr := fmt.Sprintf("%v", actual)
 	result := false

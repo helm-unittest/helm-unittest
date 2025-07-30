@@ -55,15 +55,15 @@ type PostRendererConfig struct {
 func spliteChartRoutes(routePath string) []string {
 	splited := strings.Split(routePath, string(filepath.Separator))
 	routes := make([]string, len(splited)/2+1)
-	for r := 0; r < len(routes); r++ {
+	for r := range routes {
 		routes[r] = splited[r*2]
 	}
 	return routes
 }
 
-func scopeValuesWithRoutes(routes []string, values map[string]interface{}) map[string]interface{} {
+func scopeValuesWithRoutes(routes []string, values map[string]any) map[string]any {
 	if len(routes) > 1 {
-		newvalues := make(map[string]interface{})
+		newvalues := make(map[string]any)
 		if v, ok := values["global"]; ok {
 			newvalues["global"] = v
 		}
@@ -163,7 +163,7 @@ type orderedSnapshotComparer struct {
 	counter uint
 }
 
-func (s *orderedSnapshotComparer) CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
+func (s *orderedSnapshotComparer) CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	s.counter++
 	return s.cache.Compare(s.test, s.counter, content, optFns...)
 }
@@ -175,13 +175,13 @@ type Capabilities struct {
 }
 
 // CapabilitiesFields required to identify where or not the filed is provided, and the value is unset or not
-type CapabilitiesFields map[string]interface{}
+type CapabilitiesFields map[string]any
 
 // TestJob definition of a test, including values and assertions
 type TestJob struct {
 	Name             string `yaml:"it"`
 	Values           []string
-	Set              map[string]interface{}
+	Set              map[string]any
 	Template         string
 	Templates        []string
 	DocumentIndex    *int `yaml:"documentIndex"`
@@ -207,7 +207,7 @@ type TestJob struct {
 	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
 
 	// global set values
-	globalSet map[string]interface{}
+	globalSet map[string]any
 	// route indicate which chart in the dependency hierarchy
 	// like "parant-chart", "parent-charts/charts/child-chart"
 	chartRoute string
@@ -302,12 +302,12 @@ func (t *TestJob) RunV3(
 
 // liberally borrows from helm-template
 func (t *TestJob) getUserValues() (string, error) {
-	base := map[string]interface{}{}
+	base := map[string]any{}
 	routes := spliteChartRoutes(t.chartRoute)
 
 	// Load and merge values files.
 	for _, specifiedPath := range t.Values {
-		value := map[string]interface{}{}
+		value := map[string]any{}
 		var valueFilePath string
 		if filepath.IsAbs(specifiedPath) {
 			valueFilePath = specifiedPath
@@ -753,7 +753,7 @@ func (t *TestJob) SetCapabilities() {
 	}
 	if val, ok := t.CapabilitiesFields["apiVersions"]; ok {
 		switch v := val.(type) {
-		case []interface{}:
+		case []any:
 			t.Capabilities.APIVersions = make([]string, 0, len(v)) // optimize slice allocation
 			for _, item := range v {
 				if str, ok := item.(string); ok {
@@ -773,7 +773,7 @@ func (t *TestJob) SetCapabilities() {
 
 // ConvertIToString The convertToString function takes an interface{} value as input and returns a string representation of it.
 // If the input value is nil, it returns an empty string.
-func convertIToString(val interface{}) string {
+func convertIToString(val any) string {
 	if val == nil {
 		return ""
 	}

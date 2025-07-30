@@ -109,7 +109,7 @@ func TestEqualValidatorWhenFail(t *testing.T) {
 
 	validator := EqualValidator{
 		"a.b[0]",
-		map[interface{}]interface{}{"d": 321},
+		map[any]any{"d": 321},
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -145,7 +145,7 @@ a:
 
 	validator := EqualValidator{
 		"a.b[0]",
-		map[string]interface{}{"c": 321},
+		map[string]any{"c": 321},
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -175,7 +175,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := EqualValidator{
 		"a.b[0]",
-		map[string]interface{}{"c": 321},
+		map[string]any{"c": 321},
 		false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
@@ -216,7 +216,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[0]", map[string]interface{}{"c": 123}, false}
+	v := EqualValidator{"a.b[0]", map[string]any{"c": 123}, false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,

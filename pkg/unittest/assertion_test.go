@@ -84,7 +84,7 @@ func TestAssertionUnmarshalFromYAML(t *testing.T) {
 `
 
 	a := assert.New(t)
-	assertionsAsMap := make([]map[string]interface{}, 33)
+	assertionsAsMap := make([]map[string]any, 33)
 	common.YmlUnmarshalTestHelper(assertionsYAML, &assertionsAsMap, t)
 
 	assertions := make([]Assertion, 33)
@@ -225,7 +225,7 @@ func TestReverseAssertionTheSameAsOriginalOneWithNotTrue(t *testing.T) {
 
 type fakeSnapshotComparer bool
 
-func (c fakeSnapshotComparer) CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
+func (c fakeSnapshotComparer) CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	return &snapshot.CompareResult{
 		Passed: bool(c),
 	}

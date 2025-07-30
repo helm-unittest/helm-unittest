@@ -22,7 +22,7 @@ import (
 var sectionBeginPattern = regexp.MustCompile("( PASS | FAIL |\n*###|\n*Charts:|\n*Snapshot Summary:)")
 var timePattern = regexp.MustCompile(`(Time:\s+)(?:[\d\.]+)(s|ms|\xB5s)`) // B5 = micron for microseconds
 
-func makeOutputSnapshotable(originalOutput string) []interface{} {
+func makeOutputSnapshotable(originalOutput string) []any {
 	output := strings.ReplaceAll(originalOutput, "\\", "/")
 	timeAgnosticOutput := timePattern.ReplaceAllString(output, "${1}XX.XXXms")
 
@@ -30,7 +30,7 @@ func makeOutputSnapshotable(originalOutput string) []interface{} {
 	sections := make([]string, len(sectionBeggingLocs))
 
 	suiteBeginIdx := -1
-	for sectionIdx := 0; sectionIdx < len(sections); sectionIdx++ {
+	for sectionIdx := range sections {
 		start := sectionBeggingLocs[sectionIdx][0]
 		var end int
 		if sectionIdx >= len(sections)-1 {
@@ -55,7 +55,7 @@ func makeOutputSnapshotable(originalOutput string) []interface{} {
 		}
 	}
 
-	sectionsToRetrun := make([]interface{}, len(sections))
+	sectionsToRetrun := make([]any, len(sections))
 	for idx, section := range sections {
 		sectionsToRetrun[idx] = section
 	}

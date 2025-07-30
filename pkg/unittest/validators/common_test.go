@@ -14,7 +14,7 @@ type mockSnapshotComparer struct {
 	mock.Mock
 }
 
-func (m *mockSnapshotComparer) CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
+func (m *mockSnapshotComparer) CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	args := m.Called(content)
 	return args.Get(0).(*snapshot.CompareResult)
 }

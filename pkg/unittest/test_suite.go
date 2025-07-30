@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -109,7 +110,7 @@ func createTestSuite(suiteFilePath string, chartRoute string, content string, st
 }
 
 // RenderTestSuiteFiles renders a helm suite of test files and returns their TestSuites
-func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]interface{}) ([]*TestSuite, error) {
+func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict bool, valueFilesSet []string, renderValues map[string]any) ([]*TestSuite, error) {
 	testChartPath := filepath.Join(helmTestSuiteDir, "Chart.yaml")
 	// Ensure there's a helm file
 	if _, err := os.Stat(testChartPath); err != nil {
@@ -208,7 +209,7 @@ func iterateTemplates(template string, suites []*TestSuite, absPath string, char
 type TestSuite struct {
 	Name             string `yaml:"suite"`
 	Values           []string
-	Set              map[string]interface{}
+	Set              map[string]any
 	Templates        []string
 	ExcludeTemplates []string `yaml:"excludeTemplates"`
 	Release          struct {
@@ -357,9 +358,7 @@ func (s *TestSuite) polishKubernetesProviderSettings(test *TestJob) {
 		if test.KubernetesProvider.Scheme == nil {
 			test.KubernetesProvider.Scheme = map[string]KubernetesFakeKindProps{}
 		}
-		for k, v := range s.KubernetesProvider.Scheme {
-			test.KubernetesProvider.Scheme[k] = v
-		}
+		maps.Copy(test.KubernetesProvider.Scheme, s.KubernetesProvider.Scheme)
 	}
 }
 

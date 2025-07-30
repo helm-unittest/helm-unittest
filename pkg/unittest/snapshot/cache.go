@@ -59,7 +59,7 @@ func (s *Cache) getCached(test string, idx uint) (string, bool) {
 }
 
 // Compare content to cached last time, return CompareResult
-func (s *Cache) Compare(test string, idx uint, content interface{}, optFns ...func(options *CacheOptions) error) *CompareResult {
+func (s *Cache) Compare(test string, idx uint, content any, optFns ...func(options *CacheOptions) error) *CompareResult {
 	var options CacheOptions
 	var err error
 	var msg string

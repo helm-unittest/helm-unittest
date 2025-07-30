@@ -13,7 +13,7 @@ type EqualRawValidator struct {
 	Value string
 }
 
-func (a EqualRawValidator) failInfo(actual interface{}, not bool) []string {
+func (a EqualRawValidator) failInfo(actual any, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"

@@ -14,11 +14,11 @@ import (
 // EqualValidator validate whether the value of Path equal to Value
 type EqualValidator struct {
 	Path         string
-	Value        interface{}
+	Value        any
 	DecodeBase64 bool `yaml:"decodeBase64"`
 }
 
-func (a EqualValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
+func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(a.Value)
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"
@@ -72,7 +72,7 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 	return validateManifestSuccess, validateManifestErrors
 }
 
-func (a EqualValidator) validateSingleActual(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	if s, ok := actual.(string); ok {
 		if a.DecodeBase64 {
 			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)

@@ -3,7 +3,7 @@ package validators
 // EqualOrGreaterValidator validate whether the value of Path is greater or equal to Value
 type EqualOrGreaterValidator struct {
 	Path  string
-	Value interface{}
+	Value any
 }
 
 // Validate implement Validatable

@@ -13,7 +13,7 @@ func TestEqualOrGreaterValidatorOk(t *testing.T) {
 		name        string
 		doc         string
 		path        string
-		value       interface{}
+		value       any
 		expected    bool
 		expectedErr []string
 	}{
@@ -61,7 +61,7 @@ func TestEqualOrGreaterValidatorOk(t *testing.T) {
 func TestEqualOrGreaterValidatorFail(t *testing.T) {
 	tests := []struct {
 		name, doc, path string
-		value           interface{}
+		value           any
 		errorMsg        []string
 	}{
 		{
@@ -221,7 +221,7 @@ spec:
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 	tests := []struct {
 		name, doc, path string
-		value           interface{}
+		value           any
 		errorMsg        []string
 	}{
 		{
@@ -268,7 +268,7 @@ func TestEqualOrGreaterValidatorWhenTypesDoNotMatch(t *testing.T) {
 func TestEqualOrGreaterValidatorWhenTypesDoNotMatchFailFast(t *testing.T) {
 	tests := []struct {
 		name, doc, path string
-		value           interface{}
+		value           any
 		errorMsg        []string
 	}{
 		{

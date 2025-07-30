@@ -12,8 +12,8 @@ import (
 )
 
 // GetValueOfSetPath get the value of the `--set` format path from a manifest
-func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{}, error) {
-	manifestResult := make([]interface{}, 0)
+func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]any, error) {
+	manifestResult := make([]any, 0)
 	if path == "" {
 		return append(manifestResult, manifest), nil
 	}
@@ -49,7 +49,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 	}
 
 	for _, node := range manifestParts {
-		var singleResult interface{}
+		var singleResult any
 		if err := node.Decode(&singleResult); err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func GetValueOfSetPath(manifest common.K8sManifest, path string) ([]interface{},
 }
 
 // BuildValueOfSetPath build the complete form the `--set` format path and its value
-func BuildValueOfSetPath(val interface{}, path string) (map[string]interface{}, error) {
+func BuildValueOfSetPath(val any, path string) (map[string]any, error) {
 	if path == "" {
 		return nil, fmt.Errorf("set path is empty")
 	}
@@ -90,8 +90,8 @@ type parseTraverser interface {
 }
 
 type buildTraverser struct {
-	data    interface{}
-	cursors []interface{}
+	data    any
+	cursors []any
 }
 
 func (tr *buildTraverser) traverseMapKey(key string) {
@@ -102,24 +102,24 @@ func (tr *buildTraverser) traverseListIdx(idx int) {
 	tr.cursors = append(tr.cursors, idx)
 }
 
-func (tr buildTraverser) getBuildedData() map[string]interface{} {
-	builded := make(map[string]interface{})
-	var current interface{} = builded
+func (tr buildTraverser) getBuildedData() map[string]any {
+	builded := make(map[string]any)
+	var current any = builded
 	for depth, cursor := range tr.cursors {
-		var next interface{}
+		var next any
 		if depth == len(tr.cursors)-1 {
 			next = tr.data
 		} else {
 			if idx, ok := tr.cursors[depth+1].(int); ok {
-				next = make([]interface{}, idx+1)
+				next = make([]any, idx+1)
 			} else {
-				next = make(map[string]interface{})
+				next = make(map[string]any)
 			}
 		}
 		if key, isString := cursor.(string); isString {
-			current.(map[string]interface{})[key] = next
+			current.(map[string]any)[key] = next
 		} else {
-			current.([]interface{})[cursor.(int)] = next
+			current.([]any)[cursor.(int)] = next
 		}
 		current = next
 	}
