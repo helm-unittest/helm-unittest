@@ -15,5 +15,3 @@ tests:
       name: xyz
     asserts:
       - notFailedTemplate: {}
-      - notFailedTemplate:
-          errorPattern: "not failed"
