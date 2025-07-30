@@ -270,7 +270,7 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles)
+	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles, renderSucceed)
 	if err != nil {
 		result.ExecError = err
 		return result
@@ -568,7 +568,7 @@ func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
 }
 
 // parse rendered manifest if it's yaml
-func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string) (
+func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]string, renderSucceed bool) (
 	map[string][]common.K8sManifest,
 	error,
 ) {
@@ -579,7 +579,15 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 			file = filepath.ToSlash(filepath.Join(t.configOrDefault().targetChart.Name(), file))
 		}
 
-		switch filepath.Ext(file) {
+		fileExtension := filepath.Ext(file)
+
+		if !renderSucceed {
+			// RenderSucceed is false, the manifest is already yaml parsed.
+			// se we ensure the extension is .yaml
+			fileExtension = ".yaml"
+		}
+
+		switch fileExtension {
 		case ".yaml", ".yml", ".tpl":
 			manifest, err := parseYamlFile(rendered)
 			if err != nil {
@@ -589,7 +597,6 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 		case ".txt":
 			manifestsOfFiles[file] = parseTextFile(rendered)
 		}
-
 	}
 
 	return manifestsOfFiles, nil
