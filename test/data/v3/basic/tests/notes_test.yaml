@@ -32,3 +32,11 @@ tests:
       - matchRegexRaw:
           pattern: http://\$SERVICE_IP:9999
       - matchSnapshotRaw: {}
+
+  - it: should fail the notes file when __test is set
+    set:
+      __test: |
+        {{ fail "some: error text" }}
+    asserts:
+      - failedTemplate:
+          errorMessage: "some: error text"
