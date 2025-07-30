@@ -583,7 +583,7 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 
 		if !renderSucceed {
 			// RenderSucceed is false, the manifest is already yaml parsed.
-			// se we ensure the extension is .yaml
+			// so we ensure the extension is .yaml
 			fileExtension = ".yaml"
 		}
 
