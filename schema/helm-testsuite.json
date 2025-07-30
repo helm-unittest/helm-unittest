@@ -473,8 +473,7 @@
                   },
                   "required": [
                     "failedTemplate"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "properties": {
@@ -487,8 +486,7 @@
                   },
                   "required": [
                     "notFailedTemplate"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "properties": {

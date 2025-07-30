@@ -14,7 +14,7 @@ tests:
       - contains:
           path: data["my.array"]
           content: 'value2'
-          count: 8.9
+          count: 8
       - contains:
           path: data["my.array"]
           content: 'value1'
