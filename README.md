@@ -1,5 +1,6 @@
 # helm unittest
 
+[![Release](https://img.shields.io/github/v/release/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/releases)
 [![Github Actions](https://github.com/helm-unittest/helm-unittest/actions/workflows/go.yml/badge.svg)](https://github.com/helm-unittest/helm-unittest/actions)
 [![License](https://img.shields.io/github/license/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/blob/main/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
