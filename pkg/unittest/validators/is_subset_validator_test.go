@@ -22,7 +22,7 @@ func TestIsSubsetValidatorWhenOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"d": "foo bar", "x": "baz"}}
+		map[string]any{"d": "foo bar", "x": "baz"}}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -37,7 +37,7 @@ func TestIsSubsetValidatorWhenNegativeAndOk(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"d": "hello bar", "c": "hello world"}}
+		map[string]any{"d": "hello bar", "c": "hello world"}}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -54,7 +54,7 @@ func TestIsSubsetValidatorWhenFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"e": "bar bar"},
+		map[string]any{"e": "bar bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -86,7 +86,7 @@ a:
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"d": "foo bar"},
+		map[string]any{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: manifests,
@@ -110,7 +110,7 @@ func TestIsSubsetValidatorMultiManifestWhenBothFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"e": "foo bar"},
+		map[string]any{"e": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: manifests,
@@ -144,7 +144,7 @@ func TestIsSubsetValidatorWhenNegativeAndFail(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"d": "foo bar"},
+		map[string]any{"d": "foo bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -300,7 +300,7 @@ func TestIsSubsetValidatorWhenFailFast(t *testing.T) {
 
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"e": "bar bar"},
+		map[string]any{"e": "bar bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
@@ -324,7 +324,7 @@ func TestIsSubsetValidatorWhenFailFast(t *testing.T) {
 func TestIsSubsetValidatorWhenNoManifestFail(t *testing.T) {
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"e": "bar bar"},
+		map[string]any{"e": "bar bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{},
@@ -343,7 +343,7 @@ func TestIsSubsetValidatorWhenNoManifestFail(t *testing.T) {
 func TestIsSubsetValidatorWhenNoManifestNegativeOk(t *testing.T) {
 	validator := IsSubsetValidator{
 		"a.b",
-		map[string]interface{}{"e": "bar bar"},
+		map[string]any{"e": "bar bar"},
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{},

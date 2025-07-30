@@ -11,10 +11,10 @@ import (
 // IsSubsetValidator validate whether value of Path contains Content
 type IsSubsetValidator struct {
 	Path    string
-	Content interface{}
+	Content any
 }
 
-func (v IsSubsetValidator) failInfo(actual interface{}, manifestIndex, valueIndex int, not bool) []string {
+func (v IsSubsetValidator) failInfo(actual any, manifestIndex, valueIndex int, not bool) []string {
 	expectedYAML := common.TrustedMarshalYAML(v.Content)
 	actualYAML := common.TrustedMarshalYAML(actual)
 
@@ -46,8 +46,8 @@ func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifes
 
 	for actualIndex, singleActual := range actual {
 		var errorMessage []string
-		actualMap, actualOk := singleActual.(map[string]interface{})
-		contentMap, contentOk := v.Content.(map[string]interface{})
+		actualMap, actualOk := singleActual.(map[string]any)
+		contentMap, contentOk := v.Content.(map[string]any)
 
 		if actualOk && contentOk {
 			found := validateSubset(actualMap, contentMap)

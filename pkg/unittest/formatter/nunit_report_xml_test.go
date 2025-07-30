@@ -48,7 +48,7 @@ func validateNUnitTestSuite(assert *assert.Assertions, expected, actual []NUnitT
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].Description, actual[i].Description)
 			assert.Equal(expected[i].Success, actual[i].Success)
@@ -73,7 +73,7 @@ func validatNUnitTestCase(assert *assert.Assertions, expected, actual []NUnitTes
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].Description, actual[i].Description)
 			assert.Equal(expected[i].Success, actual[i].Success)

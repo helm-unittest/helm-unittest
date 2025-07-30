@@ -53,16 +53,16 @@ func getTemplateFileNamePattern(fileName string) string {
 	return pattern
 }
 
-func copySet(setValues map[string]interface{}) map[string]interface{} {
+func copySet(setValues map[string]any) map[string]any {
 	copiedSet, err := copystructure.Copy(setValues)
 	if err != nil {
 		panic(err)
 	}
 
-	copiedSetValues := copiedSet.(map[string]interface{})
+	copiedSetValues := copiedSet.(map[string]any)
 	// if we have an empty map, make sure it is initialized
 	if copiedSetValues == nil {
-		copiedSetValues = make(map[string]interface{})
+		copiedSetValues = make(map[string]any)
 	}
 
 	return copiedSetValues

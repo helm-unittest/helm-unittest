@@ -21,7 +21,7 @@ type FailedTemplateValidator struct {
 	ErrorPattern string
 }
 
-func (a FailedTemplateValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
+func (a FailedTemplateValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	customMessage := " to equal"
 	if a.ErrorPattern != "" {
 		customMessage = " to match"
@@ -90,7 +90,7 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 	return validateSuccess, validateErrors
 }
 
-func (a FailedTemplateValidator) validateErrorPattern(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (a FailedTemplateValidator) validateErrorPattern(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	p, err := compilePattern(a.ErrorPattern)
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
@@ -114,7 +114,7 @@ func compilePattern(pattern string) (*regexp.Regexp, error) {
 	return p, err
 }
 
-func handleMetaCharacters(a FailedTemplateValidator, actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func handleMetaCharacters(a FailedTemplateValidator, actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	escaped := regexp.QuoteMeta(a.ErrorPattern)
 	log.WithField("validator", "failed_template").Debugln("fallback to escaped regex", escaped)
 	p, err := regexp.Compile(escaped)
@@ -128,7 +128,7 @@ func handleMetaCharacters(a FailedTemplateValidator, actual interface{}, manifes
 	return true, []string{}
 }
 
-func (a FailedTemplateValidator) validateErrorMessage(actual interface{}, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (a FailedTemplateValidator) validateErrorMessage(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	if (actual != nil && reflect.DeepEqual(a.ErrorMessage, actual.(string))) == context.Negative {
 		errorMessage := a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 		return false, errorMessage

@@ -84,7 +84,7 @@ func TestFindDocumentIndexObjectValueOk(t *testing.T) {
 
 	selector := DocumentSelector{
 		Path: "metadata",
-		Value: map[string]interface{}{
+		Value: map[string]any{
 			"name":      "foo",
 			"namespace": "bar",
 		},
@@ -198,12 +198,12 @@ func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNOk(t *testing.T) 
 func TestNewSafeDocumentSelector_Success(t *testing.T) {
 	tests := []struct {
 		name             string
-		input            map[string]interface{}
+		input            map[string]any
 		expectedSelector *DocumentSelector
 	}{
 		{
 			name: "all fields set",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"path":               "metadata.name",
 				"value":              "foo",
 				"matchMany":          true,
@@ -218,7 +218,7 @@ func TestNewSafeDocumentSelector_Success(t *testing.T) {
 		},
 		{
 			name: "only required fields set",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"path": "metadata.name",
 			},
 			expectedSelector: &DocumentSelector{
@@ -240,7 +240,7 @@ func TestNewSafeDocumentSelector_Success(t *testing.T) {
 }
 
 func TestNewDocumentSelectorMissingPath(t *testing.T) {
-	input := map[string]interface{}{}
+	input := map[string]any{}
 	selector, err := NewDocumentSelector(input)
 	assert.NotNil(t, err)
 	assert.Nil(t, selector)

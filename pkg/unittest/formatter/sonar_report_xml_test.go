@@ -31,7 +31,7 @@ func createSonarTestCase(name string, duration string, isError bool, isFailed bo
 func validateSonarFiles(assert *assert.Assertions, expected, actual []SonarFile) {
 	assert.Equal(len(expected), len(actual))
 
-	for i := 0; i < len(actual); i++ {
+	for i := range actual {
 		assert.Equal(expected[i].Path, actual[i].Path)
 		validateSonarTestCases(assert, expected[i].TestCases, actual[i].TestCases)
 	}
@@ -40,7 +40,7 @@ func validateSonarFiles(assert *assert.Assertions, expected, actual []SonarFile)
 func validateSonarTestCases(assert *assert.Assertions, expected, actual []SonarTestCase) {
 	assert.Equal(len(expected), len(actual))
 
-	for i := 0; i < len(actual); i++ {
+	for i := range actual {
 		assert.Equal(expected[i].Name, actual[i].Name)
 		assert.Equal(expected[i].Duration, actual[i].Duration)
 

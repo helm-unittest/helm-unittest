@@ -15,7 +15,7 @@ type IsNullOrEmptyValidator struct {
 	Path string
 }
 
-func (v IsNullOrEmptyValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
+func (v IsNullOrEmptyValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 
 	log.WithField("validator", "is_nullorempty").Debugln("actual content:", actualYAML)

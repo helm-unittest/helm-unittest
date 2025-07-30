@@ -334,6 +334,6 @@ func TestValidateUnittestChartTestsPathFlag(t *testing.T) {
 }
 
 // Using %T
-func typeofObject(variable interface{}) string {
+func typeofObject(variable any) string {
 	return fmt.Sprintf("%T", variable)
 }

@@ -22,7 +22,7 @@ var regex = regexp.MustCompile(`(?m)[ ]+\r?\n`)
 
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
-	CompareToSnapshot(content interface{}, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
+	CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
 }
 
 // ValidateContext the context passed to validators
@@ -80,7 +80,7 @@ Expected` + notAnnotation + customize + `:
 // splitInfof split multi line string into array of string
 func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...string) []string {
 	intentedFormat := strings.Trim(format, "\t\n ")
-	indentedReplacements := make([]interface{}, len(replacements))
+	indentedReplacements := make([]any, len(replacements))
 	for i, r := range replacements {
 		indentedReplacements[i] = "\t" + strings.Trim(
 			strings.Replace(r, "\n", "\n\t", -1),
@@ -123,13 +123,13 @@ func diff(expected string, actual string) string {
 }
 
 // uniform the content without invalid characters and correct line-endings
-func uniformContent(content interface{}) string {
+func uniformContent(content any) string {
 	actual := fmt.Sprintf("%v", content)
 	return regex.ReplaceAllString(actual, "\n")
 }
 
 // Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)
-func validateSubset(actual map[string]interface{}, content map[string]interface{}) bool {
+func validateSubset(actual map[string]any, content map[string]any) bool {
 	for key := range content {
 		if !reflect.DeepEqual(actual[key], content[key]) {
 			return false

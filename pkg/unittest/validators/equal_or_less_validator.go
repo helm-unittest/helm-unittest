@@ -3,7 +3,7 @@ package validators
 // EqualOrLessValidator validate whether the value of Path is less or equal to Value
 type EqualOrLessValidator struct {
 	Path  string
-	Value interface{}
+	Value any
 }
 
 // Validate implement Validatable

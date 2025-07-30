@@ -12,10 +12,10 @@ type DocumentSelector struct {
 	SkipEmptyTemplates bool `yaml:"skipEmptyTemplates"`
 	MatchMany          bool `yaml:"matchMany"`
 	Path               string
-	Value              interface{}
+	Value              any
 }
 
-func NewDocumentSelector(documentSelector map[string]interface{}) (*DocumentSelector, error) {
+func NewDocumentSelector(documentSelector map[string]any) (*DocumentSelector, error) {
 	path, ok := documentSelector["path"].(string)
 	if !ok {
 		log.WithField("selector", "document-selector").Debugln("documentSelector.path is empty")

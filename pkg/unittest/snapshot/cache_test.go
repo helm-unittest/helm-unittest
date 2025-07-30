@@ -21,27 +21,27 @@ var lastTimeContent = `cached before:
 `
 
 var snapshot1 = "a:\n  b: c\n"
-var content1 = map[string]interface{}{
+var content1 = map[string]any{
 	"a": map[string]string{
 		"b": "c",
 	},
 }
 
 var snapshot2 = "d:\n  e: f\n"
-var content2 = map[string]interface{}{
+var content2 = map[string]any{
 	"d": map[string]string{
 		"e": "f",
 	},
 }
 
 var snapshotNew = "x:\n  \"y\": z\n"
-var contentNew = map[string]interface{}{
+var contentNew = map[string]any{
 	"x": map[string]string{
 		"y": "z",
 	},
 }
 
-var contentForRegex = map[string]interface{}{
+var contentForRegex = map[string]any{
 	"x": map[string]string{
 		"y": "abrakadabra",
 	},

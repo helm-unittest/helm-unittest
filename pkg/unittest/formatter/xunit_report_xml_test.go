@@ -48,7 +48,7 @@ func assertXUnitTestAssemblies(assert *assert.Assertions, expected, actual []XUn
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].ConfigFile, actual[i].ConfigFile)
 			assert.Equal(expected[i].TotalTests, actual[i].TotalTests)
@@ -72,7 +72,7 @@ func assertXUnitTestRun(assert *assert.Assertions, expected, actual []XUnitTestR
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].TotalTests, actual[i].TotalTests)
 			assert.Equal(expected[i].PassedTests, actual[i].PassedTests)
@@ -94,7 +94,7 @@ func assertXUnitTestCase(assert *assert.Assertions, expected, actual []XUnitTest
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].Type, actual[i].Type)
 			assert.Equal(expected[i].Method, actual[i].Method)

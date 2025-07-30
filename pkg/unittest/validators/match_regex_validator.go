@@ -32,7 +32,7 @@ func (v MatchRegexValidator) failInfo(actual string, manifestIndex, actualIndex 
 	)
 }
 
-func (v MatchRegexValidator) validateSingle(actual interface{}, pattern *regexp.Regexp, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (v MatchRegexValidator) validateSingle(actual any, pattern *regexp.Regexp, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	if s, ok := actual.(string); ok {
 		if v.DecodeBase64 {
 			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)

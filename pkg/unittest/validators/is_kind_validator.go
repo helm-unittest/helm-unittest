@@ -10,7 +10,7 @@ type IsKindValidator struct {
 	Of string
 }
 
-func (v IsKindValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
+func (v IsKindValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be kind"
 

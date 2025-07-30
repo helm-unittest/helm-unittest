@@ -40,7 +40,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 
 	for actualIndex, actual := range actuals {
 		actualSuccess := false
-		actualArray, ok := actual.([]interface{})
+		actualArray, ok := actual.([]any)
 		if !ok && v.Count == nil {
 			actualErrors := splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("%s is not array", path))
 			manifestErrors = append(manifestErrors, actualErrors...)
