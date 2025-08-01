@@ -13,13 +13,13 @@ import (
 // ContainsValidator validate whether value of Path is an array and contains Content
 type ContainsValidator struct {
 	Path    string
-	Content interface{}
+	Content any
 	Count   *int
 	Any     bool
 }
 
-func (v ContainsValidator) failInfo(actual interface{}, manifestIndex, assertIndex int, not bool) []string {
-	expectedYAML := common.TrustedMarshalYAML([]interface{}{v.Content})
+func (v ContainsValidator) failInfo(actual any, manifestIndex, assertIndex int, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML([]any{v.Content})
 	actualYAML := common.TrustedMarshalYAML(actual)
 	containsFailFormat := setFailFormat(not, true, true, false, " to contain")
 
@@ -36,7 +36,7 @@ func (v ContainsValidator) failInfo(actual interface{}, manifestIndex, assertInd
 	)
 }
 
-func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
+func (v ContainsValidator) validateContent(actual []any) (bool, int) {
 	found := false
 	validateFoundCount := 0
 
@@ -56,10 +56,10 @@ func (v ContainsValidator) validateContent(actual []interface{}) (bool, int) {
 	return found, validateFoundCount
 }
 
-func (v ContainsValidator) isArrayOrSubsetMatch(ele interface{}) (bool, bool) {
+func (v ContainsValidator) isArrayOrSubsetMatch(ele any) (bool, bool) {
 	if v.Any {
-		subset, subsetOk := ele.(map[string]interface{})
-		content, contentOk := v.Content.(map[string]interface{})
+		subset, subsetOk := ele.(map[string]any)
+		content, contentOk := v.Content.(map[string]any)
 		if subsetOk && contentOk {
 			return false, validateSubset(subset, content)
 		} else {
@@ -70,7 +70,7 @@ func (v ContainsValidator) isArrayOrSubsetMatch(ele interface{}) (bool, bool) {
 	return false, false
 }
 
-func (v ContainsValidator) isExactMatch(isArray bool, ele interface{}) bool {
+func (v ContainsValidator) isExactMatch(isArray bool, ele any) bool {
 	return (!v.Any || isArray) && reflect.DeepEqual(ele, v.Content)
 }
 
@@ -78,7 +78,7 @@ func (v ContainsValidator) validateFoundCount(validateFoundCount int) bool {
 	return v.Count != nil && *v.Count == validateFoundCount
 }
 
-func (v ContainsValidator) validateSingle(singleActual []interface{}, manifestIndex, assertIndex int, context *ValidateContext) (bool, []string) {
+func (v ContainsValidator) validateSingle(singleActual []any, manifestIndex, assertIndex int, context *ValidateContext) (bool, []string) {
 	validateSingleErrors := []string{}
 	found, validateFoundCount := v.validateContent(singleActual)
 
@@ -123,7 +123,7 @@ func (v ContainsValidator) validateManifest(manifest common.K8sManifest, manifes
 	for valuesIndex, singleActual := range actual {
 		singleSuccess := false
 		var singleValidateErrors []string
-		convertedSingleActual, ok := singleActual.([]interface{})
+		convertedSingleActual, ok := singleActual.([]any)
 		if ok {
 			singleSuccess, singleValidateErrors = v.validateSingle(convertedSingleActual, manifestIndex, valuesIndex, context)
 		} else {

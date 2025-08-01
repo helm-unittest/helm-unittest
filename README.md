@@ -1,5 +1,6 @@
 # helm unittest
 
+[![Release](https://img.shields.io/github/v/release/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/releases)
 [![Github Actions](https://github.com/helm-unittest/helm-unittest/actions/workflows/go.yml/badge.svg)](https://github.com/helm-unittest/helm-unittest/actions)
 [![License](https://img.shields.io/github/license/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/blob/main/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
@@ -199,7 +200,7 @@ The test job or assertion can also specify a documentSelector rather than a docu
 
 The `path` in the documentSelector has Yaml JsonPath Support, using JsonPath expressions it is possible to filter on multiple fields.
 
-The `value` in the documentSelector can validate complete yaml objects.
+The `value` in the documentSelector can validate complete yaml objects and is optional. 
 
 ```yaml
 ...

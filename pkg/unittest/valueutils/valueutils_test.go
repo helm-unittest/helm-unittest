@@ -14,24 +14,24 @@ import (
 func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 	a := assert.New(t)
 	data := common.K8sManifest{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
+		"a": map[string]any{
+			"b":   []any{"_", map[string]any{"c": "yes"}},
 			"d":   "no",
 			"e.f": "false",
-			"g":   map[string]interface{}{"h": "\"quotes\""},
-			"i":   []interface{}{map[string]interface{}{"i1": "1"}, map[string]interface{}{"i2": "2"}},
+			"g":   map[string]any{"h": "\"quotes\""},
+			"i":   []any{map[string]any{"i1": "1"}, map[string]any{"i2": "2"}},
 		},
 	}
 
-	var expectionsMapping = map[string]interface{}{
+	var expectionsMapping = map[string]any{
 		"a.b[1].c":              "yes",
 		"a.b[0]":                "_",
-		"a.b":                   []interface{}{"_", map[string]interface{}{"c": "yes"}},
+		"a.b":                   []any{"_", map[string]any{"c": "yes"}},
 		"a['d']":                "no",
 		"a[\"e.f\"]":            "false",
 		"a.g.h":                 "\"quotes\"",
 		"":                      data,
-		"a.i[?(@.i1 == \"1\")]": map[string]interface{}(map[string]interface{}{"i1": "1"}),
+		"a.i[?(@.i1 == \"1\")]": map[string]any(map[string]any{"i1": "1"}),
 	}
 
 	for path, expect := range expectionsMapping {
@@ -44,8 +44,8 @@ func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
 func TestGetValueOfSetPathError(t *testing.T) {
 	a := assert.New(t)
 	data := common.K8sManifest{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_"},
+		"a": map[string]any{
+			"b":   []any{"_"},
 			"c.d": "no",
 		},
 	}
@@ -65,12 +65,12 @@ func TestGetValueOfSetPathError(t *testing.T) {
 
 func TestBuildValueOfSetPath(t *testing.T) {
 	a := assert.New(t)
-	data := map[string]interface{}{"foo": "bar"}
+	data := map[string]any{"foo": "bar"}
 
-	var expectionsMapping = map[string]interface{}{
-		"a.b":    map[string]interface{}{"a": map[string]interface{}{"b": data}},
-		"a[1]":   map[string]interface{}{"a": []interface{}{nil, data}},
-		"a[1].b": map[string]interface{}{"a": []interface{}{nil, map[string]interface{}{"b": data}}},
+	var expectionsMapping = map[string]any{
+		"a.b":    map[string]any{"a": map[string]any{"b": data}},
+		"a[1]":   map[string]any{"a": []any{nil, data}},
+		"a[1].b": map[string]any{"a": []any{nil, map[string]any{"b": data}}},
 	}
 
 	for path, expected := range expectionsMapping {
@@ -91,24 +91,24 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 	t.Run("value is empty", func(t *testing.T) {
 		actual, err := BuildValueOfSetPath(nil, "some.path")
 		assert.NoError(t, err)
-		assert.Equal(t, map[string]interface{}{
-			"some": map[string]interface{}{
+		assert.Equal(t, map[string]any{
+			"some": map[string]any{
 				"path": nil,
 			},
 		}, actual)
 	})
 
 	t.Run("some path", func(t *testing.T) {
-		expected := map[string]interface{}{
-			"b": map[string]interface{}{
-				"c": map[string]interface{}{
+		expected := map[string]any{
+			"b": map[string]any{
+				"c": map[string]any{
 					"a": 1,
-					"b": map[string]interface{}{
+					"b": map[string]any{
 						"c": 2,
 					}}}}
-		val := map[string]interface{}{
+		val := map[string]any{
 			"a": 1,
-			"b": map[string]interface{}{
+			"b": map[string]any{
 				"c": 2,
 			},
 		}
@@ -119,17 +119,17 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 	})
 
 	t.Run("path is not in data", func(t *testing.T) {
-		expected := map[string]interface{}{
-			"some": map[string]interface{}{
-				"path": map[string]interface{}{
-					"ingress": map[string]interface{}{
+		expected := map[string]any{
+			"some": map[string]any{
+				"path": map[string]any{
+					"ingress": map[string]any{
 						"hosts[1]": "example.local",
 					},
 				},
 			},
 		}
-		var data = map[string]interface{}{
-			"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+		var data = map[string]any{
+			"ingress": map[string]any{"hosts[1]": "example.local"},
 		}
 		actual, err := BuildValueOfSetPath(data, "some.path")
 		assert.NoError(t, err)
@@ -137,15 +137,15 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 	})
 
 	t.Run("path is in values", func(t *testing.T) {
-		expected := map[string]interface{}{
-			"hosts": map[string]interface{}{
-				"ingress": map[string]interface{}{
+		expected := map[string]any{
+			"hosts": map[string]any{
+				"ingress": map[string]any{
 					"hosts[1]": "example.local",
 				},
 			},
 		}
-		var data = map[string]interface{}{
-			"ingress": map[string]interface{}{"hosts[1]": "example.local"},
+		var data = map[string]any{
+			"ingress": map[string]any{"hosts[1]": "example.local"},
 		}
 		actual, err := BuildValueOfSetPath(data, "hosts")
 		assert.NoError(t, err)
@@ -153,29 +153,29 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 	})
 
 	t.Run("property testing", func(t *testing.T) {
-		data := map[string]interface{}{"foo": "bar"}
+		data := map[string]any{"foo": "bar"}
 		cases := []struct {
-			input  map[string]interface{}
+			input  map[string]any
 			path   string
-			exp    map[string]interface{}
+			exp    map[string]any
 			expStr string
 		}{
 			{
 				path:   "a.b",
-				input:  map[string]interface{}{"a": map[string]interface{}{"b": data}},
-				exp:    map[string]interface{}{"a": map[string]interface{}{"b": map[string]interface{}{"a": map[string]interface{}{"b": data}}}},
+				input:  map[string]any{"a": map[string]any{"b": data}},
+				exp:    map[string]any{"a": map[string]any{"b": map[string]any{"a": map[string]any{"b": data}}}},
 				expStr: "map[a:map[b:map[a:map[b:map[foo:bar]]]]]",
 			},
 			{
 				path:   "a[1]",
-				input:  map[string]interface{}{"a": []interface{}{nil, data}},
-				exp:    map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"a": []interface{}{interface{}(nil), data}}}},
+				input:  map[string]any{"a": []any{nil, data}},
+				exp:    map[string]any{"a": []any{any(nil), map[string]any{"a": []any{any(nil), data}}}},
 				expStr: "map[a:[<nil> map[a:[<nil> map[foo:bar]]]]]",
 			},
 			{
 				path:   "a[1].b",
-				input:  map[string]interface{}{"a": []interface{}{nil, map[string]interface{}{"b": data}}},
-				exp:    map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"b": map[string]interface{}{"a": []interface{}{interface{}(nil), map[string]interface{}{"b": data}}}}}},
+				input:  map[string]any{"a": []any{nil, map[string]any{"b": data}}},
+				exp:    map[string]any{"a": []any{any(nil), map[string]any{"b": map[string]any{"a": []any{any(nil), map[string]any{"b": data}}}}}},
 				expStr: "map[a:[<nil> map[b:map[a:[<nil> map[b:map[foo:bar]]]]]]]",
 			},
 		}
@@ -192,7 +192,7 @@ func TestBuildValueOfSetPath_V1(t *testing.T) {
 
 func TestBuildValueSetPathError(t *testing.T) {
 	a := assert.New(t)
-	data := map[string]interface{}{"foo": "bar"}
+	data := map[string]any{"foo": "bar"}
 
 	var expectionsMapping = map[string]string{
 		"":         "set path is empty",
@@ -213,22 +213,22 @@ func TestBuildValueSetPathError(t *testing.T) {
 
 func TestMergeValues(t *testing.T) {
 	a := assert.New(t)
-	src := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "yes"}},
+	src := map[string]any{
+		"a": map[string]any{
+			"b":   []any{"_", map[string]any{"c": "yes"}},
 			"e.f": "false",
 		},
 	}
-	dest := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
+	dest := map[string]any{
+		"a": map[string]any{
+			"b":   []any{"_", map[string]any{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},
 	}
-	expected := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b":   []interface{}{"_", map[string]interface{}{"c": "no"}, "a"},
+	expected := map[string]any{
+		"a": map[string]any{
+			"b":   []any{"_", map[string]any{"c": "no"}, "a"},
 			"d":   "no",
 			"e.f": "yes",
 		},
@@ -240,54 +240,54 @@ func TestMergeValues(t *testing.T) {
 func TestMergeValues_Cases(t *testing.T) {
 
 	t.Run("SimpleMerge", func(t *testing.T) {
-		src := map[string]interface{}{"a": 1, "b": 2}
-		dest := map[string]interface{}{"c": 3, "d": 4}
-		expected := map[string]interface{}{"a": 1, "b": 2, "c": 3, "d": 4}
+		src := map[string]any{"a": 1, "b": 2}
+		dest := map[string]any{"c": 3, "d": 4}
+		expected := map[string]any{"a": 1, "b": 2, "c": 3, "d": 4}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("OverwriteExistingValue", func(t *testing.T) {
-		src := map[string]interface{}{"a": 1}
-		dest := map[string]interface{}{"a": 2}
-		expected := map[string]interface{}{"a": 2}
+		src := map[string]any{"a": 1}
+		dest := map[string]any{"a": 2}
+		expected := map[string]any{"a": 2}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("MergeNestedMaps", func(t *testing.T) {
-		src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-		dest := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
-		expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
+		src := map[string]any{"a": map[string]any{"b": 1}}
+		dest := map[string]any{"a": map[string]any{"c": 2}}
+		expected := map[string]any{"a": map[string]any{"b": 1, "c": 2}}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("OverwriteNestedMap", func(t *testing.T) {
-		src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-		dest := map[string]interface{}{"a": 2}
-		expected := map[string]interface{}{"a": 2}
+		src := map[string]any{"a": map[string]any{"b": 1}}
+		dest := map[string]any{"a": 2}
+		expected := map[string]any{"a": 2}
 		result := v3util.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("MergeComplexMaps", func(t *testing.T) {
-		src := map[string]interface{}{
+		src := map[string]any{
 			"a": 1,
-			"b": map[string]interface{}{
+			"b": map[string]any{
 				"c": 2,
 			},
 		}
-		dest := map[string]interface{}{
+		dest := map[string]any{
 			"a": 3,
-			"b": map[string]interface{}{
+			"b": map[string]any{
 				"d": 4,
 			},
 			"e": 5,
 		}
-		expected := map[string]interface{}{
+		expected := map[string]any{
 			"a": 3,
-			"b": map[string]interface{}{
+			"b": map[string]any{
 				"c": 2,
 				"d": 4,
 			},
@@ -315,9 +315,9 @@ a:
    foo: bar
   hosts[0]: abrakadabra
 `
-		var dataSrc map[string]interface{}
+		var dataSrc map[string]any
 		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
-		var dataDst map[string]interface{}
+		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
 		output := v3util.MergeTables(dataDst, dataSrc)
@@ -346,9 +346,9 @@ a:
    - bar
    hosts[0]: abrakadabra
 `
-		var dataSrc map[string]interface{}
+		var dataSrc map[string]any
 		common.YmlUnmarshalTestHelper(yamlSrc, &dataSrc, t)
-		var dataDst map[string]interface{}
+		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
 		output := v3util.MergeTables(dataDst, dataSrc)
@@ -364,7 +364,7 @@ kind: Deployment
 metadata:
   name: my-deployment
 `
-		var dataDst map[string]interface{}
+		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yml, &dataDst, t)
 
 		actual, err := GetValueOfSetPath(dataDst, "invalid.path")
@@ -378,12 +378,12 @@ kind: Deployment
 metadata:
   name: my-deployment
 `
-		var dataDst map[string]interface{}
+		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yml, &dataDst, t)
 
 		actual, err := GetValueOfSetPath(dataDst, "metadata.name")
 		assert.NoError(t, err)
-		assert.Equal(t, []interface{}{"my-deployment"}, actual)
+		assert.Equal(t, []any{"my-deployment"}, actual)
 	})
 }
 
@@ -394,32 +394,32 @@ func TestBuildValueOfSetPath_EmptyPath(t *testing.T) {
 }
 
 func TestBuildValueOfSetPath_ValidPath(t *testing.T) {
-	data := map[string]interface{}{"foo": "bar"}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": data}}
+	data := map[string]any{"foo": "bar"}
+	expected := map[string]any{"a": map[string]any{"b": data}}
 	actual, err := BuildValueOfSetPath(data, "a.b")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func TestBuildValueOfSetPath_InvalidToken(t *testing.T) {
-	data := map[string]interface{}{"foo": "bar"}
+	data := map[string]any{"foo": "bar"}
 	_, err := BuildValueOfSetPath(data, "{")
 	assert.Error(t, err)
 	assert.EqualError(t, err, "invalid token found {")
 }
 
 func TestBuildValueOfSetPath_UnexpectedEnd(t *testing.T) {
-	data := map[string]interface{}{"foo": "bar"}
+	data := map[string]any{"foo": "bar"}
 	_, err := BuildValueOfSetPath(data, "a[")
 	assert.Error(t, err)
 	assert.EqualError(t, err, "unexpected end of")
 }
 
 func TestBuildValueOfSetPath_NestedPath(t *testing.T) {
-	data := map[string]interface{}{"foo": "bar"}
-	expected := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b": map[string]interface{}{
+	data := map[string]any{"foo": "bar"}
+	expected := map[string]any{
+		"a": map[string]any{
+			"b": map[string]any{
 				"c": data,
 			},
 		},
@@ -431,70 +431,70 @@ func TestBuildValueOfSetPath_NestedPath(t *testing.T) {
 
 // merge values
 func TestMergeValues_EmptySource(t *testing.T) {
-	src := map[string]interface{}{"a": 1}
-	dest := map[string]interface{}{}
-	expected := map[string]interface{}{"a": 1}
+	src := map[string]any{"a": 1}
+	dest := map[string]any{}
+	expected := map[string]any{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_EmptyDestination(t *testing.T) {
-	src := map[string]interface{}{}
-	dest := map[string]interface{}{"a": 1}
-	expected := map[string]interface{}{"a": 1}
+	src := map[string]any{}
+	dest := map[string]any{"a": 1}
+	expected := map[string]any{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_NilDestination(t *testing.T) {
-	src := map[string]interface{}{"a": 1}
-	dest := map[string]interface{}{}
-	expected := map[string]interface{}{"a": 1}
+	src := map[string]any{"a": 1}
+	dest := map[string]any{}
+	expected := map[string]any{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_NilSource(t *testing.T) {
-	src := map[string]interface{}{}
-	dest := map[string]interface{}{"a": 1}
-	expected := map[string]interface{}{"a": 1}
+	src := map[string]any{}
+	dest := map[string]any{"a": 1}
+	expected := map[string]any{"a": 1}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_OverwriteWithNonMap(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	dest := map[string]interface{}{"a": 2}
-	expected := map[string]interface{}{"a": 2}
+	src := map[string]any{"a": map[string]any{"b": 1}}
+	dest := map[string]any{"a": 2}
+	expected := map[string]any{"a": 2}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_DeepMerge(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	dest := map[string]interface{}{"a": map[string]interface{}{"c": 2}}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1, "c": 2}}
+	src := map[string]any{"a": map[string]any{"b": 1}}
+	dest := map[string]any{"a": map[string]any{"c": 2}}
+	expected := map[string]any{"a": map[string]any{"b": 1, "c": 2}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_ComplexMerge(t *testing.T) {
-	src := map[string]interface{}{
+	src := map[string]any{
 		"a": 1,
-		"b": map[string]interface{}{
+		"b": map[string]any{
 			"c": 2,
 		},
 	}
-	dest := map[string]interface{}{
+	dest := map[string]any{
 		"a": 3,
-		"b": map[string]interface{}{
+		"b": map[string]any{
 			"d": 4,
 		},
 		"e": 5,
 	}
-	expected := map[string]interface{}{
+	expected := map[string]any{
 		"a": 3,
-		"b": map[string]interface{}{
+		"b": map[string]any{
 			"c": 2,
 			"d": 4,
 		},
@@ -506,77 +506,77 @@ func TestMergeValues_ComplexMerge(t *testing.T) {
 
 // new
 func TestMergeValues_KeyExistsButNotMap(t *testing.T) {
-	src := map[string]interface{}{
+	src := map[string]any{
 		"a": 1,
 	}
-	dest := map[string]interface{}{
-		"a": map[string]interface{}{"b": 2},
+	dest := map[string]any{
+		"a": map[string]any{"b": 2},
 	}
-	expected := map[string]interface{}{
-		"a": map[string]interface{}{"b": 2},
+	expected := map[string]any{
+		"a": map[string]any{"b": 2},
 	}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_KeyExistsAndIsMap(t *testing.T) {
-	src := map[string]interface{}{
-		"a": map[string]interface{}{"b": 1},
+	src := map[string]any{
+		"a": map[string]any{"b": 1},
 	}
-	dest := map[string]interface{}{
-		"a": map[string]interface{}{"c": 2},
+	dest := map[string]any{
+		"a": map[string]any{"c": 2},
 	}
-	expected := map[string]interface{}{
-		"a": map[string]interface{}{"b": 1, "c": 2},
+	expected := map[string]any{
+		"a": map[string]any{"b": 1, "c": 2},
 	}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_EmptySourceAndDestination(t *testing.T) {
-	src := map[string]interface{}{}
-	dest := map[string]interface{}{}
-	expected := map[string]interface{}{}
+	src := map[string]any{}
+	dest := map[string]any{}
+	expected := map[string]any{}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_DestinationWithNilValue(t *testing.T) {
-	src := map[string]interface{}{"a": 1}
-	dest := map[string]interface{}{"b": nil}
-	expected := map[string]interface{}{"a": 1, "b": nil}
+	src := map[string]any{"a": 1}
+	dest := map[string]any{"b": nil}
+	expected := map[string]any{"a": 1, "b": nil}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_SourceWithNilValue(t *testing.T) {
-	src := map[string]interface{}{"a": nil}
-	dest := map[string]interface{}{"b": 2}
-	expected := map[string]interface{}{"a": nil, "b": 2}
+	src := map[string]any{"a": nil}
+	dest := map[string]any{"b": 2}
+	expected := map[string]any{"a": nil, "b": 2}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_NestedMapWithEmptyMap(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	dest := map[string]interface{}{"a": map[string]interface{}{}}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]any{"a": map[string]any{"b": 1}}
+	dest := map[string]any{"a": map[string]any{}}
+	expected := map[string]any{"a": map[string]any{"b": 1}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_EmptyNestedMap(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{}}
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
+	src := map[string]any{"a": map[string]any{}}
+	dest := map[string]any{"a": map[string]any{"b": 1}}
+	expected := map[string]any{"a": map[string]any{"b": 1}}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
 func TestMergeValues_OverwriteWithEmptyMap(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	dest := map[string]interface{}{"a": map[string]interface{}{"b": nil}}
-	expected := map[string]interface{}{"a": map[string]interface{}{"b": nil}}
+	src := map[string]any{"a": map[string]any{"b": 1}}
+	dest := map[string]any{"a": map[string]any{"b": nil}}
+	expected := map[string]any{"a": map[string]any{"b": nil}}
 	// expected := map[string]interface{}{"a": map[string]interface{}{}}
 	// this is the expected result when v3util.CoalesceTables is used
 	actual := v3util.MergeTables(dest, src)
@@ -584,9 +584,9 @@ func TestMergeValues_OverwriteWithEmptyMap(t *testing.T) {
 }
 
 func TestMergeValues_OverwriteWithNil(t *testing.T) {
-	src := map[string]interface{}{"a": map[string]interface{}{"b": 1}}
-	dest := map[string]interface{}{"a": nil}
-	expected := map[string]interface{}{"a": nil}
+	src := map[string]any{"a": map[string]any{"b": 1}}
+	dest := map[string]any{"a": nil}
+	expected := map[string]any{"a": nil}
 	actual := v3util.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }

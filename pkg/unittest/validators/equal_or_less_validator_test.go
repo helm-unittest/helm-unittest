@@ -13,7 +13,7 @@ func TestEqualOrLessValidatorOk(t *testing.T) {
 		name        string
 		doc         string
 		path        string
-		value       interface{}
+		value       any
 		expected    bool
 		expectedErr []string
 	}{
@@ -61,7 +61,7 @@ func TestEqualOrLessValidatorOk(t *testing.T) {
 func TestEqualOrLessValidatorFail(t *testing.T) {
 	tests := []struct {
 		name, doc, path string
-		value           interface{}
+		value           any
 		errorMsg        []string
 	}{
 		{

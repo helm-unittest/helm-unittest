@@ -375,7 +375,7 @@ func TestFailedTemplateValidator_ErrorPattern_SpecialCharactersAndEscapes_Diff(t
 	cases := []struct {
 		name    string
 		pattern string
-		diff    interface{}
+		diff    any
 	}{
 		{
 			name:    "pattern with incorrect regex escape",

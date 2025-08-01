@@ -2,10 +2,10 @@ suite: document selector erroring first suite
 templates:
   - "*"
 tests:
-  - it: partial document selector in asserts
+  - it: partial document selector in asserts, documentSelector.path is missing
     asserts:
       - exists:
           path: kind
         documentSelector:
-          # this throw an error as currently documentSelector require path and value
+          # this throw an error as currently documentSelector require path
           skipEmptyTemplates: true

@@ -52,7 +52,7 @@ func assertJUnitTestSuite(assert *assert.Assertions, expected, actual []JUnitTes
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Tests, actual[i].Tests)
 			assert.Equal(expected[i].Errors, actual[i].Errors)
 			assert.Equal(expected[i].Failures, actual[i].Failures)
@@ -73,7 +73,7 @@ func assertJUnitTestCase(assert *assert.Assertions, expected, actual []JUnitTest
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Classname, actual[i].Classname)
 			assert.Equal(expected[i].Name, actual[i].Name)
 
@@ -105,7 +105,7 @@ func assertJUnitProperty(assert *assert.Assertions, expected, actual []JUnitProp
 		actualLength := len(actual)
 		assert.Equal(len(expected), actualLength)
 
-		for i := 0; i < actualLength; i++ {
+		for i := range actualLength {
 			assert.Equal(expected[i].Name, actual[i].Name)
 			assert.Equal(expected[i].Value, actual[i].Value)
 		}

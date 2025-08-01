@@ -50,7 +50,7 @@ asserts:
 	a := assert.New(t)
 	a.Equal(tj.Name, "should do something")
 	a.Equal(tj.Values, []string{"values.yaml"})
-	a.Equal(tj.Set, map[string]interface{}{
+	a.Equal(tj.Set, map[string]any{
 		"a.b.c": "ABC",
 		"x.y.z": "XYZ",
 	})
@@ -1025,7 +1025,7 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 			Version: "1.2.3",
 		},
 		Templates: []*v3chart.File{},
-		Values:    map[string]interface{}{},
+		Values:    map[string]any{},
 	}
 
 	tests := []struct {
@@ -1064,7 +1064,7 @@ func TestV3RunJob_TplFunction_Fail_WithAssertion(t *testing.T) {
 			Version: "1.2.3",
 		},
 		Templates: []*v3chart.File{},
-		Values:    map[string]interface{}{},
+		Values:    map[string]any{},
 	}
 
 	tests := []struct {

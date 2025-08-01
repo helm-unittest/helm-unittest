@@ -227,7 +227,7 @@ func (a *Assertion) selectDocumentsByIndex(index int, docs map[string][]common.K
 
 	for template, manifests := range docs {
 		if index >= len(manifests) {
-			return map[string][]common.K8sManifest{}, fmt.Errorf("document index %d is out of rage", a.DocumentIndex)
+			return map[string][]common.K8sManifest{}, fmt.Errorf("document index %d is out of range", a.DocumentIndex)
 		}
 
 		selectedDocs[template] = []common.K8sManifest{manifests[index]}
@@ -248,8 +248,8 @@ func (a *Assertion) noFileErrMessage(template string) string {
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler, constructing the validator according to the assert type.
-func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	assertDef := make(map[string]interface{})
+func (a *Assertion) UnmarshalYAML(unmarshal func(any) error) error {
+	assertDef := make(map[string]any)
 	if err := unmarshal(&assertDef); err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (a *Assertion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // parseBasicFields parses basic fields like documentIndex, not, and template.
-func (a *Assertion) parseBasicFields(assertDef map[string]interface{}) {
+func (a *Assertion) parseBasicFields(assertDef map[string]any) {
 	if documentIndex, ok := assertDef["documentIndex"].(int); ok {
 		a.DocumentIndex = documentIndex
 	} else {
@@ -288,8 +288,8 @@ func (a *Assertion) parseBasicFields(assertDef map[string]interface{}) {
 }
 
 // parseDocumentSelector parses the documentSelector field if present.
-func (a *Assertion) parseDocumentSelector(assertDef map[string]interface{}) error {
-	if documentSelector, ok := assertDef["documentSelector"].(map[string]interface{}); ok {
+func (a *Assertion) parseDocumentSelector(assertDef map[string]any) error {
+	if documentSelector, ok := assertDef["documentSelector"].(map[string]any); ok {
 		s, err := valueutils.NewDocumentSelector(documentSelector)
 		if err != nil {
 			return err
@@ -300,7 +300,7 @@ func (a *Assertion) parseDocumentSelector(assertDef map[string]interface{}) erro
 }
 
 // validateAssertionType validates the assertion type and ensures at least one is defined.
-func (a *Assertion) validateAssertionType(assertDef map[string]interface{}) error {
+func (a *Assertion) validateAssertionType(assertDef map[string]any) error {
 	for key := range assertDef {
 		if key != "template" && key != "documentIndex" && key != "not" {
 			return fmt.Errorf("Assertion type `%s` is invalid", key)
@@ -309,7 +309,7 @@ func (a *Assertion) validateAssertionType(assertDef map[string]interface{}) erro
 	return fmt.Errorf("no assertion type defined")
 }
 
-func (a *Assertion) constructValidator(assertDef map[string]interface{}) error {
+func (a *Assertion) constructValidator(assertDef map[string]any) error {
 	for assertName, correspondDef := range assertTypeMapping {
 		if params, ok := assertDef[assertName]; ok {
 			if a.validator != nil {

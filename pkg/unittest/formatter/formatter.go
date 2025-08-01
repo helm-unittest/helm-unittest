@@ -45,7 +45,7 @@ func formatDurationMilliSeconds(d time.Duration) string {
 	return fmt.Sprintf("%d", d.Milliseconds())
 }
 
-func writeContentToFile(noXMLHeader bool, content interface{}, w io.Writer) error {
+func writeContentToFile(noXMLHeader bool, content any, w io.Writer) error {
 
 	// to xml
 	bytes, err := xml.MarshalIndent(content, "", "\t")

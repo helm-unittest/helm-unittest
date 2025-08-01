@@ -12,20 +12,16 @@ type DocumentSelector struct {
 	SkipEmptyTemplates bool `yaml:"skipEmptyTemplates"`
 	MatchMany          bool `yaml:"matchMany"`
 	Path               string
-	Value              interface{}
+	Value              any
 }
 
-func NewDocumentSelector(documentSelector map[string]interface{}) (*DocumentSelector, error) {
+func NewDocumentSelector(documentSelector map[string]any) (*DocumentSelector, error) {
 	path, ok := documentSelector["path"].(string)
 	if !ok {
 		log.WithField("selector", "document-selector").Debugln("documentSelector.path is empty")
 		return nil, errors.New("empty 'documentSelector.path' not supported")
 	}
 	value := documentSelector["value"]
-	if value == nil {
-		log.WithField("selector", "document-selector").Debugln("documentSelector.value is nil")
-		return nil, errors.New("empty 'documentSelector.value' not supported")
-	}
 	matchMany := documentSelector["matchMany"] == true
 	skipEmptyTemplates := documentSelector["skipEmptyTemplates"] == true
 
@@ -95,7 +91,7 @@ func (ds DocumentSelector) isMatchingSelector(doc common.K8sManifest) (bool, err
 	}
 
 	for _, manifestValue := range manifestValues {
-		if reflect.DeepEqual(ds.Value, manifestValue) {
+		if ds.Value == nil || reflect.DeepEqual(ds.Value, manifestValue) {
 			return true, nil
 		}
 	}

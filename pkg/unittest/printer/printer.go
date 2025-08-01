@@ -63,48 +63,48 @@ func (p *Printer) setupColor(color *color.Color) {
 // Println print a line with indent level.
 func (p *Printer) Println(content string, indentLevel int) {
 	var indent string
-	for i := 0; i < indentLevel; i++ {
+	for range indentLevel {
 		indent += "\t"
 	}
 	_, _ = fmt.Fprintln(p.Writer, indent+content)
 }
 
 // Success print success.
-func (p *Printer) Success(format string, a ...interface{}) string {
+func (p *Printer) Success(format string, a ...any) string {
 	return p.colors.Success.Sprintf(format, a...)
 }
 
 // SuccessLabel print success as label.
-func (p *Printer) SuccessLabel(format string, a ...interface{}) string {
+func (p *Printer) SuccessLabel(format string, a ...any) string {
 	return p.colors.SuccessBg.Sprintf(format, a...)
 }
 
 // Danger print danger.
-func (p *Printer) Danger(format string, a ...interface{}) string {
+func (p *Printer) Danger(format string, a ...any) string {
 	return p.colors.Danger.Sprintf(format, a...)
 }
 
 // DangerLabel print danger as label.
-func (p *Printer) DangerLabel(format string, a ...interface{}) string {
+func (p *Printer) DangerLabel(format string, a ...any) string {
 	return p.colors.DangerBg.Sprintf(format, a...)
 }
 
 // Warning print warning.
-func (p *Printer) Warning(format string, a ...interface{}) string {
+func (p *Printer) Warning(format string, a ...any) string {
 	return p.colors.Warning.Sprintf(format, a...)
 }
 
 // WarningLabel print warning as label.
-func (p *Printer) WarningLabel(format string, a ...interface{}) string {
+func (p *Printer) WarningLabel(format string, a ...any) string {
 	return p.colors.WarningBg.Sprintf(format, a...)
 }
 
 // Highlight print highlight.
-func (p *Printer) Highlight(format string, a ...interface{}) string {
+func (p *Printer) Highlight(format string, a ...any) string {
 	return p.colors.Highlight.Sprintf(format, a...)
 }
 
 // Faint print faint.
-func (p *Printer) Faint(format string, a ...interface{}) string {
+func (p *Printer) Faint(format string, a ...any) string {
 	return p.colors.Faint.Sprintf(format, a...)
 }

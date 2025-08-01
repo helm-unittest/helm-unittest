@@ -78,10 +78,19 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 			testsPath: "../../test/data/v3/basic/tests",
 		},
 		{
+			testsPath: "../../test/data/v3/basic/tests_failed",
+		},
+		{
+			testsPath: "../../test/data/v3/failing-template/tests",
+		},
+		{
 			testsPath: "../../test/data/v3/full-snapshot/tests",
 		},
 		{
 			testsPath: "../../test/data/v3/global-double-setting/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/library-chart/tests/chart/tests/unit",
 		},
 		{
 			testsPath: "../../test/data/v3/nested_glob/tests",
@@ -90,10 +99,16 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 			testsPath: "../../test/data/v3/with-document-select/tests",
 		},
 		{
+			testsPath: "../../test/data/v3/with-document-select/tests_failed",
+		},
+		{
 			testsPath: "../../test/data/v3/with-files/tests",
 		},
 		{
 			testsPath: "../../test/data/v3/with-k8s-fake-client/tests",
+		},
+		{
+			testsPath: "../../test/data/v3/with-post-renderer/tests",
 		},
 		{
 			testsPath: "../../test/data/v3/with-samenamesubsubcharts/tests",
@@ -124,9 +139,6 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 		},
 		{
 			testsPath: "../../test/data/v3/with-subsubcharts/charts/with-subsubchartssub/charts/with-subsubchartssubsub/tests",
-		},
-		{
-			testsPath: "../../test/data/v3/library-chart/tests/chart/tests/unit",
 		},
 	}
 

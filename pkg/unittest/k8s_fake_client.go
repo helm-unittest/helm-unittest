@@ -18,7 +18,7 @@ type KubernetesFakeKindProps struct {
 
 type KubernetesFakeClientProvider struct {
 	Scheme  map[string]KubernetesFakeKindProps `yaml:"scheme"`
-	Objects []map[string]interface{}           `yaml:"objects"`
+	Objects []map[string]any                   `yaml:"objects"`
 }
 
 func (p *KubernetesFakeClientProvider) GetClientFor(apiVersion, kind string) (dynamic.NamespaceableResourceInterface, bool, error) {
@@ -30,7 +30,7 @@ func (p *KubernetesFakeClientProvider) GetClientFor(apiVersion, kind string) (dy
 	return fake.NewSimpleDynamicClient(runtime.NewScheme(), convertRuntimeObject(p.Objects)...).Resource(props.Gvr), props.Namespaced, nil
 }
 
-func convertRuntimeObject(input []map[string]interface{}) []runtime.Object {
+func convertRuntimeObject(input []map[string]any) []runtime.Object {
 	result := make([]runtime.Object, len(input))
 
 	for k, v := range input {

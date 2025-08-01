@@ -20,7 +20,7 @@ type ContainsDocumentValidator struct {
 	Any        bool   // optional
 }
 
-func (v ContainsDocumentValidator) failInfo(actual interface{}, manifestIndex, assertIndex int, not bool) []string {
+func (v ContainsDocumentValidator) failInfo(actual any, manifestIndex, assertIndex int, not bool) []string {
 
 	log.WithField("validator", "contains_document").Debugln("index content:", manifestIndex)
 	log.WithField("validator", "contains_document").Debugln("actual content:", actual)

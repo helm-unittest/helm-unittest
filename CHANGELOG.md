@@ -1,3 +1,16 @@
+1.0.0 / 2025-31-07
+==================
+- Fix failedTemplate assertion to work with NOTES.txt (resolves #652, resolves #183)
+- Fix failedTemplate jsonSchema validation (resolves #700)
+- Added support for regex matching in snapshots (resolves #280, credits @ivankatliarchuk)
+- Making the value field optional in the documentSelector (resolves #707, credits @dragonpil)
+- Implement minimum plugin version for testsuite (resolves #708, credits @chlab)
+- Add badge and current release link (credits @Lubov66)
+- Update packages to latest patch versions (resolves #702)
+- Update pipeline actions
+- Update documentation (credits @FabienPapet)
+- Make full release to align with semantic versioning
+
 0.8.2 / 2025-05-11
 ==================
 - Fix broken links (credits @Lubov66)

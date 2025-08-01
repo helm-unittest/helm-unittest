@@ -11,7 +11,7 @@ type IsAPIVersionValidator struct {
 	Of string
 }
 
-func (v IsAPIVersionValidator) failInfo(actual interface{}, manifestIndex, actualIndex int, not bool) []string {
+func (v IsAPIVersionValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be apiVersion"
 

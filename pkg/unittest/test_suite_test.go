@@ -291,7 +291,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 
 func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
-	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]interface{}{
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]any{
 		"unexpectedField": false,
 	})
 
@@ -310,7 +310,7 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 
 func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a := assert.New(t)
-	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"unexpectedField": true,
 	})
 
@@ -320,7 +320,7 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 
 func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
 	a := assert.New(t)
-	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]interface{}{
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]any{
 		"unexpectedField": true,
 	})
 	a.Error(err)
@@ -384,7 +384,7 @@ version: 1.0.0
 	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
 	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
 	defer os.RemoveAll(chartPath)
-	values := map[string]interface{}{
+	values := map[string]any{
 		"key1": "value1",
 		"key2": "value2",
 	}
@@ -395,7 +395,7 @@ version: 1.0.0
 
 func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
-	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
+	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"includeSuite": false,
 	})
 	a.NotNil(err)
@@ -421,7 +421,7 @@ func TestV3RenderSuitesStrictFileOk(t *testing.T) {
 
 func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 	a := assert.New(t)
-	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]interface{}{
+	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"customSnapshotIds": true,
 	})
 
