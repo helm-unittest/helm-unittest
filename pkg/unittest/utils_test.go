@@ -12,6 +12,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // unmarshalJobTestHelper unmarshall a YAML-encoded string into a TestJob struct.
@@ -385,6 +386,29 @@ func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Success(t *testing.T) {
 
 	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
 	assert.Contains(t, buffer.String(), "Snapshot:    5 passed, 5 total")
+}
+
+func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Modify(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/modify/v1_test.yaml"},
+		Strict:    true,
+	}
+	filePath := "testdata/chart-snapshot/templates/test.yaml"
+	originalContent, err := os.ReadFile(filePath)
+	require.NoError(t, err)
+	// write original content to restore it later
+	defer writeToFile(string(originalContent), filePath)
+	// modify the file content
+	err = writeToFile("foo: modified-bar", filePath)
+	require.NoError(t, err)
+
+	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+
+	assert.Contains(t, buffer.String(), "-foo: bar")
+	assert.Contains(t, buffer.String(), "+foo: modified-bar")
+	assert.Contains(t, buffer.String(), "Snapshot:    1 failed, 0 passed, 1 total")
 }
 
 func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Failed(t *testing.T) {

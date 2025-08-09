@@ -41,12 +41,6 @@ var contentNew = map[string]any{
 	},
 }
 
-var contentForRegex = map[string]any{
-	"x": map[string]string{
-		"y": "abrakadabra",
-	},
-}
-
 func createCache(assert *assert.Assertions, existed bool) *Cache {
 	dir, _ := os.MkdirTemp("", "test")
 	cacheFile := filepath.Join(dir, "cache_test.yaml")
@@ -379,4 +373,104 @@ func TestCacheWhenNotRegexMatch(t *testing.T) {
 	result = cache.Compare(cache_before, 1, content1, WithNotMatchRegexPattern("b: c"))
 	a.False(result.Passed)
 	a.Contains(result.Msg, "pattern 'b: c' should not be in snapshot")
+}
+
+func TestCacheModificationWithoutRegexOptions(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, true)
+	err := cache.RestoreFromFile()
+
+	a.Nil(err)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
+
+	result := cache.Compare(cache_before, 1, contentNew)
+	a.False(result.Passed)
+}
+
+func TestWithMatchRegexPattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  string
+		expected string
+		enabled  bool
+	}{
+		{
+			name:     "non-empty pattern",
+			pattern:  "abc",
+			expected: "abc",
+			enabled:  true,
+		},
+		{
+			name:     "non-empty pattern with empty spaces",
+			pattern:  " abc ",
+			expected: "abc",
+			enabled:  true,
+		},
+		{
+			name:     "empty pattern",
+			pattern:  "",
+			expected: "",
+			enabled:  false,
+		},
+		{
+			name:     "empty pattern with spaces",
+			pattern:  " ",
+			expected: "",
+			enabled:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt := &CacheOptions{}
+			err := WithMatchRegexPattern(tt.pattern)(opt)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, opt.MatchRegexPattern)
+			assert.Equal(t, tt.enabled, opt.IsRegexEnabled())
+		})
+	}
+}
+
+func TestWithNotMatchRegexPattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  string
+		expected string
+		enabled  bool
+	}{
+		{
+			name:     "non-empty pattern",
+			pattern:  "abc",
+			expected: "abc",
+			enabled:  true,
+		},
+		{
+			name:     "non-empty pattern with spaces",
+			pattern:  " abc ",
+			expected: "abc",
+			enabled:  true,
+		},
+		{
+			name:     "empty pattern",
+			pattern:  "",
+			expected: "",
+			enabled:  false,
+		},
+		{
+			name:     "empty pattern with space",
+			pattern:  " ",
+			expected: "",
+			enabled:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt := &CacheOptions{}
+			err := WithNotMatchRegexPattern(tt.pattern)(opt)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, opt.NotMatchRegexPattern)
+			assert.Equal(t, tt.enabled, opt.IsRegexEnabled())
+		})
+	}
 }
