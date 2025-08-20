@@ -1,0 +1,7 @@
+suite: Test with simple snapshot modification
+templates:
+  - templates/test.yaml
+tests:
+  - it: should render correctly for test environment
+    asserts:
+      - matchSnapshot: {}
