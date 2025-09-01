@@ -1,0 +1,3 @@
+should render correctly for test environment:
+  1: |
+    foo: bar

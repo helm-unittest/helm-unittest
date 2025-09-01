@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -80,7 +81,7 @@ func (s *Cache) Compare(test string, idx uint, content any, optFns ...func(optio
 
 	newSnapshot := common.TrustedMarshalYAML(content)
 
-	if len(optFns) > 0 {
+	if options.IsRegexEnabled() {
 		if options.MatchRegexPattern != "" {
 			match, err = valueutils.MatchesPattern(newSnapshot, options.MatchRegexPattern)
 			if !match {
@@ -218,24 +219,29 @@ func (s *Cache) VanishedCount() uint {
 	return count
 }
 
-// CacheOptions is a type alias for CacheOptions functional option
+// CacheOptionsFunc is a type alias for CacheOptions functional option
 type CacheOptionsFunc func(*CacheOptions) error
 
 type CacheOptions struct {
 	MatchRegexPattern    string
 	NotMatchRegexPattern string
+	enabled              bool
 }
 
 func WithMatchRegexPattern(pattern string) CacheOptionsFunc {
 	return func(c *CacheOptions) error {
-		c.MatchRegexPattern = pattern
+		c.MatchRegexPattern = strings.TrimSpace(pattern)
 		return nil
 	}
 }
 
 func WithNotMatchRegexPattern(pattern string) CacheOptionsFunc {
 	return func(c *CacheOptions) error {
-		c.NotMatchRegexPattern = pattern
+		c.NotMatchRegexPattern = strings.TrimSpace(pattern)
 		return nil
 	}
+}
+
+func (c *CacheOptions) IsRegexEnabled() bool {
+	return c.NotMatchRegexPattern != "" || c.MatchRegexPattern != ""
 }
