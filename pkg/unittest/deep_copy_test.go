@@ -66,6 +66,22 @@ func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
 	assert.Equal(t, 58, templatesCount)
 }
 
+func TestFullCopyHelmChartWithSubCharts(t *testing.T) {
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	log.SetOutput(os.Stdout)
+
+	// Copy
+	sut := FullCopyV3Chart(initialChart.Name(), initialChart.Name(), initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 58, templatesCount)
+}
+
 func TestCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
 	templateAsserts := []string{"*.yaml"}
 
@@ -76,6 +92,22 @@ func TestCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
 
 	// Copy
 	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+
+	templatesCount := templatesCount(sut)
+
+	// Validate loaded chart
+	assert.NotNil(t, sut)
+	assert.Equal(t, 1, templatesCount)
+}
+
+func TestFullCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
+	// Load the chart used by this suite (with logging temporarily disabled)
+	log.SetOutput(io.Discard)
+	initialChart, _ := v3loader.Load(testV3WithFilesChart)
+	log.SetOutput(os.Stdout)
+
+	// Copy
+	sut := FullCopyV3Chart(initialChart.Name(), initialChart.Name(), initialChart)
 
 	templatesCount := templatesCount(sut)
 

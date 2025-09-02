@@ -14,6 +14,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
 // Most used test files
@@ -447,9 +448,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "validate empty asserts", 1, 0, 0, 0, 0)
 }
@@ -486,9 +489,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 5, 5, 0, 0)
 }
@@ -510,9 +515,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -546,9 +553,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
@@ -569,9 +578,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
@@ -592,9 +603,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubFolderChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubFolderChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
@@ -614,9 +627,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
@@ -638,8 +653,10 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 	assert.True(t, suiteResult.Passed)
 }
 
@@ -658,9 +675,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test cert-manager rbac with trimming", 1, 0, 0, 0, 0)
 }
@@ -688,9 +707,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3WithSubChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
@@ -714,8 +735,10 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Empty(t, testSuite.Chart.Version)
@@ -742,8 +765,10 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.3")
@@ -772,8 +797,10 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(testV3WithSubChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.2")
@@ -795,9 +822,11 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(testV3BasicChart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
@@ -1340,8 +1369,10 @@ tests:
 
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v3loader.Load(testV3BasicChart)
+	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.True(t, suiteResult.FailFast)
 	assert.False(t, suiteResult.Passed)
@@ -1370,7 +1401,10 @@ func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			suiteResult := testSuite.RunV3(testV3BasicChart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
+			chart, chartErr := v3loader.Load(testV3BasicChart)
+			assert.NoError(t, chartErr)
+
+			suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
 			assert.False(t, suiteResult.Passed)
 			assert.True(t, len(suiteResult.TestsResult) == 2)
 		})
@@ -1557,10 +1591,12 @@ tests:
 
 			// Check if the skip reason propagates correctly
 			testSuite := suites[0]
+			chart, chartErr := v3loader.Load(testV3BasicChart)
+			assert.NoError(t, chartErr)
 
 			// Run the suite
 			cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, fmt.Sprintf("skip-reason-snapshot-%s.yaml", tc.name)), false)
-			suiteResult := testSuite.RunV3(testV3BasicChart, cache, false, "", &results.TestSuiteResult{})
+			suiteResult := testSuite.RunV3(chart, cache, false, "", &results.TestSuiteResult{})
 
 			// Verify skipped status
 			assert.True(t, suiteResult.Skipped)
@@ -1606,7 +1642,10 @@ func TestV3RunSuiteWithSkipTests(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			suiteResult := testSuite.RunV3(testV3BasicChart, cache, tt.failFast, "", &results.TestSuiteResult{})
+			chart, chartErr := v3loader.Load(testV3BasicChart)
+			assert.NoError(t, chartErr)
+
+			suiteResult := testSuite.RunV3(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
 
 			assert.False(t, suiteResult.Skipped)
 			assert.False(t, suiteResult.Passed)
@@ -1644,7 +1683,10 @@ func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			suiteResult := testSuite.RunV3(testV3BasicChart, cache, tt.failFast, "", &results.TestSuiteResult{})
+			chart, chartErr := v3loader.Load(testV3BasicChart)
+			assert.NoError(t, chartErr)
+
+			suiteResult := testSuite.RunV3(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
 
 			assert.True(t, suiteResult.Skipped)
 			assert.True(t, suiteResult.Passed)
