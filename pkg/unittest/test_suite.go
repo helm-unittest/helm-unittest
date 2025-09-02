@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"os"
 	"path/filepath"
@@ -16,6 +15,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
+	v3chart "helm.sh/helm/v3/pkg/chart"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
 	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3engine "helm.sh/helm/v3/pkg/engine"
@@ -250,7 +250,7 @@ type TestSuite struct {
 
 // RunV3 runs all the test jobs defined in TestSuite.
 func (s *TestSuite) RunV3(
-	chartPath string,
+	chart *v3chart.Chart,
 	snapshotCache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
@@ -262,7 +262,7 @@ func (s *TestSuite) RunV3(
 	result.FilePath = s.definitionFile
 
 	r := s.runV3TestJobs(
-		chartPath,
+		chart,
 		snapshotCache,
 		failFast,
 		renderPath,
@@ -292,7 +292,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			s.polishSkipSettings(test)
 
 			// Make deep clone of global set
-			test.globalSet = copySet(s.Set)
+			test.globalSet = CopySet(s.Set)
 			if len(s.Values) > 0 {
 				test.Values = append(s.Values, test.Values...)
 			}
@@ -377,7 +377,7 @@ type SuiteResult struct {
 }
 
 func (s *TestSuite) runV3TestJobs(
-	chartPath string,
+	chart *v3chart.Chart,
 	cache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
@@ -387,10 +387,8 @@ func (s *TestSuite) runV3TestJobs(
 	skipped := 0
 
 	for idx, testJob := range s.Tests {
-		// (Re)load the chart used by this suite (with logging temporarily disabled)
-		log.SetOutput(io.Discard)
-		chart, _ := v3loader.Load(chartPath)
-		log.SetOutput(os.Stdout)
+		// Deepclone of chart
+		chartClone := FullCopyV3Chart(s.chartRoute, chart.Name(), chart)
 
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
@@ -403,7 +401,7 @@ func (s *TestSuite) runV3TestJobs(
 				result.Pass = true
 			}
 		} else {
-			testJob.WithConfig(*NewTestConfig(chart, cache,
+			testJob.WithConfig(*NewTestConfig(chartClone, cache,
 				WithRenderPath(renderPath),
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
@@ -416,6 +414,7 @@ func (s *TestSuite) runV3TestJobs(
 			}
 			result.Pass = result.Pass && jobResult.Passed
 		}
+
 		if !result.Pass && failFast {
 			result.FailFast = true
 			break

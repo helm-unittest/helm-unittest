@@ -1,6 +1,7 @@
 package unittest
 
 import (
+	"maps"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -53,7 +54,7 @@ func getTemplateFileNamePattern(fileName string) string {
 	return pattern
 }
 
-func copySet(setValues map[string]any) map[string]any {
+func CopySet(setValues map[string]any) map[string]any {
 	copiedSet, err := copystructure.Copy(setValues)
 	if err != nil {
 		panic(err)
@@ -66,6 +67,86 @@ func copySet(setValues map[string]any) map[string]any {
 	}
 
 	return copiedSetValues
+}
+
+// Copy the V3Chart and its dependencies with partials and optional selected test files.
+func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart) *v3chart.Chart {
+	copiedChart := new(v3chart.Chart)
+
+	// Copy
+	for _, rawFile := range targetChart.Raw {
+		copiedRawFile := new(v3chart.File)
+		copiedRawFile.Name = rawFile.Name
+		copiedRawFile.Data = rawFile.Data
+		copiedChart.Raw = append(copiedChart.Raw, copiedRawFile)
+	}
+
+	copiedChart.Metadata = new(v3chart.Metadata)
+	copiedChart.Metadata.Name = targetChart.Metadata.Name
+	copiedChart.Metadata.Home = targetChart.Metadata.Home
+	copiedChart.Metadata.Sources = targetChart.Metadata.Sources
+	copiedChart.Metadata.Version = targetChart.Metadata.Version
+	copiedChart.Metadata.Description = targetChart.Metadata.Description
+	copiedChart.Metadata.Keywords = targetChart.Metadata.Keywords
+	copiedChart.Metadata.Icon = targetChart.Metadata.Icon
+	copiedChart.Metadata.APIVersion = targetChart.Metadata.APIVersion
+	copiedChart.Metadata.Condition = targetChart.Metadata.Condition
+	copiedChart.Metadata.Tags = targetChart.Metadata.Tags
+	copiedChart.Metadata.AppVersion = targetChart.Metadata.AppVersion
+	copiedChart.Metadata.KubeVersion = targetChart.Metadata.KubeVersion
+	copiedChart.Metadata.Type = targetChart.Metadata.Type
+	copiedChart.Metadata.Annotations = maps.Clone(targetChart.Metadata.Annotations)
+
+	for _, maintainer := range targetChart.Metadata.Maintainers {
+		copiedMaintainer := new(v3chart.Maintainer)
+		copiedMaintainer.Name = maintainer.Name
+		copiedMaintainer.Email = maintainer.Email
+		copiedMaintainer.URL = maintainer.URL
+		copiedChart.Metadata.Maintainers = append(copiedChart.Metadata.Maintainers, copiedMaintainer)
+	}
+
+	for _, template := range targetChart.Templates {
+		copiedTemplate := new(v3chart.File)
+		copiedTemplate.Name = template.Name
+		copiedTemplate.Data = template.Data
+		copiedChart.Templates = append(copiedChart.Templates, copiedTemplate)
+	}
+
+	copiedChart.Values = CopySet(targetChart.Values)
+
+	copiedChart.Schema = targetChart.Schema
+
+	for _, file := range targetChart.Files {
+		copiedFile := new(v3chart.File)
+		copiedFile.Name = file.Name
+		copiedFile.Data = file.Data
+		copiedChart.Files = append(copiedChart.Files, copiedFile)
+	}
+
+	for _, dependency := range targetChart.Metadata.Dependencies {
+		copiedDependency := new(v3chart.Dependency)
+		copiedDependency.Name = dependency.Name
+		copiedDependency.Version = dependency.Version
+		copiedDependency.Repository = dependency.Repository
+		copiedDependency.Condition = dependency.Condition
+		copiedDependency.Tags = dependency.Tags
+		copiedDependency.Enabled = dependency.Enabled
+		copiedDependency.ImportValues = dependency.ImportValues
+		copiedDependency.Alias = dependency.Alias
+		copiedChart.Metadata.Dependencies = append(copiedChart.Metadata.Dependencies, copiedDependency)
+	}
+
+	// Recreate the dependencies
+	// Filter trough dependencies.
+	copiedChartDependencies := make([]*v3chart.Chart, 0)
+	for _, dependency := range targetChart.Dependencies() {
+		copiedChartRoute := filepath.Join(currentRoute, subchartPrefix, dependency.Name())
+		copiedDependency := FullCopyV3Chart(chartRoute, copiedChartRoute, dependency)
+		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
+	}
+	copiedChart.SetDependencies(copiedChartDependencies...)
+
+	return copiedChart
 }
 
 // Copy the V3Chart and its dependencies with partials and optional selected test files.
