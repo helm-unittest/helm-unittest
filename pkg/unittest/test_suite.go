@@ -387,7 +387,7 @@ func (s *TestSuite) runV3TestJobs(
 	skipped := 0
 
 	for idx, testJob := range s.Tests {
-		// Deepclone of chart
+		// Deep clone of chart
 		chartClone := FullCopyV3Chart(s.chartRoute, chart.Name(), chart)
 
 		var jobResult *results.TestJobResult
