@@ -5,7 +5,7 @@
   Skipped: (bool) false,
   ExecError: (*errors.errorString)(values don't meet the specifications of the schema(s) in the following chart(s):
 with-schema:
-- (root): image is required
+- at '': missing property 'image'
 ),
   AssertsResult: ([]*results.AssertionResult) (len=1) {
     (*results.AssertionResult)({

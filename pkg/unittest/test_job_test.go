@@ -645,7 +645,7 @@ it: should work
 template: templates/dummy.yaml
 asserts:
   - failedTemplate:
-      errorMessage: "values don't meet the specifications of the schema(s) in the following chart(s):\nwith-schema:\n- (root): image is required\n"
+      errorMessage: "values don't meet the specifications of the schema(s) in the following chart(s):\nwith-schema:\n- at '': missing property 'image'\n"
 `
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
