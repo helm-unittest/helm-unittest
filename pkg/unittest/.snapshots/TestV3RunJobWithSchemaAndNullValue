@@ -5,7 +5,7 @@
   Skipped: (bool) false,
   ExecError: (*errors.errorString)(values don't meet the specifications of the schema(s) in the following chart(s):
 with-schema:
-- value: Invalid type. Expected: string, given: null
+- at '/value': got null, want string
 ),
   AssertsResult: ([]*results.AssertionResult) (len=1) {
     (*results.AssertionResult)({
