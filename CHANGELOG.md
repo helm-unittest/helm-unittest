@@ -1,3 +1,11 @@
+1.0.1 / 2025-10-09
+==================
+- Fix matchsnapshot logic (resolves #712 resolves #735, credits @ivankatliarchuk) 
+- Fix memoryleak issue by using deepcopy instead of reloading (resolves #634, credits @ivankatliarchuk)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 1.0.0 / 2025-31-07
 ==================
 - Fix failedTemplate assertion to work with NOTES.txt (resolves #652, resolves #183)
