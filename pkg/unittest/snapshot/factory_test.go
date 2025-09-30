@@ -15,11 +15,11 @@ func TestCreateSnapshotOfSuiteReturnCacheRight(t *testing.T) {
 	cache2, err2 := CreateSnapshotOfSuite(filepath.Join(dir, "another_test.yaml"), false)
 
 	a := assert.New(t)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(filepath.Join(dir, "__snapshot__", "my_test.yaml.snap"), cache.Filepath)
 	a.True(cache.IsUpdating)
 
-	a.Nil(err2)
+	a.NoError(err2)
 	a.Equal(filepath.Join(dir, "__snapshot__", "another_test.yaml.snap"), cache2.Filepath)
 	a.False(cache2.IsUpdating)
 }
@@ -31,14 +31,15 @@ func TestCreateSnapshotOfSuiteWhenNoCacheDir(t *testing.T) {
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
 
 	a := assert.New(t)
-	a.Nil(err)
+	a.NoError(err)
 	a.True(info.IsDir())
 
 	_, statCacheFileErr := os.Stat(cache.Filepath)
 	a.False(cache.Existed)
 	a.True(os.IsNotExist(statCacheFileErr))
 
-	os.RemoveAll(dir)
+	raerr := os.RemoveAll(dir)
+	a.NoError(raerr)
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
@@ -53,14 +54,15 @@ func TestCreateSnapshotOfSuiteWhenCacheDirExisted(t *testing.T) {
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
 
-	a.Nil(err)
+	a.NoError(err)
 	a.True(info.IsDir())
 
 	_, statCacheFileErr := os.Stat(cache.Filepath)
 	a.False(cache.Existed)
 	a.True(os.IsNotExist(statCacheFileErr))
 
-	os.RemoveAll(dir)
+	raerr := os.RemoveAll(dir)
+	a.NoError(raerr)
 }
 
 func TestCreateSnapshotOfSuiteWhenCacheFileExisted(t *testing.T) {
@@ -82,12 +84,13 @@ func TestCreateSnapshotOfSuiteWhenCacheFileExisted(t *testing.T) {
 
 	info, err := os.Stat(filepath.Join(dir, "__snapshot__"))
 
-	a.Nil(err)
+	a.NoError(err)
 	a.True(info.IsDir())
 
 	_, statCacheFileErr := os.Stat(cache.Filepath)
 	a.True(cache.Existed)
-	a.Nil(statCacheFileErr)
+	a.NoError(statCacheFileErr)
 
-	os.RemoveAll(dir)
+	raerr := os.RemoveAll(dir)
+	a.NoError(raerr)
 }

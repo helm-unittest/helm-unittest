@@ -225,7 +225,6 @@ type CacheOptionsFunc func(*CacheOptions) error
 type CacheOptions struct {
 	MatchRegexPattern    string
 	NotMatchRegexPattern string
-	enabled              bool
 }
 
 func WithMatchRegexPattern(pattern string) CacheOptionsFunc {

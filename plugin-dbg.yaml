@@ -1,5 +1,5 @@
 name: "unittest"
-version: "1.0.1"
+version: "1.0.2"
 usage: "unittest for helm charts"
 description: "Unit test for helm chart in YAML with ease to keep your chart functional and robust."
 ignoreFlags: false

@@ -102,6 +102,7 @@ asserts:
 }
 
 func TestV3RunJobWithRenderPathOk(t *testing.T) {
+	a := assert.New(t)
 	renderPath := "testdebug"
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
@@ -128,9 +129,11 @@ asserts:
 	)
 	tj.WithConfig(*cfg)
 	testResult := tj.RunV3(&results.TestJobResult{})
-	defer os.RemoveAll(renderPath)
+	defer func() {
+		ferr := os.RemoveAll(renderPath)
+		a.NoError(ferr)
+	}()
 
-	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
@@ -376,7 +379,10 @@ asserts:
 
 	file := path.Join("_scratch", "testjob_test_TestRunJobWithValuesFile.yaml")
 	a.Nil(writeToFile("nameOverride: mary-jane", file))
-	defer os.RemoveAll(file)
+	defer func() {
+		ferr := os.RemoveAll(file)
+		a.NoError(ferr)
+	}()
 
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
@@ -894,6 +900,7 @@ asserts:
 }
 
 func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
+	a := assert.New(t)
 	c, _ := loader.Load(testV3BasicChart)
 	manifest := `
 it: should skip when not supported assert is found
@@ -906,16 +913,15 @@ asserts:
   - notSupportedAssert:
 `
 	var tj TestJob
-	common.YmlUnmarshal(manifest, &tj)
+	err := common.YmlUnmarshal(manifest, &tj)
+	a.Error(err)
 
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	a := assert.New(t)
-
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.Equal(1, len(testResult.AssertsResult))
 	a.Equal(testResult.AssertsResult[0].AssertType, "equal")
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
@@ -955,7 +961,10 @@ ingress:
     - chart-example-second.local
     - chart-example-third.local
 `, file))
-	defer os.RemoveAll(file)
+	defer func() {
+		ferr := os.RemoveAll(file)
+		assert.NoError(t, ferr)
+	}()
 
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
@@ -996,14 +1005,17 @@ asserts:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "test_tmp_values.yaml")
-	a.Nil(writeToFile(`
+	a.NoError(writeToFile(`
 ingress:
   hosts:
     - chart-example-first.local
     - chart-example-second.local
     - chart-example-third.local
 `, file))
-	defer os.RemoveAll(file)
+	defer func() {
+		err := os.RemoveAll(file)
+		a.NoError(err)
+	}()
 
 	var tj TestJob
 	unmarshalJobTestHelper(fmt.Sprintf(manifest, file), &tj, t)
@@ -1013,9 +1025,9 @@ ingress:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	assert.Nil(t, testResult.ExecError)
-	assert.True(t, testResult.Passed)
-	assert.Equal(t, 3, len(testResult.AssertsResult))
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(3, len(testResult.AssertsResult))
 }
 
 func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {

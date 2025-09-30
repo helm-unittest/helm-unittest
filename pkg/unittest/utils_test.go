@@ -41,7 +41,12 @@ func writeToFile(data string, filename string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		ferr := file.Close()
+		if ferr != nil {
+			panic(ferr)
+		}
+	}()
 
 	_, err = file.WriteString(data)
 	if err != nil {
@@ -399,7 +404,9 @@ func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Modify(t *testing.T) {
 	originalContent, err := os.ReadFile(filePath)
 	require.NoError(t, err)
 	// write original content to restore it later
-	defer writeToFile(string(originalContent), filePath)
+	defer func() {
+		require.NoError(t, writeToFile(string(originalContent), filePath))
+	}()
 	// modify the file content
 	err = writeToFile("foo: modified-bar", filePath)
 	require.NoError(t, err)
