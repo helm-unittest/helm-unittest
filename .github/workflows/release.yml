@@ -53,13 +53,17 @@ jobs:
       HELM_PLUGIN_LATEST_VERSION: ${{ steps.helm-plugin-versions.outputs.helmpluginlatestversion }}
     steps:
       - id: helm-versions
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          helmLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=4 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          helmLatest=`curl -sL -H "Authorization: token $TOKEN"  https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=4 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmlatestversion=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
       - id: helm-plugin-versions
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pluginLatest=`curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          pluginLatest=`curl -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
 
