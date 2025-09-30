@@ -1,6 +1,6 @@
 1.0.2 / 2025-01-10
 ==================
-- Replace yaml library (resolves #501) 
+- Replaced yaml library with a maintained alternative (resolves #501) 
 - Update packages to latest patch versions
 - Update pipeline actions
 - Update documentation
