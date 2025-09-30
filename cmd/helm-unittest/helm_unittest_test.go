@@ -259,7 +259,6 @@ func TestValidateUnittestOutputFileFlags(t *testing.T) {
 
 	for _, outputFileFlag := range outputFileFlags {
 		for outputFile, outputFileValue := range outputFiles {
-			defer os.Remove(outputFile)
 			cmd := setupTestCmd()
 			if len(outputFile) > 0 {
 				cmd.SetArgs([]string{outputFileFlag, outputFile})
@@ -268,7 +267,7 @@ func TestValidateUnittestOutputFileFlags(t *testing.T) {
 			err := cmd.Execute()
 			runner := GetTestRunner()
 
-			a.Nil(err)
+			a.NoError(err)
 			a.EqualValues(outputFileValue, runner.OutputFile)
 		}
 	}
@@ -279,7 +278,10 @@ func TestValidateUnittestOutputTypeFlags(t *testing.T) {
 	a := assert.New(t)
 
 	dummyOutputFile := "test-output.xml"
-	defer os.Remove(dummyOutputFile)
+	defer func() {
+		ferr := os.Remove(dummyOutputFile)
+		a.NoError(ferr)
+	}()
 	outputTypeFlags := []string{"--output-type", "-t"}
 
 	outputTypes := map[string]string{

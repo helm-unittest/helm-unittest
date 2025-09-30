@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/stretchr/testify/assert"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 	yaml "sigs.k8s.io/yaml"
 )
 
@@ -37,7 +37,12 @@ func TrustedMarshalYAML(d any) string {
 	byteBuffer := new(bytes.Buffer)
 	yamlEncoder := yamlv3.NewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(YAMLINDENTION)
-	defer yamlEncoder.Close()
+	defer func() {
+		cerr := yamlEncoder.Close()
+		if cerr != nil {
+			panic(cerr)
+		}
+	}()
 	if err := yamlEncoder.Encode(d); err != nil {
 		panic(err)
 	}

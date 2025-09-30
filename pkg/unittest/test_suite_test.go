@@ -215,7 +215,7 @@ func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 2)
 	for _, suite := range suites {
 		a.Equal("test deployment", suite.Name)
@@ -228,7 +228,7 @@ func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
 
-	a.NotNil(err)
+	a.Error(err)
 	a.EqualError(err, "no tests found")
 	a.Len(suites, 1)
 	for _, suite := range suites {
@@ -241,7 +241,7 @@ func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
 
-	a.NotNil(err)
+	a.Error(err)
 	a.EqualError(err, "no asserts found")
 	a.Len(suites, 1)
 	for _, suite := range suites {
@@ -255,7 +255,7 @@ func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
-	a.NotNil(err)
+	a.Error(err)
 	a.EqualError(err, "yaml: unmarshal errors:\n  line 6: field documents not found in type unittest.TestJob")
 	a.Len(suites, 2)
 	for _, suite := range suites {
@@ -269,7 +269,7 @@ func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	for _, suite := range suites {
 		a.Equal(suite.Name, "test deployment")
 		a.Equal(suite.Templates, []string{"templates/configmap.yaml", "templates/deployment.yaml"})
@@ -281,7 +281,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
 
-	a.Nil(err)
+	a.NoError(err)
 	for _, suite := range suites {
 		a.Equal("test deployment", suite.Name)
 		a.Equal([]string{"templates/configmap.yaml", "templates/deployment.yaml"}, suite.Templates)
@@ -296,7 +296,7 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 		"unexpectedField": false,
 	})
 
-	a.Nil(err)
+	a.NoError(err)
 
 	expectedSuites := getExpectedRenderedTestSuites(false, t)
 
@@ -315,7 +315,7 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 		"unexpectedField": true,
 	})
 
-	a.NotNil(err)
+	a.Error(err)
 	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
 }
 
@@ -337,7 +337,10 @@ func TestV3RenderSuites_LoadError(t *testing.T) {
 name: basic
 `
 	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
-	defer os.RemoveAll(chartPath)
+	defer func() {
+		err := os.RemoveAll(chartPath)
+		a.NoError(err)
+	}()
 
 	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
 	a.Error(err)
@@ -364,7 +367,10 @@ spec:
 
 	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
 	a.NoError(writeToFile(deployment, path.Join(chartPath, "templates/deployment.yaml")))
-	defer os.RemoveAll(chartPath)
+	defer func() {
+		rerr := os.RemoveAll(chartPath)
+		a.NoError(rerr)
+	}()
 	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
 
 	a.Error(err)
@@ -384,7 +390,10 @@ version: 1.0.0
 
 	a.NoError(writeToFile(chart, path.Join(chartPath, "Chart.yaml")))
 	a.NoError(writeToFile(empty_manifest, path.Join(chartPath, "templates/deployment.yaml")))
-	defer os.RemoveAll(chartPath)
+	defer func() {
+		rerr := os.RemoveAll(chartPath)
+		a.NoError(rerr)
+	}()
 	values := map[string]any{
 		"key1": "value1",
 		"key2": "value2",
@@ -399,7 +408,7 @@ func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"includeSuite": false,
 	})
-	a.NotNil(err)
+	a.Error(err)
 	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
 }
 
@@ -426,7 +435,7 @@ func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 		"customSnapshotIds": true,
 	})
 
-	a.Nil(err)
+	a.NoError(err)
 
 	expectedSuites := getExpectedRenderedTestSuites(true, t)
 
@@ -856,12 +865,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "multiple-suites-withsingle-separator.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.Remove(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		err := os.Remove(file)
+		a.NoError(err)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 2)
 }
 
@@ -912,12 +924,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "multiple-suites-with-multiline-value.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		err := os.RemoveAll(file)
+		a.NoError(err)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 3)
 }
 
@@ -939,12 +954,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-chart-metadata.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "override", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 
 	for _, suite := range suites {
@@ -972,12 +990,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 
 	for _, suite := range suites {
@@ -1010,12 +1031,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 
 	for _, suite := range suites {
@@ -1047,12 +1071,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-chart-metadata.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 
 	for _, suite := range suites {
@@ -1080,12 +1107,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "unset-test-apiversions.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
 	a.Equal([]string(nil), suites[0].Tests[0].Capabilities.APIVersions)
@@ -1111,12 +1141,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-apiversions.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 	a.Equal([]string{"autoscaling/v2"}, suites[0].Capabilities.APIVersions)
 	a.Equal([]string{"autoscaling/v1", "monitoring.coreos.com/v1", "autoscaling/v2"}, suites[0].Tests[0].Capabilities.APIVersions)
@@ -1141,12 +1174,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-apiversions.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
 	a.Equal(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
@@ -1171,12 +1207,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "override-test-apiversions.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 1)
 	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
 	a.NotEqual(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
@@ -1240,12 +1279,15 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "multiple-capabilities-modifications.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 3)
 	// first
 	a.Equal(suites[0].Capabilities.MajorVersion, suites[0].Tests[0].Capabilities.MajorVersion)
@@ -1275,8 +1317,11 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "assert-not-supported.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
@@ -1299,8 +1344,11 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "assert-not-supported.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
 	a.NoError(err)
@@ -1321,8 +1369,11 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "assert-not-supported.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	_, err := ParseTestSuiteFile(file, "basic", true, []string{})
 	a.Error(err)
@@ -1360,22 +1411,25 @@ tests:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "fail-fast.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
-	a.Nil(err)
+	a.NoError(err)
 	a.Len(suites, 3)
 
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
 	chart, chartErr := v3loader.Load(testV3BasicChart)
-	assert.NoError(t, chartErr)
+	a.NoError(chartErr)
 
 	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
-	assert.True(t, suiteResult.FailFast)
-	assert.False(t, suiteResult.Passed)
+	a.True(suiteResult.FailFast)
+	a.False(suiteResult.Passed)
 }
 
 func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
@@ -1476,39 +1530,42 @@ tests:
 
 	a := assert.New(t)
 	file := path.Join("_scratch", "multiple-suites-with-skip.yaml")
-	a.Nil(writeToFile(suiteDoc, file))
-	defer os.RemoveAll(file)
+	a.NoError(writeToFile(suiteDoc, file))
+	defer func() {
+		rerr := os.RemoveAll(file)
+		a.NoError(rerr)
+	}()
 
 	suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 
-	assert.NoError(t, err)
-	assert.Len(t, suites, 5)
+	a.NoError(err)
+	a.Len(suites, 5)
 
 	for _, s := range suites {
 		switch s.Name {
 		case "test skip on suite level":
-			assert.NotEmpty(t, s.Skip.Reason)
+			a.NotEmpty(s.Skip.Reason)
 		case "suite with single skipped test":
-			assert.NotEmpty(t, s.Skip.Reason)
+			a.NotEmpty(s.Skip.Reason)
 		case "suite with two tests and one skipped test":
-			assert.Empty(t, s.Skip.Reason)
+			a.Empty(s.Skip.Reason)
 			for _, test := range s.Tests {
 				switch test.Name {
 				case "should skip test":
-					assert.NotEmpty(t, test.Skip.Reason)
+					a.NotEmpty(test.Skip.Reason)
 				default:
-					assert.Empty(t, test.Skip.Reason)
+					a.Empty(test.Skip.Reason)
 				}
 			}
 		case "test skip with minimumVersion on suite level":
-			assert.NotEmpty(t, s.Skip.Reason)
-			assert.Contains(t, s.Skip.Reason, "Test suite requires minimum unittest plugin version 99.0.0")
+			a.NotEmpty(s.Skip.Reason)
+			a.Contains(s.Skip.Reason, "Test suite requires minimum unittest plugin version 99.0.0")
 			// Verify that the Skip.Reason is propagated to all tests
 			for _, test := range s.Tests {
-				assert.Equal(t, s.Skip.Reason, test.Skip.Reason)
+				a.Equal(s.Skip.Reason, test.Skip.Reason)
 			}
 		default:
-			assert.Empty(t, s.Skip.Reason)
+			a.Empty(s.Skip.Reason)
 		}
 	}
 }
@@ -1578,38 +1635,42 @@ tests:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			a := assert.New(t)
 			// Create a temporary file with the test suite content
 			file := path.Join("_scratch", fmt.Sprintf("skip-reason-%s.yaml", tc.name))
 			err := writeToFile(tc.suiteContent, file)
-			assert.Nil(t, err)
-			defer os.RemoveAll(file)
+			a.NoError(err)
+			defer func() {
+				rerr := os.RemoveAll(file)
+				a.NoError(rerr)
+			}()
 
 			// Parse the test suite file
 			suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
-			assert.NoError(t, err)
-			assert.Len(t, suites, 1)
+			a.NoError(err)
+			a.Len(suites, 1)
 
 			// Check if the skip reason propagates correctly
 			testSuite := suites[0]
 			chart, chartErr := v3loader.Load(testV3BasicChart)
-			assert.NoError(t, chartErr)
+			a.NoError(chartErr)
 
 			// Run the suite
 			cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, fmt.Sprintf("skip-reason-snapshot-%s.yaml", tc.name)), false)
 			suiteResult := testSuite.RunV3(chart, cache, false, "", &results.TestSuiteResult{})
 
 			// Verify skipped status
-			assert.True(t, suiteResult.Skipped)
-			assert.True(t, suiteResult.Passed) // Skipped suites should pass
+			a.True(suiteResult.Skipped)
+			a.True(suiteResult.Passed) // Skipped suites should pass
 
 			// Check test jobs have the expected skip reason
 			for _, testJob := range testSuite.Tests {
-				assert.Contains(t, testJob.Skip.Reason, tc.expectReason)
+				a.Contains(testJob.Skip.Reason, tc.expectReason)
 			}
 
 			// Verify all test results are marked as skipped
 			for _, testResult := range suiteResult.TestsResult {
-				assert.True(t, testResult.Skipped)
+				a.True(testResult.Skipped)
 			}
 		})
 	}
@@ -1879,8 +1940,11 @@ tests:
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a temporary file with the test suite content
 			file := path.Join("_scratch", fmt.Sprintf("minimum-version-%s.yaml", tt.name))
-			assert.Nil(t, writeToFile(tt.suiteContent, file))
-			defer os.RemoveAll(file)
+			assert.NoError(t, writeToFile(tt.suiteContent, file))
+			defer func() {
+				rerr := os.RemoveAll(file)
+				assert.NoError(t, rerr)
+			}()
 
 			suites, err := ParseTestSuiteFile(file, "basic", true, []string{})
 			assert.NoError(t, err)

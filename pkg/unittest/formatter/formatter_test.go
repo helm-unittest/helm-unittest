@@ -46,24 +46,27 @@ func createAssertionResult(index int, passed, not bool, assertionType, failInfo,
 func loadFormatterTestcase(assert *assert.Assertions, outputFile string, given []*results.TestSuiteResult, sut Formatter) []byte {
 
 	writer, cerr := os.Create(outputFile)
-	assert.Nil(cerr)
+	assert.NoError(cerr)
 
 	// Test the formatter
 	serr := sut.WriteTestOutput(given, false, writer)
-	assert.Nil(serr)
+	assert.NoError(serr)
 
 	// Don't defer, as we want to close it before stopping the test.
-	writer.Close()
+	werr := writer.Close()
+	assert.NoError(werr)
 
 	assert.FileExists(outputFile)
 
 	// Unmarshall and validate the output with expected.
 	testResult, rerr := os.Open(outputFile)
-	assert.Nil(rerr)
+	assert.NoError(rerr)
 	bytevalue, _ := io.ReadAll(testResult)
 
-	testResult.Close()
-	os.Remove(outputFile)
+	terr := testResult.Close()
+	assert.NoError(terr)
+	rferr := os.Remove(outputFile)
+	assert.NoError(rferr)
 
 	return bytevalue
 }
@@ -85,7 +88,10 @@ func TestNewFormatterWithOutputFileAndOutputTypeJUnit(t *testing.T) {
 	outputType := "Junit"
 	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
-	defer os.Remove(givenDirectory)
+	defer func() {
+		rerr := os.Remove(givenDirectory)
+		assert.NoError(rerr)
+	}()
 	sut := NewFormatter(given, outputType)
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)
@@ -96,7 +102,10 @@ func TestNewFormatterWithOutputFileAndOutputTypeNUnit(t *testing.T) {
 	outputType := "NUnit"
 	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
-	defer os.Remove(givenDirectory)
+	defer func() {
+		rerr := os.Remove(givenDirectory)
+		assert.NoError(rerr)
+	}()
 	sut := NewFormatter(given, outputType)
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)
@@ -107,7 +116,10 @@ func TestNewFormatterWithOutputFileAndOutputTypeXUnit(t *testing.T) {
 	outputType := "XUnit"
 	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
-	defer os.Remove(givenDirectory)
+	defer func() {
+		rerr := os.Remove(givenDirectory)
+		assert.NoError(rerr)
+	}()
 	sut := NewFormatter(given, outputType)
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)
@@ -118,7 +130,10 @@ func TestNewFormatterWithOutputFileAndOutputTypeSonar(t *testing.T) {
 	outputType := "Sonar"
 	given := testOutputFile
 	givenDirectory := filepath.Dir(given)
-	defer os.Remove(givenDirectory)
+	defer func() {
+		rerr := os.Remove(givenDirectory)
+		assert.NoError(rerr)
+	}()
 	sut := NewFormatter(given, outputType)
 	assert.NotNil(sut)
 	assert.DirExists(givenDirectory)

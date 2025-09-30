@@ -10,14 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	pathValidation          snapshotValidation = "path"
-	matchRegexValidation    snapshotValidation = "matchRegex"
-	notMatchRegexValidation snapshotValidation = "notMatchRegex"
-)
-
-type snapshotValidation string
-
 // MatchSnapshotValidator validate snapshot of value of Path the same as cached
 type MatchSnapshotValidator struct {
 	Path          string

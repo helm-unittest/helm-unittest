@@ -56,10 +56,16 @@ func BenchmarkNewTestForCPUAndMemory(b *testing.B) {
 
 	cpuProfileFile, cpuProfErr := os.Create("cpu_profile.prof")
 	assert.NoError(b, cpuProfErr)
-	defer cpuProfileFile.Close()
+	defer func() {
+		cerr := cpuProfileFile.Close()
+		assert.NoError(b, cerr)
+	}()
 	profileFile, profErr := os.Create("mem_profile.prof")
 	assert.NoError(b, profErr)
-	defer profileFile.Close()
+	defer func() {
+		perr := profileFile.Close()
+		assert.NoError(b, perr)
+	}()
 
 	runtime.GC() // get up-to-date statistics
 
@@ -67,7 +73,9 @@ func BenchmarkNewTestForCPUAndMemory(b *testing.B) {
 		_ = runner.RunV3([]string{"testdata/chart-benchmark"})
 	}
 
-	pprof.StartCPUProfile(cpuProfileFile)
+	pperr := pprof.StartCPUProfile(cpuProfileFile)
+	assert.NoError(b, pperr)
 	defer pprof.StopCPUProfile()
-	pprof.WriteHeapProfile(profileFile)
+	hperr := pprof.WriteHeapProfile(profileFile)
+	assert.NoError(b, hperr)
 }

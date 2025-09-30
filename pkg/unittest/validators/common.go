@@ -83,7 +83,7 @@ func splitInfof(format string, manifestIndex, valuesIndex int, replacements ...s
 	indentedReplacements := make([]any, len(replacements))
 	for i, r := range replacements {
 		indentedReplacements[i] = "\t" + strings.Trim(
-			strings.Replace(r, "\n", "\n\t", -1),
+			strings.ReplaceAll(r, "\n", "\n\t"),
 			"\n\t ",
 		)
 	}
