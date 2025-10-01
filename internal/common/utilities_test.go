@@ -86,19 +86,25 @@ func TestYamlToJson(t *testing.T) {
 	}
 }
 
-func TestYmlUnmarshal(t *testing.T) {
+func TestTrustedUnmarshalYml(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
+		expected    map[string]any
 		expectError bool
 	}{
 		{
 			name:  "valid yaml to map",
 			input: "name: test\nversion: 1.0",
+			expected: map[string]any{
+				"name":    "test",
+				"version": 1.0,
+			},
 		},
 		{
-			name:  "empty yaml",
-			input: "",
+			name:        "empty yaml",
+			input:       "",
+			expectError: true,
 		},
 		{
 			name:        "invalid yaml",
@@ -109,23 +115,25 @@ func TestYmlUnmarshal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var result map[string]any
-			err := YmlUnmarshal(tt.input, &result)
-
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			// Defer a function to recover from panic
+			defer func() {
+				if r := recover(); r != nil {
+					// We successfully recovered from panic
+					assert.True(t, tt.expectError)
+				}
+			}()
+			result := TrustedUnmarshalYAML(tt.input)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestYmlMarshall(t *testing.T) {
+func TestTrustedMarshalYAML(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    any
-		expected string
+		name        string
+		input       any
+		expected    string
+		expectError bool
 	}{
 		{
 			name:     "simple map",
@@ -142,12 +150,24 @@ func TestYmlMarshall(t *testing.T) {
 			input:    nil,
 			expected: "null\n",
 		},
+		{
+			name:        "invalid yaml",
+			input:       func() {}, // functions cannot be marshaled to YAML
+			expected:    "invalid",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := YmlMarshall(tt.input)
-			assert.NoError(t, err)
+			// Defer a function to recover from panic
+			defer func() {
+				if r := recover(); r != nil {
+					// We successfully recovered from panic
+					assert.True(t, tt.expectError)
+				}
+			}()
+			result := TrustedMarshalYAML(tt.input)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
