@@ -15,6 +15,7 @@ import (
 	"github.com/bradleyjkemp/cupaloy/v2"
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/stretchr/testify/assert"
 )
@@ -94,6 +95,26 @@ func TestV3RunnerOkWithPassedTests(t *testing.T) {
 	passed := runner.RunV3([]string{testV3BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
+}
+
+func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
+	outputFile := "output.txt"
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:    printer.NewPrinter(buffer, nil),
+		TestFiles:  []string{testTestFiles},
+		OutputFile: outputFile,
+		Formatter:  formatter.NewSonarReportXML(),
+	}
+	passed := runner.RunV3([]string{testV3BasicChart})
+	assert.True(t, passed, buffer.String())
+	// clean up output file if exists
+	if _, err := os.Stat(outputFile); err == nil {
+		err = os.Remove(outputFile)
+		assert.NoError(t, err)
+	} else {
+		assert.Fail(t, "Output file not created")
+	}
 }
 
 func TestV3RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
