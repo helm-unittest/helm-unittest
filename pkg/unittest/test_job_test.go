@@ -63,7 +63,7 @@ asserts:
       path: x.y
       pattern: /z/
 `, &assertions)
-	a.Nil(assErr)
+	a.NoError(assErr)
 	a.Equal(tj.Assertions, assertions)
 }
 
@@ -96,7 +96,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
@@ -136,7 +136,7 @@ asserts:
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 	// Check folder contains files
@@ -169,7 +169,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
@@ -202,7 +202,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
@@ -238,7 +238,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(3, len(testResult.AssertsResult))
 }
@@ -266,7 +266,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -296,7 +296,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.False(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
@@ -328,7 +328,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.False(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -357,7 +357,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -394,7 +394,7 @@ asserts:
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.FileExists(file)
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -424,7 +424,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -449,7 +449,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -477,7 +477,8 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.NotNil(testResult.ExecError)
+	// Error because release name is too long
+	a.Error(testResult.ExecError)
 	a.False(testResult.Passed)
 }
 
@@ -506,7 +507,7 @@ asserts:
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -614,7 +615,7 @@ asserts:
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
@@ -639,7 +640,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -664,7 +665,8 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.NotNil(testResult.ExecError)
+	// Error because not compliant to json schema
+	a.Error(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -691,7 +693,7 @@ asserts:
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
-	a.NotNil(testResult.ExecError)
+	a.Error(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -719,7 +721,7 @@ asserts:
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -747,7 +749,7 @@ asserts:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	a.Nil(testResult.ExecError)
+	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
@@ -771,9 +773,10 @@ asserts:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	assert.Nil(t, testResult.ExecError)
-	assert.True(t, testResult.Passed)
-	assert.Equal(t, 1, len(testResult.AssertsResult))
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
 }
 
 func TestModifyChartMetadataVersions(t *testing.T) {
@@ -887,7 +890,6 @@ asserts:
        -----
 `
 	var tj TestJob
-	assert := assert.New(t)
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
@@ -895,8 +897,9 @@ asserts:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	assert.NoError(testResult.ExecError)
-	assert.True(testResult.Passed, testResult.AssertsResult)
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed, testResult.AssertsResult)
 }
 
 func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
@@ -914,6 +917,7 @@ asserts:
 `
 	var tj TestJob
 	err := common.YmlUnmarshal(manifest, &tj)
+	// Expect an error because of not supported assertion
 	a.Error(err)
 
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
@@ -954,7 +958,7 @@ asserts:
 `
 	a := assert.New(t)
 	file := path.Join("_scratch", "test_tmp_values.yaml")
-	a.Nil(writeToFile(`
+	a.NoError(writeToFile(`
 ingress:
   hosts:
     - chart-example-first.local
@@ -963,7 +967,7 @@ ingress:
 `, file))
 	defer func() {
 		ferr := os.RemoveAll(file)
-		assert.NoError(t, ferr)
+		a.NoError(ferr)
 	}()
 
 	var tj TestJob
@@ -974,9 +978,9 @@ ingress:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	assert.Nil(t, testResult.ExecError)
-	assert.True(t, testResult.Passed)
-	assert.Equal(t, 3, len(testResult.AssertsResult))
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(3, len(testResult.AssertsResult))
 }
 
 func TestV3RunJobPatchPointArrayValue(t *testing.T) {
@@ -1106,20 +1110,22 @@ asserts:
 	var tj TestJob
 	unmarshalJobTestHelper(manifest, &tj, t)
 
+	a := assert.New(t)
+
 	for _, test := range tests {
 		c.Templates = []*v3chart.File{test.template}
 		tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 			WithFailFast(true),
 		))
 		testResult := tj.RunV3(&results.TestJobResult{})
-		assert.Equal(t, test.expected, testResult.Passed)
+		a.Equal(test.expected, testResult.Passed)
 		if test.error != nil {
-			assert.NotNil(t, testResult.ExecError)
-			assert.False(t, testResult.Passed)
-			assert.EqualError(t, testResult.ExecError, test.error.Error())
+			a.Error(testResult.ExecError)
+			a.False(testResult.Passed)
+			a.EqualError(testResult.ExecError, test.error.Error())
 		} else {
-			assert.Nil(t, testResult.ExecError)
-			assert.True(t, testResult.Passed)
+			a.NoError(testResult.ExecError)
+			a.True(testResult.Passed)
 		}
 	}
 }
@@ -1239,7 +1245,6 @@ func Test_MergeAndPostRender(t *testing.T) {
 			assert.Equal(t, test.expectedOutput, output.String())
 
 			test.postRenderer.AssertExpectations(t) // Verify the mock was called as expected
-
 		})
 	}
 }
@@ -1284,7 +1289,8 @@ asserts:
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
-	assert.Nil(t, testResult.ExecError)
-	assert.True(t, testResult.Passed)
-	assert.Equal(t, 1, len(testResult.AssertsResult))
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
 }
