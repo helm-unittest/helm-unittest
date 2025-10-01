@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/stretchr/testify/assert"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 	yaml "sigs.k8s.io/yaml"
 )
 
@@ -35,9 +35,14 @@ func YamlNewEncoder(w io.Writer) *yamlv3.Encoder {
 // TrustedMarshalYAML marshal yaml without error returned, if an error happens it panics
 func TrustedMarshalYAML(d any) string {
 	byteBuffer := new(bytes.Buffer)
-	yamlEncoder := yamlv3.NewEncoder(byteBuffer)
+	yamlEncoder := YamlNewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(YAMLINDENTION)
-	defer yamlEncoder.Close()
+	defer func() {
+		cerr := yamlEncoder.Close()
+		if cerr != nil {
+			panic(cerr)
+		}
+	}()
 	if err := yamlEncoder.Encode(d); err != nil {
 		panic(err)
 	}
@@ -47,7 +52,7 @@ func TrustedMarshalYAML(d any) string {
 // TrustedUnmarshalYAML unmarshal yaml without error returned, if an error happens it panics
 func TrustedUnmarshalYAML(d string) map[string]any {
 	parsedYaml := K8sManifest{}
-	yamlDecoder := yamlv3.NewDecoder(strings.NewReader(d))
+	yamlDecoder := YamlNewDecoder(strings.NewReader(d))
 	if err := yamlDecoder.Decode(&parsedYaml); err != nil {
 		panic(err)
 	}

@@ -370,7 +370,12 @@ func (tr *TestRunner) writeTestOutput() error {
 		if ferr != nil {
 			return ferr
 		}
-		defer writer.Close()
+		defer func() {
+			werr := writer.Close()
+			if werr != nil {
+				log.WithField(LOG_TEST_RUNNER, "write-test-output").Errorf("Error closing output file: %s", werr)
+			}
+		}()
 
 		//
 		jerr := tr.Formatter.WriteTestOutput(tr.testResults, true, writer)

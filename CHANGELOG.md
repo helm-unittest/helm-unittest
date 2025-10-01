@@ -1,3 +1,10 @@
+1.0.2 / 2025-01-10
+==================
+- Replaced yaml library with a maintained alternative (resolves #501) 
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 1.0.1 / 2025-10-09
 ==================
 - Fix matchsnapshot logic (resolves #712 resolves #735, credits @ivankatliarchuk) 
