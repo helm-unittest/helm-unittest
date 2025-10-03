@@ -1,3 +1,23 @@
+configmap must render successfully with overrides:
+  1: |
+    apiVersion: v1
+    data:
+      overrides.json: |2
+
+        {"globals":{"my_param":["foo","bar"]}}
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-overrides
+configmap must render with default values:
+  1: |
+    apiVersion: v1
+    data:
+      overrides.json: |2
+
+        {}
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-overrides
 matches the snapshot:
   1: |
     raw: |
@@ -150,6 +170,15 @@ matches the snapshot:
       1. Get the application URL by running these commands:
         http://chart-example.local/
   9: |
+    apiVersion: v1
+    data:
+      overrides.json: |2
+
+        {}
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-overrides
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -191,7 +220,7 @@ matches the snapshot:
               securityContext: {}
           securityContext: {}
           serviceAccountName: RELEASE-NAME-full-snapshot
-  10: |
+  11: |
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
     metadata:
@@ -214,7 +243,7 @@ matches the snapshot:
         apiVersion: apps/v1
         kind: Deployment
         name: RELEASE-NAME-full-snapshot
-  11: |
+  12: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -237,7 +266,7 @@ matches the snapshot:
                       number: 80
                 path: /
                 pathType: ImplementationSpecific
-  12: |
+  13: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -258,7 +287,7 @@ matches the snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/name: full-snapshot
       type: ClusterIP
-  13: |
+  14: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -269,7 +298,7 @@ matches the snapshot:
         app.kubernetes.io/version: 1.16.0
         helm.sh/chart: full-snapshot-0.1.0
       name: RELEASE-NAME-full-snapshot
-  14: |
+  15: |
     apiVersion: v1
     kind: Pod
     metadata:
