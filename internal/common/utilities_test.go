@@ -156,6 +156,28 @@ func TestTrustedMarshalYAML(t *testing.T) {
 			expected:    "invalid",
 			expectError: true,
 		},
+		{
+			name: "string with leading newline (block scalar normalization)",
+			input: map[string]any{
+				"data": map[string]any{
+					"content": "\n    {}",
+				},
+			},
+			// The normalized output should NOT have a blank line after |2-
+			expected: "data:\n  content: |2-\n        {}\n",
+		},
+		{
+			name: "configmap with toJson nindent pattern",
+			input: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"data": map[string]any{
+					"overrides.json": "\n    {}",
+				},
+			},
+			// Should not have blank line after |2-
+			expected: "apiVersion: v1\ndata:\n  overrides.json: |2-\n        {}\nkind: ConfigMap\n",
+		},
 	}
 
 	for _, tt := range tests {
