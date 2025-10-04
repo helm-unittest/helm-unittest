@@ -203,6 +203,24 @@ func TestTrustedMarshalYAML(t *testing.T) {
 			// Should not have blank line after |
 			expected: "apiVersion: v1\ndata:\n  overrides.json: |\n    {}\nkind: ConfigMap\n",
 		},
+		{
+			name: "configmap with array toJson nindent pattern",
+			input: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"data": []any{
+					map[string]any{
+						"overrides1.json": "\n{}\n",
+					},
+					map[string]any{
+						"overrides2.json": "\n{}\n",
+					},
+				},
+			},
+
+			// Should not have blank line after |
+			expected: "apiVersion: v1\ndata:\n  - overrides1.json: |\n      {}\n  - overrides2.json: |\n      {}\nkind: ConfigMap\n",
+		},
 	}
 
 	for _, tt := range tests {
