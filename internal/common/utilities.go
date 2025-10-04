@@ -34,6 +34,9 @@ func YamlNewEncoder(w io.Writer) *yamlv3.Encoder {
 
 // TrustedMarshalYAML marshal yaml without error returned, if an error happens it panics
 func TrustedMarshalYAML(d any) string {
+	// https://github.com/helm-unittest/helm-unittest/issues/756
+	// As a temporary fix remove starting new lines in the whole document.
+	dEscaped := removeLeadingNewLines(d)
 	byteBuffer := new(bytes.Buffer)
 	yamlEncoder := YamlNewEncoder(byteBuffer)
 	yamlEncoder.SetIndent(YAMLINDENTION)
@@ -43,57 +46,15 @@ func TrustedMarshalYAML(d any) string {
 			panic(cerr)
 		}
 	}()
-	if err := yamlEncoder.Encode(d); err != nil {
+	if err := yamlEncoder.Encode(dEscaped); err != nil {
 		panic(err)
 	}
-	return normalizeYAMLBlockScalars(byteBuffer.String())
-}
-
-// normalizeYAMLBlockScalars removes extra blank lines after literal block scalar indicators
-// that are added by go.yaml.in/yaml/v3 but were not present in gopkg.in/yaml.v3.
-// This maintains backward compatibility with snapshots created using the older library.
-func normalizeYAMLBlockScalars(yaml string) string {
-	// Pattern matches: literal/folded block scalar indicator (|/>) optionally followed by
-	// chomping indicator (+/-), indentation indicator (digit), then a newline,
-	// followed by another newline (the extra blank line), followed by spaces (indentation)
-	// Example: "|2\n\n    content" should become "|2\n    content"
-	var result strings.Builder
-	lines := strings.Split(yaml, "\n")
-	
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
-		result.WriteString(line)
-		
-		// Check if this line ends with a block scalar indicator
-		trimmed := strings.TrimSpace(line)
-		if len(trimmed) > 0 {
-			lastChar := trimmed[len(trimmed)-1]
-			// Block scalar indicators: | or >, optionally followed by chomping (+/-) or indent (digit)
-			if lastChar == '|' || lastChar == '>' || lastChar == '-' || lastChar == '+' || (lastChar >= '0' && lastChar <= '9') {
-				// Check if the original line contains | or >
-				if strings.Contains(line, "|") || strings.Contains(line, ">") {
-					// Look ahead: if next line is empty and the line after has content, skip the empty line
-					if i+2 < len(lines) && lines[i+1] == "" && len(strings.TrimSpace(lines[i+2])) > 0 {
-						// Skip the empty line
-						i++
-						result.WriteString("\n")
-						continue
-					}
-				}
-			}
-		}
-		
-		if i < len(lines)-1 {
-			result.WriteString("\n")
-		}
-	}
-	
-	return result.String()
+	return byteBuffer.String()
 }
 
 // TrustedUnmarshalYAML unmarshal yaml without error returned, if an error happens it panics
 func TrustedUnmarshalYAML(d string) map[string]any {
-	parsedYaml := K8sManifest{}
+	parsedYaml := map[string]any{}
 	yamlDecoder := YamlNewDecoder(strings.NewReader(d))
 	if err := yamlDecoder.Decode(&parsedYaml); err != nil {
 		panic(err)
@@ -149,4 +110,33 @@ func SplitBefore(s, sep string) []string {
 		s = s[i+1:]
 	}
 	return out
+}
+
+// removeLeadingNewLines recursively removes leading newlines from string values in maps and slices
+func removeLeadingNewLines(v any) any {
+
+	switch val := v.(type) {
+	case string:
+		return strings.TrimLeft(val, "\n")
+	case K8sManifest:
+		if val == nil {
+			return val
+		}
+		result := make(K8sManifest)
+		for k, v := range val {
+			result[k] = removeLeadingNewLines(v)
+		}
+		return result
+	case []any:
+		if val == nil {
+			return val
+		}
+		result := make([]any, len(val))
+		for i, v := range val {
+			result[i] = removeLeadingNewLines(v)
+		}
+		return result
+	default:
+		return val
+	}
 }

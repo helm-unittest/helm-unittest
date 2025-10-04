@@ -125,7 +125,7 @@ func diff(expected string, actual string) string {
 // uniform the content without invalid characters and correct line-endings
 func uniformContent(content any) string {
 	actual := fmt.Sprintf("%v", content)
-	return regex.ReplaceAllString(actual, "\n")
+	return strings.TrimLeft(regex.ReplaceAllString(actual, "\n"), "\n")
 }
 
 // Validate a subset, which are used for SubsetValidator and Contains (when Any option is used)

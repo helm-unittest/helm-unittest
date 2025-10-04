@@ -2,7 +2,7 @@ configmap must render successfully with overrides:
   1: |
     apiVersion: v1
     data:
-      overrides.json: |2
+      overrides.json: |
         {"globals":{"my_param":["foo","bar"]}}
     kind: ConfigMap
     metadata:
@@ -11,7 +11,7 @@ configmap must render with default values:
   1: |
     apiVersion: v1
     data:
-      overrides.json: |2
+      overrides.json: |
         {}
     kind: ConfigMap
     metadata:
@@ -170,7 +170,7 @@ matches the snapshot:
   9: |
     apiVersion: v1
     data:
-      overrides.json: |2
+      overrides.json: |
         {}
     kind: ConfigMap
     metadata:
