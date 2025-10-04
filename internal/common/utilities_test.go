@@ -185,7 +185,7 @@ func TestTrustedMarshalYAML(t *testing.T) {
 			name: "string with leading newline (block scalar normalization)",
 			input: map[string]any{
 				"data": map[string]any{
-					"content": "{}\n",
+					"content": "\n{}\n",
 				},
 			},
 			// The normalized output should NOT have a blank line after |
@@ -197,7 +197,7 @@ func TestTrustedMarshalYAML(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "ConfigMap",
 				"data": map[string]any{
-					"overrides.json": "{}\n",
+					"overrides.json": "\n\n{}\n",
 				},
 			},
 			// Should not have blank line after |

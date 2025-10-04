@@ -118,11 +118,11 @@ func removeLeadingNewLines(v any) any {
 	switch val := v.(type) {
 	case string:
 		return strings.TrimLeft(val, "\n")
-	case K8sManifest:
+	case map[string]any:
 		if val == nil {
 			return val
 		}
-		result := make(K8sManifest)
+		result := make(map[string]any)
 		for k, v := range val {
 			result[k] = removeLeadingNewLines(v)
 		}

@@ -1,6 +1,6 @@
 1.0.3 / 2025-04-10
 ==================
-- Corrected newlines which is handled inccorrectly by the yaml library (resolves #756) 
+- Corrected newlines which is handled incorrectly by the yaml library (resolves #756) 
 - Update packages to latest patch versions
 - Update pipeline actions
 - Update documentation
