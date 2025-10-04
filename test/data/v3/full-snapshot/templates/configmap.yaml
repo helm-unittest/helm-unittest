@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-overrides
 data:
-  overrides.json: |
+  overrides.json: | 
     {{ .Values.overrides | toJson | nindent 4 }}

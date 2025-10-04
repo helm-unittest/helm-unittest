@@ -171,3 +171,20 @@ tests:
             - chart-example-first.local
             - override-example-patch-1.local
             - chart-example-third.local
+
+# issue https://github.com/helm-unittest/helm-unittest/issues/756
+  - it: "should have equal values for json to strings"
+    set:
+      configJsonTests: |-
+        {
+          "key1": "value1"
+        }
+    asserts:
+      - exists:
+          path: data["file.json"]
+      - equal:
+          path: data["file.json"]
+          value: |
+            {
+              "key1": "value1"
+            }
