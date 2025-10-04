@@ -160,27 +160,27 @@ func TestTrustedMarshalYAML(t *testing.T) {
 		expected    string
 		expectError bool
 	}{
-		// {
-		// 	name:     "simple map",
-		// 	input:    map[string]any{"name": "test", "version": "1.0"},
-		// 	expected: "name: test\nversion: \"1.0\"\n",
-		// },
-		// {
-		// 	name:     "nested map",
-		// 	input:    map[string]any{"metadata": map[string]any{"name": "test"}},
-		// 	expected: "metadata:\n  name: test\n",
-		// },
-		// {
-		// 	name:     "nil input",
-		// 	input:    nil,
-		// 	expected: "null\n",
-		// },
-		// {
-		// 	name:        "invalid yaml",
-		// 	input:       func() {}, // functions cannot be marshaled to YAML
-		// 	expected:    "invalid",
-		// 	expectError: true,
-		// },
+		{
+			name:     "simple map",
+			input:    map[string]any{"name": "test", "version": "1.0"},
+			expected: "name: test\nversion: \"1.0\"\n",
+		},
+		{
+			name:     "nested map",
+			input:    map[string]any{"metadata": map[string]any{"name": "test"}},
+			expected: "metadata:\n  name: test\n",
+		},
+		{
+			name:     "nil input",
+			input:    nil,
+			expected: "null\n",
+		},
+		{
+			name:        "invalid yaml",
+			input:       func() {}, // functions cannot be marshaled to YAML
+			expected:    "invalid",
+			expectError: true,
+		},
 		{
 			name: "string with leading newline (block scalar normalization)",
 			input: map[string]any{

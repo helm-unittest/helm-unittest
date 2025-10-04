@@ -1,3 +1,10 @@
+1.0.3 / 2025-04-10
+==================
+- Corrected newlines which is handled inccorrectly by the yaml library (resolves #756) 
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 1.0.2 / 2025-01-10
 ==================
 - Replaced yaml library with a maintained alternative (resolves #501) 
