@@ -15,3 +15,17 @@ tests:
       ingress.enabled: true
     asserts:
       - matchSnapshot: {}
+  - it: configmap must render with default values
+    templates:
+      - templates/configmap.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: configmap must render successfully with overrides
+    templates:
+      - templates/configmap.yaml
+    set:
+      overrides:
+        globals:
+          my_param: [foo, bar]
+    asserts:
+      - matchSnapshot: {}
