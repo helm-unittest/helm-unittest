@@ -102,6 +102,31 @@ func TestTrustedUnmarshalYml(t *testing.T) {
 			},
 		},
 		{
+			name: "valid yaml to map",
+			input: `
+---
+# Source: full-snapshot/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-overrides
+data:
+  overrides.json: |
+
+    {}
+`,
+			expected: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata": map[string]any{
+					"name": "release-name-overrides",
+				},
+				"data": map[string]any{
+					"overrides.json": "\n{}\n",
+				},
+			},
+		},
+		{
 			name:        "empty yaml",
 			input:       "",
 			expectError: true,
@@ -155,6 +180,46 @@ func TestTrustedMarshalYAML(t *testing.T) {
 			input:       func() {}, // functions cannot be marshaled to YAML
 			expected:    "invalid",
 			expectError: true,
+		},
+		{
+			name: "string with leading newline (block scalar normalization)",
+			input: map[string]any{
+				"data": map[string]any{
+					"content": "\n{}\n",
+				},
+			},
+			// The normalized output should NOT have a blank line after |
+			expected: "data:\n  content: |\n    {}\n",
+		},
+		{
+			name: "configmap with toJson nindent pattern",
+			input: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"data": map[string]any{
+					"overrides.json": "\n\n{}\n",
+				},
+			},
+			// Should not have blank line after |
+			expected: "apiVersion: v1\ndata:\n  overrides.json: |\n    {}\nkind: ConfigMap\n",
+		},
+		{
+			name: "configmap with array toJson nindent pattern",
+			input: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"data": []any{
+					map[string]any{
+						"overrides1.json": "\n{}\n",
+					},
+					map[string]any{
+						"overrides2.json": "\n{}\n",
+					},
+				},
+			},
+
+			// Should not have blank line after |
+			expected: "apiVersion: v1\ndata:\n  - overrides1.json: |\n      {}\n  - overrides2.json: |\n      {}\nkind: ConfigMap\n",
 		},
 	}
 

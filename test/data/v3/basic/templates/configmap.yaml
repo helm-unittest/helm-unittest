@@ -28,7 +28,12 @@ data:
   {{- if .Values.ingress.hosts }}
   my.ingress.hosts:
   {{- range $host := .Values.ingress.hosts }}
-  - {{ $host }}
+    - {{ $host }}
   {{- end -}}
   {{- end -}}
-
+  {{- if .Values.configJsonTests }}
+  file.json: |
+  {{ range .Values.configJsonTests | toStrings }}
+    {{ . | nindent 4 }}
+  {{- end }}
+  {{- end }}
