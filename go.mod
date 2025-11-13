@@ -15,7 +15,7 @@ require (
 	github.com/yargevad/filepathx v1.0.0
 	go.yaml.in/yaml/v3 v3.0.4
 	helm.sh/helm/v3 v3.19.0
-	k8s.io/apimachinery v0.34.1
+	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.1
 	sigs.k8s.io/yaml v1.6.0
 )
