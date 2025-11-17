@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+  # Add all the default properties from the local values.yaml to the ConfigMap
+  # Then check if there are any downstream properties and add them as well
+  metastore-site.xml: |
+    {{- $propDict := dict }}
+    {{- if .Values.configMap.metastoreServiceConfig.properties }}
+      {{- range $property := .Values.configMap.metastoreServiceConfig.properties }}
+        {{- $propDict := set $propDict $property.name $property }}
+      {{- end }}
+    {{- end }}
+    
+    <configuration>
+    {{- range $baseProperty := .Values.configMap.metastoreServiceConfig.baseProperties }}
+      {{- if not (hasKey $propDict $baseProperty.name) }}
+      <property>
+        <name>{{ $baseProperty.name }}</name>
+        <value>{{ $baseProperty.value }}</value>
+      {{- if $baseProperty.description }}
+        <description>{{ $baseProperty.description }}</description>
+      {{- end}}
+      </property>
+      {{- end}}
+    {{- end}}
+    
+    {{- if .Values.configMap.metastoreServiceConfig.properties }}
+      {{- range $property := .Values.configMap.metastoreServiceConfig.properties }}
+      <property>
+        <name>{{ $property.name }}</name>
+        <value>{{ $property.value }}</value>
+        {{- if $property.description }}
+        <description>{{ $property.description }}</description>
+        {{- end }}
+      </property>
+      {{- end }}
+    {{- end }}
+    </configuration>
+
+
+
+
+    

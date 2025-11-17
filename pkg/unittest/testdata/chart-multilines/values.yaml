@@ -1,0 +1,16 @@
+configMap:
+  metastoreServiceConfig:
+    baseProperties:
+      - name: metastore.thrift.uris
+        value: thrift://0.0.0.0:9083
+        description: Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.
+      - name: metastore.task.threads.always
+        value: org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsCacheCleanerTask
+      - name: metastore.expression.proxy
+        value: org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy
+      - name: javax.jdo.option.ConnectionDriverName
+        value: com.mysql.cj.jdbc.Driver
+      - name: javax.jdo.option.ConnectionURL
+        value: jdbc:mysql://hive-metastore-db:3306/metastore?createDatabaseIfNotExist=true&amp;allowPublicKeyRetrieval=true&amp;useSSL=false
+        description: JDBC connect string for a JDBC metastore
+    properties: []

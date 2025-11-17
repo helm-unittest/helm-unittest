@@ -1,0 +1,146 @@
+suite: chart-multilines-configmap
+templates:
+  - configmap.yaml
+tests:
+  - it: Should contain correct default values
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data
+          value: 
+            metastore-site.xml: |
+            
+              <configuration>
+                <property>
+                  <name>metastore.thrift.uris</name>
+                  <value>thrift://0.0.0.0:9083</value>
+                  <description>Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.</description>
+                </property>
+                <property>
+                  <name>metastore.task.threads.always</name>
+                  <value>org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsCacheCleanerTask</value>
+                </property>
+                <property>
+                  <name>metastore.expression.proxy</name>
+                  <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionDriverName</name>
+                  <value>com.mysql.cj.jdbc.Driver</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionURL</name>
+                  <value>jdbc:mysql://hive-metastore-db:3306/metastore?createDatabaseIfNotExist=true&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</value>
+                  <description>JDBC connect string for a JDBC metastore</description>
+                </property>
+              </configuration>
+  - it: Should override default properties appropriately
+    set:
+      configMap:
+        metastoreServiceConfig:
+          baseProperties:
+            - name: propertyName1
+              value: value1
+    asserts:
+      - equal:
+          path: data
+          value: 
+            metastore-site.xml: |
+
+              <configuration>
+                <property>
+                  <name>propertyName1</name>
+                  <value>value1</value>
+                </property>
+              </configuration>
+  - it: Should set additional properties appropriately
+    set:
+      configMap:
+        metastoreServiceConfig:
+          properties:
+            - name: propertyName1
+              value: value1
+              description: Optional description
+            - name: propertyName2
+              value: value2
+    asserts:
+      - equal:
+          path: data
+          value: 
+            metastore-site.xml: |
+
+              <configuration>
+                <property>
+                  <name>metastore.thrift.uris</name>
+                  <value>thrift://0.0.0.0:9083</value>
+                  <description>Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.</description>
+                </property>
+                <property>
+                  <name>metastore.task.threads.always</name>
+                  <value>org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsCacheCleanerTask</value>
+                </property>
+                <property>
+                  <name>metastore.expression.proxy</name>
+                  <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionDriverName</name>
+                  <value>com.mysql.cj.jdbc.Driver</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionURL</name>
+                  <value>jdbc:mysql://hive-metastore-db:3306/metastore?createDatabaseIfNotExist=true&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</value>
+                  <description>JDBC connect string for a JDBC metastore</description>
+                </property>
+                <property>
+                  <name>propertyName1</name>
+                  <value>value1</value>
+                  <description>Optional description</description>
+                </property>
+                <property>
+                  <name>propertyName2</name>
+                  <value>value2</value>
+                </property>
+              </configuration>
+  - it: Should override baseProperties with properties appropriately
+    set:
+      configMap:
+        metastoreServiceConfig:
+          properties:
+            - name: metastore.thrift.uris
+              value: thrift://0.0.0.0:8081
+              description: Overridden metastore.thrift.uris
+            - name: metastore.task.threads.always
+              value: overridden metastore.task.threads.always
+    asserts:
+      - equal:
+          path: data
+          value:
+            metastore-site.xml: |
+            
+              <configuration>
+                <property>
+                  <name>metastore.expression.proxy</name>
+                  <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionDriverName</name>
+                  <value>com.mysql.cj.jdbc.Driver</value>
+                </property>
+                <property>
+                  <name>javax.jdo.option.ConnectionURL</name>
+                  <value>jdbc:mysql://hive-metastore-db:3306/metastore?createDatabaseIfNotExist=true&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</value>
+                  <description>JDBC connect string for a JDBC metastore</description>
+                </property>
+                <property>
+                  <name>metastore.thrift.uris</name>
+                  <value>thrift://0.0.0.0:8081</value>
+                  <description>Overridden metastore.thrift.uris</description>
+                </property>
+                <property>
+                  <name>metastore.task.threads.always</name>
+                  <value>overridden metastore.task.threads.always</value>
+                </property>
+              </configuration>
+              
