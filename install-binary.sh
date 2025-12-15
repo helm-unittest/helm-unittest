@@ -22,7 +22,7 @@ if [ "$SKIP_BIN_INSTALL" = "1" ]; then
 fi
 
 if [ "$SKIP_BIN_DOWNLOAD" = "1" ]; then
-  echo "Preparing to install into ${HELM_PLUGIN_PATH}"
+  echo "Preparing to install into $HELM_PLUGIN_PATH"
   cp -f plugin.yaml $HELM_PLUGIN_PATH/plugin.yaml
   cp -f untt $HELM_PLUGIN_PATH/untt
   chmod +x $HELM_PLUGIN_PATH/untt
@@ -42,6 +42,8 @@ initArch() {
     x86_64) ARCH="amd64";;
     i686) ARCH="386";;
     i386) ARCH="386";;
+    ppc64le) ARCH="ppc64le";;
+    s390x) ARCH="s390x";;
   esac
 }
 
@@ -85,9 +87,9 @@ getDownloadURL() {
   fi
 
   # Setup Download Url
-  DOWNLOAD_URL="https://github.com/$PROJECT_GH/releases/download/${version}/$PROJECT_NAME-$OS-$ARCH-${version#v}.tgz"
+  DOWNLOAD_URL="https://github.com/$PROJECT_GH/releases/download/$version/$PROJECT_NAME-$OS-$ARCH-${version#v}.tgz"
   # Setup Checksum Url
-  PROJECT_CHECKSUM="https://github.com/$PROJECT_GH/releases/download/${version}/$PROJECT_CHECKSUM_FILE"
+  PROJECT_CHECKSUM="https://github.com/$PROJECT_GH/releases/download/$version/$PROJECT_CHECKSUM_FILE"
 }
 
 # downloadFile downloads the latest binary package and also the checksum
@@ -98,9 +100,9 @@ downloadFile() {
   mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading "$DOWNLOAD_URL" to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
-      (cd "$PLUGIN_TMP_FOLDER" && curl -LO "$DOWNLOAD_URL")
+      (cd "$PLUGIN_TMP_FOLDER" && curl --proto "=https" -LO "$DOWNLOAD_URL")
   elif type "wget" >/dev/null 2>&1; then
-      wget -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
+      wget --max-redirect=0 -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
   fi
 }
 
@@ -114,24 +116,24 @@ installFile() {
     echo Validating Checksum.
     if type "curl" >/dev/null 2>&1; then
       if type "shasum" >/dev/null 2>&1; then
-        curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
+        curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
-          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
+          curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
-          curl -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
+          curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
     elif type "wget" >/dev/null 2>&1; then
       if type "shasum" >/dev/null 2>&1; then
-        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
+        wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
-          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
+          wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
-          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
+          wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
       else
         echo No Checksum as there is no shasum or sha256sum found.
@@ -140,7 +142,7 @@ installFile() {
   else
     echo No Checksum validated.
   fi
-  echo "Preparing to install into ${HELM_PLUGIN_PATH}"
+  echo "Preparing to install into $HELM_PLUGIN_PATH"
   tar xzf "$DOWNLOAD_FILE" -C "$HELM_PLUGIN_PATH"
   rm -rf "/tmp/_dist"
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
@@ -151,7 +153,7 @@ fail_trap() {
   result=$?
   if [ "$result" != "0" ]; then
     echo "Failed to install $PROJECT_NAME"
-    echo "For support, go to https://github.com/kubernetes/helm"
+    echo "For support, go to https://github.com/helm-unittest/helm-unittest/blob/main/FAQ.md"
   fi
   exit $result
 }
