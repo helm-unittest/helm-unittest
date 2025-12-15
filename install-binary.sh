@@ -102,7 +102,7 @@ downloadFile() {
   if type "curl" >/dev/null 2>&1; then
       (cd "$PLUGIN_TMP_FOLDER" && curl --proto "=https" -LO "$DOWNLOAD_URL")
   elif type "wget" >/dev/null 2>&1; then
-      wget --max-redirect=0 -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
+      wget -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
   fi
 }
 
@@ -128,12 +128,12 @@ installFile() {
       fi
     elif type "wget" >/dev/null 2>&1; then
       if type "shasum" >/dev/null 2>&1; then
-        wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
+        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       elif type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
-          wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
+          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
-          wget --max-redirect=0 -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
+          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
       else
         echo No Checksum as there is no shasum or sha256sum found.
