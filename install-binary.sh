@@ -42,6 +42,8 @@ initArch() {
     x86_64) ARCH="amd64";;
     i686) ARCH="386";;
     i386) ARCH="386";;
+    ppc64le) ARCH="ppc64le";;
+    s390x) ARCH="s390x";;
   esac
 }
 
