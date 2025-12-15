@@ -109,7 +109,7 @@ function Get-DownloadFile {
     $filePath = Join-Path $tempFolder $fileName
     
     try {
-        Invoke-WebRequest -Uri $DownloadUrl -OutFile $filePath -UseBasicParsing
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $filePath -UseBasicParsing -MaximumRedirection 0
         return $filePath
     }
     catch {
@@ -123,13 +123,13 @@ function Install-File {
     param($FilePath, $ChecksumUrl)
     
     $fileName = Split-Path $FilePath -Leaf
-	$folderName = Split-Path $FilePath -Parent
+    $folderName = Split-Path $FilePath -Parent
 
     # Validate checksum if URL is provided
     if ($ChecksumUrl) {
         Write-Host "Validating Checksum."
         try {
-            $checksumContent = Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing | Select-Object -ExpandProperty RawContent
+            $checksumContent = Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing -MaximumRedirection 0 | Select-Object -ExpandProperty RawContent
             $checksumLine = $checksumContent -split "`n" | Where-Object { $_ -match [regex]::Escape($fileName) }
             
             Write-Host "Checksum Line: $checksumLine"
@@ -159,9 +159,9 @@ function Install-File {
 
     Push-Location $folderName
     & tar -xzf $fileName -C .
-	
-	Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
-	Pop-Location
+
+    Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
+    Pop-Location
 
     Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"    
