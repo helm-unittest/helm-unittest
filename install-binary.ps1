@@ -113,7 +113,7 @@ function Get-DownloadFile {
     $filePath = Join-Path $tempFolder $fileName
     
     try {
-        Invoke-WebRequest -Uri $DownloadUrl -OutFile $filePath -UseBasicParsing -MaximumRedirection 0
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $filePath -UseBasicParsing
         return $filePath
     }
     catch {
@@ -133,7 +133,7 @@ function Install-File {
     if ($ChecksumUrl) {
         Write-Host "Validating Checksum."
         try {
-            $checksumContent = Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing -MaximumRedirection 0 | Select-Object -ExpandProperty RawContent
+            $checksumContent = Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing | Select-Object -ExpandProperty RawContent
             $checksumLine = $checksumContent -split "`n" | Where-Object { $_ -match [regex]::Escape($fileName) }
             
             Write-Host "Checksum Line: $checksumLine"
