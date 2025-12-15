@@ -53,6 +53,8 @@ function Test-SupportedPlatform {
 function Get-DownloadURL {
     param($OS, $ARCH)
     
+    Push-Location $HELM_PLUGIN_PATH
+
     # Try to get version from git
     $version = $null
     try {
@@ -79,6 +81,8 @@ function Get-DownloadURL {
             exit 1
         }
     }
+
+    Pop-Location
 
     # Setup Download URL
     $versionNumber = $version -replace '^v', ''
