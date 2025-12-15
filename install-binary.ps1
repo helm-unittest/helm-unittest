@@ -124,8 +124,6 @@ function Install-File {
     
     $fileName = Split-Path $FilePath -Leaf
 	$folderName = Split-Path $FilePath -Parent
-    Write-Host "FileName: $fileName"
-	Write-Host "FolderName: $folderName"
 
     # Validate checksum if URL is provided
     if ($ChecksumUrl) {
@@ -165,7 +163,7 @@ function Install-File {
 	Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
 	Pop-Location
 
-#    Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"    
 }
 
@@ -200,6 +198,6 @@ try {
 }
 catch {
     Write-Error "Failed to install $PROJECT_NAME"
-    Write-Host "For support, go to https://github.com/kubernetes/helm"
+    Write-Host "For support, go to https://github.com/helm-unittest/helm-unittest/blob/main/FAQ.md"
     exit 1
 }
