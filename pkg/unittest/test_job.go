@@ -574,6 +574,19 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
+	// Include CRDs if configured (mirrors helm template --include-crds behavior)
+	if t.configOrDefault().includeCrds {
+		for _, crd := range t.configOrDefault().targetChart.CRDObjects() {
+			// crd.Filename already includes the chart name prefix (e.g., "chart/crds/mycrd.yaml")
+			file := filepath.ToSlash(crd.Filename)
+			manifest, err := parseYamlFile(string(crd.File.Data))
+			if err != nil {
+				return nil, err
+			}
+			manifestsOfFiles[file] = manifest
+		}
+	}
+
 	for file, rendered := range outputOfFiles {
 		if !strings.HasPrefix(file, t.configOrDefault().targetChart.Name()) {
 			file = filepath.ToSlash(filepath.Join(t.configOrDefault().targetChart.Name(), file))
@@ -706,6 +719,12 @@ func (t *TestJob) resolveDefaultTemplatesToAssert(outputOfFiles map[string]strin
 	if resetAsserts {
 		for template := range outputOfFiles {
 			defaultTemplatesPath = append(defaultTemplatesPath, template)
+		}
+		// Include CRD files when includeCrds is enabled
+		if t.configOrDefault().includeCrds {
+			for _, crd := range t.configOrDefault().targetChart.CRDObjects() {
+				defaultTemplatesPath = append(defaultTemplatesPath, filepath.ToSlash(crd.Filename))
+			}
 		}
 	} else {
 		defaultTemplatesPath = t.defaultTemplatesToAssert
