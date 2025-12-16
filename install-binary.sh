@@ -78,6 +78,8 @@ verifySupported() {
 
 # getDownloadURL checks the latest available version.
 getDownloadURL() {
+  # go to the plugin directory
+  cd "$HELM_PLUGIN_PATH"
   # Determine last tag based on VCS download
   local version=$(git describe --tags --abbrev=0 >/dev/null 2>&1)
   # If no version found (because of no git), try fetch from plugin
