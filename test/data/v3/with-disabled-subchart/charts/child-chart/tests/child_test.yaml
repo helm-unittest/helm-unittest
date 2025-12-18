@@ -1,0 +1,14 @@
+suite: test child chart
+templates:
+  - configmap.yaml
+tests:
+  - it: should render child configmap when enabled
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-child-config
+      - equal:
+          path: data.message
+          value: "Child is enabled"
