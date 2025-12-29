@@ -5,9 +5,6 @@ on:
     tags:
       - "v*.*.*"
 
-permissions:
-  contents: read
-
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
@@ -141,6 +138,8 @@ jobs:
           overwrite: true
 
   merge:
+    permissions:
+      contents: read # to download assets from the release
     runs-on: ubuntu-24.04
     environment: HELMUNITTEST-RELEASE
     needs:
