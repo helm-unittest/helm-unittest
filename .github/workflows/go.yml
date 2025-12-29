@@ -1,4 +1,4 @@
-name: 'Go Build and Tests'
+name: "Go Build and Tests"
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
-  GO_VERSION: 1.24.x
+  GO_VERSION: 1.25.x
 
 permissions:
   contents: read
@@ -29,60 +29,60 @@ jobs:
         # tests for target OS
         os: [ubuntu-24.04, macos-latest, windows-latest]
     steps:
-    - name: Checkout
-      # https://github.com/actions/checkout
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - name: Checkout
+        # https://github.com/actions/checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-    - name: Setup Go
-      # https://github.com/actions/setup-go
-      uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
-      with:
-        go-version: ${{ env.GO_VERSION }}
+      - name: Setup Go
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-    # Install yq on windows machine
-    - name: Install yq as part of test validation
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install yq -y
+      # Install yq on windows machine
+      - name: Install yq as part of test validation
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install yq -y
 
-    # Make results directory
-    - name: Create test-result directory uploading testresults
-      run: |
-        mkdir -p test-results
+      # Make results directory
+      - name: Create test-result directory uploading testresults
+        run: |
+          mkdir -p test-results
 
-    # Install using go install
-    - name: Install JUnit plugin for uploading testresults
-      if: github.ref_name == github.event.repository.default_branch
-      run: |
-        go install github.com/jstemmer/go-junit-report/v2@14d61e6e75e3f3c74551d757ad936e8e88014464 # v2.1.0
+      # Install using go install
+      - name: Install JUnit plugin for uploading testresults
+        if: github.ref_name == github.event.repository.default_branch
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@14d61e6e75e3f3c74551d757ad936e8e88014464 # v2.1.0
 
-    # Run tests with nice formatting. Save the coverage and junit test results in test-results
-    - name: Run tests with junit report
-      if: github.ref_name == github.event.repository.default_branch
-      run: |
-        go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
+      # Run tests with nice formatting. Save the coverage and junit test results in test-results
+      - name: Run tests with junit report
+        if: github.ref_name == github.event.repository.default_branch
+        run: |
+          go test ./... -coverprofile=test-results/coverage -v -covermode=atomic 2>&1 | go-junit-report -set-exit-code > test-results/go-test-report.xml
 
-    - name: Run tests on pull request
-      if: github.ref_name != github.event.repository.default_branch
-      run: |
-        go test -cover -coverprofile=test-results/coverage -covermode=atomic -v ./...
-        go tool cover -func=test-results/coverage
+      - name: Run tests on pull request
+        if: github.ref_name != github.event.repository.default_branch
+        run: |
+          go test -cover -coverprofile=test-results/coverage -covermode=atomic -v ./...
+          go tool cover -func=test-results/coverage
 
-    - name: SonarCloud Scan
-      # https://github.com/SonarSource/sonarqube-scan-action
-      uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
-      if: matrix.os == 'ubuntu-24.04' && env.SONAR_TOKEN != ''
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        # https://github.com/SonarSource/sonarqube-scan-action
+        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        if: matrix.os == 'ubuntu-24.04' && env.SONAR_TOKEN != ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-    # Upload the original go test log as an artifact for later review.
-    - name: Upload Testlog
-      # https://github.com/EnricoMi/publish-unit-test-result-action
-      uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f # v2.22.0
-      if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
-      with:
-        files: |
-          test-results/go-test-report.xml
+      # Upload the original go test log as an artifact for later review.
+      - name: Upload Testlog
+        # https://github.com/EnricoMi/publish-unit-test-result-action
+        uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f # v2.22.0
+        if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
+        with:
+          files: |
+            test-results/go-test-report.xml
 
   validate_docker:
     name: Build and Test Docker
@@ -95,40 +95,39 @@ jobs:
     needs:
       - full-test
     steps:
-    - name: Checkout
-      # https://github.com/actions/checkout
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      with:
-        fetch-depth: 1
+      - name: Checkout
+        # https://github.com/actions/checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 1
 
-    - name: Setup go
-      # https://github.com/actions/setup-go
-      uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
-      with:
-        go-version: ${{ env.GO_VERSION }}
+      - name: Setup go
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-    # Run docker-tests
-    - name: Build docker-test
-      run: |
-        make test-docker
+      # Run docker-tests
+      - name: Build docker-test
+        run: |
+          make test-docker
 
-    - name: Retrieve versions
-      run: |
-        helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
-        echo "HELM_PLUGIN_VERSION=${helmPluginVersion}" >> $GITHUB_ENV
+      - name: Retrieve versions
+        run: |
+          helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+          echo "HELM_PLUGIN_VERSION=${helmPluginVersion}" >> $GITHUB_ENV
 
-    # Run trivy security
-    - name: Run Trivy vulnerability scanner
-      # https://github.com/aquasecurity/trivy-action
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-      with:
-        image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
-        format: sarif
-        output: trivy-results.sarif
+      # Run trivy security
+      - name: Run Trivy vulnerability scanner
+        # https://github.com/aquasecurity/trivy-action
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
+          format: sarif
+          output: trivy-results.sarif
 
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4.31.9
-      if: always()
-      with:
-        sarif_file: trivy-results.sarif
-
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4.31.9
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif

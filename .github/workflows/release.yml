@@ -1,4 +1,4 @@
-name: 'Helm-Unittest Release'
+name: "Helm-Unittest Release"
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
-  GO_VERSION: 1.24.x
+  GO_VERSION: 1.25.x
 
 jobs:
   release:
@@ -21,25 +21,25 @@ jobs:
       contents: write # to publish assets to the release
     runs-on: ubuntu-24.04
     steps:
-    - name: checkout
-      # https://github.com/actions/checkout
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - name: checkout
+        # https://github.com/actions/checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-    - name: setup go
-      # https://github.com/actions/setup-go
-      uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
-      with:
-        go-version: ${{ env.GO_VERSION }}
+      - name: setup go
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-    - name: make distribution
-      shell: bash
-      run: make dist
+      - name: make distribution
+        shell: bash
+        run: make dist
 
-    - name: publish artifacts
-      # https://github.com/softprops/action-gh-release
-      uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-      with:
-        files: _dist/**
+      - name: publish artifacts
+        # https://github.com/softprops/action-gh-release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          files: _dist/**
 
   determine-versions:
     name: determine latest version of helm and helm-unittest plugin
