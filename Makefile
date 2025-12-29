@@ -1,12 +1,13 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.19.0
+HELM_VERSION := 3.19.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
+GOPATH := $(shell go env GOPATH)
 TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
@@ -118,4 +119,4 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 .PHONY: go-lint
 go-lint: ## Execute golang linters
 	gofmt -l -s -w .
-	golangci-lint run --timeout=30m --fix ./...
+	$(GOPATH)/bin/golangci-lint run --timeout=30m --fix ./...
