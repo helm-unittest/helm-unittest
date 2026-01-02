@@ -5,6 +5,7 @@ _scratch
 tpl
 vendor/
 _dist/
+_build/
 
 untt
 untt-dbg

@@ -10,7 +10,7 @@ ARG HELM_VERSION
 
 COPY plugin.yaml helm-unittest/plugin.yaml
 COPY install-binary.sh helm-unittest/install-binary.sh
-COPY untt helm-unittest/untt
+COPY untt helm-unittest/untt-linux-amd64
 
 ENV SKIP_BIN_INSTALL=1
 ENV HELM_BASE_URL="https://get.helm.sh"

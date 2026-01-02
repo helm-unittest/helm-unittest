@@ -6,10 +6,11 @@ on:
       - "v*.*.*"
 
 env:
+  PACKAGE_REGISTRY: ghcr.io
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
-  PLUGIN_REPO: helm-unittest/helm-unittest
   GO_VERSION: 1.25.x
+  HELM_VERSION: "4.0.0"
 
 jobs:
   release:
@@ -28,9 +29,55 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: setup helm 4
+        # https://github.com/Azure/setup-helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: setup ORAS
+        # https://github.com/oras-project/setup-oras
+        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1.2.4
+
+      - name: login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ${{ env.PACKAGE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: retrieve plugin info
+        id: plugin
+        shell: bash
+        run: |
+          PLUGIN_NAME=$(sed -n -e 's/name:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+          PLUGIN_VERSION=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+          echo "name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+          echo "version=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
+
+      - name: setup secrets for package signing
+        env:
+          HELM_PGP_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
+          HELM_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        run: |
+          base64 --decode <<< "${{ env.HELM_PGP_PRIVATE_KEY }}" > .secring.gpg
+          echo "${{ env.HELM_PGP_PASSPHRASE }}" > .passphrase
+          
       - name: make distribution
         shell: bash
         run: make dist
+
+      - name: push to OCI registry
+        run: |
+          cd _dist
+          oras push $NAME \
+            --artifact-type application/vnd.helm.plugin.v1+json \
+            $PACKAGE \
+            $PACKAGE.prov
+          oras tag $NAME latest
+        env:
+          PACKAGE: "${{ steps.plugin.outputs.name }}-${{ steps.plugin.outputs.version }}.tgz"
+          NAME: "${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.plugin.outputs.name }}:${{ steps.plugin.outputs.version }}"
 
       - name: publish artifacts
         # https://github.com/softprops/action-gh-release
@@ -60,7 +107,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pluginLatest=`curl -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.PLUGIN_REPO }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          pluginLatest=`curl -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ github.repository }}/tags?per_page=2 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
 

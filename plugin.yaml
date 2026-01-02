@@ -4,9 +4,27 @@ usage: "unittest for helm charts"
 description: "Unit test for helm chart in YAML with ease to keep your chart functional and robust."
 ignoreFlags: false
 platformCommand:
-  - command: "$HELM_PLUGIN_DIR/untt"
+  - os: linux
+    arch: amd64
+    command: "$HELM_PLUGIN_DIR/untt-linux-amd64"
+  - os: linux
+    arch: arm64
+    command: "$HELM_PLUGIN_DIR/untt-linux-arm64"
+  - os: linux
+    arch: ppc64le
+    command: "$HELM_PLUGIN_DIR/untt-linux-ppc64le"
+  - os: linux
+    arch: s390x
+    command: "$HELM_PLUGIN_DIR/untt-linux-s390x"
+  - os: darwin
+    arch: amd64
+    command: "$HELM_PLUGIN_DIR/untt-macos-amd64"
+  - os: darwin
+    arch: arm64
+    command: "$HELM_PLUGIN_DIR/untt-macos-arm64"
   - os: windows
-    command: "$HELM_PLUGIN_DIR\\untt.exe"
+    arch: amd64
+    command: "$HELM_PLUGIN_DIR\\untt-windows-amd64.exe"
 platformHooks:
   install:
     - command: "$HELM_PLUGIN_DIR/install-binary.sh"

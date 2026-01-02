@@ -1,3 +1,10 @@
+1.0.4 / 2026-01-
+==================
+- Sign the binary releases, so the plugin can also be installed using helm 4
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 1.0.3 / 2025-04-10
 ==================
 - Corrected newlines which is handled incorrectly by the yaml library (resolves #756) 

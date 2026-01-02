@@ -1,13 +1,14 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.19.4
+PLUGIN_EMAIL := "helmunittest@gmail.com"
+HELM_VERSION := 4.0.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
+BUILD := ./_build
 DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
-GOPATH := $(shell go env GOPATH)
 TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
@@ -71,43 +72,86 @@ build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docke
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
-dist:
+dist: ## Build distribution packages, expect to have helm 4 installed.
+	mkdir -p $(BUILD)
 	mkdir -p $(DIST)
-	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-macos-arm64-$(VERSION).tgz untt README.md LICENSE plugin.yaml
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o untt.exe -ldflags $(LDFLAGS) ./cmd/helm-unittest
-	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
-	tar -zcvf $(DIST)/helm-unittest-windows_nt-amd64-$(VERSION).tgz untt.exe README.md LICENSE plugin.yaml
+
+	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt-linux-ppc64le -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt-linux-ppc64le README.md LICENSE plugin.yaml
+	mv untt-linux-ppc64le $(BUILD)/
+	
+	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt-linux-s390x -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt-linux-s390x README.md LICENSE plugin.yaml
+	mv untt-linux-s390x $(BUILD)/
+
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o untt-linux-arm64 -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-arm64-$(VERSION).tgz untt-linux-arm64 README.md LICENSE plugin.yaml
+	mv untt-linux-arm64 $(BUILD)/
+
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt-linux-amd64 -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-linux-amd64-$(VERSION).tgz untt-linux-amd64 README.md LICENSE plugin.yaml
+	mv untt-linux-amd64 $(BUILD)/
+
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o untt-macos-amd64 -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-macos-amd64-$(VERSION).tgz untt-macos-amd64 README.md LICENSE plugin.yaml
+	mv untt-macos-amd64 $(BUILD)/
+
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o untt-macos-arm64 -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-macos-arm64-$(VERSION).tgz untt-macos-arm64 README.md LICENSE plugin.yaml
+	mv untt-macos-arm64 $(BUILD)/
+
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o untt-windows-amd64.exe -ldflags $(LDFLAGS) ./cmd/helm-unittest
+	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt-windows-amd64.exe README.md LICENSE plugin.yaml
+	mv untt-windows-amd64.exe $(BUILD)/
+
+	cp -f README.md $(BUILD)
+	cp -f LICENSE $(BUILD)
+	cp -f plugin.yaml $(BUILD)
+	cp -f install-binary.sh $(BUILD)
+	cp -f install-binary.ps1 $(BUILD)
+	chmod +x $(BUILD)/install-binary.ps1
+	
+	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring ./.secring.gpg --passphrase-file ./.passphrase --sign --destination $(DIST)
+	rm -f .secring.gpg
+	rm -f .passphrase
+
 	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
+
+.PHONY: sign
+sign-dist: ## Sign distribution packages
+	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
+		echo "signing $$f"; \
+		gpg --detach-sign --armor --output $$f.asc $$f; \
+	done
 
 .PHONY: bootstrap
 bootstrap:
-
-.PHONY: dockerdist
-dockerdist:
-	./docker-build.sh
 
 .PHONY: go-dependency
 dependency: ## Dependency maintanance
 	go get -u ./...
 	go mod tidy
 
-.PHONY: dockerimage
-dockerimage: build-amd64 ## Build docker image
+.PHONY: dockerimage-alpine
+dockerimage-alpine: build-amd64 ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
 
-.PHONY: test-docker
-test-docker: dockerimage ## Execute 'helm unittests' in container
+.PHONY: dockerimage-fedora
+dockerimage-fedora: build-amd64 ## Build docker image
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f FedoraTest.Dockerfile .
+
+.PHONY: test-docker-alpine
+test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
+	@for f in $(TEST_NAMES); do \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
+		docker run \
+			--platform linux/amd64 \
+			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
+			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
+	done
+
+.PHONY: test-docker-fedora
+test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
 		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v3/$${f}'"; \
 		docker run \
@@ -119,4 +163,4 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 .PHONY: go-lint
 go-lint: ## Execute golang linters
 	gofmt -l -s -w .
-	$(GOPATH)/bin/golangci-lint run --timeout=30m --fix ./...
+	golangci-lint run --timeout=30m --fix ./...
