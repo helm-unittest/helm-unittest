@@ -7,7 +7,6 @@ DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
-GOPATH := $(shell go env GOPATH)
 TEST_NAMES ?=basic \
 	failing-template \
 	full-snapshot \
@@ -119,4 +118,4 @@ test-docker: dockerimage ## Execute 'helm unittests' in container
 .PHONY: go-lint
 go-lint: ## Execute golang linters
 	gofmt -l -s -w .
-	$(GOPATH)/bin/golangci-lint run --timeout=30m --fix ./...
+	golangci-lint run --timeout=30m --fix ./...
