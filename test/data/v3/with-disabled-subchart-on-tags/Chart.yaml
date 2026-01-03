@@ -1,0 +1,15 @@
+apiVersion: v2
+name: parent-chart
+description: Example chart demonstrating tag-based subchart management
+version: 0.1.0
+dependencies:
+  - name: frontend-chart
+    version: 0.1.0
+    tags:
+      - front-end
+      - web
+  - name: backend-chart
+    version: 0.1.0
+    tags:
+      - back-end
+      - api

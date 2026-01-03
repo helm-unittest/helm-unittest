@@ -258,6 +258,47 @@ func evaluateConditionPath(conditionPath string, values v3util.Values) bool {
 	return true
 }
 
+// evaluateTagsCondition evaluates whether a subchart is enabled based on its tags.
+// According to Helm's logic, a subchart is enabled if ANY of its tags evaluate to true (OR logic).
+// If no tags are specified, or if the tags field doesn't exist in values, the subchart is enabled by default.
+//
+// tags is the list of tag names from the dependency declaration
+// values are the merged values to evaluate against
+//
+// Returns true if any tag is true, or if no tags are specified/found in values
+func evaluateTagsCondition(tags []string, values v3util.Values) bool {
+	if len(tags) == 0 {
+		return true
+	}
+
+	// Look for the "tags" map in values
+	tagsMap, exists := values["tags"]
+	if !exists {
+		return true
+	}
+
+	tagsValues, ok := tagsMap.(map[string]any)
+	if !ok {
+		return true
+	}
+
+	// OR logic: if ANY tag is true, the subchart is enabled
+	for _, tag := range tags {
+		tagValue, exists := tagsValues[tag]
+		if !exists {
+			continue
+		}
+
+		// Check if the tag value is a boolean true
+		if boolVal, ok := tagValue.(bool); ok && boolVal {
+			return true
+		}
+	}
+
+	// All tags are either false or don't exist, subchart is disabled
+	return false
+}
+
 // getDependencyMetadata finds the Dependency metadata from the parent chart's Chart.yaml
 // that matches the given subchart. This is needed because the subchart Chart object doesn't
 // contain the condition field - that's only in the parent's dependency declaration.
@@ -286,12 +327,17 @@ func getDependencyMetadata(parentChart *v3chart.Chart, subchartName string) *v3c
 	return nil
 }
 
-// isSubchartEnabled evaluates whether a subchart dependency is enabled based on its condition field
+// isSubchartEnabled evaluates whether a subchart dependency is enabled based on its condition and tags fields
 // declared in the parent chart's Chart.yaml dependencies section.
 //
-// parentChart is the parent chart containing the dependency declaration with the condition field
+// According to Helm's logic:
+// 1. If a condition is specified, it takes precedence and determines enablement
+// 2. If no condition is specified, tags are evaluated (OR logic: any tag true means enabled)
+// 3. If neither condition nor tags are specified, the subchart is enabled by default
+//
+// parentChart is the parent chart containing the dependency declaration with the condition/tags fields
 // subchart is the loaded subchart Chart object
-// values are the merged values to evaluate the condition against
+// values are the merged values to evaluate the condition/tags against
 //
 // It returns true if the subchart should be enabled, false otherwise.
 func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3chart.Chart, values v3util.Values) bool {
@@ -308,14 +354,18 @@ func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3
 		return true
 	}
 
-	// Check the condition field from the dependency declaration
-	if depMetadata.Condition == "" {
-		// No condition specified, subchart is enabled
-		return true
+	// Priority 1: Check the condition field (takes precedence over tags)
+	if depMetadata.Condition != "" {
+		return evaluateConditionPath(depMetadata.Condition, values)
 	}
 
-	// Evaluate the condition path against the values
-	return evaluateConditionPath(depMetadata.Condition, values)
+	// Priority 2: Check tags field (only if no condition is specified)
+	if len(depMetadata.Tags) > 0 {
+		return evaluateTagsCondition(depMetadata.Tags, values)
+	}
+
+	// No condition or tags specified, subchart is enabled by default
+	return true
 }
 
 // getV3TestSuitesWithValues retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
