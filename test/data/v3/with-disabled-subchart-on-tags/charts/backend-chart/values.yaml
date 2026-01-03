@@ -1,0 +1,10 @@
+# Default values for backend-chart
+service:
+  name: backend-service
+  type: ClusterIP
+  port: 8080
+
+deployment:
+  image: node
+  tag: "18-alpine"
+  replicas: 3

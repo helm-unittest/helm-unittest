@@ -1,0 +1,55 @@
+suite: test mixed tag scenarios - OR logic
+templates:
+  - charts/frontend-chart/templates/deployment.yaml
+  - charts/backend-chart/templates/deployment.yaml
+tests:
+  - it: should render frontend when only front-end tag is enabled
+    set:
+      tags.front-end: true
+      tags.web: false
+      tags.back-end: false
+      tags.api: false
+    template: charts/frontend-chart/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: frontend-deployment
+
+  - it: should render frontend with web tag even if front-end is disabled (OR logic)
+    set:
+      tags.front-end: false
+      tags.web: true
+    template: charts/frontend-chart/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  - it: should render backend with api tag even if back-end is disabled (OR logic)
+    set:
+      tags.back-end: false
+      tags.api: true
+    template: charts/backend-chart/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  - it: should render backend when only back-end tag is enabled
+    set:
+      tags.front-end: false
+      tags.web: false
+      tags.back-end: true
+      tags.api: false
+    template: charts/backend-chart/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
