@@ -16,8 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	v3chart "helm.sh/helm/v3/pkg/chart"
-	v3util "helm.sh/helm/v3/pkg/chartutil"
 	v3loader "helm.sh/helm/v3/pkg/chart/loader"
+	v3util "helm.sh/helm/v3/pkg/chartutil"
 )
 
 const LOG_TEST_RUNNER = "test-runner"
