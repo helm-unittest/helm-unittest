@@ -188,9 +188,9 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 //
 // It returns the merged values as v3util.Values and an error if any occurred during processing.
 func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath string) (v3util.Values, error) {
-	base := make(map[string]any)
-	if chart.Values != nil {
-		base = chart.Values
+	base := chart.Values
+	if base == nil {
+		base = make(map[string]any)
 	}
 
 	for _, valuesFile := range tr.ValuesFiles {
@@ -255,7 +255,7 @@ func evaluateConditionPath(conditionPath string, values v3util.Values) bool {
 		currentMap = nextMap
 	}
 
-	panic("unreachable: evaluateConditionPath completed loop without returning")
+	return true
 }
 
 // getDependencyMetadata finds the Dependency metadata from the parent chart's Chart.yaml
