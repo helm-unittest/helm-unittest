@@ -15,17 +15,18 @@ import (
 
 // testOptions stores options setup by user in command line
 type testOptions struct {
-	debugLogging   bool
-	useFailfast    bool
-	useStrict      bool
-	colored        bool
-	updateSnapshot bool
-	withSubChart   bool
-	testFiles      []string
-	valuesFiles    []string
-	outputFile     string
-	outputType     string
-	chartTestsPath string
+	debugLogging            bool
+	useFailfast             bool
+	useStrict               bool
+	useSkipSchemaValidation bool
+	colored                 bool
+	updateSnapshot          bool
+	withSubChart            bool
+	testFiles               []string
+	valuesFiles             []string
+	outputFile              string
+	outputType              string
+	chartTestsPath          string
 }
 
 var defaultFilePattern = filepath.Join("tests", "*_test.yaml")
@@ -91,17 +92,18 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 	printer := printer.NewPrinter(os.Stdout, colored)
 	testRunner = unittest.TestRunner{
-		Printer:        printer,
-		Formatter:      formatter,
-		UpdateSnapshot: testConfig.updateSnapshot,
-		WithSubChart:   testConfig.withSubChart,
-		Strict:         testConfig.useStrict,
-		Failfast:       testConfig.useFailfast,
-		TestFiles:      testConfig.testFiles,
-		ValuesFiles:    testConfig.valuesFiles,
-		OutputFile:     testConfig.outputFile,
-		ChartTestsPath: testConfig.chartTestsPath,
-		RenderPath:     renderPath,
+		Printer:              printer,
+		Formatter:            formatter,
+		UpdateSnapshot:       testConfig.updateSnapshot,
+		WithSubChart:         testConfig.withSubChart,
+		Strict:               testConfig.useStrict,
+		Failfast:             testConfig.useFailfast,
+		SkipSchemaValidation: testConfig.useSkipSchemaValidation,
+		TestFiles:            testConfig.testFiles,
+		ValuesFiles:          testConfig.valuesFiles,
+		OutputFile:           testConfig.outputFile,
+		ChartTestsPath:       testConfig.chartTestsPath,
+		RenderPath:           renderPath,
 	}
 
 	log.SetFormatter(&log.TextFormatter{
@@ -137,6 +139,11 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useStrict, "strict", false,
 		"strict parse the testsuites",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.useSkipSchemaValidation, "skip-schema-validation", true,
+		"skip schema validation when rendering helmcharts",
 	)
 
 	cmd.PersistentFlags().StringArrayVarP(

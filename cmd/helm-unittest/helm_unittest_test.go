@@ -116,6 +116,32 @@ func TestValidateUnittestStrictFlag(t *testing.T) {
 	}
 }
 
+func TestValidateUnittestSkipSchemaValidationFlag(t *testing.T) {
+	a := assert.New(t)
+
+	skipSchemaValidationFlags := map[string]bool{
+		"":                               true,
+		"--skip-schema-validation":       true,
+		"--skip-schema-validation=false": false,
+		"--skip-schema-validation=true":  true,
+	}
+
+	for skipSchemaValidationFlag, skipSchemaValidationFlagValue := range skipSchemaValidationFlags {
+		cmd := setupTestCmd()
+
+		// Setup actual parameter
+		if len(skipSchemaValidationFlag) > 0 {
+			cmd.SetArgs([]string{skipSchemaValidationFlag})
+		}
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(skipSchemaValidationFlagValue, runner.SkipSchemaValidation)
+	}
+}
+
 func TestValidateUnittestFailFastFlags(t *testing.T) {
 	a := assert.New(t)
 

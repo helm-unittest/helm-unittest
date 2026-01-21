@@ -254,7 +254,7 @@ func (s *TestSuite) RunV3(
 	snapshotCache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
-	strict bool,
+	skipSchemaValidation bool,
 	result *results.TestSuiteResult,
 ) *results.TestSuiteResult {
 	s.polishTestJobsPathInfo()
@@ -267,7 +267,7 @@ func (s *TestSuite) RunV3(
 		snapshotCache,
 		failFast,
 		renderPath,
-		strict,
+		skipSchemaValidation,
 	)
 
 	result.Passed = r.Pass
@@ -383,7 +383,7 @@ func (s *TestSuite) runV3TestJobs(
 	cache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
-	strict bool,
+	skipSchemaValidation bool,
 ) *SuiteResult {
 	result := SuiteResult{Pass: false, FailFast: false, Skip: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -407,7 +407,7 @@ func (s *TestSuite) runV3TestJobs(
 			testJob.WithConfig(*NewTestConfig(chartClone, cache,
 				WithRenderPath(renderPath),
 				WithFailFast(failFast),
-				WithStrict(strict),
+				WithSkipSchemaValidation(skipSchemaValidation),
 				WithPostRendererConfig(s.PostRendererConfig),
 				WithDocumentSelector(testJob.DocumentSelector),
 			))
