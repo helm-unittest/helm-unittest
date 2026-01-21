@@ -13,6 +13,7 @@ type TestConfig struct {
 	cache               *snapshot.Cache
 	renderPath          string
 	failFast            bool
+	strict              bool
 	isSkipEmptyTemplate bool
 	postRenderer        PostRendererConfig
 }
@@ -37,6 +38,12 @@ type LoadTestOptionsFunc func(*TestConfig)
 func WithFailFast(failFast bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.failFast = failFast
+	}
+}
+
+func WithStrict(strict bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.strict = strict
 	}
 }
 
