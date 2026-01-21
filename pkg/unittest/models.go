@@ -9,12 +9,13 @@ import (
 )
 
 type TestConfig struct {
-	targetChart         *v3chart.Chart
-	cache               *snapshot.Cache
-	renderPath          string
-	failFast            bool
-	isSkipEmptyTemplate bool
-	postRenderer        PostRendererConfig
+	targetChart          *v3chart.Chart
+	cache                *snapshot.Cache
+	renderPath           string
+	failFast             bool
+	skipSchemaValidation bool
+	isSkipEmptyTemplate  bool
+	postRenderer         PostRendererConfig
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -37,6 +38,12 @@ type LoadTestOptionsFunc func(*TestConfig)
 func WithFailFast(failFast bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.failFast = failFast
+	}
+}
+
+func WithSkipSchemaValidation(skipSchemaValidation bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.skipSchemaValidation = skipSchemaValidation
 	}
 }
 

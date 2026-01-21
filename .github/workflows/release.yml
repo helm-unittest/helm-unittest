@@ -11,6 +11,8 @@ env:
   PLUGIN_REPO: helm-unittest/helm-unittest
   GO_VERSION: 1.25.x
 
+permissions: {}
+
 jobs:
   release:
     name: create distribution and upload to release
