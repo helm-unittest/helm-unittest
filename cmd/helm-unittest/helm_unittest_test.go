@@ -120,7 +120,7 @@ func TestValidateUnittestSkipSchemaValidationFlag(t *testing.T) {
 	a := assert.New(t)
 
 	skipSchemaValidationFlags := map[string]bool{
-		"":                               true,
+		"":                               false,
 		"--skip-schema-validation":       true,
 		"--skip-schema-validation=false": false,
 		"--skip-schema-validation=true":  true,

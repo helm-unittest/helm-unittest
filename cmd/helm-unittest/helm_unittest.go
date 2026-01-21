@@ -142,7 +142,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().BoolVar(
-		&testConfig.useSkipSchemaValidation, "skip-schema-validation", true,
+		&testConfig.useSkipSchemaValidation, "skip-schema-validation", false,
 		"skip schema validation when rendering helmcharts",
 	)
 
