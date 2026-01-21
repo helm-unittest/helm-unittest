@@ -370,7 +370,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().strict)
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), !t.configOrDefault().strict)
 	if err != nil {
 		return nil, false, err
 	}
