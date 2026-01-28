@@ -168,6 +168,11 @@ func (s *orderedSnapshotComparer) CompareToSnapshot(content any, optFns ...func(
 	return s.cache.Compare(s.test, s.counter, content, optFns...)
 }
 
+func (s *orderedSnapshotComparer) CompareToSnapshotYAML(contents []any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
+	s.counter++
+	return s.cache.CompareYAML(s.test, contents, optFns...)
+}
+
 type Capabilities struct {
 	MajorVersion string   `yaml:"majorVersion"`
 	MinorVersion string   `yaml:"minorVersion"`
