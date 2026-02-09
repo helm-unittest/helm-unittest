@@ -1028,6 +1028,13 @@
                         "path": {
                           "$ref": "#/definitions/assertion/path"
                         },
+                        "format": {
+                          "type": "string",
+                          "description": "The snapshot format: 'indexed' (default) uses numeric indexes, 'yaml' produces pure YAML with --- separators for easier diffs.",
+                          "markdownDescription": "**format** (string) _optional_\n\nThe snapshot format:\n- `indexed` (default): Uses numeric indexes (1, 2, 3...) for each document\n- `yaml`: Pure YAML format with `---` separators, similar to `helm template` output",
+                          "enum": ["indexed", "yaml"],
+                          "default": "indexed"
+                        },
                         "matchRegex": {
                           "type": "object",
                           "description": "Assert the value of regex is the same as snapshotted last time. ",
