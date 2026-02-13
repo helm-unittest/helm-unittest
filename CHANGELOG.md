@@ -215,7 +215,7 @@
 - Fix failed_template multi colon handling (resolves #200)
 - Fix glob all valid filenames (resolves #201)
 - Update packages to latest patch versions
-- Update documenation (thanks to @yariksheptykin)
+- Update documentation (thanks to @yariksheptykin)
 
 0.3.4 / 2023-08-01
 ===================
@@ -223,7 +223,7 @@
 - Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
 - Fix schema definition types (resolves #174)
 - Fix validation of required fields in suite (resolves #178)
-- Remove GitHub API usage during instal (credits @raxod502-plaid, resolves #181)
+- Remove GitHub API usage during install (credits @raxod502-plaid, resolves #181)
 - Enable suite-level set block (resolves #155)
 - Update packages to latest patch versions
 - Update documentation
@@ -286,7 +286,7 @@
 0.2.9 / 2022-09-24
 ==================
 - Add JSON Schema for validating testsuite files (credits to: @armingerten, resolves quintush/helm-unittest#161)
-- Support failedTemplate assert schema for valdiation errors (credits to: @rquino)
+- Support failedTemplate assert schema for validation errors (credits to: @rquino)
 - Switch shell instead of bash to support other (credits to: @tewfik-ghariani)
 - Correct loading appVersion (resolves quintush/helm-unittest#172)
 - Update plugin to go 1.18
@@ -383,7 +383,7 @@
 
 0.1.7 / 2020-04-02
 ==================
-- added Helm V3 compatiblity (#87, #98)
+- added Helm V3 compatibility (#87, #98)
 - make install-binary.sh version aware (#97)
 
 0.1.6 / 2019-10-14
