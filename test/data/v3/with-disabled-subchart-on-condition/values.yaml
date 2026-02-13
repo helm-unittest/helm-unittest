@@ -1,0 +1,5 @@
+child-chart:
+  # Switching this boolean to true should make child tests pass, but this test is testing that
+  # unittest doesn't expect child charts manifests to be rendered and tests to pass if the parent
+  # chart disables the subchart by default.
+  enabled: false

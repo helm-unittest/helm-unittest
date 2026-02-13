@@ -1,0 +1,25 @@
+suite: test backend chart itself
+templates:
+  - deployment.yaml
+  - service.yaml
+tests:
+  - it: should render backend deployment
+    template: deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: backend-deployment
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should render backend service
+    template: service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: backend-service

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: backend-chart
+description: Backend API component subchart
+version: 0.1.0

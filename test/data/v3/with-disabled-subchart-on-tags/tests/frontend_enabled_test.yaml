@@ -1,0 +1,39 @@
+suite: test frontend subchart with tags enabled
+templates:
+  - charts/frontend-chart/templates/deployment.yaml
+  - charts/frontend-chart/templates/service.yaml
+set:
+  tags.front-end: true
+tests:
+  - it: should render frontend deployment when front-end tag is enabled
+    template: charts/frontend-chart/templates/deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: frontend-deployment
+      - equal:
+          path: metadata.labels.component
+          value: web
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx:alpine
+
+  - it: should render frontend service when front-end tag is enabled
+    template: charts/frontend-chart/templates/service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: frontend-service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 80
