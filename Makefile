@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.19.0
+HELM_VERSION := 3.19.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"

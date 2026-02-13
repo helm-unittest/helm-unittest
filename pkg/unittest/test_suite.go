@@ -316,11 +316,14 @@ func (s *TestSuite) polishSkipSettings(test *TestJob) {
 	} else if s.Skip.Reason == "" {
 		skipped := 0
 		for _, test := range s.Tests {
+			if test == nil {
+				continue
+			}
 			if test.Skip.Reason != "" {
 				skipped++
 			}
 		}
-		if skipped == len(s.Tests) {
+		if skipped > 0 && skipped == len(s.Tests) {
 			s.Skip.Reason = "all tests are skipped"
 		}
 	}
