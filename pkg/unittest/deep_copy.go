@@ -15,6 +15,7 @@ import (
 
 const templatePrefix string = "templates"
 const subchartPrefix string = "charts"
+const crdsPrefix string = "crds"
 const multiWildcard string = "**"
 const singleWildcard string = "*"
 
@@ -24,6 +25,7 @@ const singleWildcard string = "*"
 func getTemplateFileName(fileName string) string {
 	if !strings.HasPrefix(fileName, templatePrefix) &&
 		!strings.HasPrefix(fileName, subchartPrefix) &&
+		!strings.HasPrefix(fileName, crdsPrefix) &&
 		!strings.HasPrefix(fileName, multiWildcard) {
 
 		// Within templates unix separators are always used.

@@ -1,0 +1,10 @@
+suite: Tests without CRDs
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should only render deployment without CRDs
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment

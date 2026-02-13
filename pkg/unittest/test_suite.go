@@ -212,6 +212,7 @@ type TestSuite struct {
 	Set              map[string]any
 	Templates        []string
 	ExcludeTemplates []string `yaml:"excludeTemplates"`
+	IncludeCrds      bool     `yaml:"includeCrds"`
 	Release          struct {
 		Name      string
 		Namespace string
@@ -409,6 +410,7 @@ func (s *TestSuite) runV3TestJobs(
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
 				WithDocumentSelector(testJob.DocumentSelector),
+				WithIncludeCrds(s.IncludeCrds),
 			))
 			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult

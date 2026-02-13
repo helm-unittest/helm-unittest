@@ -15,6 +15,7 @@ type TestConfig struct {
 	failFast            bool
 	isSkipEmptyTemplate bool
 	postRenderer        PostRendererConfig
+	includeCrds         bool
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -25,6 +26,7 @@ func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(
 		failFast:            false,
 		isSkipEmptyTemplate: false,
 		postRenderer:        PostRendererConfig{},
+		includeCrds:         false,
 	}
 	for _, option := range options {
 		option(config)
@@ -65,6 +67,12 @@ func WithPostRendererConfig(config PostRendererConfig) LoadTestOptionsFunc {
 func WithSkipEmptyTemplate(config bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.isSkipEmptyTemplate = config
+	}
+}
+
+func WithIncludeCrds(includeCrds bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.includeCrds = includeCrds
 	}
 }
 
