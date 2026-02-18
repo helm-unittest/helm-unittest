@@ -1,0 +1,10 @@
+# Default values for frontend-chart
+service:
+  name: frontend-service
+  type: ClusterIP
+  port: 80
+
+deployment:
+  image: nginx
+  tag: alpine
+  replicas: 2

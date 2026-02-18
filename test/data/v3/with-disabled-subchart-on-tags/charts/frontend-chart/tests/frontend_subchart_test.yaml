@@ -1,0 +1,25 @@
+suite: test frontend chart itself
+templates:
+  - deployment.yaml
+  - service.yaml
+tests:
+  - it: should render frontend deployment
+    template: deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: frontend-deployment
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: should render frontend service
+    template: service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: frontend-service

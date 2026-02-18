@@ -1,0 +1,14 @@
+suite: test parent chart resources
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render parent chart configmap
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: my-application-config
+      - equal:
+          path: data["app.name"]
+          value: "my-application"

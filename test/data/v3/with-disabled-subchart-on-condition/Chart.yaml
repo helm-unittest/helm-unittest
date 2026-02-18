@@ -1,0 +1,10 @@
+apiVersion: v2
+name: with-disabled-subchart
+description: Test chart with a disabled subchart
+version: 0.1.0
+appVersion: 1.0.0
+
+dependencies:
+  - name: child-chart
+    version: 0.1.0
+    condition: child-chart.enabled
