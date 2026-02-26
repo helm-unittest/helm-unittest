@@ -117,26 +117,26 @@ installFile() {
   if [ -n "$PROJECT_CHECKSUM" ]; then
     echo Validating Checksum.
     if type "curl" >/dev/null 2>&1; then
-      if type "shasum" >/dev/null 2>&1; then
-        curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
-      elif type "sha256sum" >/dev/null 2>&1; then
+      if type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
           curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
           curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
+      elif type "shasum" >/dev/null 2>&1; then
+        curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
     elif type "wget" >/dev/null 2>&1; then
-      if type "shasum" >/dev/null 2>&1; then
-        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
-      elif type "sha256sum" >/dev/null 2>&1; then
+      if type "sha256sum" >/dev/null 2>&1; then
         if grep -q "ID=alpine" /etc/os-release; then
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
         else
           wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status
         fi
+      elif type "shasum" >/dev/null 2>&1; then
+        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
       else
         echo No Checksum as there is no shasum or sha256sum found.
       fi
