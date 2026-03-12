@@ -2,6 +2,7 @@ package results
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 )
@@ -32,6 +33,7 @@ func (ar AssertionResult) print(printer *printer.Printer, verbosity int) {
 
 func (ar AssertionResult) getTitle() string {
 	var title string
+
 	if ar.CustomInfo != "" {
 		title = ar.CustomInfo
 	} else {
@@ -46,11 +48,16 @@ func (ar AssertionResult) getTitle() string {
 
 // ToString writing the object to a customized formatted string.
 func (ar AssertionResult) stringify() string {
-	content := fmt.Sprintf("\t\t %s \n", ar.getTitle())
+	var content strings.Builder
+	if !ar.Skipped {
+		fmt.Fprintf(&content, "\t\t %s \n", ar.getTitle())
 
-	for _, infoLine := range ar.FailInfo {
-		content += fmt.Sprintf("\t\t\t %s \n", infoLine)
+		for _, infoLine := range ar.FailInfo {
+			fmt.Fprintf(&content, "\t\t\t %s \n", infoLine)
+		}
+	} else {
+		fmt.Fprintf(&content, "\t\t\t %s \n", ar.SkipReason)
 	}
 
-	return content
+	return content.String()
 }

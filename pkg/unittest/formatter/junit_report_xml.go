@@ -70,7 +70,7 @@ func NewJUnitReportXML() Formatter {
 	return &jUnitReportXML{}
 }
 
-// JUnitReportXML writes a JUnit xml representation of the given report to w
+// JUnitReportXML writes a JUnit xml representation of the given report to a writer
 // in the format described at http://windyroad.org/dl/Open%20Source/JUnit.xsd
 func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteResult, noXMLHeader bool, w io.Writer) error {
 	suites := JUnitTestSuites{}
@@ -86,13 +86,17 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		for _, test := range testSuiteResult.TestsResult {
 			testCase := j.createJUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
+			if test.Skipped {
+				testCase.SkipMessage = j.createJUnitSkipMessage(test.Stringify())
+			}
+
 			// Write when a test is failed
-			if !test.Passed && test.ExecError == nil {
+			if !test.Skipped && !test.Passed && test.ExecError == nil {
 				ts.Failures++
 				testCase.Failure = j.createJUnitFailure("Failed", "", test.Stringify())
 			}
 
-			if !test.Passed && test.ExecError != nil {
+			if !test.Skipped && !test.Passed && test.ExecError != nil {
 				ts.Errors++
 				testCase.Error = j.createJUnitFailure("Error", "", test.ExecError.Error())
 			}
@@ -141,5 +145,11 @@ func (j *jUnitReportXML) createJUnitFailure(message, failureType, content string
 		Message:  message,
 		Type:     failureType,
 		Contents: content,
+	}
+}
+
+func (j *jUnitReportXML) createJUnitSkipMessage(message string) *JUnitSkipMessage {
+	return &JUnitSkipMessage{
+		Message: message,
 	}
 }

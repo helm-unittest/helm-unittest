@@ -46,6 +46,11 @@ func (tjr TestJobResult) print(printer *printer.Printer, verbosity int) {
 // Stringify writing the object to a customized formatted string.
 func (tjr TestJobResult) Stringify() string {
 	content := ""
+
+	if tjr.Skipped {
+		content += "SKIPPED '" + tjr.DisplayName + "'\n"
+	}
+
 	if tjr.ExecError != nil {
 		content += tjr.ExecError.Error() + "\n"
 	}

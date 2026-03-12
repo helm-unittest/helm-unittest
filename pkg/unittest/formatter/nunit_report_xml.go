@@ -115,7 +115,7 @@ type NUnitFailure struct {
 	StackTrace string `xml:"stack-trace"`
 }
 
-// NUnitReason contains data related to a failed test.
+// NUnitReason contains data related to a failed or skipped test.
 type NUnitReason struct {
 	Message string `xml:"message"`
 }
@@ -134,6 +134,7 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 	totalTests := 0
 	totalErrors := 0
 	totalFailures := 0
+	totalSkipped := 0
 	totalSuccess := true
 	testSuites := []NUnitTestSuite{}
 
@@ -152,13 +153,22 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 			testSuites = append(testSuites, ts)
 			continue
 		}
+
 		// individual test cases
 		for _, test := range testSuiteResult.TestsResult {
 			totalTests++
 			testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
+			if test.Skipped {
+				totalSkipped++
+				testCase.Reason = &NUnitReason{
+					Message: test.Stringify(),
+				}
+				testCase.Result = "Skipped"
+			}
+
 			// Write when a test is failed
-			if !test.Passed {
+			if !test.Passed && !test.Skipped {
 				// Update total counts
 				if test.ExecError != nil {
 					totalErrors++
@@ -175,7 +185,7 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		testSuites = append(testSuites, ts)
 	}
 
-	nunitResult := n.createNUnitTestResults(currentTime, totalTests, totalErrors, totalFailures, totalSuccess, testSuites)
+	nunitResult := n.createNUnitTestResults(currentTime, totalTests, totalErrors, totalFailures, totalSkipped, testSuites)
 
 	// to xml
 	if err := writeContentToFile(noXMLHeader, nunitResult, w); err != nil {
@@ -199,8 +209,11 @@ func (n *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
 	return domainName, userName
 }
 
-func (n *nUnitReportXML) formatResult(b bool) string {
-	if !b {
+func (n *nUnitReportXML) formatResult(success, skipped bool) string {
+	if skipped {
+		return "Skipped"
+	}
+	if !success {
 		return "Failed"
 	}
 	return "Success"
@@ -208,8 +221,7 @@ func (n *nUnitReportXML) formatResult(b bool) string {
 
 func (n *nUnitReportXML) createNUnitTestResults(
 	currentTime time.Time,
-	totalTests, totalErrors, totalFailures int,
-	totalSuccess bool,
+	totalTests, totalErrors, totalFailures, totalSkipped int,
 	testSuites []NUnitTestSuite) NUnitTestResults {
 	domainName, userName := n.formatUserAndDomain()
 	cwd, _ := os.Getwd()
@@ -240,7 +252,7 @@ func (n *nUnitReportXML) createNUnitTestResults(
 		NotRun:       0,
 		Inconclusive: 0,
 		Ignored:      0,
-		Skipped:      0,
+		Skipped:      totalSkipped,
 		Invalid:      0,
 		Date:         formatDate(currentTime),
 		Time:         formatTime(currentTime),
@@ -254,8 +266,8 @@ func (n *nUnitReportXML) createNUnitTestSuite(testSuiteResult *results.TestSuite
 		Description: testSuiteResult.FilePath,
 		Success:     strconv.FormatBool(testSuiteResult.Passed),
 		Time:        formatDuration(testSuiteResult.CalculateTestSuiteDuration()),
-		Executed:    strconv.FormatBool(testSuiteResult.ExecError == nil),
-		Result:      n.formatResult(testSuiteResult.Passed),
+		Executed:    strconv.FormatBool(testSuiteResult.ExecError == nil && !testSuiteResult.Skipped),
+		Result:      n.formatResult(testSuiteResult.Passed, testSuiteResult.Skipped),
 	}
 }
 
@@ -266,9 +278,9 @@ func (n *nUnitReportXML) createNUnitTestCase(className string, testJobResult *re
 		Description: fmt.Sprintf("%s.%s", className, testJobResult.DisplayName),
 		Success:     strconv.FormatBool(testJobResult.Passed),
 		Time:        formatDuration(testJobResult.Duration),
-		Executed:    strconv.FormatBool(testJobResult.ExecError == nil),
+		Executed:    strconv.FormatBool(testJobResult.ExecError == nil && !testJobResult.Skipped),
 		Asserts:     "0",
-		Result:      n.formatResult(testJobResult.Passed),
+		Result:      n.formatResult(testJobResult.Passed, testJobResult.Skipped),
 	}
 }
 

@@ -14,10 +14,16 @@ import (
 
 var tmpJUnitTestDir, _ = os.MkdirTemp("", testSuiteTests)
 
-func createJUnitTestCase(classname, name, failureContent string, errorContent error) JUnitTestCase {
+func createJUnitTestCase(classname, name, failureContent, skipMessage string, errorContent error) JUnitTestCase {
 	testCase := JUnitTestCase{
 		Classname: classname,
 		Name:      name,
+	}
+
+	if len(skipMessage) > 0 {
+		testCase.SkipMessage = &JUnitSkipMessage{
+			Message: skipMessage,
+		}
 	}
 
 	if len(failureContent) > 0 {
@@ -92,6 +98,12 @@ func assertJUnitTestCase(assert *assert.Assertions, expected, actual []JUnitTest
 			} else {
 				assert.True(expected[i].Error == nil && actual[i].Error == nil)
 			}
+
+			if expected[i].SkipMessage != nil && actual[i].SkipMessage != nil {
+				assert.Equal(expected[i].SkipMessage.Message, actual[i].SkipMessage.Message)
+			} else {
+				assert.True(expected[i].SkipMessage == nil && actual[i].SkipMessage == nil)
+			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
@@ -131,7 +143,7 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 					createJUnitProperty("helm-unittest.version", "1.6"),
 				},
 				TestCases: []JUnitTestCase{
-					createJUnitTestCase(testSuiteDisplayName, testCaseDisplayName, "", nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseDisplayName, "", "", nil),
 				},
 			},
 		},
@@ -143,7 +155,59 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      true,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseDisplayName, "", true, nil),
+				createTestJobResult(testCaseDisplayName, "", true, false, nil),
+			},
+		},
+	}
+
+	sut := NewJUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual JUnitTestSuites
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
+
+	assertJUnitTestSuite(assert, expected.Suites, actual.Suites)
+}
+
+func TestWriteTestOutputAsJUnitWithSkipped(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayNameSkipped := "TestCaseSkipped"
+	skipReason := "Version mismatch"
+	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseDisplayNameSkipped, skipReason)
+
+	expected := JUnitTestSuites{
+		Suites: []JUnitTestSuite{
+			{
+				Tests:    2,
+				Failures: 0,
+				Name:     testSuiteDisplayName,
+				Properties: []JUnitProperty{
+					createJUnitProperty("helm-unittest.version", "1.6"),
+				},
+				TestCases: []JUnitTestCase{
+					createJUnitTestCase(testSuiteDisplayName, testCaseDisplayName, "", "", nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseDisplayNameSkipped, "", skippedContent, nil),
+				},
+			},
+		},
+	}
+
+	assertionSkippedResults := []*results.AssertionResult{
+		createAssertionResult(0, false, true, false, "", "", skipReason, ""),
+	}
+
+	given := []*results.TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*results.TestJobResult{
+				createTestJobResult(testCaseDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseDisplayNameSkipped, "", false, true, assertionSkippedResults),
 			},
 		},
 	}
@@ -179,15 +243,15 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 					createJUnitProperty("helm-unittest.version", "1.6"),
 				},
 				TestCases: []JUnitTestCase{
-					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", nil),
-					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", "", nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, "", nil),
 				},
 			},
 		},
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -196,8 +260,8 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
 			},
 		},
 	}
@@ -237,16 +301,16 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 					createJUnitProperty("helm-unittest.version", "1.6"),
 				},
 				TestCases: []JUnitTestCase{
-					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", nil),
-					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, nil),
-					createJUnitTestCase(testSuiteDisplayName, testCaseErrorDisplayName, "", fmt.Errorf("%s", failureErrorContent)),
+					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", "", nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, "", nil),
+					createJUnitTestCase(testSuiteDisplayName, testCaseErrorDisplayName, "", "", fmt.Errorf("%s", failureErrorContent)),
 				},
 			},
 		},
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -255,9 +319,9 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
-				createTestJobResult(testCaseErrorDisplayName, failureErrorContent, false, nil),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
+				createTestJobResult(testCaseErrorDisplayName, failureErrorContent, false, false, nil),
 			},
 		},
 	}
