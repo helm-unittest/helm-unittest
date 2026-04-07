@@ -62,18 +62,24 @@ func validateSonarTestCases(assert *assert.Assertions, expected, actual []SonarT
 			assert.NotNil(actual[i].Skipped)
 			assert.Equal(expected[i].Skipped.Message, actual[i].Skipped.Message)
 			assert.Equal(expected[i].Skipped.Reason, actual[i].Skipped.Reason)
+		} else {
+			assert.Nil(actual[i].Skipped)
 		}
 
 		if expected[i].Error != nil {
 			assert.NotNil(actual[i].Error)
 			assert.Equal(expected[i].Error.Message, actual[i].Error.Message)
 			assert.Equal(expected[i].Error.Stacktrace, actual[i].Error.Stacktrace)
+		} else {
+			assert.Nil(actual[i].Error)
 		}
 
 		if expected[i].Failure != nil {
 			assert.NotNil(actual[i].Failure)
 			assert.Equal(expected[i].Failure.Message, actual[i].Failure.Message)
 			assert.Equal(expected[i].Failure.Stacktrace, actual[i].Failure.Stacktrace)
+		} else {
+			assert.Nil(actual[i].Failure)
 		}
 	}
 }

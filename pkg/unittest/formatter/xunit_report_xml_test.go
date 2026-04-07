@@ -69,7 +69,8 @@ func assertXUnitTestAssemblies(assert *assert.Assertions, expected, actual []XUn
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -91,7 +92,8 @@ func assertXUnitTestRun(assert *assert.Assertions, expected, actual []XUnitTestR
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -107,26 +109,29 @@ func assertXUnitTestCase(assert *assert.Assertions, expected, actual []XUnitTest
 			assert.Equal(expected[i].Method, actual[i].Method)
 			assert.Equal(expected[i].Result, actual[i].Result)
 
-			if expected[i].Failure != nil || actual[i].Failure != nil {
+			if expected[i].Failure != nil {
+				assert.NotNil(actual[i].Failure)
 				assert.Equal(expected[i].Failure.ExceptionType, actual[i].Failure.ExceptionType)
 				assert.Equal(expected[i].Failure.Message.Data, actual[i].Failure.Message.Data)
 				assert.Equal(expected[i].Failure.StackTrace.Data, actual[i].Failure.StackTrace.Data)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+				assert.Nil(actual[i].Failure)
 			}
 
-			if expected[i].Reason != nil || actual[i].Reason != nil {
+			if expected[i].Reason != nil {
+				assert.NotNil(actual[i].Reason)
 				assert.Equal(expected[i].Reason.Reason, actual[i].Reason.Reason)
 				assert.Equal(expected[i].Result, actual[i].Result)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Reason == nil && actual[i].Reason == nil)
+				assert.Nil(actual[i].Reason)
 			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 

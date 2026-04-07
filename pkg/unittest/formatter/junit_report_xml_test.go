@@ -69,7 +69,8 @@ func assertJUnitTestSuite(assert *assert.Assertions, expected, actual []JUnitTes
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -83,31 +84,35 @@ func assertJUnitTestCase(assert *assert.Assertions, expected, actual []JUnitTest
 			assert.Equal(expected[i].Classname, actual[i].Classname)
 			assert.Equal(expected[i].Name, actual[i].Name)
 
-			if expected[i].Failure != nil && actual[i].Failure != nil {
+			if expected[i].Failure != nil {
+				assert.NotNil(actual[i].Failure)
 				assert.Equal(expected[i].Failure.Message, actual[i].Failure.Message)
 				assert.Equal(expected[i].Failure.Type, actual[i].Failure.Type)
 				assert.Equal(expected[i].Failure.Contents, actual[i].Failure.Contents)
 			} else {
-				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+				assert.Nil(actual[i].Failure)
 			}
 
-			if expected[i].Error != nil && actual[i].Error != nil {
+			if expected[i].Error != nil {
+				assert.NotNil(actual[i].Error)
 				assert.Equal(expected[i].Error.Message, actual[i].Error.Message)
 				assert.Equal(expected[i].Error.Type, actual[i].Error.Type)
 				assert.Equal(expected[i].Error.Contents, actual[i].Error.Contents)
 			} else {
-				assert.True(expected[i].Error == nil && actual[i].Error == nil)
+				assert.Nil(actual[i].Error)
 			}
 
-			if expected[i].SkipMessage != nil && actual[i].SkipMessage != nil {
+			if expected[i].SkipMessage != nil {
+				assert.NotNil(actual[i].SkipMessage)
 				assert.Equal(expected[i].SkipMessage.Message, actual[i].SkipMessage.Message)
 			} else {
-				assert.True(expected[i].SkipMessage == nil && actual[i].SkipMessage == nil)
+				assert.Nil(actual[i].SkipMessage)
 			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -123,7 +128,8 @@ func assertJUnitProperty(assert *assert.Assertions, expected, actual []JUnitProp
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -131,7 +137,7 @@ func TestWriteTestOutputAsJUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayName := "TestCaseSuccess"
 
 	expected := JUnitTestSuites{
 		Suites: []JUnitTestSuite{
@@ -174,7 +180,7 @@ func TestWriteTestOutputAsJUnitWithSkipped(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayName := "TestCaseSuccess"
 	testCaseDisplayNameSkipped := "TestCaseSkipped"
 	skipReason := "Version mismatch"
 	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseDisplayNameSkipped, skipReason)
@@ -226,7 +232,7 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_Failure_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
+	TestCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
 	assertionFailure := "AssertionFailure"
 	assertionType := "equal"
@@ -243,7 +249,7 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 					createJUnitProperty("helm-unittest.version", "1.6"),
 				},
 				TestCases: []JUnitTestCase{
-					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", "", nil),
+					createJUnitTestCase(testSuiteDisplayName, TestCaseSuccessDisplayName, "", "", nil),
 					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, "", nil),
 				},
 			},
@@ -260,7 +266,7 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(TestCaseSuccessDisplayName, "", true, false, nil),
 				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
 			},
 		},
@@ -280,7 +286,7 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpJUnitTestDir, "JUnit_Test_FailureError_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseSuccessDisplayName := "TestCaseSuccess"
+	TestCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseFailureDisplayName := "TestCaseFailure"
 	testCaseErrorDisplayName := "TestCaseError"
 	assertionFailure := "AssertionFailure"
@@ -301,7 +307,7 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 					createJUnitProperty("helm-unittest.version", "1.6"),
 				},
 				TestCases: []JUnitTestCase{
-					createJUnitTestCase(testSuiteDisplayName, testCaseSuccessDisplayName, "", "", nil),
+					createJUnitTestCase(testSuiteDisplayName, TestCaseSuccessDisplayName, "", "", nil),
 					createJUnitTestCase(testSuiteDisplayName, testCaseFailureDisplayName, failureContent, "", nil),
 					createJUnitTestCase(testSuiteDisplayName, testCaseErrorDisplayName, "", "", fmt.Errorf("%s", failureErrorContent)),
 				},
@@ -319,7 +325,7 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(TestCaseSuccessDisplayName, "", true, false, nil),
 				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
 				createTestJobResult(testCaseErrorDisplayName, failureErrorContent, false, false, nil),
 			},

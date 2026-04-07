@@ -70,7 +70,8 @@ func validateNUnitTestSuite(assert *assert.Assertions, expected, actual []NUnitT
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -88,25 +89,28 @@ func validatNUnitTestCase(assert *assert.Assertions, expected, actual []NUnitTes
 			assert.Equal(expected[i].Executed, actual[i].Executed)
 			assert.Equal(expected[i].Result, actual[i].Result)
 
-			if expected[i].Failure != nil || actual[i].Failure != nil {
+			if expected[i].Failure != nil {
+				assert.NotNil(actual[i].Failure)
 				assert.Equal(expected[i].Failure.Message, actual[i].Failure.Message)
 				assert.Equal(expected[i].Failure.StackTrace, actual[i].Failure.StackTrace)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+				assert.Nil(actual[i].Failure)
 			}
 
-			if expected[i].Reason != nil || actual[i].Reason != nil {
+			if expected[i].Reason != nil {
+				assert.NotNil(actual[i].Reason)
 				assert.Equal(expected[i].Reason.Message, actual[i].Reason.Message)
 				assert.Equal(expected[i].Result, actual[i].Result)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Reason == nil && actual[i].Reason == nil)
+				assert.Nil(actual[i].Reason)
 			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
