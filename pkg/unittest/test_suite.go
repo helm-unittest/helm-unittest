@@ -15,10 +15,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
-	v3util "helm.sh/helm/v3/pkg/chartutil"
-	v3engine "helm.sh/helm/v3/pkg/engine"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
+	v3loader "helm.sh/helm/v4/pkg/chart/v2/loader"
+	v3engine "helm.sh/helm/v4/pkg/engine"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -122,7 +123,7 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		return nil, err
 	}
 
-	options := v3util.ReleaseOptions{
+	options := chartcommon.ReleaseOptions{
 		Name:      "TEST-SUITE-RELEASE",
 		Namespace: "NAMESPACE",
 		Revision:  1,
@@ -130,7 +131,7 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		IsUpgrade: false,
 	}
 
-	values, err := v3util.ToRenderValues(chart, renderValues, options, nil)
+	values, err := chartcommonutil.ToRenderValues(chart, renderValues, options, nil)
 	if err != nil {
 		return nil, err
 	}

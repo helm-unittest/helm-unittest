@@ -229,6 +229,7 @@ func TestV3RunnerWith_Fixture_Chart_SkipTest(t *testing.T) {
 }
 
 func TestV3RunnerWith_Fixture_Chart_PostRenderer(t *testing.T) {
+	setPostRendererPluginEnv(t)
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),

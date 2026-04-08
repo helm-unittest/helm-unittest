@@ -10,8 +10,8 @@ import (
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	v3loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
 func templatesCount(targetChart *chart.Chart) int {

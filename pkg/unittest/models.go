@@ -5,7 +5,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 type TestConfig struct {

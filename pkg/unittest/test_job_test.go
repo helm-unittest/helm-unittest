@@ -19,8 +19,9 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
 func makeTestJobResultSnapshotable(result *results.TestJobResult) *results.TestJobResult {
@@ -1096,20 +1097,20 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 			Name:    "moby",
 			Version: "1.2.3",
 		},
-		Templates: []*v3chart.File{},
+		Templates: []*chartcommon.File{},
 		Values:    map[string]any{},
 	}
 
 	tests := []struct {
-		template *v3chart.File
+		template *chartcommon.File
 		error    error
 	}{
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
 			error:    errors.New("execution error at (moby/templates/validate.tpl:1:4): `root`"),
 		},
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
 			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
 		},
 	}
@@ -1118,7 +1119,7 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 
 	for _, test := range tests {
 		tj := TestJob{}
-		c.Templates = []*v3chart.File{test.template}
+		c.Templates = []*chartcommon.File{test.template}
 		tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 			WithFailFast(true),
 		))
@@ -1135,22 +1136,22 @@ func TestV3RunJob_TplFunction_Fail_WithAssertion(t *testing.T) {
 			Name:    "moby",
 			Version: "1.2.3",
 		},
-		Templates: []*v3chart.File{},
+		Templates: []*chartcommon.File{},
 		Values:    map[string]any{},
 	}
 
 	tests := []struct {
-		template *v3chart.File
+		template *chartcommon.File
 		error    error
 		expected bool
 	}{
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
 			error:    nil,
 			expected: true,
 		},
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
 			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
 			expected: false,
 		},
@@ -1169,7 +1170,7 @@ asserts:
 	a := assert.New(t)
 
 	for _, test := range tests {
-		c.Templates = []*v3chart.File{test.template}
+		c.Templates = []*chartcommon.File{test.template}
 		tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 			WithFailFast(true),
 		))

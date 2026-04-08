@@ -15,9 +15,10 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	log "github.com/sirupsen/logrus"
 
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
-	v3util "helm.sh/helm/v3/pkg/chartutil"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
+	v3loader "helm.sh/helm/v4/pkg/chart/v2/loader"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
 )
 
 const LOG_TEST_RUNNER = "test-runner"
@@ -187,8 +188,8 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 // chart is the chart object for which to build merged values.
 // chartPath is the file system path to the chart directory.
 //
-// It returns the merged values as v3util.Values and an error if any occurred during processing.
-func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath string) (v3util.Values, error) {
+// It returns the merged values as chartcommon.Values and an error if any occurred during processing.
+func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath string) (chartcommon.Values, error) {
 	base := chart.Values
 	if base == nil {
 		base = make(map[string]any)
@@ -210,10 +211,10 @@ func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath 
 			return nil, fmt.Errorf("failed to parse values file %s: %w", valuesFile, err)
 		}
 
-		base = v3util.MergeTables(value, base)
+		base = chartcommonutil.MergeTables(value, base)
 	}
 
-	return v3util.Values(base), nil
+	return chartcommon.Values(base), nil
 }
 
 // evaluateConditionPath evaluates a YAML path (e.g., "postgresql.enabled" or "subchart.component.enabled")
@@ -223,7 +224,7 @@ func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath 
 // values are the merged values to evaluate against
 //
 // Returns true if the path resolves to a boolean true value, or if the path doesn't exist or isn't a boolean
-func evaluateConditionPath(conditionPath string, values v3util.Values) bool {
+func evaluateConditionPath(conditionPath string, values chartcommon.Values) bool {
 	if conditionPath == "" {
 		return true
 	}
@@ -267,7 +268,7 @@ func evaluateConditionPath(conditionPath string, values v3util.Values) bool {
 // values are the merged values to evaluate against
 //
 // Returns true if any tag is true, or if no tags are specified/found in values
-func evaluateTagsCondition(tags []string, values v3util.Values) bool {
+func evaluateTagsCondition(tags []string, values chartcommon.Values) bool {
 	if len(tags) == 0 {
 		return true
 	}
@@ -341,7 +342,7 @@ func getDependencyMetadata(parentChart *v3chart.Chart, subchartName string) *v3c
 // values are the merged values to evaluate the condition/tags against
 //
 // It returns true if the subchart should be enabled, false otherwise.
-func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3chart.Chart, values v3util.Values) bool {
+func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3chart.Chart, values chartcommon.Values) bool {
 	if subchart.Metadata == nil {
 		return true
 	}
@@ -379,7 +380,7 @@ func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3
 // mergedValues are the pre-computed merged values (nil means compute them from chartPath).
 //
 // It returns a slice of TestSuite pointers and an error if any occurred during processing.
-func (tr *TestRunner) getV3TestSuitesWithValues(chartPath, chartRoute string, chart *v3chart.Chart, mergedValues v3util.Values) ([]*TestSuite, error) {
+func (tr *TestRunner) getV3TestSuitesWithValues(chartPath, chartRoute string, chart *v3chart.Chart, mergedValues chartcommon.Values) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
 		return nil, err

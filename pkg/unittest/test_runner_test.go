@@ -288,6 +288,7 @@ func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
 }
 
 func TestV3RunnerOkWithPostRenderer(t *testing.T) {
+	setPostRendererPluginEnv(t)
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),

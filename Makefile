@@ -36,8 +36,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-	$(eval HELM_3_PLUGINS := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
-	$(eval HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest)
+	$(eval HELM_PLUGINS_VALUE := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
+	$(eval HELM_PLUGIN_DIR := $(HELM_PLUGINS_VALUE)/helm-unittest)
 
 .PHONY: install
 install: bootstrap build plugin-dir

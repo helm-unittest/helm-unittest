@@ -7,7 +7,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 func TestNewTestConfig(t *testing.T) {

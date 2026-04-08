@@ -13,7 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"helm.sh/helm/v3/pkg/postrender"
+	"helm.sh/helm/v4/pkg/cli"
+	"helm.sh/helm/v4/pkg/postrenderer"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -21,9 +22,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	log "github.com/sirupsen/logrus"
 
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	v3util "helm.sh/helm/v3/pkg/chartutil"
-	v3engine "helm.sh/helm/v3/pkg/engine"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
+	v3chart "helm.sh/helm/v4/pkg/chart/v2"
+	chartv2util "helm.sh/helm/v4/pkg/chart/v2/util"
+	v3engine "helm.sh/helm/v4/pkg/engine"
 )
 
 const LOG_TEST_JOB = "test-job"
@@ -39,16 +42,19 @@ const LOG_TEST_JOB = "test-job"
 //	--- s: Dot-all mode. . matches any character, including newline.
 //	--- U: Ungreedy mode. Makes quantifiers lazy by default.
 const regexPattern string = "(?msU)^(?:.+: |.+ \\()(?:(.+):\\d+:\\d+).+(?:.+>)*: (.+)$"
+const regexPathLinePattern string = "^(.+):\\d+:\\d+$"
 const fileKeyPrefix = "#### file:"
 const yamlFileSeparator = "---\n" + fileKeyPrefix
 
 var (
 	regexPostRenderPattern = regexp.MustCompile(fileKeyPrefix + ` (.*)`)
 	regexErrorPattern      = regexp.MustCompile(regexPattern)
+	regexPathLine          = regexp.MustCompile(regexPathLinePattern)
 )
 
 type PostRendererConfig struct {
-	Cmd      string   `yaml:"cmd"`
+	Plugin   string   `yaml:"plugin"`
+	Cmd      string   `yaml:"cmd"` // Deprecated: use Plugin.
 	ArgSlice []string `yaml:"args"`
 }
 
@@ -98,6 +104,32 @@ func parseRenderError(errorMessage string) (string, map[string]string) {
 		} else {
 			// return error unparsed message
 			content[common.RAW] = result[2]
+		}
+	}
+
+	// Helm v4 can emit multiline template errors where the first line is:
+	// "<chart>/<template>.yaml:<line>:<column>"
+	if filePath == "" {
+		lines := strings.Split(errorMessage, "\n")
+		if len(lines) > 0 {
+			pathMatch := regexPathLine.FindStringSubmatch(strings.TrimSpace(lines[0]))
+			if len(pathMatch) == 2 {
+				filePath = pathMatch[1]
+				relevantLines := make([]string, 0, len(lines)-1)
+				for _, line := range lines[1:] {
+					trimmed := strings.TrimSpace(line)
+					if trimmed == "" {
+						continue
+					}
+					if strings.HasPrefix(trimmed, "executing \"") {
+						continue
+					}
+					relevantLines = append(relevantLines, trimmed)
+				}
+				if len(relevantLines) > 0 {
+					content[common.RAW] = strings.Join(relevantLines, " ")
+				}
+			}
 		}
 	}
 
@@ -337,7 +369,7 @@ func (t *TestJob) getUserValues() (string, error) {
 			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 
-		base = v3util.MergeTables(scopeValuesWithRoutes(routes, value), base)
+		base = chartcommonutil.MergeTables(scopeValuesWithRoutes(routes, value), base)
 	}
 
 	// Merge global set values before merging the other set values
@@ -347,7 +379,7 @@ func (t *TestJob) getUserValues() (string, error) {
 			return "", err
 		}
 
-		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
+		base = chartcommonutil.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
 
 	for path, values := range t.Set {
@@ -356,7 +388,7 @@ func (t *TestJob) getUserValues() (string, error) {
 			return "", err
 		}
 
-		base = v3util.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
+		base = chartcommonutil.MergeTables(scopeValuesWithRoutes(routes, setMap), base)
 	}
 	log.WithField(LOG_TEST_JOB, "get-user-values").Debug("values ", base)
 	return common.YmlMarshall(base)
@@ -364,7 +396,7 @@ func (t *TestJob) getUserValues() (string, error) {
 
 // render the chart and return result map
 func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, error) {
-	values, err := v3util.ReadValues(userValues)
+	values, err := chartcommon.ReadValues(userValues)
 	if err != nil {
 		return nil, false, err
 	}
@@ -372,18 +404,18 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 
 	// Check Release Name length
 	if t.Release.Name != "" {
-		err = v3util.ValidateReleaseName(t.Release.Name)
+		err = chartv2util.ValidateReleaseName(t.Release.Name)
 		if err != nil {
 			return nil, false, err
 		}
 	}
 
-	err = v3util.ProcessDependenciesWithMerge(t.configOrDefault().targetChart, values)
+	err = chartv2util.ProcessDependencies(t.configOrDefault().targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().isSkipSchemaValidation)
+	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().isSkipSchemaValidation)
 	if err != nil {
 		return nil, false, err
 	}
@@ -415,7 +447,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 }
 
 // MergeAndPostRender merge the map into a single file, post-render it, and split it out again
-func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
+func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrenderer.PostRenderer) (*bytes.Buffer, error) {
 	var renderedManifests bytes.Buffer
 
 	// stable iteration order
@@ -488,15 +520,22 @@ func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string
 
 	var cfg PostRendererConfig
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
-	if t.PostRendererConfig.Cmd != "" {
+	if t.PostRendererConfig.Plugin != "" || t.PostRendererConfig.Cmd != "" {
 		cfg = t.PostRendererConfig
-	} else if t.configOrDefault().postRenderer.Cmd != "" {
+	} else if t.configOrDefault().postRenderer.Plugin != "" || t.configOrDefault().postRenderer.Cmd != "" {
 		cfg = t.configOrDefault().postRenderer
 	} else {
 		return renderedManifestsMap, false, nil
 	}
 
-	postRenderer, err := postrender.NewExec(cfg.Cmd, cfg.ArgSlice...)
+	if cfg.Cmd != "" {
+		return nil, true, fmt.Errorf("postRenderer.cmd is no longer supported with Helm v4; use postRenderer.plugin")
+	}
+	if cfg.Plugin == "" {
+		return nil, true, fmt.Errorf("postRenderer.plugin is required when postRenderer is configured")
+	}
+
+	postRenderer, err := postrenderer.NewPostRendererPlugin(cli.New(), cfg.Plugin, cfg.ArgSlice...)
 	if err != nil {
 		return nil, true, err
 	}
@@ -543,8 +582,8 @@ func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[strin
 }
 
 // get chartutil.ReleaseOptions ready for render
-func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
-	options := v3util.ReleaseOptions{
+func (t *TestJob) releaseV3Option() *chartcommon.ReleaseOptions {
+	options := chartcommon.ReleaseOptions{
 		Name:      "RELEASE-NAME",
 		Namespace: "NAMESPACE",
 		Revision:  t.Release.Revision,
@@ -563,19 +602,19 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 // capabilitiesV3 chartutil.Capabilities ready for render
 // function returns a v3util.Capabilities struct based on the TestJob's capabilities.
 // It overrides the KubeVersion field if majorVersion or minorVersion are set
-func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
-	capabilities := v3util.DefaultCapabilities
+func (t *TestJob) capabilitiesV3() *chartcommon.Capabilities {
+	capabilities := chartcommon.DefaultCapabilities.Copy()
 
 	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
 	minorVersion := cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor)
 
-	capabilities.KubeVersion = v3util.KubeVersion{
+	capabilities.KubeVersion = chartcommon.KubeVersion{
 		Version: fmt.Sprintf("v%s.%s.0", majorVersion, minorVersion),
 		Major:   majorVersion,
 		Minor:   minorVersion,
 	}
 
-	capabilities.APIVersions = v3util.VersionSet(t.Capabilities.APIVersions)
+	capabilities.APIVersions = chartcommon.VersionSet(t.Capabilities.APIVersions)
 
 	return capabilities
 }
