@@ -73,23 +73,23 @@ type totalSnapshotCounting struct {
 
 // TestRunner stores basic settings and testing status for running all tests
 type TestRunner struct {
-	Printer          *printer.Printer
-	Formatter        formatter.Formatter
+	Printer              *printer.Printer
+	Formatter            formatter.Formatter
 	UpdateSnapshot       bool
 	WithSubChart         bool
 	Strict               bool
 	Failfast             bool
 	SkipSchemaValidation bool
 	TestFiles            []string
-	ChartTestsPath   string
-	ValuesFiles      []string
-	OutputFile       string
-	RenderPath       string
-	suiteCounting    testUnitCountingWithSnapshotFailed
-	testCounting     testUnitCounting
-	chartCounting    testUnitCounting
-	snapshotCounting totalSnapshotCounting
-	testResults      []*results.TestSuiteResult
+	ChartTestsPath       string
+	ValuesFiles          []string
+	OutputFile           string
+	RenderPath           string
+	suiteCounting        testUnitCountingWithSnapshotFailed
+	testCounting         testUnitCounting
+	chartCounting        testUnitCounting
+	snapshotCounting     totalSnapshotCounting
+	testResults          []*results.TestSuiteResult
 }
 
 // RunV3 test suites in chart in ChartPaths.
