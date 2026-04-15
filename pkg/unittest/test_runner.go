@@ -75,11 +75,12 @@ type totalSnapshotCounting struct {
 type TestRunner struct {
 	Printer          *printer.Printer
 	Formatter        formatter.Formatter
-	UpdateSnapshot   bool
-	WithSubChart     bool
-	Strict           bool
-	Failfast         bool
-	TestFiles        []string
+	UpdateSnapshot       bool
+	WithSubChart         bool
+	Strict               bool
+	Failfast             bool
+	SkipSchemaValidation bool
+	TestFiles            []string
 	ChartTestsPath   string
 	ValuesFiles      []string
 	OutputFile       string
@@ -442,6 +443,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Cha
 			chartPassed = false
 			continue
 		}
+		suite.skipSchemaValidation = tr.SkipSchemaValidation
 		result := suite.RunV3(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)

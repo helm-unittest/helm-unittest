@@ -335,6 +335,32 @@ func TestValidateUnittestChartTestsPathFlag(t *testing.T) {
 	}
 }
 
+func TestValidateUnittestSkipSchemaValidationFlag(t *testing.T) {
+	a := assert.New(t)
+
+	skipSchemaValidationFlags := map[string]bool{
+		"":                                false,
+		"--skip-schema-validation":        true,
+		"--skip-schema-validation=true":   true,
+		"--skip-schema-validation=false":  false,
+	}
+
+	for skipSchemaValidationFlag, skipSchemaValidationFlagValue := range skipSchemaValidationFlags {
+		cmd := setupTestCmd()
+
+		// Setup actual parameter
+		if len(skipSchemaValidationFlag) > 0 {
+			cmd.SetArgs([]string{skipSchemaValidationFlag})
+		}
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(skipSchemaValidationFlagValue, runner.SkipSchemaValidation)
+	}
+}
+
 // Using %T
 func typeofObject(variable any) string {
 	return fmt.Sprintf("%T", variable)
