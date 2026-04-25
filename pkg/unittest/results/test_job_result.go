@@ -64,7 +64,7 @@ func (tjr TestJobResult) Stringify() string {
 	return content.String()
 }
 
-// Stringify to xml attribute, replacing the the object to a customized formatted string.
+// Stringify to xml attribute, replacing the object to a customized formatted string compatible with XML attributes.
 func (tjr TestJobResult) StringifyToXmlAttribute() string {
 	flattenString := strings.ReplaceAll(tjr.Stringify(), "\n", ",")
 	return strings.ReplaceAll(flattenString, "\t", "")

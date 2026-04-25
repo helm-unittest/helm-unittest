@@ -155,32 +155,11 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		}
 
 		// individual test cases
-		for _, test := range testSuiteResult.TestsResult {
-			totalTests++
-			testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
-
-			if test.Skipped {
-				totalSkipped++
-				testCase.Reason = &NUnitReason{
-					Message: test.Stringify(),
-				}
-				testCase.Result = "Skipped"
-			}
-
-			// Write when a test is failed
-			if !test.Passed && !test.Skipped {
-				// Update total counts
-				if test.ExecError != nil {
-					totalErrors++
-				} else {
-					totalFailures++
-				}
-
-				testCase.Failure = n.createNUnitFailure("Failed", test.Stringify())
-			}
-
-			ts.TestCases = append(ts.TestCases, testCase)
-		}
+		testsAdded, errorsAdded, failuresAdded, skippedAdded := n.processTestCases(testSuiteResult, &ts)
+		totalTests += testsAdded
+		totalErrors += errorsAdded
+		totalFailures += failuresAdded
+		totalSkipped += skippedAdded
 
 		testSuites = append(testSuites, ts)
 	}
@@ -193,6 +172,42 @@ func (n *nUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 	}
 
 	return nil
+}
+
+func (n *nUnitReportXML) processTestCases(testSuiteResult *results.TestSuiteResult, ts *NUnitTestSuite) (int, int, int, int) {
+	testsCount := 0
+	errorsCount := 0
+	failuresCount := 0
+	skippedCount := 0
+
+	for _, test := range testSuiteResult.TestsResult {
+		testsCount++
+		testCase := n.createNUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+
+		if test.Skipped {
+			skippedCount++
+			testCase.Reason = &NUnitReason{
+				Message: test.Stringify(),
+			}
+			testCase.Result = "Skipped"
+		}
+
+		// Write when a test is failed
+		if !test.Passed && !test.Skipped {
+			// Update total counts
+			if test.ExecError != nil {
+				errorsCount++
+			} else {
+				failuresCount++
+			}
+
+			testCase.Failure = n.createNUnitFailure("Failed", test.Stringify())
+		}
+
+		ts.TestCases = append(ts.TestCases, testCase)
+	}
+
+	return testsCount, errorsCount, failuresCount, skippedCount
 }
 
 func (n *nUnitReportXML) formatUserAndDomain() (domainName, userName string) {
