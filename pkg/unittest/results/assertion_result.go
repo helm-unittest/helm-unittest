@@ -49,9 +49,9 @@ func (ar AssertionResult) getTitle() string {
 // ToString writing the object to a customized formatted string.
 func (ar AssertionResult) stringify() string {
 	var content strings.Builder
-	if !ar.Skipped {
-		fmt.Fprintf(&content, "\t\t %s \n", ar.getTitle())
+	fmt.Fprintf(&content, "\t\t %s \n", ar.getTitle())
 
+	if !ar.Skipped {
 		for _, infoLine := range ar.FailInfo {
 			fmt.Fprintf(&content, "\t\t\t %s \n", infoLine)
 		}

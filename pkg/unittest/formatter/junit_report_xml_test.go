@@ -182,8 +182,10 @@ func TestWriteTestOutputAsJUnitWithSkipped(t *testing.T) {
 	testSuiteDisplayName := "TestingSuite"
 	testCaseDisplayName := "TestCaseSuccess"
 	testCaseDisplayNameSkipped := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
 	skipReason := "Version mismatch"
-	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseDisplayNameSkipped, skipReason)
+	skippedContent := fmt.Sprintf("SKIPPED '%s' , - asserts[%v] `%s` fail , %s ,", testCaseDisplayNameSkipped, assertIndex, assertionType, skipReason)
 
 	expected := JUnitTestSuites{
 		Suites: []JUnitTestSuite{
@@ -203,7 +205,7 @@ func TestWriteTestOutputAsJUnitWithSkipped(t *testing.T) {
 	}
 
 	assertionSkippedResults := []*results.AssertionResult{
-		createAssertionResult(0, false, true, false, "", "", skipReason, ""),
+		createAssertionResult(assertIndex, false, true, false, assertionType, "", skipReason, ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -237,7 +239,7 @@ func TestWriteTestOutputAsJUnitWithFailures(t *testing.T) {
 	assertionFailure := "AssertionFailure"
 	assertionType := "equal"
 	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	failureContent := fmt.Sprintf(" - asserts[%d]%s `%s` fail , %s ,", assertIndex, "", assertionType, assertionFailure)
 
 	expected := JUnitTestSuites{
 		Suites: []JUnitTestSuite{
@@ -292,7 +294,7 @@ func TestWriteTestOutputAsJUnitWithFailuresAndErrors(t *testing.T) {
 	assertionFailure := "AssertionFailure"
 	assertionType := "equal"
 	assertIndex := 0
-	failureContent := fmt.Sprintf("\t\t - asserts[%d]%s `%s` fail \n\t\t\t %s \n", assertIndex, "", assertionType, assertionFailure)
+	failureContent := fmt.Sprintf(" - asserts[%d]%s `%s` fail , %s ,", assertIndex, "", assertionType, assertionFailure)
 	errorMessage := "Throw an error."
 	failureErrorContent := fmt.Sprintf("%s\n%s", errorMessage, failureContent)
 

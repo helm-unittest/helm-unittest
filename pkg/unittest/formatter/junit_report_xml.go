@@ -87,13 +87,13 @@ func (j *jUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 			testCase := j.createJUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
 
 			if test.Skipped {
-				testCase.SkipMessage = j.createJUnitSkipMessage(test.Stringify())
+				testCase.SkipMessage = j.createJUnitSkipMessage(test.StringifyToXmlAttribute())
 			}
 
 			// Write when a test is failed
 			if !test.Skipped && !test.Passed && test.ExecError == nil {
 				ts.Failures++
-				testCase.Failure = j.createJUnitFailure("Failed", "", test.Stringify())
+				testCase.Failure = j.createJUnitFailure("Failed", "", test.StringifyToXmlAttribute())
 			}
 
 			if !test.Skipped && !test.Passed && test.ExecError != nil {

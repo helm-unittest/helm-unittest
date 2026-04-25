@@ -1,6 +1,8 @@
 package results
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
@@ -45,19 +47,25 @@ func (tjr TestJobResult) print(printer *printer.Printer, verbosity int) {
 
 // Stringify writing the object to a customized formatted string.
 func (tjr TestJobResult) Stringify() string {
-	content := ""
+	var content strings.Builder
 
 	if tjr.Skipped {
-		content += "SKIPPED '" + tjr.DisplayName + "'\n"
+		fmt.Fprintf(&content, "SKIPPED '%s' \n", tjr.DisplayName)
 	}
 
 	if tjr.ExecError != nil {
-		content += tjr.ExecError.Error() + "\n"
+		fmt.Fprintf(&content, "%s\n", tjr.ExecError.Error())
 	}
 
 	for _, assertResult := range tjr.AssertsResult {
-		content += assertResult.stringify()
+		content.WriteString(assertResult.stringify())
 	}
 
-	return content
+	return content.String()
+}
+
+// Stringify to xml attribute, replacing the the object to a customized formatted string.
+func (tjr TestJobResult) StringifyToXmlAttribute() string {
+	flattenString := strings.ReplaceAll(tjr.Stringify(), "\n", ",")
+	return strings.ReplaceAll(flattenString, "\t", "")
 }

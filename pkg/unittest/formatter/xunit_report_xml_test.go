@@ -139,7 +139,7 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayName := "TestCaseSuccess"
 	totalTests := 1
 	totalPassed := 1
 	totalFailed := 0
@@ -200,8 +200,9 @@ func TestWriteTestOutputAsXUnitWithSkipped(t *testing.T) {
 	testCaseSuccessDisplayName := "TestCaseSuccess"
 	testCaseSkippedDisplayName := "TestCaseSkipped"
 	assertionType := "equal"
+	assertIndex := 0
 	skipReason := "Version mismatch"
-	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseSkippedDisplayName, skipReason)
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
 	totalTests := 2
 	totalPassed := 1
 	totalFailed := 0
@@ -236,7 +237,7 @@ func TestWriteTestOutputAsXUnitWithSkipped(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, true, false, assertionType, "", skipReason, ""),
+		createAssertionResult(assertIndex, false, true, false, assertionType, "", skipReason, ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -267,8 +268,9 @@ func TestWriteTestOutputAsXUnitWithAllSkipped(t *testing.T) {
 	testSuiteDisplayName := "TestingSuite"
 	testCaseSkippedDisplayName := "TestCaseSkipped"
 	assertionType := "equal"
+	assertIndex := 0
 	skipReason := "Version mismatch"
-	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseSkippedDisplayName, skipReason)
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
 	totalTests := 1
 	totalPassed := 0
 	totalFailed := 0
@@ -302,7 +304,7 @@ func TestWriteTestOutputAsXUnitWithAllSkipped(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, true, true, false, assertionType, "", skipReason, ""),
+		createAssertionResult(assertIndex, true, true, false, assertionType, "", skipReason, ""),
 	}
 
 	given := []*results.TestSuiteResult{

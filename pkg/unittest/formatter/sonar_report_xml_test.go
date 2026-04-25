@@ -227,8 +227,10 @@ func TestWriteTestOutputAsSonarWithSkipped(t *testing.T) {
 	outputFile := filepath.Join(tmpNunitTestDir, "Sonar_Skipped_Output.xml")
 	testSuiteDisplayName := "TestingSuiteSkipped"
 	testCaseDisplayNameSkipped := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
 	skipReason := "Version mismatch"
-	skippedContent := fmt.Sprintf("SKIPPED '%s'\n\t\t\t %s \n", testCaseDisplayNameSkipped, skipReason)
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseDisplayNameSkipped, assertIndex, assertionType, skipReason)
 
 	expected := SonarTestExecutions{
 		Files: []SonarFile{
@@ -251,7 +253,7 @@ func TestWriteTestOutputAsSonarWithSkipped(t *testing.T) {
 	}
 
 	assertionSkippedResults := []*results.AssertionResult{
-		createAssertionResult(0, false, true, false, "", "", skipReason, ""),
+		createAssertionResult(assertIndex, false, true, false, assertionType, "", skipReason, ""),
 	}
 
 	given := []*results.TestSuiteResult{
