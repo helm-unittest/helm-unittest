@@ -1,0 +1,16 @@
+# Default values for parent-chart
+appName: my-application
+
+# Tag-based subchart control
+tags:
+  front-end: false
+  back-end: false
+  web: false
+  true: false
+
+# Parent chart values
+replicaCount: 1
+image:
+  repository: nginx
+  tag: stable
+  pullPolicy: IfNotPresent

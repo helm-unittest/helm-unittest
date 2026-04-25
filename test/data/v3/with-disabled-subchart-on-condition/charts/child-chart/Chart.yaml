@@ -1,0 +1,5 @@
+apiVersion: v2
+name: child-chart
+description: A child chart that can be disabled
+version: 0.1.0
+appVersion: 1.0.0
