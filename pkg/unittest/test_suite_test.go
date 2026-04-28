@@ -44,6 +44,8 @@ const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesub
 const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
 const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
 const testV3WithPostRendererChart string = "../../test/data/v3/with-post-renderer"
+const testV3WithDisabledSubChartOnCondition string = "../../test/data/v3/with-disabled-subchart-on-condition"
+const testV3WithDisabledSubChartOnTags string = "../../test/data/v3/with-disabled-subchart-on-tags"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 

@@ -13,6 +13,8 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	with-disabled-subchart-on-condition \
+	with-disabled-subchart-on-tags \
 	with-document-select \
 	with-files \
 	with-helm-tests \

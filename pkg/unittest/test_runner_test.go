@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -408,10 +407,6 @@ tests:
 }
 
 func TestV3RunnerOkWithSkippedTests_Output(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		// https://github.com/golang/go/issues/69159
-		t.Skip("This test is not working on Windows. Please try to fix it if you have a Windows machine.")
-	}
 	chart := `
 apiVersion: v2
 name: basic
@@ -494,10 +489,6 @@ tests:
 }
 
 func TestV3RunnerOkWithSkippedSuits_Output(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		// https://github.com/golang/go/issues/69159
-		t.Skip("This test is not working on Windows. Please try to fix it if you have a Windows machine.")
-	}
 	chart := `
 apiVersion: v2
 name: basic
@@ -554,4 +545,29 @@ tests:
 	assert.Contains(t, buffer.String(), "PASS  should skip one and execute one")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should skip test'")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 skipped, 2 total")
+}
+
+func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:      printer.NewPrinter(buffer, nil),
+		TestFiles:    []string{testTestFiles},
+		WithSubChart: true,
+	}
+	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnCondition})
+	assert.True(t, passed, buffer.String())
+
+	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
+	assert.Contains(t, buffer.String(), "Test Suites: 0 passed, 0 total")
+}
+
+func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:      printer.NewPrinter(buffer, nil),
+		TestFiles:    []string{testTestFiles},
+		WithSubChart: true,
+	}
+	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnTags})
+	assert.True(t, passed, buffer.String())
 }
