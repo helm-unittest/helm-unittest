@@ -554,7 +554,7 @@ func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T)
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnCondition})
+	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnConditionChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
@@ -568,6 +568,9 @@ func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnTags})
+	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnTagsChart})
 	assert.True(t, passed, buffer.String())
+
+	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
+	assert.Contains(t, buffer.String(), "Test Suites: 4 passed, 4 total")
 }
