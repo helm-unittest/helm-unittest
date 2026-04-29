@@ -457,7 +457,7 @@ tests:
           path: spec.notExists
 `
 
-	tmp := t.TempDir()
+	tmp := t.ArtifactDir()
 	paths := []string{filepath.Join(tmp, "chart/templates"), filepath.Join(tmp, "chart/tests")}
 	for _, path := range paths {
 		err := os.MkdirAll(path, 0755)
@@ -519,7 +519,7 @@ tests:
       - exists:
           path: metadata.name
 `
-	tmp := t.TempDir()
+	tmp := t.ArtifactDir()
 	paths := []string{filepath.Join(tmp, "chart/templates"), filepath.Join(tmp, "chart/tests")}
 	for _, path := range paths {
 		err := os.MkdirAll(path, 0755)
