@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Prerequisite
-# Make sure you set secret enviroment variables in Circle CI
+# Make sure you set secret environment variables in Circle CI
 # DOCKER_USERNAME
 # DOCKER_PASSWORD
 # GITHUB_TOKEN

@@ -4,7 +4,7 @@ Issues and PRs are welcome!
 
 ## Issues and Improvements
 
-When you find an Issue or Improvement, please chech first if it already occurs
+When you find an Issue or Improvement, please check first if it already occurs
 otherwise create a [New Issue](https://github.com/helm-unittest/helm-unittest/issues/new/choose)
 
 If you have a Issue related to security, please follow our [Security Policy](./SECURITY.md)

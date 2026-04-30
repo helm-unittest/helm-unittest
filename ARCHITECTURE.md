@@ -20,7 +20,7 @@ The testsuite is the starting point, the properties which you can set here are d
 | Features/Quirks | The feature | The quirk |
 | ------ | ----- | ----- |
 | When templates are defined, it filters only those templates | You can focus on only templates to be tests | templates that depends on other templates, need to be added to the list |
-| When release and/or capabillities are defined, it overrides the behavour of the chart itself | You can control the behaviour of the template rendering and have a predictable outcome | |
+| When release and/or capabilities are defined, it overrides the behaviour of the chart itself | You can control the behaviour of the template rendering and have a predictable outcome | |
 | When KubernetesProvider is used, it generates a Mock that can be used for e.g. Lookups | You can control the outcome of the rendering of dependend resources that are not part of the helm template | Only use the KubernetesProvider when you expect output, without the provider dependend resources return an empty object |
 
 #### Test Job(s)
