@@ -415,3 +415,9 @@
 - doc: fix `isAPIVersion` typo
 - upgrade helm to v2.8.2
 - more robust tests (of the plugin)
+
+## [Unreleased]
+
+### Fixed
+- **Subchart tests are now skipped when the subchart is disabled via conditions**: When a parent chart disables a subchart via `enabled: false` in values.yaml (with a corresponding `condition` field in Chart.yaml dependencies), helm-unittest now correctly skips loading and executing that subchart's test files. This fixes issue #792 where tests would fail with "template not exists" errors for disabled subcharts. The fix uses Helm's `ProcessDependenciesWithMerge()` to evaluate subchart conditions before test discovery, ensuring consistency with Helm's rendering behavior.
+

@@ -1,0 +1,39 @@
+suite: test backend subchart with tags enabled
+templates:
+  - charts/backend-chart/templates/deployment.yaml
+  - charts/backend-chart/templates/service.yaml
+set:
+  tags.back-end: true
+tests:
+  - it: should render backend deployment when back-end tag is enabled
+    template: charts/backend-chart/templates/deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: backend-deployment
+      - equal:
+          path: metadata.labels.component
+          value: api
+      - equal:
+          path: spec.replicas
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: node:18-alpine
+
+  - it: should render backend service when back-end tag is enabled
+    template: charts/backend-chart/templates/service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: backend-service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 8080

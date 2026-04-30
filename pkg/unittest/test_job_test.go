@@ -726,6 +726,62 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV3RunJobWithSkipSchemaValidation(t *testing.T) {
+	c, _ := loader.Load(testV3WithSchemaChart)
+	manifest := `
+it: should work with invalid schema when skipped
+template: templates/dummy.yaml
+asserts:
+  - notFailedTemplate: {}
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+		WithSkipSchemaValidation(true),
+	))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	// Should NOT error because schema validation is skipped
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithSkipSchemaValidationInvalidValues(t *testing.T) {
+	c, _ := loader.Load(testV3WithSchemaChart)
+	manifest := `
+it: should work with invalid pullPolicy when schema validation skipped
+template: templates/dummy.yaml
+set:
+  image:
+    repository: "repo"
+    pullPolicy: "InvalidValue"
+asserts:
+  - notFailedTemplate: {}
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+		WithSkipSchemaValidation(true),
+	))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	// Should NOT error because schema validation is skipped even though pullPolicy is invalid
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestV3RunSubChartWithVersionOverride(t *testing.T) {
 	c, _ := loader.Load(testV3WithSubChart)
 	manifest := `
