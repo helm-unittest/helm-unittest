@@ -14,12 +14,19 @@ import (
 
 var tmpXunitTestDir, _ = os.MkdirTemp("", testSuiteTests)
 
-func createXUnitTestCase(name, description, failureContent string, isError bool) XUnitTestCase {
+func createXUnitTestCase(name, description, failureContent, skipMessage string, isError bool) XUnitTestCase {
 	testCase := XUnitTestCase{
 		Name:   name,
 		Type:   description,
 		Method: XUnitValidationMethod,
 		Result: "Pass",
+	}
+
+	if len(skipMessage) > 0 {
+		testCase.Reason = &XUnitReason{
+			Reason: skipMessage,
+		}
+		testCase.Result = "Skip"
 	}
 
 	if len(failureContent) > 0 {
@@ -62,7 +69,8 @@ func assertXUnitTestAssemblies(assert *assert.Assertions, expected, actual []XUn
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -84,7 +92,8 @@ func assertXUnitTestRun(assert *assert.Assertions, expected, actual []XUnitTestR
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -100,18 +109,29 @@ func assertXUnitTestCase(assert *assert.Assertions, expected, actual []XUnitTest
 			assert.Equal(expected[i].Method, actual[i].Method)
 			assert.Equal(expected[i].Result, actual[i].Result)
 
-			if expected[i].Failure != nil || actual[i].Failure != nil {
+			if expected[i].Failure != nil {
+				assert.NotNil(actual[i].Failure)
 				assert.Equal(expected[i].Failure.ExceptionType, actual[i].Failure.ExceptionType)
 				assert.Equal(expected[i].Failure.Message.Data, actual[i].Failure.Message.Data)
 				assert.Equal(expected[i].Failure.StackTrace.Data, actual[i].Failure.StackTrace.Data)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+				assert.Nil(actual[i].Failure)
+			}
+
+			if expected[i].Reason != nil {
+				assert.NotNil(actual[i].Reason)
+				assert.Equal(expected[i].Reason.Reason, actual[i].Reason.Reason)
+				assert.Equal(expected[i].Result, actual[i].Result)
+			} else {
+				// Verify if both are nil, otherwise it's still a failure.
+				assert.Nil(actual[i].Reason)
 			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -119,7 +139,7 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayName := "TestCaseSuccess"
 	totalTests := 1
 	totalPassed := 1
 	totalFailed := 0
@@ -144,7 +164,7 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 						FailedTests:  totalFailed,
 						SkippedTests: totalSkipped,
 						TestCases: []XUnitTestCase{
-							createXUnitTestCase(testCaseDisplayName, testSuiteDisplayName, "", false),
+							createXUnitTestCase(testCaseDisplayName, testSuiteDisplayName, "", "", false),
 						},
 					},
 				},
@@ -158,7 +178,143 @@ func TestWriteTestOutputAsXUnitMinimalSuccess(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      true,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseDisplayName, "", true, nil),
+				createTestJobResult(testCaseDisplayName, "", true, false, nil),
+			},
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+}
+
+func TestWriteTestOutputAsXUnitWithSkipped(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_Skipped_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseSkippedDisplayName := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
+	skipReason := "Version mismatch"
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
+	totalTests := 2
+	totalPassed := 1
+	totalFailed := 0
+	totalErrors := 0
+	totalSkipped := 1
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				FailedTests:  totalFailed,
+				SkippedTests: totalSkipped,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", "", false),
+							createXUnitTestCase(testCaseSkippedDisplayName, testSuiteDisplayName, "", skippedContent, false),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	assertionResults := []*results.AssertionResult{
+		createAssertionResult(assertIndex, false, true, false, assertionType, "", skipReason, ""),
+	}
+
+	given := []*results.TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*results.TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseSkippedDisplayName, "", true, true, assertionResults),
+			},
+		},
+	}
+
+	sut := NewXUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual XUnitAssemblies
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
+
+	assertXUnitTestAssemblies(assert, expected.Assembly, actual.Assembly)
+}
+
+func TestWriteTestOutputAsXUnitWithAllSkipped(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := filepath.Join(tmpXunitTestDir, "XUnit_Test_AllSkipped_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSkippedDisplayName := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
+	skipReason := "Version mismatch"
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
+	totalTests := 1
+	totalPassed := 0
+	totalFailed := 0
+	totalErrors := 0
+	totalSkipped := 1
+
+	expected := XUnitAssemblies{
+		Assembly: []XUnitAssembly{
+			{
+				Name:         outputFile,
+				ConfigFile:   outputFile,
+				TotalTests:   totalTests,
+				PassedTests:  totalPassed,
+				FailedTests:  totalFailed,
+				SkippedTests: totalSkipped,
+				ErrorsTests:  totalErrors,
+				TestRuns: []XUnitTestRun{
+					{
+						Name:         testSuiteDisplayName,
+						TotalTests:   totalTests,
+						PassedTests:  totalPassed,
+						FailedTests:  totalFailed,
+						SkippedTests: totalSkipped,
+						TestCases: []XUnitTestCase{
+							createXUnitTestCase(testCaseSkippedDisplayName, testSuiteDisplayName, "", skippedContent, false),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	assertionResults := []*results.AssertionResult{
+		createAssertionResult(assertIndex, true, true, false, assertionType, "", skipReason, ""),
+	}
+
+	given := []*results.TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			Skipped:     true,
+			TestsResult: []*results.TestJobResult{
+				createTestJobResult(testCaseSkippedDisplayName, "", true, true, assertionResults),
 			},
 		},
 	}
@@ -207,8 +363,8 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 						FailedTests:  totalFailed,
 						SkippedTests: totalSkipped,
 						TestCases: []XUnitTestCase{
-							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", false),
-							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, false),
+							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", "", false),
+							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, "", false),
 						},
 					},
 				},
@@ -217,7 +373,7 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -226,8 +382,8 @@ func TestWriteTestOutputAsXUnitWithFailures(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
 			},
 		},
 	}
@@ -279,9 +435,9 @@ func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 						FailedTests:  totalFailed,
 						SkippedTests: totalSkipped,
 						TestCases: []XUnitTestCase{
-							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", false),
-							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, false),
-							createXUnitTestCase(testCaseErrorDisplayName, testSuiteDisplayName, failureErrorContent, true),
+							createXUnitTestCase(testCaseSuccessDisplayName, testSuiteDisplayName, "", "", false),
+							createXUnitTestCase(testCaseFailureDisplayName, testSuiteDisplayName, failureContent, "", false),
+							createXUnitTestCase(testCaseErrorDisplayName, testSuiteDisplayName, failureErrorContent, "", true),
 						},
 					},
 				},
@@ -290,7 +446,7 @@ func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -299,9 +455,9 @@ func TestWriteTestOutputAsXUnitWithFailuresAndErrors(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
-				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, assertionResults),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
+				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, false, assertionResults),
 			},
 		},
 	}

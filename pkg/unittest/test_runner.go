@@ -108,7 +108,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 			continue
 		}
 		chartRoute := chart.Name()
-		testSuites, err := tr.getV3TestSuitesWithValues(chartPath, chartRoute, chart, nil)
+		testSuites, err := tr.getV3TestSuites(chartPath, chartRoute, chart)
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)

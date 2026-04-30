@@ -296,6 +296,18 @@ func (t *TestJob) RunV3(
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
+
+	// When all assertions are skipped, we consider the test job as skipped.
+	if len(result.AssertsResult) > 0 {
+		result.Skipped = true
+		for _, assertResult := range result.AssertsResult {
+			if !assertResult.Skipped {
+				result.Skipped = false
+				break
+			}
+		}
+	}
+
 	result.Duration = time.Since(startTestRun)
 	return result
 }
