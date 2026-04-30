@@ -15,18 +15,18 @@ import (
 
 // testOptions stores options setup by user in command line
 type testOptions struct {
-	debugLogging         bool
-	useFailfast          bool
-	useStrict            bool
-	colored              bool
-	updateSnapshot       bool
-	withSubChart         bool
-	skipSchemaValidation bool
-	testFiles            []string
-	valuesFiles          []string
-	outputFile           string
-	outputType           string
-	chartTestsPath       string
+	debugLogging            bool
+	useFailfast             bool
+	useStrict               bool
+	colored                 bool
+	updateSnapshot          bool
+	withSubChart            bool
+	useSkipSchemaValidation bool
+	testFiles               []string
+	valuesFiles             []string
+	outputFile              string
+	outputType              string
+	chartTestsPath          string
 }
 
 var defaultFilePattern = filepath.Join("tests", "*_test.yaml")
@@ -98,7 +98,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		WithSubChart:         testConfig.withSubChart,
 		Strict:               testConfig.useStrict,
 		Failfast:             testConfig.useFailfast,
-		SkipSchemaValidation: testConfig.skipSchemaValidation,
+		SkipSchemaValidation: testConfig.useSkipSchemaValidation,
 		TestFiles:            testConfig.testFiles,
 		ValuesFiles:          testConfig.valuesFiles,
 		OutputFile:           testConfig.outputFile,
@@ -187,7 +187,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().BoolVar(
-		&testConfig.skipSchemaValidation, "skip-schema-validation", false,
+		&testConfig.useSkipSchemaValidation, "skip-schema-validation", false,
 		"skip values schema validation when rendering the chart",
 	)
 }
