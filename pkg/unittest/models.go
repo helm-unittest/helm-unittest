@@ -9,23 +9,24 @@ import (
 )
 
 type TestConfig struct {
-	targetChart          *v3chart.Chart
-	cache                *snapshot.Cache
-	renderPath           string
-	failFast             bool
-	isSkipEmptyTemplate  bool
-	skipSchemaValidation bool
-	postRenderer         PostRendererConfig
+	targetChart            *v3chart.Chart
+	cache                  *snapshot.Cache
+	renderPath             string
+	failFast               bool
+	isSkipEmptyTemplate    bool
+	isSkipSchemaValidation bool
+	postRenderer           PostRendererConfig
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
 	config := &TestConfig{
-		targetChart:         chart,
-		cache:               cache,
-		renderPath:          "",
-		failFast:            false,
-		isSkipEmptyTemplate: false,
-		postRenderer:        PostRendererConfig{},
+		targetChart:            chart,
+		cache:                  cache,
+		renderPath:             "",
+		failFast:               false,
+		isSkipEmptyTemplate:    false,
+		isSkipSchemaValidation: false,
+		postRenderer:           PostRendererConfig{},
 	}
 	for _, option := range options {
 		option(config)
@@ -71,39 +72,42 @@ func WithSkipEmptyTemplate(config bool) LoadTestOptionsFunc {
 
 func WithSkipSchemaValidation(skip bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
-		c.skipSchemaValidation = skip
+		c.isSkipSchemaValidation = skip
 	}
 }
 
 type AssertionConfig struct {
-	templatesResult     map[string][]common.K8sManifest
-	snapshotComparer    validators.SnapshotComparer
-	renderSucceed       bool
-	failFast            bool
-	isSkipEmptyTemplate bool
-	didPostRender       bool
-	renderError         error
+	templatesResult        map[string][]common.K8sManifest
+	snapshotComparer       validators.SnapshotComparer
+	renderSucceed          bool
+	failFast               bool
+	isSkipEmptyTemplate    bool
+	isSkipSchemaValidation bool
+	didPostRender          bool
+	renderError            error
 }
 
 // AssertionConfigBuilder Required to simplify tests
 type AssertionConfigBuilder struct {
-	TemplatesResult     map[string][]common.K8sManifest
-	SnapshotComparer    validators.SnapshotComparer
-	RenderSucceed       bool
-	FailFast            bool
-	DidPostRender       bool
-	RenderError         error
-	IsSkipEmptyTemplate bool
+	TemplatesResult        map[string][]common.K8sManifest
+	SnapshotComparer       validators.SnapshotComparer
+	RenderSucceed          bool
+	FailFast               bool
+	DidPostRender          bool
+	RenderError            error
+	IsSkipEmptyTemplate    bool
+	IsSkipSchemaValidation bool
 }
 
 func (b AssertionConfigBuilder) Build() AssertionConfig {
 	return AssertionConfig{
-		templatesResult:     b.TemplatesResult,
-		snapshotComparer:    b.SnapshotComparer,
-		renderSucceed:       b.RenderSucceed,
-		failFast:            b.FailFast,
-		didPostRender:       b.DidPostRender,
-		renderError:         b.RenderError,
-		isSkipEmptyTemplate: b.IsSkipEmptyTemplate,
+		templatesResult:        b.TemplatesResult,
+		snapshotComparer:       b.SnapshotComparer,
+		renderSucceed:          b.RenderSucceed,
+		failFast:               b.FailFast,
+		didPostRender:          b.DidPostRender,
+		renderError:            b.RenderError,
+		isSkipEmptyTemplate:    b.IsSkipEmptyTemplate,
+		isSkipSchemaValidation: b.IsSkipSchemaValidation,
 	}
 }
