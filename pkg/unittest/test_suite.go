@@ -212,6 +212,7 @@ type TestSuite struct {
 	Set              map[string]any
 	Templates        []string
 	ExcludeTemplates []string `yaml:"excludeTemplates"`
+	IncludeCrds      bool     `yaml:"includeCrds"`
 	Release          struct {
 		Name      string
 		Namespace string
@@ -238,6 +239,8 @@ type TestSuite struct {
 	chartRoute string
 	// if true, indicates that this was created from a helm rendered file
 	fromRender bool
+	// if true, skip values.schema.json validation when rendering
+	skipSchemaValidation bool
 	// An identifier to append to snapshot files
 	SnapshotId string `yaml:"snapshotId"`
 	Skip       struct {
@@ -316,11 +319,14 @@ func (s *TestSuite) polishSkipSettings(test *TestJob) {
 	} else if s.Skip.Reason == "" {
 		skipped := 0
 		for _, test := range s.Tests {
+			if test == nil {
+				continue
+			}
 			if test.Skip.Reason != "" {
 				skipped++
 			}
 		}
-		if skipped == len(s.Tests) {
+		if skipped > 0 && skipped == len(s.Tests) {
 			s.Skip.Reason = "all tests are skipped"
 		}
 	}
@@ -406,6 +412,8 @@ func (s *TestSuite) runV3TestJobs(
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
 				WithDocumentSelector(testJob.DocumentSelector),
+				WithIncludeCrds(s.IncludeCrds),
+				WithSkipSchemaValidation(s.skipSchemaValidation),
 			))
 			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult

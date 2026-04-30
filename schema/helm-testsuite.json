@@ -29,6 +29,11 @@
     "excludeTemplates": {
       "$ref": "#/definitions/excludeTemplates"
     },
+    "includeCrds": {
+      "type": "boolean",
+      "description": "Include CRDs from the crds/ directory in the rendered output for testing. Mirrors the behavior of helm template --include-crds. Defaults to false.",
+      "markdownDescription": "**includeCrds** (boolean) _optional_\n\nInclude CRDs from the `crds/` directory in the rendered output for testing. Mirrors the behavior of `helm template --include-crds`. Defaults to `false`."
+    },
     "release": {
       "$ref": "#/definitions/release"
     },

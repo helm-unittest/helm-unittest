@@ -1,7 +1,7 @@
 
 # borrowed from https://github.com/technosophos/helm-template
 
-HELM_VERSION := 3.19.4
+HELM_VERSION := 3.20.2
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
@@ -13,6 +13,8 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	with-disabled-subchart-on-condition \
+	with-disabled-subchart-on-tags \
 	with-document-select \
 	with-files \
 	with-helm-tests \

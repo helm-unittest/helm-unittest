@@ -291,16 +291,29 @@ func (t *TestJob) RunV3(
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
-		templatesResult:     manifestsOfFiles,
-		snapshotComparer:    snapshotComparer,
-		renderSucceed:       renderSucceed,
-		failFast:            t.configOrDefault().failFast,
-		didPostRender:       didPostRender,
-		renderError:         renderError,
-		isSkipEmptyTemplate: t.configOrDefault().isSkipEmptyTemplate,
+		templatesResult:        manifestsOfFiles,
+		snapshotComparer:       snapshotComparer,
+		renderSucceed:          renderSucceed,
+		failFast:               t.configOrDefault().failFast,
+		didPostRender:          didPostRender,
+		renderError:            renderError,
+		isSkipEmptyTemplate:    t.configOrDefault().isSkipEmptyTemplate,
+		isSkipSchemaValidation: t.configOrDefault().isSkipSchemaValidation,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
+
+	// When all assertions are skipped, we consider the test job as skipped.
+	if len(result.AssertsResult) > 0 {
+		result.Skipped = true
+		for _, assertResult := range result.AssertsResult {
+			if !assertResult.Skipped {
+				result.Skipped = false
+				break
+			}
+		}
+	}
+
 	result.Duration = time.Since(startTestRun)
 	return result
 }
@@ -375,7 +388,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().isSkipSchemaValidation)
 	if err != nil {
 		return nil, false, err
 	}
@@ -579,6 +592,19 @@ func (t *TestJob) parseManifestsFromOutputOfFiles(outputOfFiles map[string]strin
 ) {
 	manifestsOfFiles := make(map[string][]common.K8sManifest)
 
+	// Include CRDs if configured (mirrors helm template --include-crds behavior)
+	if t.configOrDefault().includeCrds {
+		for _, crd := range t.configOrDefault().targetChart.CRDObjects() {
+			// crd.Filename already includes the chart name prefix (e.g., "chart/crds/mycrd.yaml")
+			file := filepath.ToSlash(crd.Filename)
+			manifest, err := parseYamlFile(string(crd.File.Data))
+			if err != nil {
+				return nil, err
+			}
+			manifestsOfFiles[file] = manifest
+		}
+	}
+
 	for file, rendered := range outputOfFiles {
 		if !strings.HasPrefix(file, t.configOrDefault().targetChart.Name()) {
 			file = filepath.ToSlash(filepath.Join(t.configOrDefault().targetChart.Name(), file))
@@ -711,6 +737,12 @@ func (t *TestJob) resolveDefaultTemplatesToAssert(outputOfFiles map[string]strin
 	if resetAsserts {
 		for template := range outputOfFiles {
 			defaultTemplatesPath = append(defaultTemplatesPath, template)
+		}
+		// Include CRD files when includeCrds is enabled
+		if t.configOrDefault().includeCrds {
+			for _, crd := range t.configOrDefault().targetChart.CRDObjects() {
+				defaultTemplatesPath = append(defaultTemplatesPath, filepath.ToSlash(crd.Filename))
+			}
 		}
 	} else {
 		defaultTemplatesPath = t.defaultTemplatesToAssert
