@@ -14,6 +14,7 @@ type TestConfig struct {
 	renderPath          string
 	failFast            bool
 	isSkipEmptyTemplate bool
+	isSkipSchemaValidation bool
 	postRenderer        PostRendererConfig
 	includeCrds         bool
 }
@@ -25,6 +26,7 @@ func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(
 		renderPath:          "",
 		failFast:            false,
 		isSkipEmptyTemplate: false,
+		isSkipSchemaValidation: false,
 		postRenderer:        PostRendererConfig{},
 		includeCrds:         false,
 	}
@@ -76,35 +78,44 @@ func WithIncludeCrds(includeCrds bool) LoadTestOptionsFunc {
 	}
 }
 
+func WithSkipSchemaValidation(skip bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.isSkipSchemaValidation = skip
+	}
+}
+
 type AssertionConfig struct {
-	templatesResult     map[string][]common.K8sManifest
-	snapshotComparer    validators.SnapshotComparer
-	renderSucceed       bool
-	failFast            bool
-	isSkipEmptyTemplate bool
-	didPostRender       bool
-	renderError         error
+	templatesResult        map[string][]common.K8sManifest
+	snapshotComparer       validators.SnapshotComparer
+	renderSucceed          bool
+	failFast               bool
+	isSkipEmptyTemplate    bool
+	isSkipSchemaValidation bool
+	didPostRender          bool
+	renderError            error
 }
 
 // AssertionConfigBuilder Required to simplify tests
 type AssertionConfigBuilder struct {
-	TemplatesResult     map[string][]common.K8sManifest
-	SnapshotComparer    validators.SnapshotComparer
-	RenderSucceed       bool
-	FailFast            bool
-	DidPostRender       bool
-	RenderError         error
-	IsSkipEmptyTemplate bool
+	TemplatesResult        map[string][]common.K8sManifest
+	SnapshotComparer       validators.SnapshotComparer
+	RenderSucceed          bool
+	FailFast               bool
+	DidPostRender          bool
+	RenderError            error
+	IsSkipEmptyTemplate    bool
+	IsSkipSchemaValidation bool
 }
 
 func (b AssertionConfigBuilder) Build() AssertionConfig {
 	return AssertionConfig{
-		templatesResult:     b.TemplatesResult,
-		snapshotComparer:    b.SnapshotComparer,
-		renderSucceed:       b.RenderSucceed,
-		failFast:            b.FailFast,
-		didPostRender:       b.DidPostRender,
-		renderError:         b.RenderError,
-		isSkipEmptyTemplate: b.IsSkipEmptyTemplate,
+		templatesResult:        b.TemplatesResult,
+		snapshotComparer:       b.SnapshotComparer,
+		renderSucceed:          b.RenderSucceed,
+		failFast:               b.FailFast,
+		didPostRender:          b.DidPostRender,
+		renderError:            b.RenderError,
+		isSkipEmptyTemplate:    b.IsSkipEmptyTemplate,
+		isSkipSchemaValidation: b.IsSkipSchemaValidation,
 	}
 }

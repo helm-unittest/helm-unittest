@@ -164,18 +164,19 @@ defined in test suite files.
 ### Flags
 
 ```
-      --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
-      --strict                 strict parse the testsuites (default false)
-  -d  --debugPlugin            enable debug logging (default false)
-  -v, --values stringArray     absolute or glob paths of values files location to override helmchart values
-  -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
-  -q, --failfast               direct quit testing, when a test is failed (default false)
-  -h, --help                   help for unittest
-  -t, --output-type string     the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
-  -o, --output-file string     the file where testresults are written in format specified, defaults no output is written to file
-  -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
-  -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
+      --color                   enforce printing colored output even stdout is not a tty. Set to false to disable color
+      --strict                  strict parse the testsuites (default false)
+  -d  --debugPlugin             enable debug logging (default false)
+  -v, --values stringArray      absolute or glob paths of values files location to override helmchart values
+  -f, --file stringArray        glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
+  -q, --failfast                direct quit testing, when a test is failed (default false)
+  -h, --help                    help for unittest
+  -t, --output-type string      the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -o, --output-file string      the file where testresults are written in format specified, defaults no output is written to file
+  -u, --update-snapshot         update the snapshot cached if needed, make sure you review the change before update
+  -s, --with-subchart charts    include tests of the subcharts within charts folder (default true)
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
+      --skip-schema-validation  skip values schema validation when rendering the chart (default false)
 ```
 
 ### Yaml JsonPath Support
