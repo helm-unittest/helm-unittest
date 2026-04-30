@@ -1,0 +1,6 @@
+apiVersion: v2
+name: with-crds
+description: A test chart with CRDs
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

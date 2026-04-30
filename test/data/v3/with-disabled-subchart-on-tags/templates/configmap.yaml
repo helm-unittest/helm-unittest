@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-config
+  labels:
+    app: {{ .Values.appName }}
+data:
+  app.name: {{ .Values.appName | quote }}
+  replicaCount: {{ .Values.replicaCount | quote }}

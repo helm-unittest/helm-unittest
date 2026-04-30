@@ -1,0 +1,17 @@
+suite: documentSelector invalid format should not panic after previous test
+templates:
+  - mixed-resource-types.yaml
+
+tests:
+  - it: warmup - run a simple assertion
+    asserts:
+      - contains:
+          path: kind
+          value: Deployment
+
+  - it: partial document selector in asserts, documentSelector.path is missing
+    asserts:
+      - exists:
+          path: kind
+        documentSelector:
+          skipEmptyTemplates: true

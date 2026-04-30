@@ -22,6 +22,7 @@ set:
 templates:
   - templates/deployment.yaml
   - templates/web/service.yaml
+includeCrds: true
 release:
   name: my-release
   namespace: my-namespace
@@ -72,6 +73,8 @@ tests:
 - **templates**: *array of string, recommended*. The template files scope to test in this suite. Only the selected files will be rendered. Template files that are put in a templates sub-folder can be addressed with a linux path separator. Also the `templates/` can be omitted. Using wildcards it is possible to test multiple templates without listing them one-by-one. Partial templates (which are prefixed with and `_` or have the .tpl extension) are added automatically even if it is in a templates sub-folder, you don't need to add them.
 
 - **excludeTemplates**: *array of string, optional*. The template files which should be excluded from the scope of this test suite. Using wildcards it is possible to exclude multiple templates without listing them one-by-one.
+
+- **includeCrds**: *bool, optional*. When set to `true`, includes CRD files from the `crds/` directory in the rendered output for testing. This mirrors the behavior of `helm template --include-crds`. Defaults to `false`. CRD files can be referenced using `template: crds/mycrd.yaml` in assertions. Note that CRDs are not templated by Helm (they are static YAML).
 
 - **release**: *object, optional*. Define the `{{ .Release }}` object.
   - **name**: *string, optional*. The release name, default to `"RELEASE-NAME"`.
