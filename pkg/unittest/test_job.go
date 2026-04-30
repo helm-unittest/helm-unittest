@@ -286,13 +286,14 @@ func (t *TestJob) RunV3(
 	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
-		templatesResult:     manifestsOfFiles,
-		snapshotComparer:    snapshotComparer,
-		renderSucceed:       renderSucceed,
-		failFast:            t.configOrDefault().failFast,
-		didPostRender:       didPostRender,
-		renderError:         renderError,
-		isSkipEmptyTemplate: t.configOrDefault().isSkipEmptyTemplate,
+		templatesResult:        manifestsOfFiles,
+		snapshotComparer:       snapshotComparer,
+		renderSucceed:          renderSucceed,
+		failFast:               t.configOrDefault().failFast,
+		didPostRender:          didPostRender,
+		renderError:            renderError,
+		isSkipEmptyTemplate:    t.configOrDefault().isSkipEmptyTemplate,
+		isSkipSchemaValidation: t.configOrDefault().isSkipSchemaValidation,
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
@@ -382,7 +383,7 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 		return nil, false, err
 	}
 
-	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), false)
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().isSkipSchemaValidation)
 	if err != nil {
 		return nil, false, err
 	}

@@ -20,6 +20,8 @@ func TestNewTestConfig(t *testing.T) {
 	assert.Equal(t, cache, config.cache)
 	assert.Equal(t, "", config.renderPath)
 	assert.False(t, config.failFast)
+	assert.False(t, config.isSkipEmptyTemplate)
+	assert.False(t, config.isSkipSchemaValidation)
 	assert.Equal(t, PostRendererConfig{}, config.postRenderer)
 }
 
@@ -58,14 +60,32 @@ func TestWithDocumentSelector(t *testing.T) {
 	assert.False(t, config.isSkipEmptyTemplate)
 }
 
+func TestWithSkipEmptyTemplate(t *testing.T) {
+	chart := &v3chart.Chart{}
+	cache := &snapshot.Cache{}
+	config := NewTestConfig(chart, cache, WithSkipEmptyTemplate(true))
+
+	assert.True(t, config.isSkipEmptyTemplate)
+}
+
+func TestWithSkipSchemaValidation(t *testing.T) {
+	chart := &v3chart.Chart{}
+	cache := &snapshot.Cache{}
+	config := NewTestConfig(chart, cache, WithSkipSchemaValidation(true))
+
+	assert.True(t, config.isSkipSchemaValidation)
+}
+
 func TestAssertionConfigBuilder(t *testing.T) {
 	builder := AssertionConfigBuilder{
-		TemplatesResult:  map[string][]common.K8sManifest{},
-		SnapshotComparer: nil,
-		RenderSucceed:    true,
-		FailFast:         true,
-		DidPostRender:    true,
-		RenderError:      nil,
+		TemplatesResult:        map[string][]common.K8sManifest{},
+		SnapshotComparer:       nil,
+		RenderSucceed:          true,
+		FailFast:               true,
+		DidPostRender:          true,
+		RenderError:            nil,
+		IsSkipEmptyTemplate:    false,
+		IsSkipSchemaValidation: false,
 	}
 
 	config := builder.Build()
@@ -77,4 +97,6 @@ func TestAssertionConfigBuilder(t *testing.T) {
 	assert.True(t, config.failFast)
 	assert.True(t, config.didPostRender)
 	assert.Nil(t, config.renderError)
+	assert.False(t, config.isSkipEmptyTemplate)
+	assert.False(t, config.isSkipSchemaValidation)
 }

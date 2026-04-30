@@ -238,6 +238,8 @@ type TestSuite struct {
 	chartRoute string
 	// if true, indicates that this was created from a helm rendered file
 	fromRender bool
+	// if true, skip values.schema.json validation when rendering
+	skipSchemaValidation bool
 	// An identifier to append to snapshot files
 	SnapshotId string `yaml:"snapshotId"`
 	Skip       struct {
@@ -409,6 +411,7 @@ func (s *TestSuite) runV3TestJobs(
 				WithFailFast(failFast),
 				WithPostRendererConfig(s.PostRendererConfig),
 				WithDocumentSelector(testJob.DocumentSelector),
+				WithSkipSchemaValidation(s.skipSchemaValidation),
 			))
 			jobResult = testJob.RunV3(&job)
 			jobResults[idx] = jobResult
