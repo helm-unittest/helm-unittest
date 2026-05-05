@@ -45,11 +45,49 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 
 ## Install
 
+When not defining any versions, it will install the latest version of binary into helm plugin directory, otherwise it will install the specified version.
+
+Using Helm 3:
 ```
 $ helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ```
 
-It will install the latest version of binary into helm plugin directory.
+Using Helm 4<sup>*</sup>:
+```
+$ helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+```
+
+Using OCI download<sup>**</sup>:
+```
+$ helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
+```
+or using http download<sup>***</sup>:
+```
+$ helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
+```
+
+__Notes:__ </br>
+<sup>*</sup> for Helm 4, installation using webhooks GPG verification is not supported, so `--verify=false` is required when installing from git repository. </br>
+
+<sup>**</sup> when using oci download, please note the following limitations:
+- the download contains all os and architecture binaries, making the package larger;
+- the download is only supported since plugin version 1.0.4 and later;
+- for helm 4 the archive download can perform a GPG verification, when the public-key.asc is imported into the gpg store. </br>
+
+<sup>***</sup> when using http download, please note the same limiations as the oci download, including:
+- the download can only have a fixed version, which needs to be filled twice in the url;
+- the archive download does not support auto update of the plugin
+
+
+__Importing the public key for GPG verification:__
+```
+# Import the public key
+curl -SsL https://github.com/helm-unittest/helm-unittest/raw/refs/heads/main/public-key.asc | gpg --import
+
+# Convert your keyring to the legacy gpg format
+# See https://helm.sh/docs/topics/provenance/
+gpg --export > ~/.gnupg/pubring.gpg
+```
 
 ## Docker Usage
 

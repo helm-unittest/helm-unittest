@@ -31,6 +31,10 @@ function Initialize-Architecture {
 # initOS discovers the operating system for this system.
 function Initialize-OS {
     $os = $($env:OS).ToLower()
+    switch ($os) {
+        "windows_nt" { return "windows" }
+        default { return "windows" }
+    }
     return $os
 }
 
@@ -39,7 +43,7 @@ function Test-SupportedPlatform {
     param($OS, $ARCH)
     
     $supported = @(
-        "windows-amd64", "windows_nt-amd64"
+        "windows-amd64"
     )
     
     $platform = "$OS-$ARCH"
@@ -173,13 +177,14 @@ function Install-File {
 
 # testVersion tests the installed client to make sure it is working.
 function Test-Version {
+    param($OS, $ARCH)
     try {
-        $unttPath = Join-Path $HELM_PLUGIN_PATH "untt.exe"
+        $unttPath = Join-Path $HELM_PLUGIN_PATH "untt-${OS}-${ARCH}.exe"
         if (Test-Path $unttPath) {
             & $unttPath -h
         }
         else {
-            Write-Warning "untt.exe not found at expected location"
+            Write-Warning "untt-${OS}-${ARCH}.exe not found at expected location"
         }
     }
     catch {
@@ -192,11 +197,15 @@ try {
     $ARCH = Initialize-Architecture
     $OS = Initialize-OS
     Test-SupportedPlatform -OS $OS -ARCH $ARCH
-    
-    $urls = Get-DownloadURL -OS $OS -ARCH $ARCH
-    $downloadedFile = Get-DownloadFile -DownloadUrl $urls.DownloadUrl
-    Install-File -FilePath $downloadedFile -ChecksumUrl $urls.ChecksumUrl
-    Test-Version
+
+    # If executables are already present, skip download and install
+    $existingUnitt = Join-Path $HELM_PLUGIN_PATH "untt-${OS}-${ARCH}.exe"
+    if (-not (Test-Path $existingUnitt)) {
+        $urls = Get-DownloadURL -OS $OS -ARCH $ARCH
+        $downloadedFile = Get-DownloadFile -DownloadUrl $urls.DownloadUrl
+        Install-File -FilePath $downloadedFile -ChecksumUrl $urls.ChecksumUrl
+    }
+    Test-Version -OS $OS -ARCH $ARCH
     
     Write-Host "Installation completed successfully"
 }

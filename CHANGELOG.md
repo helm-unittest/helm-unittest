@@ -1,3 +1,17 @@
+1.1.0 / 2026-05-05
+==================
+- Fix handling skipped tests in output properly (resolves #838)
+- Fix documentSelector on unset YAML keys (resolves #812, credits @Semih702) 
+- Fix isType assertion on unset YAML keys (resolves #794, credits @SAY-5)
+- Fix skip tests when subcharts are disabled via conditions (resolves #792, credits @bebosudo)
+- Enable native windows installation (resolves #748)
+- Add skip schema validation with a flag to enable and disable it (resolves #772, credits @FinnHuelsbusch)
+- Add support for testing CRDs
+- Update release and package process, so the plugin can also be installed using helm 4 (resolves #785)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation (credits @pratikshmalik05)
+
 1.0.3 / 2025-04-10
 ==================
 - Corrected newlines which is handled incorrectly by the yaml library (resolves #756) 
@@ -415,9 +429,4 @@
 - doc: fix `isAPIVersion` typo
 - upgrade helm to v2.8.2
 - more robust tests (of the plugin)
-
-## [Unreleased]
-
-### Fixed
-- **Subchart tests are now skipped when the subchart is disabled via conditions**: When a parent chart disables a subchart via `enabled: false` in values.yaml (with a corresponding `condition` field in Chart.yaml dependencies), helm-unittest now correctly skips loading and executing that subchart's test files. This fixes issue #792 where tests would fail with "template not exists" errors for disabled subcharts. The fix uses Helm's `ProcessDependenciesWithMerge()` to evaluate subchart conditions before test discovery, ensuring consistency with Helm's rendering behavior.
 
