@@ -74,7 +74,7 @@ __Notes:__ </br>
 - the download is only supported since plugin version 1.0.4 and later;
 - for helm 4 the archive download can perform a GPG verification, when the public-key.asc is imported into the gpg store. </br>
 
-<sup>***</sup> when using http download, please note the same limiations as the oci download, including:
+<sup>***</sup> when using http download, please note the same limitations as the oci download, including:
 - the download can only have a fixed version, which needs to be filled twice in the url;
 - the archive download does not support auto update of the plugin
 

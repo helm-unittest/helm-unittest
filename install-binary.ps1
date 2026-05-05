@@ -35,7 +35,6 @@ function Initialize-OS {
         "windows_nt" { return "windows" }
         default { return "windows" }
     }
-    return $os
 }
 
 # verifySupported checks that the os/arch combination is supported for binary builds.

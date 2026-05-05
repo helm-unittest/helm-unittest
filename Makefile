@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.0.4
+HELM_VERSION := 4.1.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -15,6 +15,7 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	with-crds \
 	with-disabled-subchart-on-condition \
 	with-disabled-subchart-on-tags \
 	with-document-select \
@@ -119,7 +120,7 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 
 	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
 
-.PHONY: sign
+.PHONY: sign-dist
 sign-dist: ## Sign distribution packages
 	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
 		echo "signing $$f"; \
