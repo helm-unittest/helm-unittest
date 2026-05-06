@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.1.4
+HELM_VERSION := 3.20.2
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
