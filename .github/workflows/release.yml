@@ -61,8 +61,8 @@ jobs:
           HELM_PGP_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
           HELM_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         run: |
-          base64 --decode <<< "${{ env.HELM_PGP_PRIVATE_KEY }}" > .secring.gpg
-          echo "${{ env.HELM_PGP_PASSPHRASE }}" > .passphrase
+          base64 --decode <<< ${{ env.HELM_PGP_PRIVATE_KEY }} > .secring.gpg
+          echo ${{ env.HELM_PGP_PASSPHRASE }} > .passphrase
           
       - name: make distribution
         shell: bash
