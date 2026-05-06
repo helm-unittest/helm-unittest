@@ -304,9 +304,10 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 			if len(s.Templates) > 0 {
 				test.defaultTemplatesToAssert = s.Templates
 			}
-		}
-		if len(s.ExcludeTemplates) > 0 {
-			test.defaultTemplatesToSkip = s.ExcludeTemplates
+
+			if len(s.ExcludeTemplates) > 0 {
+				test.defaultTemplatesToSkip = s.ExcludeTemplates
+			}
 		}
 	}
 }
@@ -316,7 +317,7 @@ func (s *TestSuite) polishTestJobsPathInfo() {
 func (s *TestSuite) polishSkipSettings(test *TestJob) {
 	if s.Skip.Reason != "" {
 		test.Skip.Reason = s.Skip.Reason
-	} else if s.Skip.Reason == "" {
+	} else {
 		skipped := 0
 		for _, test := range s.Tests {
 			if test == nil {
