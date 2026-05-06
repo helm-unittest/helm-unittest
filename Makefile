@@ -113,9 +113,10 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 	cp -f install-binary.sh $(BUILD)
 	cp -f install-binary.ps1 $(BUILD)
 	chmod +x $(BUILD)/install-binary.ps1
+
+	gpg --import ./public-key.asc
 	
-	helm plugin package $(BUILD) --sign=false --destination $(DIST)
-##	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring ./.secring.gpg --passphrase-file ./.passphrase --sign --destination $(DIST)
+	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring ./.secring.gpg --passphrase-file ./.passphrase --sign --destination $(DIST)
 	rm -f .secring.gpg
 	rm -f .passphrase
 
