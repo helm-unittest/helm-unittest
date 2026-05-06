@@ -1,4 +1,4 @@
-1.1.0 / 2026-05-05
+1.1.0 / 2026-05-06
 ==================
 - Fix handling skipped tests in output properly (resolves #838)
 - Fix documentSelector on unset YAML keys (resolves #812, credits @Semih702) 
@@ -6,7 +6,7 @@
 - Fix skip tests when subcharts are disabled via conditions (resolves #792, credits @bebosudo)
 - Enable native windows installation (resolves #748)
 - Add skip schema validation with a flag to enable and disable it (resolves #772, credits @FinnHuelsbusch)
-- Add support for testing CRDs
+- Add support for testing CRDs (credits @blacksd)
 - Update release and package process, so the plugin can also be installed using helm 4 (resolves #785)
 - Update packages to latest patch versions
 - Update pipeline actions
