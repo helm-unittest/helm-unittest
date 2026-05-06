@@ -126,7 +126,7 @@ jobs:
         # https://github.com/aquasecurity/trivy-action
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
-          image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}
+          image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.HELM_PLUGIN_VERSION }}-${{ matrix.image }}
           format: sarif
           output: trivy-results-${{ matrix.image }}.sarif
 

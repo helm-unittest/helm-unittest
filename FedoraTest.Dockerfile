@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM fedora@sha256:781b7642e8bf256e9cf75d2aa58d86f5cc695fd2df113517614e181a5eee9138
+FROM --platform=$BUILDPLATFORM fedora@sha256:498c452f32a739b61f0ef215bce9924ebc4866cbe44710f58157d77723b7a6d2
 
 # variable "HELM_VERSION" must be passed as docker environment variables during the image build
 # docker buildx build --load --no-cache --platform linux/amd64 --build-arg HELM_VERSION=3.13.0 -t fedora/helm-unittest:test -f FedoraTest.Dockerfile .

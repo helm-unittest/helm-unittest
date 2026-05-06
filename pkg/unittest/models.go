@@ -9,26 +9,26 @@ import (
 )
 
 type TestConfig struct {
-	targetChart         *v3chart.Chart
-	cache               *snapshot.Cache
-	renderPath          string
-	failFast            bool
-	isSkipEmptyTemplate bool
+	targetChart            *v3chart.Chart
+	cache                  *snapshot.Cache
+	renderPath             string
+	failFast               bool
+	isSkipEmptyTemplate    bool
 	isSkipSchemaValidation bool
-	postRenderer        PostRendererConfig
-	includeCrds         bool
+	postRenderer           PostRendererConfig
+	includeCrds            bool
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
 	config := &TestConfig{
-		targetChart:         chart,
-		cache:               cache,
-		renderPath:          "",
-		failFast:            false,
-		isSkipEmptyTemplate: false,
+		targetChart:            chart,
+		cache:                  cache,
+		renderPath:             "",
+		failFast:               false,
+		isSkipEmptyTemplate:    false,
 		isSkipSchemaValidation: false,
-		postRenderer:        PostRendererConfig{},
-		includeCrds:         false,
+		postRenderer:           PostRendererConfig{},
+		includeCrds:            false,
 	}
 	for _, option := range options {
 		option(config)

@@ -137,11 +137,11 @@ dependency: ## Dependency maintanance
 
 .PHONY: dockerimage-alpine
 dockerimage-alpine: build-amd64 ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f AlpineTest.Dockerfile .
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-alpine -f AlpineTest.Dockerfile .
 
 .PHONY: dockerimage-fedora
 dockerimage-fedora: build-amd64 ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION) -f FedoraTest.Dockerfile .
+	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
 
 .PHONY: test-docker-alpine
 test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
@@ -150,7 +150,7 @@ test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml .;\
 	done
 
 .PHONY: test-docker-fedora
@@ -160,7 +160,7 @@ test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION) -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml .;\
 	done
 
 .PHONY: go-lint
