@@ -56,17 +56,28 @@ jobs:
           echo "name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
           echo "version=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
 
-      - name: setup secrets for package signing
+      - name: setup secrets for signing
         env:
-          HELM_PGP_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
-          HELM_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          HELM_GPG_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
+          HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          base64 --decode <<< ${{ env.HELM_PGP_PRIVATE_KEY }} > .secring.gpg
-          echo ${{ env.HELM_PGP_PASSPHRASE }} > .passphrase
+          base64 --decode <<< ${{ env.HELM_GPG_PRIVATE_KEY }} > .secring.gpg
+          echo ${{ env.HELM_GPG_PASSPHRASE }} > .passphrase
+          gpg --import --batch --pinentry-mode=loopback --passphrase '${{ env.HELM_GPG_PASSPHRASE }}' .secring.gpg
           
-      - name: make distribution
+      - name: make and sign distribution
         shell: bash
-        run: make dist
+        run: make sign-dist
+
+      - name: clean up secrets
+        if: always()
+        env:
+          HELM_GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
+        run: |
+          shred -u .secring.gpg
+          shred -u .passphrase
+          gpg --batch --yes --delete-secret-keys ${{ env.HELM_GPG_FINGERPRINT }}
+          gpg --batch --yes --delete-keys ${{ env.HELM_GPG_FINGERPRINT }}
 
       - name: push to OCI registry
         run: |

@@ -52,6 +52,8 @@ initOS() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
 
   case "$OS" in
+    # Windows NT
+    windows_nt) OS='windows';;
     # Msys support
     msys*) OS='windows';;
     # Minimalist GNU for Windows
@@ -63,7 +65,7 @@ initOS() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="linux-amd64\nlinux-arm64\nlinux-s390x\nlinux-ppc64le\nmacos-amd64\nmacos-arm64\nwindows-amd64\nwindows_nt-amd64"
+  local supported="linux-amd64\nlinux-arm64\nlinux-s390x\nlinux-ppc64le\nmacos-amd64\nmacos-arm64\nwindows-amd64"
   if ! echo "$supported" | grep -q "$OS-$ARCH"; then
     echo "No prebuild binary for $OS-$ARCH."
     exit 1
@@ -165,7 +167,7 @@ testVersion() {
   # To avoid to keep track of the Windows suffix,
   # call the plugin assuming it is in the PATH
   PATH=$PATH:$HELM_PLUGIN_PATH
-  untt -h
+  untt-${OS}-${ARCH} -h
 }
 
 # Execution
@@ -176,7 +178,10 @@ set -e
 initArch
 initOS
 verifySupported
-getDownloadURL
-downloadFile
-installFile
+# If executables are already present, skip download and install
+if [ ! -f "$HELM_PLUGIN_PATH/untt-${OS}-${ARCH}" ]; then
+  getDownloadURL
+  downloadFile
+  installFile
+fi
 testVersion
