@@ -61,9 +61,9 @@ jobs:
           HELM_GPG_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
           HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          base64 --decode <<< ${{ env.HELM_GPG_PRIVATE_KEY }} > .secring.gpg
-          echo ${{ env.HELM_GPG_PASSPHRASE }} > .passphrase
-          gpg --import --batch --pinentry-mode=loopback --passphrase '${{ env.HELM_GPG_PASSPHRASE }}' .secring.gpg
+          printf '%s' "${{ env.HELM_GPG_PRIVATE_KEY }}" | base64 --decode > .secring.gpg
+          printf '%s' "${{ env.HELM_GPG_PASSPHRASE }}" > .passphrase
+          gpg --import --batch --pinentry-mode=loopback --passphrase-file .passphrase .secring.gpg
           
       - name: make and sign distribution
         shell: bash
@@ -74,10 +74,12 @@ jobs:
         env:
           HELM_GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
         run: |
-          shred -u .secring.gpg
-          shred -u .passphrase
-          gpg --batch --yes --delete-secret-keys ${{ env.HELM_GPG_FINGERPRINT }}
-          gpg --batch --yes --delete-keys ${{ env.HELM_GPG_FINGERPRINT }}
+          test -f .secring.gpg && shred -u .secring.gpg
+          test -f .passphrase && shred -u .passphrase
+          if [ -n "${{ env.HELM_GPG_FINGERPRINT }}" ]; then
+            gpg --batch --yes --delete-secret-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
+            gpg --batch --yes --delete-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
+          fi
 
       - name: push to OCI registry
         run: |

@@ -4,7 +4,6 @@
 PLUGIN_EMAIL := "helmunittest@gmail.com"
 HELM_VERSION := 4.1.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
-PASS := $(file < .passphrase)
 BUILD := ./_build
 DIST := ./_dist
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
@@ -125,7 +124,7 @@ sign-build: dist ## Sign build packages
 sign-dist: sign-build ## Sign distribution packages
 	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
 		echo "signing $$f"; \
-		gpg --local-user $(PLUGIN_EMAIL) --armor --batch --pinentry-mode=loopback --passphrase '$(PASS)' --output $$f.asc --detach-sign $$f; \
+		gpg --local-user $(PLUGIN_EMAIL) --armor --batch --pinentry-mode=loopback --passphrase-file .passphrase --output $$f.asc --detach-sign $$f; \
 	done
 
 .PHONY: bootstrap
