@@ -59,10 +59,10 @@ jobs:
       - name: setup secrets for signing
         env:
           HELM_GPG_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
-          HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
         run: |
           printf '%s' "${{ env.HELM_GPG_PRIVATE_KEY }}" | base64 --decode > .secring.gpg
-          printf '%s' "${{ env.HELM_GPG_PASSPHRASE }}" > .passphrase
+          printf '%s' "${{ env.HELM_GPG_PASSPHRASE }}" | base64 --decode > .passphrase
           gpg --import --batch --pinentry-mode=loopback --passphrase-file .passphrase .secring.gpg
           
       - name: make and sign distribution
