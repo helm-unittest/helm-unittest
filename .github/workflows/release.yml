@@ -18,6 +18,9 @@ jobs:
     name: create distribution and upload to release
     permissions:
       contents: write # to publish assets to the release
+      packages: write
+      attestations: write
+      id-token: write
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
@@ -56,17 +59,30 @@ jobs:
           echo "name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
           echo "version=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
 
-      - name: setup secrets for package signing
+      - name: setup secrets for signing
         env:
-          HELM_PGP_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
-          HELM_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          HELM_GPG_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
+          HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
         run: |
-          base64 --decode <<< ${{ env.HELM_PGP_PRIVATE_KEY }} > .secring.gpg
-          echo ${{ env.HELM_PGP_PASSPHRASE }} > .passphrase
+          printf '%s' "${{ env.HELM_GPG_PRIVATE_KEY }}" | base64 --decode > .secring.gpg
+          printf '%s' "${{ env.HELM_GPG_PASSPHRASE }}" | base64 --decode > .passphrase
+          gpg --import --batch --pinentry-mode=loopback --passphrase-file .passphrase .secring.gpg
           
-      - name: make distribution
+      - name: make and sign distribution
         shell: bash
-        run: make dist
+        run: make sign-dist
+
+      - name: clean up secrets
+        if: always()
+        env:
+          HELM_GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
+        run: |
+          test -f .secring.gpg && shred -u .secring.gpg
+          test -f .passphrase && shred -u .passphrase
+          if [ -n "${{ env.HELM_GPG_FINGERPRINT }}" ]; then
+            gpg --batch --yes --delete-secret-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
+            gpg --batch --yes --delete-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
+          fi
 
       - name: push to OCI registry
         run: |

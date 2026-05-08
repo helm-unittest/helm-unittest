@@ -31,7 +31,10 @@ function Initialize-Architecture {
 # initOS discovers the operating system for this system.
 function Initialize-OS {
     $os = $($env:OS).ToLower()
-    return $os
+    switch ($os) {
+        "windows_nt" { return "windows" }
+        default { return "windows" }
+    }
 }
 
 # verifySupported checks that the os/arch combination is supported for binary builds.
@@ -39,7 +42,7 @@ function Test-SupportedPlatform {
     param($OS, $ARCH)
     
     $supported = @(
-        "windows-amd64", "windows_nt-amd64"
+        "windows-amd64"
     )
     
     $platform = "$OS-$ARCH"
@@ -53,6 +56,8 @@ function Test-SupportedPlatform {
 function Get-DownloadURL {
     param($OS, $ARCH)
     
+    Push-Location $HELM_PLUGIN_PATH
+
     # Try to get version from git
     $version = $null
     try {
@@ -79,6 +84,8 @@ function Get-DownloadURL {
             exit 1
         }
     }
+
+    Pop-Location
 
     # Setup Download URL
     $versionNumber = $version -replace '^v', ''
@@ -123,9 +130,7 @@ function Install-File {
     param($FilePath, $ChecksumUrl)
     
     $fileName = Split-Path $FilePath -Leaf
-	$folderName = Split-Path $FilePath -Parent
-    Write-Host "FileName: $fileName"
-	Write-Host "FolderName: $folderName"
+    $folderName = Split-Path $FilePath -Parent
 
     # Validate checksum if URL is provided
     if ($ChecksumUrl) {
@@ -161,23 +166,24 @@ function Install-File {
 
     Push-Location $folderName
     & tar -xzf $fileName -C .
-	
-	Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
-	Pop-Location
 
-#    Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
+    Pop-Location
+
+    Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"    
 }
 
 # testVersion tests the installed client to make sure it is working.
 function Test-Version {
+    param($OS, $ARCH)
     try {
-        $unttPath = Join-Path $HELM_PLUGIN_PATH "untt.exe"
+        $unttPath = Join-Path $HELM_PLUGIN_PATH "untt-${OS}-${ARCH}.exe"
         if (Test-Path $unttPath) {
             & $unttPath -h
         }
         else {
-            Write-Warning "untt.exe not found at expected location"
+            Write-Warning "untt-${OS}-${ARCH}.exe not found at expected location"
         }
     }
     catch {
@@ -190,16 +196,20 @@ try {
     $ARCH = Initialize-Architecture
     $OS = Initialize-OS
     Test-SupportedPlatform -OS $OS -ARCH $ARCH
-    
-    $urls = Get-DownloadURL -OS $OS -ARCH $ARCH
-    $downloadedFile = Get-DownloadFile -DownloadUrl $urls.DownloadUrl
-    Install-File -FilePath $downloadedFile -ChecksumUrl $urls.ChecksumUrl
-    Test-Version
+
+    # If executables are already present, skip download and install
+    $existingUnitt = Join-Path $HELM_PLUGIN_PATH "untt-${OS}-${ARCH}.exe"
+    if (-not (Test-Path $existingUnitt)) {
+        $urls = Get-DownloadURL -OS $OS -ARCH $ARCH
+        $downloadedFile = Get-DownloadFile -DownloadUrl $urls.DownloadUrl
+        Install-File -FilePath $downloadedFile -ChecksumUrl $urls.ChecksumUrl
+    }
+    Test-Version -OS $OS -ARCH $ARCH
     
     Write-Host "Installation completed successfully"
 }
 catch {
     Write-Error "Failed to install $PROJECT_NAME"
-    Write-Host "For support, go to https://github.com/kubernetes/helm"
+    Write-Host "For support, go to https://github.com/helm-unittest/helm-unittest/blob/main/FAQ.md"
     exit 1
 }

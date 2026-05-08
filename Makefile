@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 3.20.2
+HELM_VERSION := 4.1.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -107,6 +107,8 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt-windows-amd64.exe README.md LICENSE plugin.yaml
 	mv untt-windows-amd64.exe $(BUILD)/
 
+.PHONY: sign-build
+sign-build: dist ## Sign build packages
 	cp -f README.md $(BUILD)
 	cp -f LICENSE $(BUILD)
 	cp -f plugin.yaml $(BUILD)
@@ -114,17 +116,15 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 	cp -f install-binary.ps1 $(BUILD)
 	chmod +x $(BUILD)/install-binary.ps1
 
-	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring ./.secring.gpg --passphrase-file ./.passphrase --sign --destination $(DIST)
-	rm -f .secring.gpg
-	rm -f .passphrase
+	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring .secring.gpg --passphrase-file .passphrase --sign --destination $(DIST)
 
 	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
 
 .PHONY: sign-dist
-sign-dist: ## Sign distribution packages
+sign-dist: sign-build ## Sign distribution packages
 	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
 		echo "signing $$f"; \
-		gpg --detach-sign --armor --output $$f.asc $$f; \
+		gpg --local-user $(PLUGIN_EMAIL) --armor --batch --pinentry-mode=loopback --passphrase-file .passphrase --output $$f.asc --detach-sign $$f; \
 	done
 
 .PHONY: bootstrap

@@ -1,10 +1,11 @@
-1.1.0 / 2026-05-06
+1.1.0 / 2026-05-08
 ==================
 - Fix handling skipped tests in output properly (resolves #838)
 - Fix documentSelector on unset YAML keys (resolves #812, credits @Semih702) 
 - Fix isType assertion on unset YAML keys (resolves #794, credits @SAY-5)
 - Fix skip tests when subcharts are disabled via conditions (resolves #792, credits @bebosudo)
 - Enable native windows installation (resolves #748)
+- Signed release (resolves #362)
 - Add skip schema validation with a flag to enable and disable it (resolves #772, credits @FinnHuelsbusch)
 - Add support for testing CRDs (credits @blacksd)
 - Update release and package process, so the plugin can also be installed using helm 4 (resolves #785)
@@ -34,7 +35,7 @@
 - Update pipeline actions
 - Update documentation
 
-1.0.0 / 2025-31-07
+1.0.0 / 2025-07-31
 ==================
 - Fix failedTemplate assertion to work with NOTES.txt (resolves #652, resolves #183)
 - Fix failedTemplate jsonSchema validation (resolves #700)
