@@ -1,6 +1,10 @@
 name: "Test Helm-Unittest Release Signing"
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 env:
   PACKAGE_REGISTRY: ghcr.io
