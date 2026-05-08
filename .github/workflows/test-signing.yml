@@ -16,6 +16,9 @@ jobs:
     name: create distribution and upload to release
     permissions:
       contents: write # to publish assets to the release
+      packages: write
+      attestations: write
+      id-token: write
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
