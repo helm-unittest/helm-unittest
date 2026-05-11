@@ -1,117 +1,22 @@
-name: "Helm-Unittest Release"
+name: "Correct Helm-Unittest Release"
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
 
 env:
-  PACKAGE_REGISTRY: ghcr.io
   REGISTRY_IMAGE: helmunittest/helm-unittest
   HELM_REPO: helm/helm
-  PLUGIN_REPO: helm-unittest/helm-unittest
-  GO_VERSION: 1.26.x
   HELM_VERSION: "4.1.4"
 
 permissions:
   contents: read
 
 jobs:
-  release:
-    name: create distribution and upload to release
-    permissions:
-      contents: write # to publish assets to the release
-      packages: write
-      attestations: write
-      id-token: write
-    runs-on: ubuntu-24.04
-    steps:
-      - name: checkout
-        # https://github.com/actions/checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: setup go
-        # https://github.com/actions/setup-go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: setup helm 4
-        # https://github.com/Azure/setup-helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
-        with:
-          version: ${{ env.HELM_VERSION }}
-
-      - name: setup ORAS
-        # https://github.com/oras-project/setup-oras
-        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1.2.4
-
-      - name: login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          registry: ${{ env.PACKAGE_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: retrieve plugin info
-        id: plugin
-        shell: bash
-        run: |
-          PLUGIN_NAME=$(sed -n -e 's/name:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
-          PLUGIN_VERSION=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
-          echo "name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
-          echo "version=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
-
-      - name: setup secrets for signing
-        env:
-          HELM_GPG_PRIVATE_KEY: ${{ secrets.GPG_KEYRING_BASE64 }}
-          HELM_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
-        run: |
-          printf '%s' "${{ env.HELM_GPG_PRIVATE_KEY }}" | base64 --decode > .secring.gpg
-          printf '%s' "${{ env.HELM_GPG_PASSPHRASE }}" | base64 --decode > .passphrase
-          gpg --import --batch --pinentry-mode=loopback --passphrase-file .passphrase .secring.gpg
-          
-      - name: make and sign distribution
-        shell: bash
-        run: make sign-dist
-
-      - name: clean up secrets
-        if: always()
-        env:
-          HELM_GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
-        run: |
-          test -f .secring.gpg && shred -u .secring.gpg
-          test -f .passphrase && shred -u .passphrase
-          if [ -n "${{ env.HELM_GPG_FINGERPRINT }}" ]; then
-            gpg --batch --yes --delete-secret-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
-            gpg --batch --yes --delete-keys ${{ env.HELM_GPG_FINGERPRINT }} || true
-          fi
-
-      - name: push to OCI registry
-        run: |
-          cd _package
-          oras push $NAME \
-            --artifact-type application/vnd.helm.plugin.v1+json \
-            $PACKAGE \
-            $PACKAGE.prov
-          oras tag $NAME latest
-        env:
-          PACKAGE: "${{ steps.plugin.outputs.name }}-${{ steps.plugin.outputs.version }}.tgz"
-          NAME: "${{ env.PACKAGE_REGISTRY }}/${{ github.repository }}/${{ steps.plugin.outputs.name }}:${{ steps.plugin.outputs.version }}"
-
-      - name: publish artifacts
-        # https://github.com/softprops/action-gh-release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
-        with:
-          files: _dist/**
-
   determine-versions:
     name: determine latest version of helm and helm-unittest plugin
     permissions:
       contents: read
     runs-on: ubuntu-24.04
-    needs:
-      - release
     outputs:
       HELM_VERSIONS: ${{ steps.helm-versions.outputs.helmversions }}
       HELM_PLUGIN_VERSIONS: ${{ steps.helm-plugin-versions.outputs.helmpluginversions }}
@@ -122,7 +27,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          helmLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=4 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          helmLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=20 |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmlatestversion=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
       - id: helm-plugin-versions

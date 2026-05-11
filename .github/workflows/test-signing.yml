@@ -8,6 +8,9 @@ env:
   GO_VERSION: 1.26.x
   HELM_VERSION: "4.1.4"
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: create distribution and upload to release
@@ -81,7 +84,7 @@ jobs:
 
       - name: push to OCI registry
         run: |
-          cd _dist
+          cd _package
           oras push $NAME \
             --artifact-type application/vnd.helm.plugin.v1+json \
             $PACKAGE \

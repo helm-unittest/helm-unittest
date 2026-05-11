@@ -1,3 +1,9 @@
+1.1.1 / 
+==================
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation (credits @Semih702)
+
 1.1.0 / 2026-05-08
 ==================
 - Fix handling skipped tests in output properly (resolves #838)
