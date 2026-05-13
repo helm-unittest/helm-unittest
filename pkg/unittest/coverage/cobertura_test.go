@@ -16,15 +16,21 @@ func sampleCoverage() Coverage {
 	cov := Coverage{ChartName: "demo"}
 	cov.Files = []FileCoverage{
 		{
-			Name:    "demo/templates/cm.yaml",
-			Actions: CountStat{Covered: 2, Total: 3},
+			Name:     "demo/templates/cm.yaml",
+			Rendered: true,
+			Actions:  CountStat{Covered: 2, Total: 3},
 			Branches: CountStat{Covered: 1, Total: 2},
-			Loops:   CountStat{Covered: 0, Total: 1},
+			Loops:    CountStat{Covered: 0, Total: 1},
 			Lines: []LineCoverage{
 				{Line: 4, Hits: 2},
 				{Line: 6, Hits: 0, Branches: []BranchCoverage{{Label: "if", Hits: 0}, {Label: "else", Hits: 2}}},
 				{Line: 9, Hits: 0, Branches: []BranchCoverage{{Label: "range-body", Hits: 0}}},
 			},
+		},
+		{
+			Name:     "demo/templates/dead.yaml",
+			Rendered: false,
+			Actions:  CountStat{Covered: 0, Total: 1},
 		},
 		{
 			Name:       "demo/templates/broken.yaml",
@@ -63,17 +69,24 @@ func TestWriteCobertura_StructureAndCounts(t *testing.T) {
 	pkg := doc.Packages.Packages[0]
 	assert.Equal(t, "demo", pkg.Name)
 
-	// Parse-error files must not appear as classes in the package.
-	require.Len(t, pkg.Classes.Classes, 1)
-	cls := pkg.Classes.Classes[0]
-	assert.Equal(t, "demo/templates/cm.yaml", cls.Filename)
-	require.Len(t, cls.Lines.Lines, 3)
+	// Parse-error files must not appear as classes; rendered AND unused files do.
+	require.Len(t, pkg.Classes.Classes, 2)
+	byName := map[string]coberturaClass{}
+	for _, c := range pkg.Classes.Classes {
+		byName[c.Filename] = c
+	}
 
+	cm := byName["demo/templates/cm.yaml"]
+	require.Len(t, cm.Lines.Lines, 3)
+	assert.Equal(t, "true", cm.HelmUnittestRendered, "rendered template should be flagged")
 	// Branch line should be marked and carry condition-coverage attribute.
-	branchLine := cls.Lines.Lines[1]
+	branchLine := cm.Lines.Lines[1]
 	assert.Equal(t, 6, branchLine.Number)
 	assert.Equal(t, "true", branchLine.Branch)
 	assert.Contains(t, branchLine.ConditionCoverage, "1/2")
+
+	dead := byName["demo/templates/dead.yaml"]
+	assert.Equal(t, "false", dead.HelmUnittestRendered, "unrendered template should be flagged")
 }
 
 func TestClassNameFromPath(t *testing.T) {

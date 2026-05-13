@@ -35,6 +35,10 @@ type Tracker struct {
 	// templateOrder preserves the insertion order so reports list files in a
 	// stable, source-like order.
 	templateOrder []string
+	// renderedFiles records which template-file keys produced non-empty output
+	// (after probe tokens are stripped) in at least one Absorb call. Used to
+	// flag templates that were never exercised by any test.
+	renderedFiles map[string]bool
 
 	// instrumentedChart is a deep clone of the input chart whose Templates
 	// (and all subcharts' Templates) have been swapped for instrumented bytes.
@@ -53,6 +57,7 @@ func NewTracker(chart *v3chart.Chart) *Tracker {
 	t := &Tracker{
 		chartName:     chart.Name(),
 		templateMetas: map[string]TemplateMeta{},
+		renderedFiles: map[string]bool{},
 	}
 	t.instrumentedChart = t.deepCopyAndInstrument(chart, chart.Name())
 	return t
@@ -157,14 +162,17 @@ func (t *Tracker) HasProbes() bool {
 
 var probeTokenRe = regexp.MustCompile(regexp.QuoteMeta(tokenPrefix) + `(\d+)` + regexp.QuoteMeta(tokenSuffix))
 
-// Absorb scans the output map produced by v3engine.Render for probe tokens and
-// increments hit counts. It is safe to call from concurrent goroutines.
+// Absorb scans the output map produced by v3engine.Render for probe tokens,
+// increments hit counts, and records which files produced non-empty output
+// (with probe tokens stripped) so the Rendered flag can be set. It is safe to
+// call from concurrent goroutines.
 func (t *Tracker) Absorb(rendered map[string]string) {
 	if len(rendered) == 0 {
 		return
 	}
 	local := make(map[int]int)
-	for _, content := range rendered {
+	rendNonEmpty := make(map[string]bool)
+	for key, content := range rendered {
 		matches := probeTokenRe.FindAllStringSubmatch(content, -1)
 		for _, m := range matches {
 			idx, err := strconv.Atoi(m[1])
@@ -173,9 +181,13 @@ func (t *Tracker) Absorb(rendered map[string]string) {
 			}
 			local[idx]++
 		}
-	}
-	if len(local) == 0 {
-		return
+		// Detect "did this file produce anything real?" by stripping our own
+		// probe tokens and checking whether the remaining text has any
+		// non-whitespace characters.
+		cleaned := probeTokenRe.ReplaceAllString(content, "")
+		if strings.TrimSpace(cleaned) != "" {
+			rendNonEmpty[key] = true
+		}
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -185,6 +197,9 @@ func (t *Tracker) Absorb(rendered map[string]string) {
 		} else {
 			log.WithField(logField, "absorb").Debugf("probe index %d out of range", idx)
 		}
+	}
+	for key := range rendNonEmpty {
+		t.renderedFiles[key] = true
 	}
 }
 
@@ -251,6 +266,13 @@ func (t *Tracker) Snapshot() Coverage {
 			fc.Lines = append(fc.Lines, *lc)
 		}
 		sort.Slice(fc.Lines, func(i, j int) bool { return fc.Lines[i].Line < fc.Lines[j].Line })
+
+		// A template is "rendered" if it produced non-empty output of its own
+		// in any test, OR if any of its probes were exercised (the latter
+		// catches partial _.tpl templates whose define blocks were called via
+		// include from elsewhere — those don't render content directly).
+		fc.Rendered = t.renderedFiles[key] ||
+			fc.Actions.Covered+fc.Branches.Covered+fc.Loops.Covered > 0
 
 		cov.Totals.Actions.Total += fc.Actions.Total
 		cov.Totals.Actions.Covered += fc.Actions.Covered

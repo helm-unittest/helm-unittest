@@ -34,6 +34,12 @@ func WriteLCOV(path string, cov Coverage) error {
 		if _, err := fmt.Fprintf(w, "SF:%s\n", file.Name); err != nil {
 			return err
 		}
+		// helm-unittest extension: emit the per-file Rendered status as a
+		// comment line. Standard LCOV parsers tolerate `#` comments; tools
+		// that recognise this prefix can surface unused templates.
+		if _, err := fmt.Fprintf(w, "# helm-unittest:rendered=%t\n", file.Rendered); err != nil {
+			return err
+		}
 
 		if file.ParseError != nil {
 			// Empty record so the file still appears in the file list.

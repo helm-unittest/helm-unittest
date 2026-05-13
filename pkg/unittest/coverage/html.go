@@ -76,6 +76,10 @@ const htmlStyles = `
   .source tr.partial .code { background: #fff8c5; }
   .source tr.neutral .code { background: transparent; }
   .parse-error { padding: 10px 14px; background: #ffebe9; color: #cf222e; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+           border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+  .badge-unused { background: #ffebe9; color: #cf222e; border: 1px solid #ffc1ba; }
+  .badge-used   { background: #ddf4e4; color: #1a7f37; border: 1px solid #b6e3c1; }
   @media (prefers-color-scheme: dark) {
     body { color: #c9d1d9; background: #0d1117; }
     .stat, .files th, details.file summary,
@@ -141,9 +145,10 @@ func writeHTMLFileList(b *strings.Builder, cov Coverage) {
 	b.WriteString(`<table class="files"><thead><tr><th>File</th><th class="num">Actions</th><th class="num">Branches</th><th class="num">Loops</th><th class="num">Iters</th></tr></thead><tbody>`)
 	for _, f := range cov.Files {
 		fmt.Fprintf(b,
-			`<tr><td><a href="#%s">%s</a></td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>`,
+			`<tr><td><a href="#%s">%s</a>%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>`,
 			htmlID(f.Name),
 			html.EscapeString(f.Name),
+			renderedBadge(f),
 			statCell(f.Actions, f.ParseError),
 			statCell(f.Branches, f.ParseError),
 			statCell(f.Loops, f.ParseError),
@@ -224,7 +229,20 @@ func summaryBadges(f FileCoverage) string {
 	if f.Loops.Total > 0 {
 		parts = append(parts, fmt.Sprintf(`L %d/%d`, f.Loops.Covered, f.Loops.Total))
 	}
-	return html.EscapeString(strings.Join(parts, " · "))
+	return html.EscapeString(strings.Join(parts, " · ")) + renderedBadge(f)
+}
+
+// renderedBadge returns a small coloured pill marking the file as used or
+// unused. Parse-error files get no badge; they already render their own error
+// block, and the badge would just add visual noise.
+func renderedBadge(f FileCoverage) string {
+	if f.ParseError != nil {
+		return ""
+	}
+	if f.Rendered {
+		return `<span class="badge badge-used">used</span>`
+	}
+	return `<span class="badge badge-unused">unused</span>`
 }
 
 func pctClass(pct float64) string {

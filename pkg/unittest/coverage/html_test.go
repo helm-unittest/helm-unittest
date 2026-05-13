@@ -15,14 +15,20 @@ func sampleHTMLCoverage() Coverage {
 	cov := Coverage{ChartName: "demo"}
 	cov.Files = []FileCoverage{
 		{
-			Name:    "demo/templates/cm.yaml",
-			Actions: CountStat{Covered: 1, Total: 2, Hits: 5},
+			Name:     "demo/templates/cm.yaml",
+			Rendered: true,
+			Actions:  CountStat{Covered: 1, Total: 2, Hits: 5},
 			Branches: CountStat{Covered: 1, Total: 2, Hits: 3},
-			Loops:   CountStat{Covered: 1, Total: 1, Hits: 4},
-			Source:  []byte("apiVersion: v1\nkind: ConfigMap\nname: {{ .Values.name }}\n"),
+			Loops:    CountStat{Covered: 1, Total: 1, Hits: 4},
+			Source:   []byte("apiVersion: v1\nkind: ConfigMap\nname: {{ .Values.name }}\n"),
 			Lines: []LineCoverage{
 				{Line: 3, Hits: 5, ProbesCovered: 1, ProbesTotal: 1},
 			},
+		},
+		{
+			Name:     "demo/templates/dead.yaml",
+			Rendered: false,
+			Source:   []byte("apiVersion: v1\nkind: ConfigMap\n"),
 		},
 		{
 			Name:       "demo/templates/broken.yaml",
@@ -71,6 +77,20 @@ func TestWriteHTML_StructureAndContent(t *testing.T) {
 	assert.Contains(t, contents, "synthetic parse failure")
 	// And no source table for the broken file.
 	assert.NotContains(t, contents, `<a href="#f-demo-templates-broken-yaml"><table`)
+
+	// Rendered/unused badges must appear on the right files.
+	assert.Contains(t, contents, `<span class="badge badge-used">used</span>`,
+		"cm.yaml should show a 'used' badge")
+	assert.Contains(t, contents, `<span class="badge badge-unused">unused</span>`,
+		"dead.yaml should show an 'unused' badge")
+	// Each badge should appear exactly twice (once in the file list row,
+	// once in the per-file <details> summary). Match the full element so the
+	// `.badge-used` / `.badge-unused` rules in the embedded stylesheet don't
+	// throw the count off.
+	usedCount := strings.Count(contents, `<span class="badge badge-used">used</span>`)
+	unusedCount := strings.Count(contents, `<span class="badge badge-unused">unused</span>`)
+	assert.Equal(t, 2, usedCount, "cm.yaml shows used badge twice (file list + summary)")
+	assert.Equal(t, 2, unusedCount, "dead.yaml shows unused badge twice")
 }
 
 func TestWriteReport_HTMLDispatch(t *testing.T) {

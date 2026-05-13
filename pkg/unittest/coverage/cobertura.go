@@ -76,13 +76,17 @@ type coberturaClasses struct {
 }
 
 type coberturaClass struct {
-	Name       string             `xml:"name,attr"`
-	Filename   string             `xml:"filename,attr"`
-	LineRate   string             `xml:"line-rate,attr"`
-	BranchRate string             `xml:"branch-rate,attr"`
-	Complexity string             `xml:"complexity,attr"`
-	Methods    coberturaMethods   `xml:"methods"`
-	Lines      coberturaLineList  `xml:"lines"`
+	Name       string            `xml:"name,attr"`
+	Filename   string            `xml:"filename,attr"`
+	LineRate   string            `xml:"line-rate,attr"`
+	BranchRate string            `xml:"branch-rate,attr"`
+	Complexity string            `xml:"complexity,attr"`
+	// HelmUnittestRendered is a helm-unittest extension attribute. Standard
+	// Cobertura consumers ignore unknown attributes, so this is safe; tooling
+	// that knows to look for it can use it to surface unused templates.
+	HelmUnittestRendered string             `xml:"helm-unittest-rendered,attr"`
+	Methods              coberturaMethods   `xml:"methods"`
+	Lines                coberturaLineList  `xml:"lines"`
 }
 
 type coberturaMethods struct{}
@@ -133,11 +137,12 @@ func buildCobertura(cov Coverage) coberturaCoverage {
 			continue
 		}
 		class := coberturaClass{
-			Name:       classNameFromPath(f.Name),
-			Filename:   f.Name,
-			LineRate:   formatRate(f.Actions),
-			BranchRate: formatRate(CountStat{Covered: f.Branches.Covered + f.Loops.Covered, Total: f.Branches.Total + f.Loops.Total}),
-			Complexity: "0",
+			Name:                 classNameFromPath(f.Name),
+			Filename:             f.Name,
+			LineRate:             formatRate(f.Actions),
+			BranchRate:           formatRate(CountStat{Covered: f.Branches.Covered + f.Loops.Covered, Total: f.Branches.Total + f.Loops.Total}),
+			Complexity:           "0",
+			HelmUnittestRendered: fmt.Sprintf("%t", f.Rendered),
 		}
 		for _, ln := range f.Lines {
 			cl := coberturaLine{

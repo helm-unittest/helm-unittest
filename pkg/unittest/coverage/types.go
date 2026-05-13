@@ -42,6 +42,13 @@ type FileCoverage struct {
 	// report's source-annotated view and is therefore kept on the snapshot;
 	// JSON output skips it to keep reports small.
 	Source []byte `json:"-"`
+	// Rendered reports whether at least one test caused this template to
+	// contribute output. It is true if (a) the template rendered non-empty
+	// content of its own in any test, or (b) it is a partial template whose
+	// define-block probes were exercised via `template` / `include` calls
+	// from other templates. False means the file existed in the chart but no
+	// test exercised it — useful for spotting dead templates.
+	Rendered bool
 }
 
 // LineCoverage is the aggregated coverage for a single source line within a

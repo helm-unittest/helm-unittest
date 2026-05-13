@@ -32,13 +32,18 @@ func RenderConsole(p *printer.Printer, cov Coverage) {
 	}
 
 	rows := make([][]string, 0, len(cov.Files)+2)
-	rows = append(rows, []string{"File", "Actions", "Branches", "Loops"})
+	rows = append(rows, []string{"File", "Actions", "Branches", "Loops", "Used"})
+	usedFiles := 0
 	for _, f := range cov.Files {
+		if f.Rendered {
+			usedFiles++
+		}
 		rows = append(rows, []string{
 			f.Name,
 			formatStat(p, f.Actions, f.ParseError),
 			formatStat(p, f.Branches, f.ParseError),
 			formatLoopStat(p, f.Loops, f.ParseError),
+			formatUsed(p, f),
 		})
 	}
 	rows = append(rows, []string{
@@ -46,6 +51,7 @@ func RenderConsole(p *printer.Printer, cov Coverage) {
 		formatStat(p, cov.Totals.Actions, nil),
 		formatStat(p, cov.Totals.Branches, nil),
 		formatLoopStat(p, cov.Totals.Loops, nil),
+		fmt.Sprintf("%d/%d", usedFiles, len(cov.Files)),
 	})
 
 	printTable(w, rows)
@@ -103,6 +109,22 @@ func formatLoopStat(p *printer.Printer, s CountStat, parseErr error) string {
 		plain = fmt.Sprintf("%s, %d iters", plain, s.Hits)
 	}
 	return colorizeByPct(p, plain, s.Pct())
+}
+
+func formatUsed(p *printer.Printer, f FileCoverage) string {
+	if f.ParseError != nil {
+		return "parse-error"
+	}
+	if f.Rendered {
+		if p != nil {
+			return p.Success("%s", "yes")
+		}
+		return "yes"
+	}
+	if p != nil {
+		return p.Danger("%s", "no")
+	}
+	return "no"
 }
 
 func colorizeByPct(p *printer.Printer, text string, pct float64) string {
@@ -242,6 +264,7 @@ type jsonStat struct {
 type jsonFile struct {
 	Name        string   `json:"name"`
 	ParseError  string   `json:"parseError,omitempty"`
+	Rendered    bool     `json:"rendered"`
 	Actions     jsonStat `json:"actions"`
 	Branches    jsonStat `json:"branches"`
 	Loops       jsonStat `json:"loops"`
@@ -263,6 +286,7 @@ func toJSONReport(cov Coverage) jsonReport {
 	for _, f := range cov.Files {
 		entry := jsonFile{
 			Name:        f.Name,
+			Rendered:    f.Rendered,
 			Actions:     toJSONStat(f.Actions),
 			Branches:    toJSONStat(f.Branches),
 			Loops:       toJSONStat(f.Loops),

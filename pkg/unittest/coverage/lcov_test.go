@@ -19,10 +19,17 @@ func TestWriteLCOV_RecordsAndCounters(t *testing.T) {
 	require.NoError(t, err)
 	contents := string(data)
 
-	// Two records: one real, one empty for the parse-error file.
-	assert.Equal(t, 2, strings.Count(contents, "end_of_record"))
+	// Three records: cm.yaml (rendered), dead.yaml (unrendered), broken.yaml (parse-error).
+	assert.Equal(t, 3, strings.Count(contents, "end_of_record"))
 	assert.Contains(t, contents, "SF:demo/templates/cm.yaml")
+	assert.Contains(t, contents, "SF:demo/templates/dead.yaml")
 	assert.Contains(t, contents, "SF:demo/templates/broken.yaml")
+
+	// helm-unittest extension comment lines should encode per-file Rendered status.
+	assert.Contains(t, contents, "# helm-unittest:rendered=true",
+		"cm.yaml should be flagged as rendered")
+	assert.Contains(t, contents, "# helm-unittest:rendered=false",
+		"dead.yaml / broken.yaml should be flagged as unrendered")
 
 	// Per-line DA lines must be present for every Lines entry on the real file.
 	assert.Contains(t, contents, "DA:4,2")

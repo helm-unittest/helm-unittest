@@ -232,6 +232,13 @@ Output columns:
   "`N iters`" annotation is the total iteration count summed across every
   test run, so a `range` over a large list shows real loop volume even when
   the binary coverage stat is 100%.
+* **Used** — `yes` if the template rendered non-empty content in any test,
+  or (for `_*.tpl` partials) if any of its `define`-block probes were hit
+  via `template` / `include`. `no` flags dead templates that no test
+  exercises, which the action/branch/loop columns alone can't always
+  surface (e.g. a static-YAML template that's never rendered shows `-` for
+  all three but `no` for Used). The footer row shows the rendered count as
+  `used/total`.
 
 Use `--coverage-file path/to/report` to emit a machine-readable report; this
 flag implies `--coverage`. The format is controlled by `--coverage-format`:
@@ -247,6 +254,18 @@ Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
 branch and loop probes are reported as branches (Cobertura `condition-coverage`
 attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
 with empty counters so consumers still see them in the file list.
+
+The per-file **Rendered** signal (whether any test caused this template to
+contribute output) is surfaced in every format:
+
+* JSON: `"rendered": true|false` on each file entry.
+* Cobertura: `helm-unittest-rendered="true|false"` attribute on each `<class>`
+  element (a non-standard extension that compliant consumers ignore).
+* LCOV: a `# helm-unittest:rendered=true|false` comment line emitted right
+  after each `SF:` record. Standard `genhtml` / `lcov` tooling tolerates the
+  comment.
+* HTML: a green `used` / red `unused` pill next to each filename and a count
+  in the summary.
 
 ### Yaml JsonPath Support
 

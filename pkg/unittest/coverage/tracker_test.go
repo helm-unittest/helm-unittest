@@ -110,6 +110,57 @@ data:
 	assert.NotEmpty(t, cov.Files[0].MissedLines)
 }
 
+func TestTracker_RenderedFlag(t *testing.T) {
+	// Chart with three templates:
+	//   live.yaml  — renders unconditionally (always non-empty)
+	//   gated.yaml — content wrapped in `{{ if .Values.on }}…{{ end }}`
+	//   static.yaml — plain YAML with no Go-template actions at all
+	chart := buildTestChart("covtest", map[string]string{
+		"templates/live.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: live
+`,
+		"templates/gated.yaml": `{{- if .Values.on }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gated
+{{- end }}
+`,
+		"templates/static.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: static
+`,
+	})
+
+	tracker := NewTracker(chart)
+	instrumented := tracker.InstrumentedChart()
+
+	// Render with .Values.on absent so gated.yaml produces no content.
+	vals, err := v3util.ToRenderValues(instrumented, map[string]any{}, v3util.ReleaseOptions{
+		Name: "rel", Namespace: "ns", IsInstall: true,
+	}, nil)
+	require.NoError(t, err)
+	out, err := v3engine.Render(instrumented, vals)
+	require.NoError(t, err)
+	tracker.Absorb(out)
+
+	cov := tracker.Snapshot()
+	byName := map[string]FileCoverage{}
+	for _, f := range cov.Files {
+		byName[f.Name] = f
+	}
+
+	assert.True(t, byName["covtest/templates/live.yaml"].Rendered,
+		"live.yaml renders content unconditionally")
+	assert.True(t, byName["covtest/templates/static.yaml"].Rendered,
+		"static.yaml has no probes but renders non-empty content")
+	assert.False(t, byName["covtest/templates/gated.yaml"].Rendered,
+		"gated.yaml renders empty when .Values.on is false")
+}
+
 func TestTracker_PartialTemplateInstrumented(t *testing.T) {
 	chart := buildTestChart("covtest", map[string]string{
 		"templates/_helpers.tpl": `{{- define "covtest.label" -}}
