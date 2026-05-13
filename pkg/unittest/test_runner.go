@@ -150,7 +150,8 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 }
 
 // renderCoverage prints the per-chart coverage tables collected during the run
-// and, when CoverageFile is set, writes the structured JSON report to disk.
+// and, when CoverageFile is set, writes a structured report in the format
+// chosen by CoverageFormat (json, cobertura or lcov; defaults to json).
 func (tr *TestRunner) renderCoverage() {
 	if len(tr.coverageReports) == 0 {
 		return
