@@ -6,6 +6,7 @@ HELM_VERSION := 4.1.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
+PACKAGE := ./_package
 LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${VERSION} -extldflags '-static'"
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
@@ -75,7 +76,7 @@ build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docke
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
-dist: ## Build distribution packages, expect to have helm 4 installed.
+dist: ## Build distribution packages
 	mkdir -p $(BUILD)
 	mkdir -p $(DIST)
 
@@ -107,8 +108,12 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 	tar -zcvf $(DIST)/helm-unittest-windows-amd64-$(VERSION).tgz untt-windows-amd64.exe README.md LICENSE plugin.yaml
 	mv untt-windows-amd64.exe $(BUILD)/
 
-.PHONY: sign-build
-sign-build: dist ## Sign build packages
+	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
+
+.PHONY: helm4-package
+helm4-package: dist ## Create a signed helm 4 plugin package, expect to have helm 4 installed
+	mkdir -p $(PACKAGE)
+
 	cp -f README.md $(BUILD)
 	cp -f LICENSE $(BUILD)
 	cp -f plugin.yaml $(BUILD)
@@ -116,12 +121,10 @@ sign-build: dist ## Sign build packages
 	cp -f install-binary.ps1 $(BUILD)
 	chmod +x $(BUILD)/install-binary.ps1
 
-	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring .secring.gpg --passphrase-file .passphrase --sign --destination $(DIST)
-
-	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
+	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring .secring.gpg --passphrase-file .passphrase --sign --destination $(PACKAGE)
 
 .PHONY: sign-dist
-sign-dist: sign-build ## Sign distribution packages
+sign-dist: helm4-package ## Sign distribution packages
 	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
 		echo "signing $$f"; \
 		gpg --local-user $(PLUGIN_EMAIL) --armor --batch --pinentry-mode=loopback --passphrase-file .passphrase --output $$f.asc --detach-sign $$f; \

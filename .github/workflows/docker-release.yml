@@ -1,0 +1,20 @@
+name: "Correct Helm-Unittest Release"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-docker-release:
+    name: run docker refresh via reusable release workflow
+    uses: ./.github/workflows/release.yml
+    with:
+      run_release_job: false
+      run_docker_publish: true
+      helm_tags_per_page: 20
+      plugin_tags_per_page: 2
+    secrets: 
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
