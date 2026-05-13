@@ -47,9 +47,6 @@ on:
         type: boolean
         default: true
     secrets:
-      GITHUB_TOKEN:
-        description: "GitHub token for API access, required for signing test workflow"
-        required: true
       GPG_KEYRING_BASE64:
         description: "Base64 encoded GPG keyring for signing, required for signing test workflow"
         required: false

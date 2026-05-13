@@ -17,6 +17,5 @@ jobs:
       publish_release_artifacts: false
       run_docker_publish: false
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GPG_KEYRING_BASE64: ${{ secrets.GPG_KEYRING_BASE64 }}
       GPG_PASSPHRASE_BASE64: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
