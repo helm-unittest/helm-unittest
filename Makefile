@@ -76,7 +76,7 @@ build-amd64: ## Compile packages and dependencies, pinned to amd64 for the docke
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./cmd/helm-unittest
 
 .PHONY: dist
-dist: ## Build distribution packages, expect to have helm 4 installed.
+dist: ## Build distribution packages
 	mkdir -p $(BUILD)
 	mkdir -p $(DIST)
 
@@ -110,8 +110,8 @@ dist: ## Build distribution packages, expect to have helm 4 installed.
 
 	shasum -a 256 -b $(DIST)/* > $(DIST)/helm-unittest-checksum.sha
 
-.PHONY: sign-build
-sign-build: dist ## Sign build packages
+.PHONY: helm4-package
+helm4-package: dist ## Create a signed helm 4 plugin package, expect to have helm 4 installed
 	mkdir -p $(PACKAGE)
 
 	cp -f README.md $(BUILD)
@@ -124,7 +124,7 @@ sign-build: dist ## Sign build packages
 	helm plugin package $(BUILD) --key $(PLUGIN_EMAIL) --keyring .secring.gpg --passphrase-file .passphrase --sign --destination $(PACKAGE)
 
 .PHONY: sign-dist
-sign-dist: sign-build ## Sign distribution packages
+sign-dist: helm4-package ## Sign distribution packages
 	@for f in $$(ls $(DIST)/*.* 2>/dev/null); do \
 		echo "signing $$f"; \
 		gpg --local-user $(PLUGIN_EMAIL) --armor --batch --pinentry-mode=loopback --passphrase-file .passphrase --output $$f.asc --detach-sign $$f; \
