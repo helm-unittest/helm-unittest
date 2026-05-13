@@ -12,9 +12,11 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       run_release_job: true
-      run_docker_publish: false
       oci_tag_suffix: -alpha
       oci_tag_latest: false
       publish_release_artifacts: false
-      oci_push_enabled: true
-    secrets: inherit
+      run_docker_publish: false
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GPG_KEYRING_BASE64: ${{ secrets.GPG_KEYRING_BASE64 }}
+      GPG_PASSPHRASE_BASE64: ${{ secrets.GPG_PASSPHRASE_BASE64 }}

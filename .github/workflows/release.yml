@@ -11,21 +11,11 @@ on:
         required: false
         type: boolean
         default: true
-      run_docker_publish:
-        description: "Run docker build and merge jobs"
+      oci_push_enabled:
+        description: "Whether to push signed package to OCI"
         required: false
         type: boolean
         default: true
-      helm_tags_per_page:
-        description: "How many Helm tags to fetch"
-        required: false
-        type: number
-        default: 4
-      plugin_tags_per_page:
-        description: "How many plugin tags to fetch"
-        required: false
-        type: number
-        default: 2
       oci_tag_suffix:
         description: "Optional OCI tag suffix, e.g. -alpha"
         required: false
@@ -41,11 +31,34 @@ on:
         required: false
         type: boolean
         default: true
-      oci_push_enabled:
-        description: "Whether to push signed package to OCI"
+      helm_tags_per_page:
+        description: "How many Helm tags to fetch"
+        required: false
+        type: number
+        default: 4
+      plugin_tags_per_page:
+        description: "How many plugin tags to fetch"
+        required: false
+        type: number
+        default: 2
+      run_docker_publish:
+        description: "Run docker build and merge jobs"
         required: false
         type: boolean
         default: true
+    secrets:
+      GITHUB_TOKEN:
+        description: "GitHub token for API access, required for signing test workflow"
+        required: true
+      GPG_KEYRING_BASE64:
+        description: "Base64 encoded GPG keyring for signing, required for signing test workflow"
+        required: false
+      GPG_PASSPHRASE_BASE64:
+        description: "Base64 encoded GPG passphrase for signing, required for signing test workflow"
+        required: false
+      DOCKERHUB_TOKEN:
+        description: "Docker Hub token for pushing images, required for docker publish test workflow"
+        required: false
 
 env:
   PACKAGE_REGISTRY: ghcr.io

@@ -15,4 +15,6 @@ jobs:
       run_docker_publish: true
       helm_tags_per_page: 20
       plugin_tags_per_page: 2
-    secrets: inherit
+    secrets: 
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
