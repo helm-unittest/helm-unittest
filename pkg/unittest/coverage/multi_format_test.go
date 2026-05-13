@@ -38,12 +38,37 @@ func TestParseFormats(t *testing.T) {
 }
 
 func TestResolveOutputPaths_SingleFormatVerbatim(t *testing.T) {
-	// One format → user's path is used exactly as given. This preserves
-	// the long-standing single-format behaviour.
+	// One format → user's path is used exactly as given when it already
+	// carries an extension. Preserves the long-standing single-format
+	// behaviour for callers that have always passed a full filename.
 	got := ResolveOutputPaths("coverage.xml", []string{FormatCobertura})
 	require.Len(t, got, 1)
 	assert.Equal(t, "coverage.xml", got[0].Path)
 	assert.Equal(t, FormatCobertura, got[0].Format)
+}
+
+func TestResolveOutputPaths_SingleFormatAppendsExtensionWhenMissing(t *testing.T) {
+	// Extension-less path under a single format gets the format's
+	// conventional extension. Avoids the footgun where the user writes
+	// `--coverage-file ./reports/cov --coverage-format cobertura` and ends
+	// up with an extension-less file no tool can recognise.
+	cases := []struct {
+		in       string
+		format   string
+		wantPath string
+	}{
+		{"coverage", FormatJSON, "coverage.json"},
+		{"./reports/cov", FormatCobertura, "./reports/cov.xml"},
+		{"out", FormatLCOV, "out.info"},
+		{"report", FormatHTML, "report.html"},
+		// User-provided extension wins, even when it doesn't match the format.
+		{"coverage.report", FormatJSON, "coverage.report"},
+	}
+	for _, c := range cases {
+		got := ResolveOutputPaths(c.in, []string{c.format})
+		require.Len(t, got, 1, c.in)
+		assert.Equal(t, c.wantPath, got[0].Path, "input %q + %s", c.in, c.format)
+	}
 }
 
 func TestResolveOutputPaths_MultiFormatStem(t *testing.T) {

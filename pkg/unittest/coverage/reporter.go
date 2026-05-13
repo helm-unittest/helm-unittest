@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
@@ -286,14 +287,23 @@ type FileTarget struct {
 var knownExtensions = []string{".json", ".xml", ".info", ".html"}
 
 // ResolveOutputPaths maps the user's --coverage-file value to a list of
-// concrete (path, format) targets. For a single format the path is used
-// verbatim — existing behaviour. For multiple formats the path is treated as
-// a stem: a trailing extension matching one of our known formats is stripped
-// (so `coverage.xml` becomes `coverage`), then `FormatExt(f)` is appended for
+// concrete (path, format) targets.
+//
+// For a single format, the path is used as-is when it already carries an
+// extension; an extension-less path (e.g. `./reports/cov`) gets the format's
+// conventional extension appended so the file is written somewhere sensible.
+//
+// For multiple formats, the path is always treated as a stem: a trailing
+// extension matching one of our known formats is stripped first (so
+// `coverage.xml` becomes `coverage`), then `FormatExt(f)` is appended for
 // each requested format.
 func ResolveOutputPaths(file string, formats []string) []FileTarget {
 	if len(formats) == 1 {
-		return []FileTarget{{Path: file, Format: formats[0]}}
+		path := file
+		if filepath.Ext(path) == "" {
+			path += FormatExt(formats[0])
+		}
+		return []FileTarget{{Path: path, Format: formats[0]}}
 	}
 	stem := file
 	for _, ext := range knownExtensions {
