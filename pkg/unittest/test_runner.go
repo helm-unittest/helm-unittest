@@ -150,8 +150,10 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 }
 
 // renderCoverage prints the per-chart coverage tables collected during the run
-// and, when CoverageFile is set, writes a structured report in the format
-// chosen by CoverageFormat (json, cobertura or lcov; defaults to json).
+// and, when CoverageFile is set, writes a structured report for each format
+// listed in CoverageFormat (comma-separated; defaults to json). When more than
+// one format is requested CoverageFile is treated as a path stem and the
+// per-format extension is appended for each output.
 func (tr *TestRunner) renderCoverage() {
 	if len(tr.coverageReports) == 0 {
 		return
@@ -162,26 +164,25 @@ func (tr *TestRunner) renderCoverage() {
 	if tr.CoverageFile == "" {
 		return
 	}
-	format := tr.CoverageFormat
-	if format == "" {
-		format = coverage.FormatJSON
-	}
-	// When a single chart was tested, write the chart's report directly.
-	// For multi-chart runs we still write the first chart's report at the
-	// configured path and a sibling file per additional chart, keyed by name.
-	if len(tr.coverageReports) == 1 {
-		if err := coverage.WriteReport(tr.CoverageFile, format, tr.coverageReports[0]); err != nil {
-			log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write coverage report: %v", err)
-		}
+	formats, err := coverage.ParseFormats(tr.CoverageFormat)
+	if err != nil {
+		log.WithField(LOG_TEST_RUNNER, "coverage-format").Errorf("invalid --coverage-format: %v", err)
 		return
 	}
+	targets := coverage.ResolveOutputPaths(tr.CoverageFile, formats)
+
+	// For multi-chart runs the first chart uses the resolved path as-is and
+	// subsequent charts append a `.<chartName>` suffix to disambiguate. This
+	// matches the long-standing single-format behaviour.
 	for i, cov := range tr.coverageReports {
-		path := tr.CoverageFile
-		if i > 0 {
-			path = fmt.Sprintf("%s.%s", tr.CoverageFile, cov.ChartName)
-		}
-		if err := coverage.WriteReport(path, format, cov); err != nil {
-			log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write coverage report for %s: %v", cov.ChartName, err)
+		for _, target := range targets {
+			path := target.Path
+			if i > 0 {
+				path = fmt.Sprintf("%s.%s", path, cov.ChartName)
+			}
+			if err := coverage.WriteReport(path, target.Format, cov); err != nil {
+				log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write %s coverage report for %s: %v", target.Format, cov.ChartName, err)
+			}
 		}
 	}
 }

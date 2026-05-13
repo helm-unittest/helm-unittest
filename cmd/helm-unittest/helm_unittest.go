@@ -206,7 +206,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&testConfig.coverageFormat, "coverage-format", "json",
-		"format for --coverage-file: json | cobertura | lcov | html",
+		"format(s) for --coverage-file: json | cobertura | lcov | html. Comma-separated for multiple (e.g. cobertura,lcov,html); in that case --coverage-file is used as a path stem and per-format extensions are appended (.xml/.info/.html/.json)",
 	)
 }
 

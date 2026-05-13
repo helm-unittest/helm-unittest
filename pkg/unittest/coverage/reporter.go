@@ -221,6 +221,94 @@ const (
 	FormatHTML      = "html"
 )
 
+// FormatExt returns the conventional file extension for a coverage format
+// (including the leading dot). Used to derive per-format filenames when a
+// single --coverage-file stem is shared across multiple formats. Returns ""
+// for unknown formats.
+func FormatExt(format string) string {
+	switch format {
+	case FormatJSON:
+		return ".json"
+	case FormatCobertura:
+		return ".xml"
+	case FormatLCOV:
+		return ".info"
+	case FormatHTML:
+		return ".html"
+	default:
+		return ""
+	}
+}
+
+// ParseFormats parses a comma-separated --coverage-format value, trimming
+// whitespace around each entry. An empty string defaults to ["json"]. Any
+// unrecognised format produces an error so misspellings fail loudly instead
+// of being silently dropped.
+func ParseFormats(s string) ([]string, error) {
+	if strings.TrimSpace(s) == "" {
+		return []string{FormatJSON}, nil
+	}
+	known := map[string]bool{
+		FormatJSON: true, FormatCobertura: true, FormatLCOV: true, FormatHTML: true,
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	seen := map[string]bool{}
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if !known[p] {
+			return nil, fmt.Errorf("unsupported coverage format %q (want json, cobertura, lcov, or html)", p)
+		}
+		if seen[p] {
+			continue // ignore duplicates rather than writing the same file twice
+		}
+		seen[p] = true
+		out = append(out, p)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("--coverage-format must list at least one format")
+	}
+	return out, nil
+}
+
+// FileTarget pairs an output path with the format that should be written
+// there. Returned by ResolveOutputPaths.
+type FileTarget struct {
+	Path   string
+	Format string
+}
+
+// knownExtensions lists every extension ResolveOutputPaths is willing to strip
+// when treating a user-provided --coverage-file as a stem.
+var knownExtensions = []string{".json", ".xml", ".info", ".html"}
+
+// ResolveOutputPaths maps the user's --coverage-file value to a list of
+// concrete (path, format) targets. For a single format the path is used
+// verbatim — existing behaviour. For multiple formats the path is treated as
+// a stem: a trailing extension matching one of our known formats is stripped
+// (so `coverage.xml` becomes `coverage`), then `FormatExt(f)` is appended for
+// each requested format.
+func ResolveOutputPaths(file string, formats []string) []FileTarget {
+	if len(formats) == 1 {
+		return []FileTarget{{Path: file, Format: formats[0]}}
+	}
+	stem := file
+	for _, ext := range knownExtensions {
+		if strings.HasSuffix(stem, ext) {
+			stem = strings.TrimSuffix(stem, ext)
+			break
+		}
+	}
+	out := make([]FileTarget, 0, len(formats))
+	for _, f := range formats {
+		out = append(out, FileTarget{Path: stem + FormatExt(f), Format: f})
+	}
+	return out
+}
+
 // WriteReport dispatches to the writer for the requested format. An unknown
 // format returns an error rather than silently picking a default — callers are
 // expected to validate user input before calling.

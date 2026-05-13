@@ -178,7 +178,10 @@ defined in test suite files.
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
       --coverage               enable code coverage reporting for chart templates (default false)
       --coverage-file string   write coverage report to the given path (implies --coverage)
-      --coverage-format string format for --coverage-file: json | cobertura | lcov | html (default json)
+      --coverage-format string format(s) for --coverage-file: json | cobertura | lcov | html.
+                               Comma-separated for multi-format (e.g. cobertura,lcov,html);
+                               --coverage-file is then a path stem and per-format extensions
+                               are appended. (default json)
 ```
 
 ### Installing from a Fork or Branch
@@ -241,7 +244,8 @@ Output columns:
   `used/total`.
 
 Use `--coverage-file path/to/report` to emit a machine-readable report; this
-flag implies `--coverage`. The format is controlled by `--coverage-format`:
+flag implies `--coverage`. The format is controlled by `--coverage-format`,
+which accepts a single format or a comma-separated list:
 
 | Format      | Flag value    | Consumed by                                                          |
 |-------------|---------------|----------------------------------------------------------------------|
@@ -254,6 +258,25 @@ Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
 branch and loop probes are reported as branches (Cobertura `condition-coverage`
 attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
 with empty counters so consumers still see them in the file list.
+
+For a **single** format, `--coverage-file` is the exact output path. For
+**multiple** formats, `--coverage-file` is treated as a path stem; each
+format appends its conventional extension automatically — and a trailing
+known extension on the stem (e.g. `coverage.xml`) is stripped first so you
+don't end up with `coverage.xml.xml`. Example:
+
+```bash
+helm unittest \
+  --coverage-format cobertura,lcov,html,json \
+  --coverage-file ./reports/cov \
+  <chart>
+
+# writes:
+#   ./reports/cov.xml    (cobertura)
+#   ./reports/cov.info   (lcov)
+#   ./reports/cov.html   (html)
+#   ./reports/cov.json   (json)
+```
 
 The per-file **Rendered** signal (whether any test caused this template to
 contribute output) is surfaced in every format:
