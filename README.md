@@ -176,7 +176,45 @@ defined in test suite files.
   -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
   -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
+      --coverage               enable code coverage reporting for chart templates (default false)
+      --coverage-file string   write coverage report to the given path (implies --coverage)
+      --coverage-format string format for --coverage-file: json | cobertura | lcov (default json)
 ```
+
+### Code Coverage
+
+Pass `--coverage` to print a per-template coverage table after the test summary.
+Each chart template is instrumented by parsing its Go-template AST and injecting
+probe tokens at action, branch and range constructs; helm-unittest then renders
+each test job a second time through the instrumented chart and counts the
+tokens that survived in the output. Coverage rendering is isolated from the
+assertion render, so adding `--coverage` never changes test results.
+
+Output columns:
+
+* **Actions** — `{{ ... }}` expressions executed at least once.
+* **Branches** — `if`, `else`, `with`, `with-else` bodies, plus implicit
+  branches for `default` and `ternary` calls (primary vs fallback / true vs
+  false) when the call sits at the end of a pipeline with a simple field or
+  variable input.
+* **Loops** — `range` body / `range-else` entered at least once. The trailing
+  "`N iters`" annotation is the total iteration count summed across every
+  test run, so a `range` over a large list shows real loop volume even when
+  the binary coverage stat is 100%.
+
+Use `--coverage-file path/to/report` to emit a machine-readable report; this
+flag implies `--coverage`. The format is controlled by `--coverage-format`:
+
+| Format      | Flag value   | Consumed by                                                         |
+|-------------|--------------|---------------------------------------------------------------------|
+| JSON (default) | `json`    | Custom dashboards, this repo's own schema                           |
+| Cobertura XML | `cobertura` | Codecov, SonarQube, GitLab, Jenkins (Cobertura plugin), Azure DevOps |
+| LCOV        | `lcov`       | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import    |
+
+Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
+branch and loop probes are reported as branches (Cobertura `condition-coverage`
+attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
+with empty counters so consumers still see them in the file list.
 
 ### Yaml JsonPath Support
 

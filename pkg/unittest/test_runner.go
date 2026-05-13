@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -76,6 +77,9 @@ type TestRunner struct {
 	WithSubChart     bool
 	Strict           bool
 	Failfast         bool
+	Coverage         bool
+	CoverageFile     string
+	CoverageFormat   string
 	TestFiles        []string
 	ChartTestsPath   string
 	ValuesFiles      []string
@@ -86,6 +90,7 @@ type TestRunner struct {
 	chartCounting    testUnitCounting
 	snapshotCounting totalSnapshotCounting
 	testResults      []*results.TestSuiteResult
+	coverageReports  []coverage.Coverage
 }
 
 // RunV3 test suites in chart in ChartPaths.
@@ -116,7 +121,20 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 		}
 
 		tr.printChartHeader(chart.Name(), chartPath)
+
+		var tracker *coverage.Tracker
+		if tr.Coverage {
+			tracker = coverage.NewTracker(chart)
+			for _, suite := range testSuites {
+				suite.WithCoverageTracker(tracker)
+			}
+		}
+
 		chartPassed := tr.runV3SuitesOfChart(testSuites, chart)
+
+		if tracker != nil {
+			tr.coverageReports = append(tr.coverageReports, tracker.Snapshot())
+		}
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -127,7 +145,44 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 	}
 	tr.printSnapshotSummary()
 	tr.printSummary(time.Since(start))
+	tr.renderCoverage()
 	return allPassed
+}
+
+// renderCoverage prints the per-chart coverage tables collected during the run
+// and, when CoverageFile is set, writes the structured JSON report to disk.
+func (tr *TestRunner) renderCoverage() {
+	if len(tr.coverageReports) == 0 {
+		return
+	}
+	for _, cov := range tr.coverageReports {
+		coverage.RenderConsole(tr.Printer, cov)
+	}
+	if tr.CoverageFile == "" {
+		return
+	}
+	format := tr.CoverageFormat
+	if format == "" {
+		format = coverage.FormatJSON
+	}
+	// When a single chart was tested, write the chart's report directly.
+	// For multi-chart runs we still write the first chart's report at the
+	// configured path and a sibling file per additional chart, keyed by name.
+	if len(tr.coverageReports) == 1 {
+		if err := coverage.WriteReport(tr.CoverageFile, format, tr.coverageReports[0]); err != nil {
+			log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write coverage report: %v", err)
+		}
+		return
+	}
+	for i, cov := range tr.coverageReports {
+		path := tr.CoverageFile
+		if i > 0 {
+			path = fmt.Sprintf("%s.%s", tr.CoverageFile, cov.ChartName)
+		}
+		if err := coverage.WriteReport(path, format, cov); err != nil {
+			log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write coverage report for %s: %v", cov.ChartName, err)
+		}
+	}
 }
 
 // getTestSuites retrieves the list of test suites for the given chart.

@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -296,8 +297,71 @@ func (t *TestJob) RunV3(
 	}
 
 	result.Passed, result.AssertsResult = t.runAssertions(assertionsConfig)
+
+	// Coverage runs as a side activity: render the same job against the
+	// tracker's instrumented chart, then absorb hit tokens from the output.
+	// Failures here are logged but never fail the user's test.
+	if tracker := t.configOrDefault().coverageTracker; tracker != nil {
+		if covOutput, covErr := t.renderForCoverage([]byte(userValues), tracker); covErr != nil {
+			log.WithField(LOG_TEST_JOB, "coverage-render").Debugf("coverage render failed: %v", covErr)
+		} else {
+			tracker.Absorb(covOutput)
+		}
+	}
+
 	result.Duration = time.Since(startTestRun)
 	return result
+}
+
+// renderForCoverage runs a duplicate render through the tracker's instrumented
+// chart so probe tokens are emitted into the output. The returned map is the
+// raw rendered-files map straight from v3engine.Render and is intended only
+// for token scanning — its contents are otherwise discarded.
+func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker) (map[string]string, error) {
+	if tracker == nil {
+		return nil, nil
+	}
+	instrumented := tracker.InstrumentedChart()
+	if instrumented == nil {
+		return nil, nil
+	}
+
+	values, err := v3util.ReadValues(userValues)
+	if err != nil {
+		return nil, err
+	}
+	options := *t.releaseV3Option()
+	if t.Release.Name != "" {
+		if err = v3util.ValidateReleaseName(t.Release.Name); err != nil {
+			return nil, err
+		}
+	}
+
+	// ProcessDependenciesWithMerge mutates the chart in place to apply
+	// dependency-condition logic. We call it on the instrumented copy so it
+	// sees the same value-driven enable/disable decisions as the primary
+	// render. Mutating the tracker's chart between renders is acceptable
+	// because the operation is deterministic for a given (chart, values) pair.
+	if err = v3util.ProcessDependenciesWithMerge(instrumented, values); err != nil {
+		return nil, err
+	}
+
+	vals, err := v3util.ToRenderValuesWithSchemaValidation(instrumented, values.AsMap(), options, t.capabilitiesV3(), false)
+	if err != nil {
+		return nil, err
+	}
+
+	t.ModifyChartMetadata(instrumented)
+	templatesToAssert := t.defaultTemplatesToAssert
+	if len(templatesToAssert) == 0 {
+		templatesToAssert = []string{multiWildcard}
+	}
+	filtered := CopyV3Chart(t.chartRoute, instrumented.Name(), templatesToAssert, t.defaultTemplatesToSkip, instrumented)
+
+	if len(t.KubernetesProvider.Objects) > 0 {
+		return v3engine.RenderWithClientProvider(filtered, vals, &t.KubernetesProvider)
+	}
+	return v3engine.Render(filtered, vals)
 }
 
 // liberally borrows from helm-template

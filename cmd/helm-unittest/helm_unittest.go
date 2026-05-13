@@ -21,6 +21,9 @@ type testOptions struct {
 	colored        bool
 	updateSnapshot bool
 	withSubChart   bool
+	coverage       bool
+	coverageFile   string
+	coverageFormat string
 	testFiles      []string
 	valuesFiles    []string
 	outputFile     string
@@ -88,6 +91,10 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		testConfig.testFiles = []string{defaultFilePattern}
 	}
 
+	if testConfig.coverageFile != "" {
+		testConfig.coverage = true
+	}
+
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 	printer := printer.NewPrinter(os.Stdout, colored)
 	testRunner = unittest.TestRunner{
@@ -97,6 +104,9 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		WithSubChart:   testConfig.withSubChart,
 		Strict:         testConfig.useStrict,
 		Failfast:       testConfig.useFailfast,
+		Coverage:       testConfig.coverage,
+		CoverageFile:   testConfig.coverageFile,
+		CoverageFormat: testConfig.coverageFormat,
 		TestFiles:      testConfig.testFiles,
 		ValuesFiles:    testConfig.valuesFiles,
 		OutputFile:     testConfig.outputFile,
@@ -182,6 +192,21 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.debugLogging, "debugPlugin", "d", false,
 		"enable verbose output",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.coverage, "coverage", false,
+		"enable code coverage reporting for chart templates",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.coverageFile, "coverage-file", "",
+		"write coverage report to the given path (implies --coverage)",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.coverageFormat, "coverage-format", "json",
+		"format for --coverage-file: json | cobertura | lcov",
 	)
 }
 
