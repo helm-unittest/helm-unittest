@@ -17,8 +17,5 @@ jobs:
       plugin_tags_per_page: 2
     permissions:
       contents: write # to publish assets to the release
-      packages: write
-      attestations: write
-      id-token: write
     secrets: 
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
