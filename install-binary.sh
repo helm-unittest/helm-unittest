@@ -3,7 +3,10 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PROJECT_NAME="helm-unittest"
-PROJECT_GH="helm-unittest/$PROJECT_NAME"
+# PROJECT_GH can be overridden via HELM_UNITTEST_PROJECT_GH so forks that
+# publish their own prebuilt releases (e.g. owner/helm-unittest) are picked
+# up instead of upstream.
+PROJECT_GH="${HELM_UNITTEST_PROJECT_GH:-helm-unittest/$PROJECT_NAME}"
 PROJECT_CHECKSUM_FILE="$PROJECT_NAME-checksum.sha"
 HELM_PLUGIN_PATH="$HELM_PLUGIN_DIR"
 
@@ -27,7 +30,35 @@ if [ "$SKIP_BIN_DOWNLOAD" = "1" ]; then
   cp -f untt $HELM_PLUGIN_PATH/untt
   chmod +x $HELM_PLUGIN_PATH/untt
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
-  exit 
+  exit
+fi
+
+# buildFromSource compiles the plugin binary from the repository checkout
+# Helm has cloned into $HELM_PLUGIN_PATH. Used for fork branches / custom
+# tags that don't have a matching prebuilt release.
+buildFromSource() {
+  echo "Building $PROJECT_NAME from source in $HELM_PLUGIN_PATH"
+  if ! type "go" >/dev/null 2>&1; then
+    echo "Cannot build from source: 'go' is not on PATH."
+    echo "Install Go 1.24+ or set HELM_UNITTEST_PROJECT_GH to a fork that publishes releases."
+    return 1
+  fi
+  if [ ! -f "$HELM_PLUGIN_PATH/go.mod" ]; then
+    echo "Cannot build from source: no go.mod found in $HELM_PLUGIN_PATH."
+    return 1
+  fi
+  (cd "$HELM_PLUGIN_PATH" && go build -o untt ./cmd/helm-unittest) || return 1
+  chmod +x "$HELM_PLUGIN_PATH/untt"
+  echo "$PROJECT_NAME built from source into $HELM_PLUGIN_PATH"
+  return 0
+}
+
+# Explicit opt-in: build straight from source without trying the download
+# path. Useful in CI when you know the install must use the checked-out
+# branch and not whatever happens to be tagged in plugin.yaml.
+if [ "$BUILD_FROM_SOURCE" = "1" ] || [ "$BUILD_FROM_SOURCE" = "true" ]; then
+  buildFromSource && exit 0
+  exit 1
 fi
 
 # initArch discovers the architecture for this system.
@@ -98,7 +129,10 @@ downloadFile() {
   mkdir -p "$PLUGIN_TMP_FOLDER"
   echo "Downloading "$DOWNLOAD_URL" to location $PLUGIN_TMP_FOLDER"
   if type "curl" >/dev/null 2>&1; then
-      (cd "$PLUGIN_TMP_FOLDER" && curl -LO "$DOWNLOAD_URL")
+      # -f makes curl exit non-zero on HTTP errors (404 etc.) instead of
+      # silently writing an HTML error page to disk; the auto-fallback to a
+      # source build depends on that.
+      (cd "$PLUGIN_TMP_FOLDER" && curl -f -LO "$DOWNLOAD_URL")
   elif type "wget" >/dev/null 2>&1; then
       wget -P "$PLUGIN_TMP_FOLDER" "$DOWNLOAD_URL"
   fi
@@ -164,6 +198,28 @@ testVersion() {
   untt -h
 }
 
+# detectFork returns 0 if the cloned repo's `origin` remote is NOT the
+# canonical upstream and the user has not overridden PROJECT_GH. This is the
+# `helm plugin install https://github.com/<fork>/helm-unittest.git ...` case:
+# downloading a release tarball from upstream would silently install a
+# different binary than the user's fork-branch contains, so we build from
+# source instead.
+detectFork() {
+  # If the user explicitly told us where to download from, trust them.
+  if [ -n "$HELM_UNITTEST_PROJECT_GH" ]; then
+    return 1
+  fi
+  if [ ! -d "$HELM_PLUGIN_PATH/.git" ]; then
+    return 1
+  fi
+  local remoteUrl
+  remoteUrl=$(cd "$HELM_PLUGIN_PATH" && git config --get remote.origin.url 2>/dev/null || echo "")
+  case "$remoteUrl" in
+    ""|*helm-unittest/helm-unittest*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
 # Execution
 
 #Stop execution on any error
@@ -171,8 +227,22 @@ trap "fail_trap" EXIT
 set -e
 initArch
 initOS
-verifySupported
-getDownloadURL
-downloadFile
-installFile
-testVersion
+
+# Fork installs (where origin points at a non-upstream repo) build from
+# source so the user's branch contents are what actually runs.
+if detectFork; then
+  echo "Detected fork install: building from source so the checked-out branch is used."
+  buildFromSource && testVersion && exit 0
+  exit 1
+fi
+
+# Try the prebuilt-release path first; if any step in it errors, fall back to
+# a source build when a Go toolchain is available.
+if (set -e; verifySupported && getDownloadURL && downloadFile && installFile); then
+  testVersion
+else
+  echo
+  echo "Prebuilt download was unavailable (likely because plugin.yaml's version does not match a published release on $PROJECT_GH)."
+  echo "Falling back to building from source."
+  buildFromSource && testVersion
+fi

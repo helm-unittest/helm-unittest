@@ -181,6 +181,37 @@ defined in test suite files.
       --coverage-format string format for --coverage-file: json | cobertura | lcov (default json)
 ```
 
+### Installing from a Fork or Branch
+
+`install-binary.sh` first tries to download a prebuilt release tarball
+matching `plugin.yaml`'s `version` from the GitHub repo named in
+`PROJECT_GH` (default `helm-unittest/helm-unittest`). For a fork branch
+that has no matching release, this would silently install the wrong
+binary, so the script now:
+
+1. Detects fork installs automatically — if the cloned repo's
+   `origin` remote does not point at `helm-unittest/helm-unittest`, the
+   script builds the binary from source instead of downloading.
+2. Falls back to building from source when the prebuilt download fails
+   (404, network error, etc.) and a Go toolchain is available.
+
+Environment knobs:
+
+| Variable | Effect |
+|---|---|
+| `BUILD_FROM_SOURCE=1` | Skip the download path entirely and always build from source. Requires `go` on `PATH`. |
+| `HELM_UNITTEST_PROJECT_GH=<owner>/<repo>` | Download prebuilt binaries from a fork that publishes its own releases. Disables the fork-detection short-circuit. |
+| `SKIP_BIN_DOWNLOAD=1` | Use a pre-staged `untt` binary already sitting next to the script. |
+| `SKIP_BIN_INSTALL=1` | Don't install a binary at all (script noop). |
+
+So CI pipelines can pin to a fork branch with:
+
+```bash
+helm plugin install https://github.com/<owner>/helm-unittest.git --version <branch-or-tag>
+```
+
+and the source build runs automatically (Go is required on the runner).
+
 ### Code Coverage
 
 Pass `--coverage` to print a per-template coverage table after the test summary.
