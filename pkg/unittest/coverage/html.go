@@ -52,7 +52,7 @@ const htmlStyles = `
   table.files { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
   .files th, .files td { text-align: left; padding: 6px 12px; border-bottom: 1px solid #d0d7de; }
   .files th { font-weight: 600; background: #f6f8fa; }
-  .files td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .files th.num, .files td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .files a { color: #0969da; text-decoration: none; }
   .files a:hover { text-decoration: underline; }
   .pct-high { color: #1a7f37; }
@@ -138,7 +138,7 @@ func writeHTMLFileList(b *strings.Builder, cov Coverage) {
 		b.WriteString(`<p>(no templates were instrumented)</p>`)
 		return
 	}
-	b.WriteString(`<table class="files"><thead><tr><th>File</th><th>Actions</th><th>Branches</th><th>Loops</th><th>Iters</th></tr></thead><tbody>`)
+	b.WriteString(`<table class="files"><thead><tr><th>File</th><th class="num">Actions</th><th class="num">Branches</th><th class="num">Loops</th><th class="num">Iters</th></tr></thead><tbody>`)
 	for _, f := range cov.Files {
 		fmt.Fprintf(b,
 			`<tr><td><a href="#%s">%s</a></td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>`,
