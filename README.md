@@ -178,7 +178,7 @@ defined in test suite files.
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
       --coverage               enable code coverage reporting for chart templates (default false)
       --coverage-file string   write coverage report to the given path (implies --coverage)
-      --coverage-format string format for --coverage-file: json | cobertura | lcov (default json)
+      --coverage-format string format for --coverage-file: json | cobertura | lcov | html (default json)
 ```
 
 ### Installing from a Fork or Branch
@@ -236,11 +236,12 @@ Output columns:
 Use `--coverage-file path/to/report` to emit a machine-readable report; this
 flag implies `--coverage`. The format is controlled by `--coverage-format`:
 
-| Format      | Flag value   | Consumed by                                                         |
-|-------------|--------------|---------------------------------------------------------------------|
-| JSON (default) | `json`    | Custom dashboards, this repo's own schema                           |
+| Format      | Flag value    | Consumed by                                                          |
+|-------------|---------------|----------------------------------------------------------------------|
+| JSON (default) | `json`     | Custom dashboards, this repo's own schema                            |
 | Cobertura XML | `cobertura` | Codecov, SonarQube, GitLab, Jenkins (Cobertura plugin), Azure DevOps |
-| LCOV        | `lcov`       | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import    |
+| LCOV          | `lcov`      | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import     |
+| HTML          | `html`      | Standalone single-file page — open in any browser, attach as a CI artifact. Source code is embedded with per-line colour coding (covered / missed / partial) and a sortable file list. |
 
 Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
 branch and loop probes are reported as branches (Cobertura `condition-coverage`

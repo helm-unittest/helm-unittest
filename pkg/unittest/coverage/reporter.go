@@ -196,6 +196,7 @@ const (
 	FormatJSON      = "json"
 	FormatCobertura = "cobertura"
 	FormatLCOV      = "lcov"
+	FormatHTML      = "html"
 )
 
 // WriteReport dispatches to the writer for the requested format. An unknown
@@ -209,8 +210,10 @@ func WriteReport(path, format string, cov Coverage) error {
 		return WriteCobertura(path, cov)
 	case FormatLCOV:
 		return WriteLCOV(path, cov)
+	case FormatHTML:
+		return WriteHTML(path, cov)
 	default:
-		return fmt.Errorf("unsupported coverage format %q (want json, cobertura, or lcov)", format)
+		return fmt.Errorf("unsupported coverage format %q (want json, cobertura, lcov, or html)", format)
 	}
 }
 

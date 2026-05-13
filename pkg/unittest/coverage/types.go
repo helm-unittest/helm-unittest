@@ -38,17 +38,25 @@ type FileCoverage struct {
 	Loops       CountStat
 	MissedLines []int          // 1-based source lines that were never executed
 	Lines       []LineCoverage // per-line breakdown, sorted by Line
+	// Source is the original template bytes. It is needed to render the HTML
+	// report's source-annotated view and is therefore kept on the snapshot;
+	// JSON output skips it to keep reports small.
+	Source []byte `json:"-"`
 }
 
 // LineCoverage is the aggregated coverage for a single source line within a
 // template file. Hits is the maximum hit count across every probe that sits on
 // the line — it represents "how many times this line executed". Branches lists
 // each branch/loop probe on the line individually, which is what LCOV and
-// Cobertura need in order to emit per-condition data.
+// Cobertura need in order to emit per-condition data. ProbesCovered /
+// ProbesTotal are what the HTML report uses to colour the line (covered /
+// missed / partial) without needing to re-walk individual probe hits.
 type LineCoverage struct {
-	Line     int
-	Hits     int
-	Branches []BranchCoverage
+	Line          int
+	Hits          int
+	Branches      []BranchCoverage
+	ProbesCovered int
+	ProbesTotal   int
 }
 
 // BranchCoverage is a single branch-style probe (if / else / with / range body

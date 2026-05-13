@@ -206,7 +206,7 @@ func InitPluginFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&testConfig.coverageFormat, "coverage-format", "json",
-		"format for --coverage-file: json | cobertura | lcov",
+		"format for --coverage-file: json | cobertura | lcov | html",
 	)
 }
 
