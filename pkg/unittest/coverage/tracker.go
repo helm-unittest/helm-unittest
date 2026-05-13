@@ -44,6 +44,23 @@ type Tracker struct {
 	// (and all subcharts' Templates) have been swapped for instrumented bytes.
 	// We retain it so test jobs can reuse it without re-instrumenting per run.
 	instrumentedChart *v3chart.Chart
+
+	// includeSubcharts controls whether dependency-chart templates are
+	// instrumented. When false, subchart templates are copied into the
+	// instrumented chart verbatim so the parent's `include`/`template` calls
+	// still work, but no probes are registered for them and they stay out of
+	// the coverage report. Mirrors helm-unittest's --with-subchart flag.
+	includeSubcharts bool
+}
+
+// TrackerOption configures a Tracker at construction time.
+type TrackerOption func(*Tracker)
+
+// WithSubcharts controls whether dependency-chart templates are instrumented
+// and included in coverage reports. Default is true (matches helm-unittest's
+// --with-subchart default).
+func WithSubcharts(include bool) TrackerOption {
+	return func(t *Tracker) { t.includeSubcharts = include }
 }
 
 // NewTracker constructs a tracker by instrumenting every template in the chart
@@ -53,20 +70,29 @@ type Tracker struct {
 //
 // The returned tracker owns its own deep copy of the chart; the input is not
 // modified.
-func NewTracker(chart *v3chart.Chart) *Tracker {
+func NewTracker(chart *v3chart.Chart, opts ...TrackerOption) *Tracker {
 	t := &Tracker{
-		chartName:     chart.Name(),
-		templateMetas: map[string]TemplateMeta{},
-		renderedFiles: map[string]bool{},
+		chartName:        chart.Name(),
+		templateMetas:    map[string]TemplateMeta{},
+		renderedFiles:    map[string]bool{},
+		includeSubcharts: true,
 	}
-	t.instrumentedChart = t.deepCopyAndInstrument(chart, chart.Name())
+	for _, opt := range opts {
+		opt(t)
+	}
+	t.instrumentedChart = t.deepCopyAndInstrument(chart, chart.Name(), true)
 	return t
 }
 
 // deepCopyAndInstrument mirrors FullCopyV3Chart but rewrites template Data with
 // instrumented bytes. It must produce a chart whose structure is otherwise
 // identical to FullCopyV3Chart's output so the engine treats it the same way.
-func (t *Tracker) deepCopyAndInstrument(in *v3chart.Chart, route string) *v3chart.Chart {
+//
+// When instrument is false the templates are copied verbatim — useful for
+// subcharts when the user has set --with-subchart=false: Helm still renders
+// them (so `include`/`template` from the parent still resolves), but no probes
+// are registered for them so they don't appear in coverage reports.
+func (t *Tracker) deepCopyAndInstrument(in *v3chart.Chart, route string, instrument bool) *v3chart.Chart {
 	out := new(v3chart.Chart)
 
 	// Raw files (Chart.yaml, values.yaml, ...) — copy as-is.
@@ -89,13 +115,13 @@ func (t *Tracker) deepCopyAndInstrument(in *v3chart.Chart, route string) *v3char
 		out.Files = append(out.Files, &c)
 	}
 
-	// Templates — instrument each.
+	// Templates — instrument each (or copy verbatim when instrument is false).
 	for _, tmpl := range in.Templates {
 		copied := &v3chart.File{Name: tmpl.Name}
 
 		// Only instrument YAML / TPL templates. Other files (txt, json, etc.)
 		// might appear in templates/ and we don't tamper with them.
-		if shouldInstrument(tmpl.Name) {
+		if instrument && shouldInstrument(tmpl.Name) {
 			key := metaKey(route, tmpl.Name)
 			instrumented, meta := t.Instrument(key, tmpl.Data)
 			copied.Data = instrumented
@@ -107,12 +133,14 @@ func (t *Tracker) deepCopyAndInstrument(in *v3chart.Chart, route string) *v3char
 	}
 
 	// Recurse into dependencies, mirroring FullCopyV3Chart's route convention.
+	// Subcharts are instrumented only when the tracker was configured to
+	// include them (i.e. helm-unittest --with-subchart is true).
 	depRoute := func(dep *v3chart.Chart) string {
 		return filepath.ToSlash(filepath.Join(route, "charts", dep.Name()))
 	}
 	deps := make([]*v3chart.Chart, 0, len(in.Dependencies()))
 	for _, d := range in.Dependencies() {
-		deps = append(deps, t.deepCopyAndInstrument(d, depRoute(d)))
+		deps = append(deps, t.deepCopyAndInstrument(d, depRoute(d), t.includeSubcharts))
 	}
 	out.SetDependencies(deps...)
 

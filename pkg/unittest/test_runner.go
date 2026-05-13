@@ -124,7 +124,12 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 
 		var tracker *coverage.Tracker
 		if tr.Coverage {
-			tracker = coverage.NewTracker(chart)
+			// Mirror --with-subchart in coverage: when subchart tests are
+			// excluded from the run, their templates also stay out of the
+			// coverage report (but they're still copied into the
+			// instrumented chart so the parent's include/template calls
+			// continue to resolve).
+			tracker = coverage.NewTracker(chart, coverage.WithSubcharts(tr.WithSubChart))
 			for _, suite := range testSuites {
 				suite.WithCoverageTracker(tracker)
 			}

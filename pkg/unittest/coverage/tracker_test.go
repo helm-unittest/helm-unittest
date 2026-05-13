@@ -1,6 +1,7 @@
 package coverage
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -159,6 +160,88 @@ metadata:
 		"static.yaml has no probes but renders non-empty content")
 	assert.False(t, byName["covtest/templates/gated.yaml"].Rendered,
 		"gated.yaml renders empty when .Values.on is false")
+}
+
+func TestTracker_WithSubcharts_FalseSkipsSubchartTemplates(t *testing.T) {
+	// Parent chart that includes a helper defined in a subchart.
+	parent := buildTestChart("parentchart", map[string]string{
+		"templates/cm.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    team: {{ include "sub.label" . }}
+`,
+	})
+	sub := buildTestChart("subchart", map[string]string{
+		"templates/_helpers.tpl": `{{- define "sub.label" -}}
+{{- .Values.team | default "default" -}}
+{{- end -}}`,
+		"templates/svc.yaml": `apiVersion: v1
+kind: Service
+metadata:
+  name: sub-svc
+`,
+	})
+	parent.SetDependencies(sub)
+
+	tracker := NewTracker(parent, WithSubcharts(false))
+	instrumented := tracker.InstrumentedChart()
+
+	// The instrumented chart must still carry the subchart so the parent's
+	// `include` call resolves at render time.
+	require.Len(t, instrumented.Dependencies(), 1, "subchart still attached")
+
+	vals, err := v3util.ToRenderValues(instrumented, map[string]any{}, v3util.ReleaseOptions{
+		Name: "rel", Namespace: "ns", IsInstall: true,
+	}, nil)
+	require.NoError(t, err)
+	out, err := v3engine.Render(instrumented, vals)
+	require.NoError(t, err)
+	tracker.Absorb(out)
+
+	cov := tracker.Snapshot()
+	for _, f := range cov.Files {
+		assert.NotContains(t, f.Name, "/charts/subchart/",
+			"subchart template %q must not appear when WithSubcharts(false)", f.Name)
+	}
+	// Parent chart's own template is still there.
+	var sawParent bool
+	for _, f := range cov.Files {
+		if f.Name == "parentchart/templates/cm.yaml" {
+			sawParent = true
+		}
+	}
+	assert.True(t, sawParent, "parent template should still be reported")
+}
+
+func TestTracker_WithSubcharts_DefaultIncludes(t *testing.T) {
+	// Same chart but with subcharts enabled (default) — subchart templates
+	// must show up in the report.
+	parent := buildTestChart("parentchart", map[string]string{
+		"templates/cm.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    team: {{ include "sub.label" . }}
+`,
+	})
+	sub := buildTestChart("subchart", map[string]string{
+		"templates/_helpers.tpl": `{{- define "sub.label" -}}
+{{- .Values.team | default "default" -}}
+{{- end -}}`,
+	})
+	parent.SetDependencies(sub)
+
+	tracker := NewTracker(parent) // default: WithSubcharts(true)
+	cov := tracker.Snapshot()
+
+	var sawSub bool
+	for _, f := range cov.Files {
+		if strings.Contains(f.Name, "/charts/subchart/") {
+			sawSub = true
+		}
+	}
+	assert.True(t, sawSub, "subchart template should appear by default")
 }
 
 func TestTracker_PartialTemplateInstrumented(t *testing.T) {

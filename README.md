@@ -243,6 +243,12 @@ Output columns:
   all three but `no` for Used). The footer row shows the rendered count as
   `used/total`.
 
+Coverage respects the existing `--with-subchart` flag: when it's set to
+`false`, subchart templates are excluded from coverage instrumentation and
+the report. They are still copied into the chart that's rendered for
+coverage so `include "subchart.foo"` calls from the parent chart still
+work — only their probes and report rows are dropped.
+
 Use `--coverage-file path/to/report` to emit a machine-readable report; this
 flag implies `--coverage`. The format is controlled by `--coverage-format`,
 which accepts a single format or a comma-separated list:
