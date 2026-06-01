@@ -16,6 +16,11 @@ jobs:
       oci_tag_latest: false
       publish_release_artifacts: false
       run_docker_publish: false
+    permissions:
+      contents: write # to publish assets to the release
+      packages: write
+      attestations: write
+      id-token: write
     secrets:
       GPG_KEYRING_BASE64: ${{ secrets.GPG_KEYRING_BASE64 }}
       GPG_PASSPHRASE_BASE64: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
