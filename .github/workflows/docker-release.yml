@@ -15,9 +15,9 @@ jobs:
       oci_push_enabled: false
       oci_tag_latest: false
       publish_release_artifacts: false
-      run_docker_publish: true
       helm_tags_per_page: 20
       plugin_tags_per_page: 2
+      run_docker_publish: true
     permissions:
       contents: write # to publish assets to the release
       packages: write
