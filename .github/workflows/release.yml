@@ -183,7 +183,7 @@ jobs:
 
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
-    if: ${{ always() && (needs.release.result == 'success') && inputs.run_docker_publish }} # only run when release job is successful and docker publish is enabled, skip when release job is skipped
+    if: ${{ always() && (needs.release.result == 'success' || needs.release.result == 'skipped') && inputs.run_docker_publish }}
     permissions:
       contents: write # to publish assets to the release
     runs-on: ubuntu-24.04
@@ -256,7 +256,7 @@ jobs:
           overwrite: true
 
   merge:
-    if: ${{ always() && (needs.release.result == 'success') && inputs.run_docker_publish }} # only run when release job is successful and docker publish is enabled, skip when release job is skipped
+    if: ${{ always() && (needs.release.result == 'success' || needs.release.result == 'skipped') && inputs.run_docker_publish }}
     permissions:
       contents: read # to download assets from the release
     runs-on: ubuntu-24.04
