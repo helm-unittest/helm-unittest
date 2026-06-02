@@ -1,22 +1,23 @@
-name: "Test Helm-Unittest Release Signing"
+name: "Helm-Unittest Release"
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: read
 
 jobs:
-  test-signing:
+  full-release:
     name: run signing test via reusable release workflow
     uses: ./.github/workflows/release.yml
     with:
       run_release_job: true
       oci_push_enabled: true
-      oci_tag_suffix: -alpha
-      oci_tag_latest: false
-      publish_release_artifacts: false
-      run_docker_publish: false
+      oci_tag_latest: true
+      publish_release_artifacts: true
+      run_docker_publish: true
     permissions:
       contents: write # to publish assets to the release
       packages: write
@@ -25,3 +26,4 @@ jobs:
     secrets:
       GPG_KEYRING_BASE64: ${{ secrets.GPG_KEYRING_BASE64 }}
       GPG_PASSPHRASE_BASE64: ${{ secrets.GPG_PASSPHRASE_BASE64 }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
