@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   full-release:
-    name: run signing test via reusable release workflow
+    name: run full release via reusable release workflow
     uses: ./.github/workflows/release.yml
     with:
       run_release_job: true
