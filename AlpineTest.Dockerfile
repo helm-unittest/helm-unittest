@@ -4,13 +4,13 @@ FROM --platform=$BUILDPLATFORM alpine@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f0
 # docker buildx build --load --no-cache --platform linux/amd64 --build-arg HELM_VERSION=3.13.0 -t alpine/helm-unittest:test -f AlpineTest.Dockerfile .
 
 ARG BUILDPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 ARG HELM_VERSION
 
 COPY plugin.yaml helm-unittest/plugin.yaml
 COPY install-binary.sh helm-unittest/install-binary.sh
-COPY untt helm-unittest/untt-linux-amd64
+COPY untt helm-unittest/untt-${TARGETOS}-${TARGETARCH}
 
 ENV SKIP_BIN_INSTALL=1
 ENV HELM_BASE_URL="https://get.helm.sh"
@@ -20,7 +20,9 @@ ENV PLUGIN_URL="helm-unittest"
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
 # Ensure to have latest packages
-RUN apk upgrade --no-cache && \
+RUN test -n "${TARGETOS}" && \
+    test -n "${TARGETARCH}" && \
+    apk upgrade --no-cache && \
     apk add --no-cache --update ca-certificates curl git libc6-compat yq && \
     curl --proto "=https" -L "${HELM_BASE_URL}/${HELM_TAR_FILE}" |tar xvz && \
     mv "${TARGETOS}-${TARGETARCH}/helm" /usr/bin/helm && \

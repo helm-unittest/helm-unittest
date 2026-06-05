@@ -12,7 +12,7 @@ HELM_PLUGIN_PATH="$HELM_PLUGIN_DIR"
 # on Windows where helm returns a Windows path but we
 # need a Unix path
 if type cygpath >/dev/null 2>&1; then
-  echo Use Sygpath
+  echo Use Cygpath
   HELM_PLUGIN_PATH=$(cygpath -u "$HELM_PLUGIN_PATH")
 fi
 
@@ -67,7 +67,7 @@ initOS() {
 verifySupported() {
   local supported="linux-amd64\nlinux-arm64\nlinux-s390x\nlinux-ppc64le\nmacos-amd64\nmacos-arm64\nwindows-amd64"
   if ! echo "$supported" | grep -q "$OS-$ARCH"; then
-    echo "No prebuild binary for $OS-$ARCH."
+    echo "No prebuilt binary for $OS-$ARCH."
     exit 1
   fi
 

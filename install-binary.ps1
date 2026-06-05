@@ -47,7 +47,7 @@ function Test-SupportedPlatform {
     
     $platform = "$OS-$ARCH"
     if ($platform -notin $supported) {
-        Write-Error "No prebuild binary for $OS-$ARCH."
+        Write-Error "No prebuilt binary for $OS-$ARCH."
         exit 1
     }
 }
