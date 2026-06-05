@@ -1,5 +1,7 @@
-1.1.1 / 
+1.1.1 / 2026-06-05
 ==================
+- Publish official plugin on artifacthub.io (resolves #802)
+- Better maintainable release process (resolves #856, resolves #790)
 - Update packages to latest patch versions
 - Update pipeline actions
 - Update documentation (credits @Semih702)
