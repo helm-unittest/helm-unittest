@@ -20,8 +20,8 @@ ENV PLUGIN_URL="helm-unittest"
 ENV HELM_DATA_HOME=/usr/local/share/helm
 
 # Ensure to have latest packages
-RUN test -n "${TARGETOS}" && \ 
-    test -n "${TARGETARCH}" && \ 
+RUN test -n "${TARGETOS}" && \
+    test -n "${TARGETARCH}" && \
     apk upgrade --no-cache && \
     apk add --no-cache --update ca-certificates curl git libc6-compat yq && \
     curl --proto "=https" -L "${HELM_BASE_URL}/${HELM_TAR_FILE}" |tar xvz && \
