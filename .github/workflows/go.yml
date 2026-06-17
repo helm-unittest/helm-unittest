@@ -70,7 +70,7 @@ jobs:
 
       - name: SonarCloud Scan
         # https://github.com/SonarSource/sonarqube-scan-action
-        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
         if: matrix.os == 'ubuntu-24.04' && env.SONAR_TOKEN != ''
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -132,7 +132,7 @@ jobs:
           skip-files: /usr/bin/helm
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         if: always()
         with:
           sarif_file: trivy-results-${{ matrix.image }}.sarif
