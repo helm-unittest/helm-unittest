@@ -53,7 +53,7 @@ env:
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
   GO_VERSION: 1.26.x
-  HELM_VERSION: "4.1.4"
+  HELM_VERSION: "4.2.1"
 
 permissions:
   contents: read
