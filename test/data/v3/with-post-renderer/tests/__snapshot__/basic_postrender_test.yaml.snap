@@ -1,6 +1,1 @@
-manifest should match snapshot:
-  1: |
-    metadata:
-      annotations:
-        appended: new
-        foo: bar
+{}
