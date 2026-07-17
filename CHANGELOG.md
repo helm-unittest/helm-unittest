@@ -1,3 +1,8 @@
+1.2.0 / 2026-07-17
+==================
+- Add opt-in parallel test suite execution with `--parallel` and `--max-workers` flags
+- Fix global capabilities mutation when overriding kubernetes version (data race under parallel runs)
+
 1.1.1 / 2026-06-05
 ==================
 - Publish official plugin on artifacthub.io (resolves #802)

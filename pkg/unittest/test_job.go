@@ -564,7 +564,10 @@ func (t *TestJob) releaseV3Option() *v3util.ReleaseOptions {
 // function returns a v3util.Capabilities struct based on the TestJob's capabilities.
 // It overrides the KubeVersion field if majorVersion or minorVersion are set
 func (t *TestJob) capabilitiesV3() *v3util.Capabilities {
-	capabilities := v3util.DefaultCapabilities
+	// Copy the shared global so we never mutate v3util.DefaultCapabilities
+	// (a data race under parallel runs). APIVersions is fully replaced below,
+	// so the shallow copy of that slice is never observed.
+	capabilities := v3util.DefaultCapabilities.Copy()
 
 	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
 	minorVersion := cmp.Or(t.Capabilities.MinorVersion, capabilities.KubeVersion.Minor)

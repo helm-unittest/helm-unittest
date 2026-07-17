@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -21,6 +24,10 @@ import (
 )
 
 const LOG_TEST_RUNNER = "test-runner"
+
+// suiteStartHook is called at the start of running each suite. It is nil in normal
+// operation and exists only so tests can observe suite scheduling concurrency.
+var suiteStartHook func()
 
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
@@ -80,6 +87,8 @@ type TestRunner struct {
 	Strict               bool
 	Failfast             bool
 	SkipSchemaValidation bool
+	Parallel             bool
+	MaxWorkers           int
 	TestFiles            []string
 	ChartTestsPath       string
 	ValuesFiles          []string
@@ -430,39 +439,193 @@ func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3cha
 	return tr.getV3TestSuitesWithValues(chartPath, chartRoute, chart, nil)
 }
 
-// runV3SuitesOfChart runs suite files of the chart and print output
+// runV3SuitesOfChart runs suite files of the chart and print output.
+// It dispatches to the parallel path when enabled (and not in debug render mode),
+// otherwise runs sequentially with identical output to the historical behavior.
 func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Chart) bool {
+	if tr.Parallel && tr.RenderPath == "" {
+		return tr.runV3SuitesOfChartParallel(suites, chart)
+	}
+	return tr.runV3SuitesOfChartSequential(suites, chart)
+}
+
+// suiteRunResult holds the outcome of running one suite: every result that must be
+// printed and counted (toPrint), and the single suite result that should be appended
+// to the formatter input (toAppend, nil for error-synthesized results). This mirrors
+// the historical behavior where snapshot cache/store errors were printed and counted
+// but never added to tr.testResults.
+type suiteRunResult struct {
+	toPrint  []*results.TestSuiteResult
+	toAppend *results.TestSuiteResult
+}
+
+// failFast reports whether the primary suite result requested a fail-fast stop.
+func (r suiteRunResult) failFast() bool {
+	return r.toAppend != nil && r.toAppend.FailFast
+}
+
+// runV3SuitesOfChartSequential runs the suites one after another, printing as it goes.
+func (tr *TestRunner) runV3SuitesOfChartSequential(suites []*TestSuite, chart *v3chart.Chart) bool {
 	chartPassed := true
 	for _, suite := range suites {
-		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)
-		if err != nil {
-			tr.handleSuiteResult(&results.TestSuiteResult{
-				FilePath:  suite.definitionFile,
-				ExecError: err,
-			})
-			chartPassed = false
-			continue
+		suiteResult := tr.runSingleSuite(suite, chart)
+		for _, result := range suiteResult.toPrint {
+			chartPassed = chartPassed && result.Passed
+			tr.handleSuiteResult(result)
 		}
-		suite.skipSchemaValidation = tr.SkipSchemaValidation
-		result := suite.RunV3(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
-		chartPassed = chartPassed && result.Passed
-		tr.handleSuiteResult(result)
-		tr.testResults = append(tr.testResults, result)
-
-		_, storeErr := snapshotCache.StoreToFileIfNeeded()
-		if storeErr != nil {
-			tr.handleSuiteResult(&results.TestSuiteResult{
-				FilePath:  suite.SnapshotFileUrl(),
-				ExecError: storeErr,
-			})
-			chartPassed = false
+		if suiteResult.toAppend != nil {
+			tr.testResults = append(tr.testResults, suiteResult.toAppend)
 		}
 
-		if !chartPassed && result.FailFast {
+		if !chartPassed && suiteResult.failFast() {
 			break
 		}
 	}
 
+	return chartPassed
+}
+
+// runSingleSuite runs one suite and returns its results. The snapshot cache-creation
+// error and the store error are synthesized as extra results that get printed and
+// counted but are kept out of tr.testResults, matching the original sequential path.
+// It never prints or mutates runner counters, so it is safe to call concurrently for
+// suites that do not share a snapshot file.
+func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v3chart.Chart) suiteRunResult {
+	if suiteStartHook != nil {
+		suiteStartHook()
+	}
+
+	snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)
+	if err != nil {
+		return suiteRunResult{
+			toPrint: []*results.TestSuiteResult{{
+				FilePath:  suite.definitionFile,
+				ExecError: err,
+			}},
+		}
+	}
+
+	suite.skipSchemaValidation = tr.SkipSchemaValidation
+	result := suite.RunV3(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
+	suiteResult := suiteRunResult{
+		toPrint:  []*results.TestSuiteResult{result},
+		toAppend: result,
+	}
+
+	if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
+		suiteResult.toPrint = append(suiteResult.toPrint, &results.TestSuiteResult{
+			FilePath:  suite.SnapshotFileUrl(),
+			ExecError: storeErr,
+		})
+	}
+
+	return suiteResult
+}
+
+// suiteGroup is a set of suites that share a snapshot file and therefore must run
+// sequentially with respect to each other; distinct groups may run concurrently.
+type suiteGroup struct {
+	suites []*TestSuite
+}
+
+// groupSuitesBySnapshotFile groups suites by their SnapshotFileUrl, preserving the
+// order in which each group was first seen so output stays deterministic.
+func groupSuitesBySnapshotFile(suites []*TestSuite) []*suiteGroup {
+	groups := make([]*suiteGroup, 0, len(suites))
+	index := make(map[string]int)
+	for _, suite := range suites {
+		key := suite.SnapshotFileUrl()
+		if i, ok := index[key]; ok {
+			groups[i].suites = append(groups[i].suites, suite)
+			continue
+		}
+		index[key] = len(groups)
+		groups = append(groups, &suiteGroup{suites: []*TestSuite{suite}})
+	}
+	return groups
+}
+
+// effectiveWorkers returns the number of workers to use, defaulting to the CPU count
+// when MaxWorkers is not set, and never exceeding the amount of work available.
+func (tr *TestRunner) effectiveWorkers(groupCount int) int {
+	workers := tr.MaxWorkers
+	if workers <= 0 {
+		workers = runtime.NumCPU()
+	}
+	if workers > groupCount {
+		workers = groupCount
+	}
+	if workers < 1 {
+		workers = 1
+	}
+	return workers
+}
+
+// runV3SuitesOfChartParallel runs snapshot-file groups concurrently while keeping all
+// printing, counting and result collection on the main goroutine in discovery order.
+func (tr *TestRunner) runV3SuitesOfChartParallel(suites []*TestSuite, chart *v3chart.Chart) bool {
+	groups := groupSuitesBySnapshotFile(suites)
+	if len(groups) == 0 {
+		return true
+	}
+
+	// Results land in disjoint, preallocated slots so no locking is needed.
+	groupResults := make([][]suiteRunResult, len(groups))
+	done := make([]chan struct{}, len(groups))
+	for i := range done {
+		done[i] = make(chan struct{})
+	}
+
+	var failed atomic.Bool
+	semaphore := make(chan struct{}, tr.effectiveWorkers(len(groups)))
+	var wg sync.WaitGroup
+
+	for i, group := range groups {
+		wg.Add(1)
+		go func(idx int, g *suiteGroup) {
+			defer wg.Done()
+			defer close(done[idx])
+			defer func() { <-semaphore }()
+			semaphore <- struct{}{}
+
+			// Failfast: once a suite has failed, skip scheduling further groups.
+			// Leaving results nil mirrors the sequential break which leaves later
+			// suites unreported.
+			if tr.Failfast && failed.Load() {
+				return
+			}
+
+			out := make([]suiteRunResult, 0, len(g.suites))
+			for _, suite := range g.suites {
+				suiteResult := tr.runSingleSuite(suite, chart)
+				out = append(out, suiteResult)
+				// Trigger failfast only on the primary result, matching the
+				// sequential break; synthesized snapshot errors must not stop
+				// scheduling of later groups.
+				if suiteResult.failFast() {
+					failed.Store(true)
+				}
+			}
+			groupResults[idx] = out
+		}(i, group)
+	}
+
+	// Stream output deterministically: wait on each group in order, then print.
+	chartPassed := true
+	for i := range groups {
+		<-done[i]
+		for _, suiteResult := range groupResults[i] {
+			for _, result := range suiteResult.toPrint {
+				chartPassed = chartPassed && result.Passed
+				tr.handleSuiteResult(result)
+			}
+			if suiteResult.toAppend != nil {
+				tr.testResults = append(tr.testResults, suiteResult.toAppend)
+			}
+		}
+	}
+
+	wg.Wait()
 	return chartPassed
 }
 

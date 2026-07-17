@@ -55,7 +55,7 @@ hookInstall: bootstrap build
 
 .PHONY: unittest
 unittest: ## Run unit tests
-	go test ./... -v -cover
+	go test ./... -v -cover -race
 
 .PHONY: test-coverage
 test-coverage: build ## Test coverage with open report in default browser

@@ -215,7 +215,17 @@ defined in test suite files.
   -s, --with-subchart charts    include tests of the subcharts within charts folder (default true)
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
       --skip-schema-validation  skip values schema validation when rendering the chart (default false)
+      --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
+      --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
 ```
+
+With `--parallel`, test suites run concurrently. Suites that share a snapshot
+(`.snap`) file are grouped and run sequentially within their group, so snapshot
+files are never written concurrently. Output stays deterministic: suites are
+printed in the same order as a sequential run. Combined with `--failfast`, the
+first failing suite stops any not-yet-started suites from being scheduled while
+in-flight suites finish. `--parallel` is ignored when `--debugPlugin` is set and
+execution falls back to sequential.
 
 ### Yaml JsonPath Support
 

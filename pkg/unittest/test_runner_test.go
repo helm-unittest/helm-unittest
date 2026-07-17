@@ -575,3 +575,150 @@ func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Test Suites: 4 passed, 4 total")
 }
+
+const testV3ParallelMultiSuiteChart string = "../../test/data/v3/parallel-multisuite"
+
+// summaryCountLines returns just the summary counting lines (Charts/Test Suites/
+// Tests/Snapshot) so parallel and sequential runs can be compared regardless of
+// timing noise in the footer.
+func summaryCountLines(output string) []string {
+	var lines []string
+	for _, line := range strings.Split(output, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "Charts:") ||
+			strings.HasPrefix(trimmed, "Test Suites:") ||
+			strings.HasPrefix(trimmed, "Tests:") ||
+			strings.HasPrefix(trimmed, "Snapshot:") {
+			lines = append(lines, trimmed)
+		}
+	}
+	return lines
+}
+
+func TestV3RunnerParallelSameOutcomeAsSequential(t *testing.T) {
+	seqBuffer := new(bytes.Buffer)
+	seqRunner := TestRunner{
+		Printer:   printer.NewPrinter(seqBuffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	seqPassed := seqRunner.RunV3([]string{testV3BasicChart})
+
+	parBuffer := new(bytes.Buffer)
+	parRunner := TestRunner{
+		Printer:   printer.NewPrinter(parBuffer, nil),
+		TestFiles: []string{testTestFiles},
+		Parallel:  true,
+	}
+	parPassed := parRunner.RunV3([]string{testV3BasicChart})
+
+	assert.Equal(t, seqPassed, parPassed)
+	assert.Equal(t, summaryCountLines(seqBuffer.String()), summaryCountLines(parBuffer.String()))
+}
+
+func TestV3RunnerParallelDeterministicOutput(t *testing.T) {
+	run := func(parallel bool) string {
+		buffer := new(bytes.Buffer)
+		runner := TestRunner{
+			Printer:   printer.NewPrinter(buffer, nil),
+			TestFiles: []string{testTestFiles},
+			Parallel:  parallel,
+		}
+		runner.RunV3([]string{testV3BasicChart})
+		return timePattern.ReplaceAllString(buffer.String(), "${1}XX.XXXms")
+	}
+
+	sequential := run(false)
+	parallelFirst := run(true)
+	parallelSecond := run(true)
+
+	assert.Equal(t, parallelFirst, parallelSecond, "parallel output must be stable across runs")
+	assert.Equal(t, sequential, parallelFirst, "parallel output must match sequential order")
+}
+
+func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
+	// Copy the fixture so the update run writes into a throwaway location.
+	copyChart := func() string {
+		dir := filepath.Join(t.TempDir(), "chart")
+		if err := os.CopyFS(dir, os.DirFS(testV3ParallelMultiSuiteChart)); err != nil {
+			t.Fatalf("failed to copy fixture: %v", err)
+		}
+		return dir
+	}
+
+	parChart := copyChart()
+	parBuffer := new(bytes.Buffer)
+	parRunner := TestRunner{
+		Printer:        printer.NewPrinter(parBuffer, nil),
+		TestFiles:      []string{testTestFiles},
+		Parallel:       true,
+		UpdateSnapshot: true,
+	}
+	assert.True(t, parRunner.RunV3([]string{parChart}), parBuffer.String())
+
+	// The suites share one .snap file; grouping keeps them on a single goroutine
+	// so the file must be byte-identical to a sequential update and valid YAML.
+	seqChart := copyChart()
+	seqBuffer := new(bytes.Buffer)
+	seqRunner := TestRunner{
+		Printer:        printer.NewPrinter(seqBuffer, nil),
+		TestFiles:      []string{testTestFiles},
+		UpdateSnapshot: true,
+	}
+	assert.True(t, seqRunner.RunV3([]string{seqChart}), seqBuffer.String())
+
+	snapPath := filepath.Join("tests", "__snapshot__", "parallel_test.yaml.snap")
+	parSnap, err := os.ReadFile(filepath.Join(parChart, snapPath))
+	assert.NoError(t, err)
+	seqSnap, err := os.ReadFile(filepath.Join(seqChart, snapPath))
+	assert.NoError(t, err)
+	assert.Equal(t, string(seqSnap), string(parSnap), "parallel snapshot file must match sequential")
+
+	var parsed map[string]any
+	assert.NoError(t, common.YmlUnmarshal(string(parSnap), &parsed), "snapshot file must be valid YAML")
+
+	// Re-running in parallel against the freshly written snapshot must pass.
+	rerunBuffer := new(bytes.Buffer)
+	rerunRunner := TestRunner{
+		Printer:   printer.NewPrinter(rerunBuffer, nil),
+		TestFiles: []string{testTestFiles},
+		Parallel:  true,
+	}
+	assert.True(t, rerunRunner.RunV3([]string{parChart}), rerunBuffer.String())
+}
+
+func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
+	countFailedSuites := func(output string) int {
+		return strings.Count(output, " FAIL ")
+	}
+
+	// Work on a throwaway copy so the failing suites (which may rewrite snapshots)
+	// never touch the committed fixture.
+	chartDir := filepath.Join(t.TempDir(), "chart")
+	if err := os.CopyFS(chartDir, os.DirFS(testV3BasicChart)); err != nil {
+		t.Fatalf("failed to copy fixture: %v", err)
+	}
+
+	// Without failfast, every failing suite is reported.
+	fullBuffer := new(bytes.Buffer)
+	fullRunner := TestRunner{
+		Printer:   printer.NewPrinter(fullBuffer, nil),
+		TestFiles: []string{testTestFailedFiles},
+		Parallel:  true,
+	}
+	assert.False(t, fullRunner.RunV3([]string{chartDir}), fullBuffer.String())
+	fullCount := countFailedSuites(fullBuffer.String())
+	assert.Greater(t, fullCount, 1)
+
+	// With failfast and a single worker, the first failure prevents the remaining
+	// groups from being scheduled, so fewer suites are reported.
+	ffBuffer := new(bytes.Buffer)
+	ffRunner := TestRunner{
+		Printer:    printer.NewPrinter(ffBuffer, nil),
+		TestFiles:  []string{testTestFailedFiles},
+		Parallel:   true,
+		Failfast:   true,
+		MaxWorkers: 1,
+	}
+	assert.False(t, ffRunner.RunV3([]string{chartDir}), ffBuffer.String())
+	assert.Less(t, countFailedSuites(ffBuffer.String()), fullCount, "failfast must skip unstarted groups")
+}
