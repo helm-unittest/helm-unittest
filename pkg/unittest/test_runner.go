@@ -25,10 +25,6 @@ import (
 
 const LOG_TEST_RUNNER = "test-runner"
 
-// suiteStartHook is called at the start of running each suite. It is nil in normal
-// operation and exists only so tests can observe suite scheduling concurrency.
-var suiteStartHook func()
-
 // testUnitCounting stores counting numbers of test unit status
 type testUnitCounting struct {
 	passed  uint
@@ -99,6 +95,10 @@ type TestRunner struct {
 	chartCounting        testUnitCounting
 	snapshotCounting     totalSnapshotCounting
 	testResults          []*results.TestSuiteResult
+	// suiteStartHook is called at the start of running each suite. It is nil in
+	// normal operation and exists only so tests can observe suite scheduling
+	// concurrency.
+	suiteStartHook func()
 }
 
 // RunV3 test suites in chart in ChartPaths.
@@ -491,8 +491,8 @@ func (tr *TestRunner) runV3SuitesOfChartSequential(suites []*TestSuite, chart *v
 // It never prints or mutates runner counters, so it is safe to call concurrently for
 // suites that do not share a snapshot file.
 func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v3chart.Chart) suiteRunResult {
-	if suiteStartHook != nil {
-		suiteStartHook()
+	if tr.suiteStartHook != nil {
+		tr.suiteStartHook()
 	}
 
 	snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)

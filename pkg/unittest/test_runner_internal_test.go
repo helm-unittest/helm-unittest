@@ -76,11 +76,6 @@ func TestRunV3SuitesParallelEngagesConcurrency(t *testing.T) {
 
 	started := make(chan struct{}, 64)
 	release := make(chan struct{})
-	suiteStartHook = func() {
-		started <- struct{}{}
-		<-release
-	}
-	defer func() { suiteStartHook = nil }()
 
 	buffer := new(bytes.Buffer)
 	tr := &TestRunner{
@@ -88,6 +83,10 @@ func TestRunV3SuitesParallelEngagesConcurrency(t *testing.T) {
 		TestFiles:  []string{"tests/*_test.yaml"},
 		Parallel:   true,
 		MaxWorkers: workers,
+	}
+	tr.suiteStartHook = func() {
+		started <- struct{}{}
+		<-release
 	}
 
 	finished := make(chan bool, 1)
