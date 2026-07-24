@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Tests for normalizing multiline objects with map[any]any and []any
+// Tests for normalizing multiline objects with map[string]any and []any
 
 var docWithArrayAny = `
 items:
@@ -63,7 +63,7 @@ func TestEqualValidatorArrayAnyWithMultilineWhenFail(t *testing.T) {
 	})
 
 	assert.False(t, pass)
-	assert.True(t, len(diff) > 0)
+	assert.NotEmpty(t, diff)
 }
 
 // Regression test for https://github.com/helm-unittest/helm-unittest/issues/826
