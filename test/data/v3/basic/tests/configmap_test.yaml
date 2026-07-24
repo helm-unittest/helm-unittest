@@ -188,3 +188,17 @@ tests:
             {
               "key1": "value1"
             }
+# issue https://github.com/helm-unittest/helm-unittest/issues/826
+  - it: "should have equal values for profiles"
+    set:
+      profiles:
+        bus:
+          config: |
+            TEST CONFIG
+            WITH MULTILINE CONFIG
+    asserts:
+      - equal:
+          path: data["bus.lua"]
+          value: |
+            TEST CONFIG
+            WITH MULTILINE CONFIG
