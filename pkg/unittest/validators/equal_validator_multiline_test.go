@@ -8,6 +8,64 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Tests for normalizing multiline objects with map[string]any and []any
+
+var docWithArrayAny = `
+items:
+  - name: item1
+    content: |
+
+      Multi
+      Line
+      Content
+  - name: item2
+    data: simple
+`
+
+// TestEqualValidatorArrayAnyWithMultilineWhenOk verifies []any normalization
+func TestEqualValidatorArrayAnyWithMultilineWhenOk(t *testing.T) {
+	manifest := makeManifest(docWithArrayAny)
+	validator := EqualValidator{"items", []any{
+		map[string]any{
+			"name":    "item1",
+			"content": "Multi\nLine\nContent\n",
+		},
+		map[string]any{
+			"name": "item2",
+			"data": "simple",
+		},
+	}, false}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// TestEqualValidatorArrayAnyWithMultilineWhenFail verifies []any mismatch detection
+func TestEqualValidatorArrayAnyWithMultilineWhenFail(t *testing.T) {
+	manifest := makeManifest(docWithArrayAny)
+	validator := EqualValidator{"items", []any{
+		map[string]any{
+			"name":    "item1",
+			"content": "Wrong\nContent\n",
+		},
+		map[string]any{
+			"name": "item2",
+			"data": "simple",
+		},
+	}, false}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.NotEmpty(t, diff)
+}
+
 // Regression test for https://github.com/helm-unittest/helm-unittest/issues/826
 // equal assertion fails on identical multi-line block scalar in ConfigMap data
 // when the actual value has leading newlines (from YAML round-trip).
