@@ -37,7 +37,7 @@ RUN apk upgrade --no-cache && \
         helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}" --verify=false; \
       fi \
     else \
-      helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}"; \
+      helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}" --verify=false; \
     fi && \
     rm -rf "${TARGETOS}-${TARGETARCH}" && \
     apk del curl git bash && \
