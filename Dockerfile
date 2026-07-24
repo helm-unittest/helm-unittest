@@ -30,14 +30,14 @@ RUN apk upgrade --no-cache && \
     chmod +x /usr/bin/helm && \
     # Extract major version from HELM_VERSION (e.g., 4.0.0 -> 4) \
     HELM_MAJOR_VERSION=$(echo "${HELM_VERSION}" | cut -d. -f1) && \
-    if [ $HELM_MAJOR_VERSION -ge 4 ]; then \
+    if [ $HELM_MAJOR_VERSION -ge 5 ]; then \
       if  [ "$(printf '%s\n%s' "1.1.0" "${PLUGIN_VERSION}" | sort -V | head -n1)" = "1.1.0" ];  then \
-        helm plugin install "${OCI_PLUGIN_URL}" --verify=false; \
+        helm plugin install "${OCI_PLUGIN_URL}"; \
       else \
         helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}" --verify=false; \
       fi \
     else \
-      helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}"; \
+      helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}" --verify=false; \
     fi && \
     rm -rf "${TARGETOS}-${TARGETARCH}" && \
     apk del curl git bash && \
