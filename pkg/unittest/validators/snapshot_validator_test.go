@@ -322,3 +322,106 @@ func TestSnapshotValidatorWheNotMatchRegexFail(t *testing.T) {
 	assert.False(t, pass)
 	assert.Equal(t, []string{"DocumentIndex:\t0", "ValuesIndex:\t0", "Expected pattern '.*abra.*' should not be in snapshot:", "\ta: abrakadabra"}, diff)
 }
+
+// Tests for YAML format
+
+func TestSnapshotValidatorYAMLFormatWhenOk(t *testing.T) {
+	data1 := common.K8sManifest{"apiVersion": "v1", "kind": "ConfigMap", "metadata": map[string]any{"name": "test"}}
+	data2 := common.K8sManifest{"apiVersion": "v1", "kind": "Service", "metadata": map[string]any{"name": "test-svc"}}
+	validator := MatchSnapshotValidator{Format: "yaml"}
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshotYAML", []any{data1, data2}).Return(&snapshot.CompareResult{
+		Passed: true,
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{data1, data2},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mockComparer.AssertExpectations(t)
+}
+
+func TestSnapshotValidatorYAMLFormatWhenFail(t *testing.T) {
+	data1 := common.K8sManifest{"apiVersion": "v1", "kind": "ConfigMap"}
+	data2 := common.K8sManifest{"apiVersion": "v1", "kind": "Service"}
+	validator := MatchSnapshotValidator{Format: "yaml"}
+
+	cachedSnapshot := "---\napiVersion: v1\nkind: ConfigMap\n---\napiVersion: v1\nkind: Deployment\n"
+	newSnapshot := "---\napiVersion: v1\nkind: ConfigMap\n---\napiVersion: v1\nkind: Service\n"
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshotYAML", []any{data1, data2}).Return(&snapshot.CompareResult{
+		Passed:         false,
+		CachedSnapshot: cachedSnapshot,
+		NewSnapshot:    newSnapshot,
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{data1, data2},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.False(t, pass)
+	assert.NotEmpty(t, diff)
+
+	mockComparer.AssertExpectations(t)
+}
+
+func TestSnapshotValidatorYAMLFormatWithPath(t *testing.T) {
+	data := common.K8sManifest{"spec": map[string]any{"replicas": 3}}
+	validator := MatchSnapshotValidator{Path: "spec", Format: "yaml"}
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshotYAML", []any{map[string]any{"replicas": 3}}).Return(&snapshot.CompareResult{
+		Passed: true,
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:             []common.K8sManifest{data},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mockComparer.AssertExpectations(t)
+}
+
+func TestSnapshotValidatorYAMLFormatWhenNoManifests(t *testing.T) {
+	validator := MatchSnapshotValidator{Format: "yaml"}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{},
+	})
+
+	assert.False(t, pass)
+	assert.Contains(t, diff[0], "Error")
+}
+
+func TestSnapshotValidatorYAMLFormatNegativeAndOk(t *testing.T) {
+	data := common.K8sManifest{"apiVersion": "v1", "kind": "ConfigMap"}
+	validator := MatchSnapshotValidator{Format: "yaml"}
+
+	mockComparer := new(mockSnapshotComparer)
+	mockComparer.On("CompareToSnapshotYAML", []any{data}).Return(&snapshot.CompareResult{
+		Passed:         false,
+		CachedSnapshot: "old-content",
+		NewSnapshot:    "new-content",
+	})
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Negative:         true,
+		Docs:             []common.K8sManifest{data},
+		SnapshotComparer: mockComparer,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mockComparer.AssertExpectations(t)
+}

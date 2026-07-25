@@ -18,3 +18,8 @@ func (m *mockSnapshotComparer) CompareToSnapshot(content any, optFns ...func(opt
 	args := m.Called(content)
 	return args.Get(0).(*snapshot.CompareResult)
 }
+
+func (m *mockSnapshotComparer) CompareToSnapshotYAML(contents []any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
+	args := m.Called(contents)
+	return args.Get(0).(*snapshot.CompareResult)
+}

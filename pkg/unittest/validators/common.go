@@ -23,6 +23,8 @@ var regex = regexp.MustCompile(`(?m)[ ]+\r?\n`)
 // SnapshotComparer provide CompareToSnapshot utility to validator
 type SnapshotComparer interface {
 	CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
+	// CompareToSnapshotYAML compares multiple contents as a single YAML document with --- separators
+	CompareToSnapshotYAML(contents []any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
 }
 
 // ValidateContext the context passed to validators
