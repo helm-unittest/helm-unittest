@@ -41,21 +41,26 @@ func (ds DocumentSelector) SelectDocuments(documentsByTemplate map[string][]comm
 	for template, manifests := range documentsByTemplate {
 		filteredManifests, err := ds.selectDocuments(manifests)
 
-		filteredManifestsCount := len(filteredManifests)
-		matchingDocumentsCount += filteredManifestsCount
-
 		if err != nil {
 			return map[string][]common.K8sManifest{}, err
 		}
+
+		filteredManifestsCount := len(filteredManifests)
+		matchingDocumentsCount += filteredManifestsCount
 
 		if !ds.MatchMany && matchingDocumentsCount > 1 {
 			return map[string][]common.K8sManifest{}, errors.New("multiple indexes found")
 		}
 
-		if filteredManifestsCount > 0 || !ds.SkipEmptyTemplates {
+		if filteredManifestsCount > 0 {
 			matchingDocuments[template] = filteredManifests
 		}
 	}
+
+	if matchingDocumentsCount == 0 && !ds.SkipEmptyTemplates {
+		return map[string][]common.K8sManifest{}, errors.New("document not found")
+	}
+
 	return matchingDocuments, nil
 }
 
@@ -77,11 +82,7 @@ func (ds DocumentSelector) selectDocuments(docs []common.K8sManifest) ([]common.
 		}
 	}
 
-	if ds.SkipEmptyTemplates || len(selectedDocs) > 0 {
-		return selectedDocs, nil
-	}
-
-	return selectedDocs, errors.New("document not found")
+	return selectedDocs, nil
 }
 
 func (ds DocumentSelector) isMatchingSelector(doc common.K8sManifest) (bool, error) {

@@ -3,6 +3,14 @@
 - Add opt-in parallel test suite execution with `--parallel` and `--max-workers` flags
 - Fix global capabilities mutation when overriding kubernetes version (data race under parallel runs)
 
+1.1.2 / 2026-07-24
+==================
+- Fix handling multiline block scalars in YAML (resolves #826, credits @AruneshDwivedi)
+- Fix documentSelector not working when multiple templates are used (resolves #781, credits @twixthehero)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
 1.1.1 / 2026-06-05
 ==================
 - Publish official plugin on artifacthub.io (resolves #802)
