@@ -38,6 +38,20 @@ func TestEqualOrLessValidatorOk(t *testing.T) {
 			value:    "680m",
 			expected: true,
 		},
+		{
+			name:     "Test case 4: k8s resource quantity millicores",
+			doc:      "requests:\n  cpu: \"50m\"\n",
+			path:     "requests.cpu",
+			value:    "200m",
+			expected: true,
+		},
+		{
+			name:     "Test case 5: k8s resource quantity memory",
+			doc:      "limits:\n  memory: \"512Mi\"\n",
+			path:     "limits.memory",
+			value:    "1Gi",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
