@@ -232,6 +232,7 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           build-args: |
+            BUILDPLATFORM=${{ matrix.platform }}
             HELM_VERSION=${{ matrix.helmVersion }}
             PLUGIN_VERSION=${{ matrix.pluginVersion }}
           labels: ${{ steps.meta.outputs.labels }}
