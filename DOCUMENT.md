@@ -93,7 +93,7 @@ tests:
 
 - **kubernetesProvider**: *object, optional*. Define Kubernetes resources to fake.
   - **scheme**: *object*. Define the Kubernetes schema to fake
-  - **objects**: *array of objects*. Define the Kubernetes objects to fake
+  - **objects**: *array of objects*. Define the Kubernetes objects to fake. A `v1/Secret` may use `stringData`, which is base64 encoded into `data` and dropped, just like the api-server does.
 
 - **skip**: *object, optional*. Marks the test suite as having been skipped. Execution will continue at the next suite.
   - **reason**: *string, required*. Define the reason for skipping. Marks all tests as skipped. Do not set **minimumVersion** if you set this.
@@ -185,7 +185,7 @@ tests:
 
 - **kubernetesProvider**: *object, optional*. Define Kubernetes resources to fake.
   - **scheme**: *object, optional*. Define the Kubernetes schema to fake
-  - **objects**: *array of objects*. Define the Kubernetes objects to fake
+  - **objects**: *array of objects*. Define the Kubernetes objects to fake. A `v1/Secret` may use `stringData`, which is base64 encoded into `data` and dropped, just like the api-server does.
 
 - **skip**: *object, optional*. Marks the test as having been skipped. Execution will continue at the next test.
   - **reason**: *string, required*. Define the reason for skipping. If all tests skipped, marks 'suite' as skipped.
