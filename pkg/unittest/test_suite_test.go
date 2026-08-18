@@ -1,7 +1,9 @@
 package unittest_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"testing"
@@ -1968,4 +1970,98 @@ tests:
 			}
 		})
 	}
+}
+
+// captureStdout redirects os.Stdout for the duration of act, returning what was
+// written. Needed because suite-level debug output goes to stdout by default.
+func captureStdout(t *testing.T, act func()) string {
+	t.Helper()
+	original := os.Stdout
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("could not create pipe: %v", err)
+	}
+	os.Stdout = writer
+	defer func() { os.Stdout = original }()
+
+	captured := make(chan string, 1)
+	go func() {
+		var buffer bytes.Buffer
+		_, _ = io.Copy(&buffer, reader)
+		captured <- buffer.String()
+	}()
+
+	act()
+
+	if closeErr := writer.Close(); closeErr != nil {
+		t.Fatalf("could not close pipe writer: %v", closeErr)
+	}
+	return <-captured
+}
+
+func TestV4RunSuiteWithDebugPrintsRenderedManifests(t *testing.T) {
+	suiteDoc := `
+suite: test suite with debug
+debug: true
+templates:
+  - configmap.yaml
+  - deployment.yaml
+tests:
+  - it: should pass
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
+	assert.NoError(t, chartErr)
+
+	a := assert.New(t)
+	a.True(testSuite.Debug, "debug should be unmarshalled from the suite definition")
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_debug_test.yaml"), false)
+	var suiteResult *results.TestSuiteResult
+	output := captureStdout(t, func() {
+		suiteResult = testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
+	})
+
+	a.True(suiteResult.Passed)
+	a.Contains(output, "#### file: basic/templates/deployment.yaml",
+		"suite level debug should be passed down to every test job")
+	a.Contains(output, "kind: Deployment")
+}
+
+func TestV4RunSuiteWithoutDebugPrintsNothing(t *testing.T) {
+	suiteDoc := `
+suite: test suite without debug
+templates:
+  - configmap.yaml
+  - deployment.yaml
+tests:
+  - it: should pass
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
+	assert.NoError(t, chartErr)
+
+	a := assert.New(t)
+	a.False(testSuite.Debug)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_nodebug_test.yaml"), false)
+	var suiteResult *results.TestSuiteResult
+	output := captureStdout(t, func() {
+		suiteResult = testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
+	})
+
+	a.True(suiteResult.Passed)
+	a.NotContains(output, "#### file:", "no debug output expected when debug is not enabled")
 }

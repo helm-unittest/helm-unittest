@@ -59,6 +59,7 @@ postRenderer:
     - "eval"
     - '.metadata.annotations.appended="new"'
     - "-"
+debug: true
 tests:
   - it: should test something
     ...
@@ -104,6 +105,8 @@ tests:
   - **plugin**: *string, required, when testing for deployments using helm 4*. Name of the installed Helm post-renderer plugin to invoke.
   - **args**: *array of strings*. Command-line arguments to pass to the selected `cmd` or `plugin`.
 
+- **debug**: *bool, optional*. When set to `true`, prints the rendered manifests of **every** test job in this suite to stdout, to help diagnose failing tests. Defaults to `false`. The output is taken after any `postRenderer` has been applied, so it shows exactly what the assertions validate. Individual test jobs can enable this on their own instead, check [Test Job](#test-job).
+
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
 ## Test Job
@@ -147,6 +150,7 @@ tests:
         - "eval"
         - '.metadata.annotations.appended="new"'
         - "-"
+    debug: true
     asserts:
       - equal:
           path: metadata.name
@@ -195,6 +199,8 @@ tests:
     - **cmd**: *string, required when testing for deployments using helm 3*. The command to execute as the post-renderer.
     - **plugin**: *string, required, when testing for deployments using helm 4*. Name of the installed Helm post-renderer plugin to invoke.
     - **args**: *array of strings*. Command-line arguments to pass to the selected `cmd` or `plugin`.
+
+- **debug**: *bool, optional*. When set to `true`, prints the rendered manifests of **this** test job to stdout, to help diagnose a failing test. Defaults to `false`. The output is taken after any `postRenderer` has been applied, so it shows exactly what the assertions validate. Enabling `debug` on the suite turns this on for every test job, but a test job never disables what the suite enabled.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
