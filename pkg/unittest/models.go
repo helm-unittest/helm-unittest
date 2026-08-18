@@ -1,6 +1,9 @@
 package unittest
 
 import (
+	"io"
+	"os"
+
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
@@ -17,6 +20,17 @@ type TestConfig struct {
 	isSkipSchemaValidation bool
 	postRenderer           PostRendererConfig
 	includeCrds            bool
+	debug                  bool
+	debugWriter            io.Writer
+}
+
+// debugWriterOrDefault returns the writer debug output should be written to,
+// falling back to stdout when none was configured.
+func (c TestConfig) debugWriterOrDefault() io.Writer {
+	if c.debugWriter == nil {
+		return os.Stdout
+	}
+	return c.debugWriter
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -29,6 +43,7 @@ func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(
 		isSkipSchemaValidation: false,
 		postRenderer:           PostRendererConfig{},
 		includeCrds:            false,
+		debug:                  false,
 	}
 	for _, option := range options {
 		option(config)
@@ -81,6 +96,21 @@ func WithIncludeCrds(includeCrds bool) LoadTestOptionsFunc {
 func WithSkipSchemaValidation(skip bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.isSkipSchemaValidation = skip
+	}
+}
+
+// WithDebug enables printing of the rendered manifests for every test job in
+// the suite. Individual test jobs can opt in on their own via their debug field.
+func WithDebug(debug bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.debug = debug
+	}
+}
+
+// WithDebugWriter sets where debug output is written to, defaulting to stdout.
+func WithDebugWriter(writer io.Writer) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.debugWriter = writer
 	}
 }
 

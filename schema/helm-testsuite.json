@@ -34,6 +34,11 @@
       "description": "Include CRDs from the crds/ directory in the rendered output for testing. Mirrors the behavior of helm template --include-crds. Defaults to false.",
       "markdownDescription": "**includeCrds** (boolean) _optional_\n\nInclude CRDs from the `crds/` directory in the rendered output for testing. Mirrors the behavior of `helm template --include-crds`. Defaults to `false`."
     },
+    "debug": {
+      "type": "boolean",
+      "description": "Print the rendered manifests of every test job in this suite to stdout, to help diagnose failing tests. Defaults to false.",
+      "markdownDescription": "**debug** (boolean) _optional_\n\nPrint the rendered manifests of every test job in this suite to stdout, to help diagnose failing tests. Defaults to `false`."
+    },
     "release": {
       "$ref": "#/definitions/release"
     },
@@ -78,6 +83,11 @@
           },
           "postRenderer": {
             "$ref": "#/definitions/postRenderer"
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Print the rendered manifests of this test job to stdout, to help diagnose a failing test. Defaults to false.",
+            "markdownDescription": "**debug** (boolean) _optional_\n\nPrint the rendered manifests of this test job to stdout, to help diagnose a failing test. Defaults to `false`."
           },
           "template": {
             "type": "string",
