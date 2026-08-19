@@ -739,3 +739,67 @@ equal:
 	assert.NoError(t, err)
 	assert.Equal(t, "equal", assertion.AssertType)
 }
+
+// A non-string key anywhere in the assertion body makes yaml decode it as
+// map[any]any rather than map[string]any. The parse-support check must still
+// run: otherwise 'parse' would be silently ignored, which is the failure mode
+// this check exists to prevent.
+func TestAssertionRejectsParseWithNonStringKeysPresent(t *testing.T) {
+	tests := []struct {
+		name        string
+		manifest    string
+		expectedErr string
+	}{
+		{
+			name: "integer key alongside parse on unsupported assertion",
+			manifest: `
+matchRegex:
+  1: foo
+  parse: json
+  path: metadata.name
+  pattern: chart
+`,
+			expectedErr: "'parse' is not supported for assertion type 'matchRegex'",
+		},
+		{
+			name: "boolean key alongside parse on unsupported assertion",
+			manifest: `
+isKind:
+  true: foo
+  of: Deployment
+  parse: json
+`,
+			expectedErr: "'parse' is not supported for assertion type 'isKind'",
+		},
+		{
+			name: "integer key alongside innerPath on unsupported assertion",
+			manifest: `
+matchRegex:
+  1: foo
+  innerPath: a.b
+  path: metadata.name
+  pattern: chart
+`,
+			expectedErr: "'innerPath' is not supported for assertion type 'matchRegex'",
+		},
+		{
+			name: "integer key does not skip option validation on a supported assertion",
+			manifest: `
+equal:
+  1: foo
+  path: a
+  value: 1
+  parse: toml
+`,
+			expectedErr: "invalid parse format 'toml', expected 'json' or 'yaml'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertion := new(Assertion)
+			err := common.YmlUnmarshal(tt.manifest, &assertion)
+			assert.EqualError(t, err, tt.expectedErr)
+		})
+	}
+}

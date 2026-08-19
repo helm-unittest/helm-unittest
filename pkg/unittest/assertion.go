@@ -347,15 +347,12 @@ func (a *Assertion) constructValidator(assertDef map[string]any) error {
 // without it `parse` on an unsupported assertion would be silently dropped and
 // the assertion would pass while appearing to assert on parsed content.
 func validateParseSupport(assertName string, params, validator any) error {
-	paramsMap, ok := params.(map[string]any)
-	if !ok {
-		return nil
-	}
+	fields := declaredFields(params)
 
 	parseAwareValidator, supportsParse := validator.(validators.ParseAware)
 	if !supportsParse {
 		for _, field := range []string{"parse", "innerPath"} {
-			if _, declared := paramsMap[field]; declared {
+			if fields[field] {
 				return fmt.Errorf(
 					"'%s' is not supported for assertion type '%s'",
 					field, assertName,
@@ -365,7 +362,37 @@ func validateParseSupport(assertName string, params, validator any) error {
 		return nil
 	}
 
+	// Run regardless of the shape of params: a validator that supports parse
+	// must have its options validated whether or not params happened to be a
+	// map we could inspect above.
 	return parseAwareValidator.ValidateParseOptions()
+}
+
+// declaredFields returns the set of field names declared in an assertion's
+// YAML body, comparing keys as strings.
+//
+// The body is not always a map[string]any: a non-string key anywhere in the
+// mapping makes go.yaml.in/yaml/v3 decode the whole mapping as map[any]any
+// (or map[bool]any, etc.), so a type assertion against map[string]any fails
+// even though the body is still a map. Using reflect to walk the map's keys
+// and comparing them via fmt.Sprintf keeps the field check working
+// regardless of the concrete key type.
+//
+// A non-map body (e.g. `hasDocuments: 3`, or nil) genuinely has no fields to
+// inspect, so it deliberately returns an empty set rather than an error.
+func declaredFields(params any) map[string]bool {
+	fields := map[string]bool{}
+
+	v := reflect.ValueOf(params)
+	if !v.IsValid() || v.Kind() != reflect.Map {
+		return fields
+	}
+
+	for _, key := range v.MapKeys() {
+		fields[fmt.Sprintf("%v", key.Interface())] = true
+	}
+
+	return fields
 }
 
 func (a *Assertion) computeTemplatesWithPostRender() map[string][]common.K8sManifest {
