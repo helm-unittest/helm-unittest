@@ -102,6 +102,21 @@ func TestParseOptionsValidate(t *testing.T) {
 			options:     ParseOptions{InnerPath: "server.port"},
 			expectedErr: "field 'innerPath' requires 'parse' to be set",
 		},
+		{
+			name:        "whitespace-only innerPath is rejected",
+			options:     ParseOptions{Parse: ParseFormatJSON, InnerPath: "   "},
+			expectedErr: "field 'innerPath' must not be blank",
+		},
+		{
+			name:        "tab-only innerPath is rejected",
+			options:     ParseOptions{Parse: ParseFormatJSON, InnerPath: "\t"},
+			expectedErr: "field 'innerPath' must not be blank",
+		},
+		{
+			name:        "whitespace-only innerPath without parse is rejected",
+			options:     ParseOptions{InnerPath: "   "},
+			expectedErr: "field 'innerPath' must not be blank",
+		},
 	}
 
 	for _, tt := range tests {
