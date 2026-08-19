@@ -205,6 +205,7 @@ type TestJob struct {
 	} `yaml:"skip"`
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
+	Debug              bool                         `yaml:"debug"`
 
 	// global set values
 	globalSet map[string]any
@@ -238,6 +239,34 @@ func (t *TestJob) configOrDefault() TestConfig {
 	return t.config
 }
 
+// debugOutput renders the manifests into the text to show when debug is enabled
+// on either this test job or its suite, and returns an empty string when it is
+// not. The stage argument labels output which is not the final post-rendered
+// result; pass "" when it is.
+func (t *TestJob) debugOutput(manifestsOfFiles map[string]string, stage string) string {
+	if !t.Debug && !t.configOrDefault().debug {
+		return ""
+	}
+
+	// sort the keys so debug output is stable across runs
+	files := make([]string, 0, len(manifestsOfFiles))
+	for file := range manifestsOfFiles {
+		files = append(files, file)
+	}
+	sort.Strings(files)
+
+	label := "file"
+	if stage != "" {
+		label = fmt.Sprintf("file (%s)", stage)
+	}
+	var output strings.Builder
+	for _, file := range files {
+		fmt.Fprintf(&output, "#### %s: %s\n", label, file)
+		fmt.Fprintln(&output, manifestsOfFiles[file])
+	}
+	return output.String()
+}
+
 // RunV3 render the chart and validate it with assertions in TestJob.
 func (t *TestJob) RunV3(
 	result *results.TestJobResult,
@@ -266,9 +295,13 @@ func (t *TestJob) RunV3(
 
 	postRenderedManifestsOfFiles, didPostRender, err := t.postRender(outputOfFiles)
 	if err != nil {
+		// the chart itself rendered, so still show that output when debugging
+		result.DebugOutput = t.debugOutput(outputOfFiles, "pre-post-render")
 		result.ExecError = err
 		return result
 	}
+
+	result.DebugOutput = t.debugOutput(postRenderedManifestsOfFiles, "")
 
 	manifestsOfFiles, err := t.parseManifestsFromOutputOfFiles(postRenderedManifestsOfFiles, renderSucceed)
 	if err != nil {

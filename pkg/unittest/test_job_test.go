@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -1349,4 +1350,138 @@ asserts:
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobDebugWritesRenderedManifestsWhenJobDebugSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+debug: true
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: templates/deployment.yaml
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.True(tj.Debug, "debug should be unmarshalled from the test job definition")
+	a.Contains(testResult.DebugOutput, "#### file: basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
+}
+
+func TestV3RunJobDebugWritesRenderedManifestsWhenSuiteDebugSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: templates/deployment.yaml
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithDebug(true),
+	))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.False(tj.Debug, "the job itself did not opt in; only the suite did")
+	a.Contains(testResult.DebugOutput, "#### file: basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
+}
+
+func TestV3RunJobDebugWritesNothingWhenDebugNotSet(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: templates/deployment.yaml
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Empty(testResult.DebugOutput, "no debug output expected when neither job nor suite enables debug")
+}
+
+func TestV3RunJobDebugPrintsPostRenderedManifests(t *testing.T) {
+	if _, err := exec.LookPath("yq"); err != nil {
+		t.Skip("yq is not installed, skipping post-renderer debug test")
+	}
+	c, _ := loader.Load(testV3WithPostRendererChart)
+	manifest := `
+it: should print the post-rendered manifest
+debug: true
+postRenderer:
+  cmd: "yq"
+  args:
+    - "eval"
+    - '.metadata.annotations.appended="new"'
+    - "-"
+asserts:
+  - equal:
+      path: metadata.annotations.appended
+      value: new
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	// debug output must reflect the POST-rendered manifest, not the raw render
+	a.Contains(testResult.DebugOutput, "appended: new")
+}
+
+func TestV3RunJobDebugPrintsRenderedManifestsWhenPostRenderFails(t *testing.T) {
+	c, _ := loader.Load(testV3BasicChart)
+	// a post-renderer that always fails, so RunV3 returns early
+	manifest := `
+it: should still show what was rendered
+debug: true
+postRenderer:
+  cmd: "false"
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: templates/deployment.yaml
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
+	testResult := tj.RunV3(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.Error(testResult.ExecError, "the failing post-renderer should be reported")
+	// the chart itself rendered fine, so debug must still show that output,
+	// clearly marked as being from before the post-renderer ran
+	a.Contains(testResult.DebugOutput, "pre-post-render")
+	a.Contains(testResult.DebugOutput, "basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
 }

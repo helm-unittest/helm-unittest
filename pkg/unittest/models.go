@@ -17,6 +17,7 @@ type TestConfig struct {
 	isSkipSchemaValidation bool
 	postRenderer           PostRendererConfig
 	includeCrds            bool
+	debug                  bool
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -29,6 +30,7 @@ func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(
 		isSkipSchemaValidation: false,
 		postRenderer:           PostRendererConfig{},
 		includeCrds:            false,
+		debug:                  false,
 	}
 	for _, option := range options {
 		option(config)
@@ -81,6 +83,14 @@ func WithIncludeCrds(includeCrds bool) LoadTestOptionsFunc {
 func WithSkipSchemaValidation(skip bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.isSkipSchemaValidation = skip
+	}
+}
+
+// WithDebug enables printing of the rendered manifests for every test job in
+// the suite. Individual test jobs can opt in on their own via their debug field.
+func WithDebug(debug bool) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.debug = debug
 	}
 }
 

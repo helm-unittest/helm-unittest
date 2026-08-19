@@ -59,6 +59,7 @@ postRenderer:
     - "eval"
     - '.metadata.annotations.appended="new"'
     - "-"
+debug: true
 tests:
   - it: should test something
     ...
@@ -103,6 +104,8 @@ tests:
   - **cmd**: *string, required*. The full path to the command to invoke, or just its name if it's on `$PATH`.
   - **args**: *array of strings*. Command-line arguments to pass to the above `cmd`.
 
+- **debug**: *bool, optional*. When set to `true`, prints the rendered manifests of **every** test job in this suite to stdout, to help diagnose failing tests. Defaults to `false`. The output is taken after any `postRenderer` has been applied, so it shows exactly what the assertions validate. Individual test jobs can enable this on their own instead, check [Test Job](#test-job).
+
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
 ## Test Job
@@ -146,6 +149,7 @@ tests:
         - "eval"
         - '.metadata.annotations.appended="new"'
         - "-"
+    debug: true
     asserts:
       - equal:
           path: metadata.name
@@ -193,6 +197,8 @@ tests:
 - **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.
     - **cmd**: *string, required*. The full path to the command to invoke, or just its name if it's on `$PATH`.
     - **args**: *array of strings*. Command-line arguments to pass to the above `cmd`.
+
+- **debug**: *bool, optional*. When set to `true`, prints the rendered manifests of **this** test job to stdout, to help diagnose a failing test. Defaults to `false`. The output is taken after any `postRenderer` has been applied, so it shows exactly what the assertions validate. Enabling `debug` on the suite turns this on for every test job, but a test job never disables what the suite enabled.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
