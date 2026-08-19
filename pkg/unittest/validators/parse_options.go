@@ -36,6 +36,29 @@ type parseAware interface {
 	parseSpec() ParseOptions
 }
 
+// validate checks the option combination is coherent, independent of any
+// actual value.
+func (p ParseOptions) validate() error {
+	if p.Parse == "" {
+		if p.InnerPath != "" {
+			return fmt.Errorf("field 'innerPath' requires 'parse' to be set")
+		}
+		return nil
+	}
+
+	if p.Parse != ParseFormatJSON && p.Parse != ParseFormatYAML {
+		return fmt.Errorf(
+			"invalid parse format '%s', expected '%s' or '%s'",
+			p.Parse, ParseFormatJSON, ParseFormatYAML,
+		)
+	}
+
+	return nil
+}
+
+// enabled reports whether parsing was requested.
+func (p ParseOptions) enabled() bool { return p.Parse != "" }
+
 // normalizeParsedNumbers converts json.Number values to int or float64 using
 // the same rule go.yaml.in/yaml/v3 applies, so that `parse: json` and
 // `parse: yaml` produce identical Go types for identical input:
