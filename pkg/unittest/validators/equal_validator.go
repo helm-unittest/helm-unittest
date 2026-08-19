@@ -82,13 +82,55 @@ func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIn
 			}
 			s = string(decodedSingleActual)
 		}
-		actual = uniformContent(s)
-	} else {
-		actual = normalizeActual(actual)
+		actual = s
 	}
 
-	if reflect.DeepEqual(a.Value, actual) == context.Negative {
-		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+	if a.ParseOptions.enabled() {
+		return a.validateParsedActuals(actual, manifestIndex, actualIndex, context)
+	}
+
+	return a.compareActual(actual, manifestIndex, actualIndex, context)
+}
+
+// validateParsedActuals parses the actual value and validates every node the
+// innerPath matched. All matches must satisfy the comparison, which mirrors how
+// a multi-match path already behaves.
+func (a EqualValidator) validateParsedActuals(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	parsedActuals, err := a.ParseOptions.resolveParsed(actual, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, actualIndex, err.Error())
+	}
+
+	if len(parsedActuals) == 0 {
+		if context.Negative {
+			return true, []string{}
+		}
+		return false, splitInfof(errorFormat, manifestIndex, actualIndex,
+			fmt.Sprintf("unknown parsed path %s", a.ParseOptions.InnerPath))
+	}
+
+	success := true
+	var errors []string
+
+	for _, parsedActual := range parsedActuals {
+		parsedSuccess, parsedErrors := a.compareActual(parsedActual, manifestIndex, actualIndex, context)
+		errors = append(errors, parsedErrors...)
+		success = success && parsedSuccess
+
+		if !parsedSuccess && context.FailFast {
+			break
+		}
+	}
+
+	return success, errors
+}
+
+// compareActual performs the equality comparison against a single value.
+func (a EqualValidator) compareActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	normalized := normalizeActual(actual)
+
+	if reflect.DeepEqual(a.Value, normalized) == context.Negative {
+		return false, a.failInfo(normalized, manifestIndex, actualIndex, context.Negative)
 	}
 
 	return true, []string{}
