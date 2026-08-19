@@ -48,9 +48,20 @@ type parseAware interface {
 // no error at all, which downstream validators cannot tell apart from an
 // absent value). An empty InnerPath remains valid; it means "use the whole
 // parsed document".
+//
+// An InnerPath starting with '.' is also rejected. wrapForPathLookup joins a
+// non-object parse result's synthetic root key to InnerPath with "." when
+// InnerPath doesn't start with "[", so a leading dot would produce a ".."
+// expression. In JSONPath ".." means recursive descent, not child access, so
+// it would silently match values at arbitrary depths instead of the intended
+// child, rather than erroring or resolving to the intended child.
 func (p ParseOptions) validate() error {
 	if p.InnerPath != "" && strings.TrimSpace(p.InnerPath) == "" {
 		return fmt.Errorf("field 'innerPath' must not be blank")
+	}
+
+	if strings.HasPrefix(strings.TrimSpace(p.InnerPath), ".") {
+		return fmt.Errorf("field 'innerPath' must not start with '.'")
 	}
 
 	if p.Parse == "" {

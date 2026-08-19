@@ -117,6 +117,21 @@ func TestParseOptionsValidate(t *testing.T) {
 			options:     ParseOptions{InnerPath: "   "},
 			expectedErr: "field 'innerPath' must not be blank",
 		},
+		{
+			name:        "innerPath with a leading dot is rejected",
+			options:     ParseOptions{Parse: ParseFormatJSON, InnerPath: ".server.port"},
+			expectedErr: "field 'innerPath' must not start with '.'",
+		},
+		{
+			name:        "innerPath that is only a dot is rejected",
+			options:     ParseOptions{Parse: ParseFormatJSON, InnerPath: "."},
+			expectedErr: "field 'innerPath' must not start with '.'",
+		},
+		{
+			name:        "innerPath with a leading dot before an index is rejected",
+			options:     ParseOptions{Parse: ParseFormatJSON, InnerPath: ".[0]"},
+			expectedErr: "field 'innerPath' must not start with '.'",
+		},
 	}
 
 	for _, tt := range tests {
@@ -290,4 +305,14 @@ func TestResolveParsedInvalidInnerPathIsError(t *testing.T) {
 
 	_, err := options.resolveParsed(`{"a":1}`, "data.config")
 	assert.Error(t, err)
+}
+
+// A leading dot must be rejected rather than silently joined to the synthetic
+// root key, which would produce a '..' recursive-descent expression and match
+// values at arbitrary depths instead of the requested child.
+func TestParseOptionsRejectsLeadingDotBeforeResolution(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: ".x"}
+
+	assert.EqualError(t, options.validate(),
+		"field 'innerPath' must not start with '.'")
 }
