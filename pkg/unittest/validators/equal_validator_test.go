@@ -585,3 +585,105 @@ data:
 	})
 	assert.True(t, pass)
 }
+
+// Two distinct failing nodes in a parse fan-out must be distinguishable in the
+// output, the same way a plain multi-match path distinguishes them.
+func TestEqualValidatorParsedFanOutReportsDistinctIndices(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":9090},{"port":7070}]}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "ValuesIndex:\t0")
+	assert.Contains(t, joined, "ValuesIndex:\t1")
+}
+
+func TestEqualValidatorParsedFanOutFailFastReportsOneFailure(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2},{"port":3}]}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        9999,
+	}
+
+	_, failFastDiff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
+	})
+	_, fullDiff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.Less(t, len(failFastDiff), len(fullDiff),
+		"FailFast must stop after the first failing parsed node")
+}
+
+// Negation composes with fan-out per node: every node must differ from Value.
+func TestEqualValidatorParsedFanOutNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2}]}
+`)
+
+	noneMatch := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        9999,
+	}
+
+	pass, _ := noneMatch.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "no node equals the value, so notEqual holds")
+
+	oneMatches := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        1,
+	}
+
+	pass, _ = oneMatches.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.False(t, pass, "one node equals the value, so notEqual fails")
+}
+
+func TestEqualValidatorParsedUnmatchedInnerPathNamesBothPaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.missing"},
+		Value:        1,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, `data["config.json"]`)
+	assert.Contains(t, joined, "server.missing")
+}

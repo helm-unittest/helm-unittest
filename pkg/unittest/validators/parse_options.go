@@ -236,6 +236,43 @@ func wrapForPathLookup(parsed any, innerPath string) (common.K8sManifest, string
 	return wrapper, parsedRootKey + "." + innerPath
 }
 
+// resolveActuals applies parse and innerPath to every value matched by the
+// assertion's path, flattening the results into a single slice.
+//
+// Flattening rather than nesting means a validator's existing per-actual loop
+// works unchanged, and its value index increments across innerPath matches the
+// same way it already does across path matches. When parsing is not requested
+// the input is returned as-is, so callers can use this unconditionally.
+func (p ParseOptions) resolveActuals(actuals []any, path string) ([]any, error) {
+	if !p.enabled() {
+		return actuals, nil
+	}
+
+	flattened := make([]any, 0, len(actuals))
+
+	for _, actual := range actuals {
+		parsed, err := p.resolveParsed(actual, path)
+		if err != nil {
+			return nil, err
+		}
+
+		flattened = append(flattened, parsed...)
+	}
+
+	return flattened, nil
+}
+
+// describePath names what an assertion looked up, for error messages. It
+// includes the innerPath when one was used, so that two assertions probing
+// different fields at the same innerPath produce distinguishable errors.
+func (p ParseOptions) describePath(path string) string {
+	if !p.enabled() || p.InnerPath == "" {
+		return path
+	}
+
+	return fmt.Sprintf("%s innerPath %s", path, p.InnerPath)
+}
+
 // describeType names a value's type for error messages, reporting untyped nil
 // as "nil" rather than the empty string reflect returns.
 func describeType(value any) string {

@@ -316,3 +316,66 @@ func TestParseOptionsRejectsLeadingDotBeforeResolution(t *testing.T) {
 	assert.EqualError(t, options.validate(),
 		"field 'innerPath' must not start with '.'")
 }
+
+func TestResolveActualsFlattensFanOut(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"}
+
+	actuals := []any{`{"servers":[{"port":1},{"port":2}]}`}
+
+	flattened, err := options.resolveActuals(actuals, "data.config")
+
+	assert.NoError(t, err)
+	assert.Equal(t, []any{1, 2}, flattened,
+		"innerPath matches must be flattened into the actuals slice")
+}
+
+func TestResolveActualsFlattensAcrossMultipleActuals(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: "port"}
+
+	actuals := []any{`{"port":1}`, `{"port":2}`, `{"port":3}`}
+
+	flattened, err := options.resolveActuals(actuals, "data.*")
+
+	assert.NoError(t, err)
+	assert.Equal(t, []any{1, 2, 3}, flattened,
+		"each path match contributes its own innerPath matches, in order")
+}
+
+func TestResolveActualsDisabledReturnsInputUnchanged(t *testing.T) {
+	options := ParseOptions{}
+
+	actuals := []any{"a", 2, map[string]any{"b": 3}}
+
+	flattened, err := options.resolveActuals(actuals, "data.config")
+
+	assert.NoError(t, err)
+	assert.Equal(t, actuals, flattened)
+}
+
+func TestResolveActualsPropagatesError(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON}
+
+	_, err := options.resolveActuals([]any{`{"bad":}`}, "data.config")
+
+	assert.ErrorContains(t, err, "unable to parse path 'data.config' as json")
+}
+
+func TestResolveActualsUnmatchedInnerPathYieldsEmpty(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: "nope"}
+
+	flattened, err := options.resolveActuals([]any{`{"a":1}`}, "data.config")
+
+	assert.NoError(t, err)
+	assert.Empty(t, flattened)
+}
+
+func TestDescribePathNamesBothPaths(t *testing.T) {
+	assert.Equal(t, "data.config",
+		ParseOptions{}.describePath("data.config"))
+
+	assert.Equal(t, "data.config",
+		ParseOptions{Parse: ParseFormatJSON}.describePath("data.config"))
+
+	assert.Equal(t, "data.config innerPath server.port",
+		ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"}.describePath("data.config"))
+}

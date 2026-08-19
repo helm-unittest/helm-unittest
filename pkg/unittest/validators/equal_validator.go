@@ -54,8 +54,19 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actuals, decodeErrors := a.decodeBase64Actuals(actuals, manifestIndex)
+	if decodeErrors != nil {
+		return false, decodeErrors
+	}
+
+	actuals, err = a.ParseOptions.resolveActuals(actuals, a.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actuals) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", a.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path %s", a.ParseOptions.describePath(a.Path)))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
@@ -73,56 +84,41 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 	return validateManifestSuccess, validateManifestErrors
 }
 
-func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	if s, ok := actual.(string); ok {
-		if a.DecodeBase64 {
-			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
-			if err != nil {
-				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
-			}
-			s = string(decodedSingleActual)
+// decodeBase64Actuals decodes each string actual, so that parsing operates on
+// the decoded content. Ordering matters: a Secret can hold base64-encoded
+// JSON/YAML, so decoding must happen before `parse` and `innerPath` are
+// applied. Non-string actuals pass through untouched, matching the previous
+// per-actual behavior.
+//
+// The returned []string is non-nil only on failure, in which case it is the
+// complete splitInfof error output and the caller must return it immediately.
+func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([]any, []string) {
+	if !a.DecodeBase64 {
+		return actuals, nil
+	}
+
+	decoded := make([]any, len(actuals))
+
+	for actualIndex, actual := range actuals {
+		s, ok := actual.(string)
+		if !ok {
+			decoded[actualIndex] = actual
+			continue
 		}
-		actual = s
+
+		decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return nil, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
+		}
+
+		decoded[actualIndex] = string(decodedSingleActual)
 	}
 
-	if a.ParseOptions.enabled() {
-		return a.validateParsedActuals(actual, manifestIndex, actualIndex, context)
-	}
-
-	return a.compareActual(actual, manifestIndex, actualIndex, context)
+	return decoded, nil
 }
 
-// validateParsedActuals parses the actual value and validates every node the
-// innerPath matched. All matches must satisfy the comparison, which mirrors how
-// a multi-match path already behaves.
-func (a EqualValidator) validateParsedActuals(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	parsedActuals, err := a.ParseOptions.resolveParsed(actual, a.Path)
-	if err != nil {
-		return false, splitInfof(errorFormat, manifestIndex, actualIndex, err.Error())
-	}
-
-	if len(parsedActuals) == 0 {
-		if context.Negative {
-			return true, []string{}
-		}
-		return false, splitInfof(errorFormat, manifestIndex, actualIndex,
-			fmt.Sprintf("unknown parsed path %s", a.ParseOptions.InnerPath))
-	}
-
-	success := true
-	var errors []string
-
-	for _, parsedActual := range parsedActuals {
-		parsedSuccess, parsedErrors := a.compareActual(parsedActual, manifestIndex, actualIndex, context)
-		errors = append(errors, parsedErrors...)
-		success = success && parsedSuccess
-
-		if !parsedSuccess && context.FailFast {
-			break
-		}
-	}
-
-	return success, errors
+func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	return a.compareActual(actual, manifestIndex, actualIndex, context)
 }
 
 // compareActual performs the equality comparison against a single value.
