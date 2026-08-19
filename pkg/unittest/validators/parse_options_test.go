@@ -163,3 +163,131 @@ func TestParseStructuredContentOversizedNumberFallsBackToLiteral(t *testing.T) {
 		fromJSON.(map[string]any)["a"],
 		"json and yaml must agree on type even for unrepresentable numbers")
 }
+
+const configJSON = `{"server":{"port":8080,"tls":{"enabled":true}},` +
+	`"debug":false,"servers":[{"port":1},{"port":2}],` +
+	`"panels":[{"title":"Latency"},{"title":"QPS"}]}`
+
+func TestResolveParsedObjectRoot(t *testing.T) {
+	tests := []struct {
+		name      string
+		innerPath string
+		expected  []any
+	}{
+		{"whole document", "", []any{map[string]any{
+			"server": map[string]any{
+				"port": 8080,
+				"tls":  map[string]any{"enabled": true},
+			},
+			"debug":   false,
+			"servers": []any{map[string]any{"port": 1}, map[string]any{"port": 2}},
+			"panels": []any{
+				map[string]any{"title": "Latency"},
+				map[string]any{"title": "QPS"},
+			},
+		}}},
+		{"nested leaf", "server.port", []any{8080}},
+		{"deeply nested leaf", "server.tls.enabled", []any{true}},
+		{"boolean leaf", "debug", []any{false}},
+		{"array element", "panels[0].title", []any{"Latency"}},
+		{"array fan-out", "servers[*].port", []any{1, 2}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			options := ParseOptions{Parse: ParseFormatJSON, InnerPath: tt.innerPath}
+			actuals, err := options.resolveParsed(configJSON, "data[\"config.json\"]")
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actuals)
+		})
+	}
+}
+
+func TestResolveParsedArrayRoot(t *testing.T) {
+	const dashboardJSON = `[{"title":"Latency","n":1},{"title":"QPS","n":2}]`
+
+	tests := []struct {
+		name      string
+		innerPath string
+		expected  []any
+	}{
+		{"whole array", "", []any{[]any{
+			map[string]any{"title": "Latency", "n": 1},
+			map[string]any{"title": "QPS", "n": 2},
+		}}},
+		{"indexed element", "[0].title", []any{"Latency"}},
+		{"indexed number", "[1].n", []any{2}},
+		{"wildcard fan-out", "[*].title", []any{"Latency", "QPS"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			options := ParseOptions{Parse: ParseFormatJSON, InnerPath: tt.innerPath}
+			actuals, err := options.resolveParsed(dashboardJSON, "data[\"d.json\"]")
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actuals)
+		})
+	}
+}
+
+func TestResolveParsedYAMLContent(t *testing.T) {
+	const configYAML = "server:\n  port: 8080\n  tls:\n    enabled: true\ndebug: false\n"
+
+	options := ParseOptions{Parse: ParseFormatYAML, InnerPath: "server.port"}
+	actuals, err := options.resolveParsed(configYAML, "data[\"config.yaml\"]")
+	assert.NoError(t, err)
+	assert.Equal(t, []any{8080}, actuals)
+}
+
+func TestResolveParsedDisabledPassesThrough(t *testing.T) {
+	options := ParseOptions{}
+	actuals, err := options.resolveParsed("plain string", "data.value")
+	assert.NoError(t, err)
+	assert.Equal(t, []any{"plain string"}, actuals)
+
+	structured := map[string]any{"already": "parsed"}
+	actuals, err = options.resolveParsed(structured, "data")
+	assert.NoError(t, err)
+	assert.Equal(t, []any{structured}, actuals)
+}
+
+func TestResolveParsedNonStringIsError(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON}
+
+	_, err := options.resolveParsed(3, "spec.replicas")
+	assert.EqualError(t, err,
+		"expect 'spec.replicas' to be a string to parse as json, got int")
+
+	_, err = options.resolveParsed(map[string]any{"a": 1}, "spec.selector")
+	assert.EqualError(t, err,
+		"expect 'spec.selector' to be a string to parse as json, got map[string]interface {}")
+
+	_, err = options.resolveParsed(nil, "spec.missing")
+	assert.EqualError(t, err,
+		"expect 'spec.missing' to be a string to parse as json, got nil")
+}
+
+func TestResolveParsedParseFailureIncludesPath(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON}
+
+	_, err := options.resolveParsed(`{"port": 8080,}`, `data["config.json"]`)
+	assert.ErrorContains(t, err, `unable to parse path 'data["config.json"]' as json:`)
+}
+
+// An innerPath that matches nothing yields an empty slice with a nil error.
+// Each validator's existing len(actuals) == 0 branch then handles it, which
+// keeps negative (not:) assertions behaving consistently.
+func TestResolveParsedUnmatchedInnerPathIsEmpty(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: "nope.deeper"}
+
+	actuals, err := options.resolveParsed(`{"a":1}`, "data.config")
+	assert.NoError(t, err)
+	assert.Empty(t, actuals)
+}
+
+func TestResolveParsedInvalidInnerPathIsError(t *testing.T) {
+	options := ParseOptions{Parse: ParseFormatJSON, InnerPath: "a[["}
+
+	_, err := options.resolveParsed(`{"a":1}`, "data.config")
+	assert.Error(t, err)
+}
