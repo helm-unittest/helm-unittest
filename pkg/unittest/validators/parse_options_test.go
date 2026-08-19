@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -67,4 +68,83 @@ func TestParseStructuredContentNestedNormalization(t *testing.T) {
 	assert.Equal(t, 1, list[0])
 	assert.Equal(t, float64(2), list[1])
 	assert.Equal(t, 3, list[2].(map[string]any)["deep"])
+}
+
+func TestParseOptionsValidate(t *testing.T) {
+	tests := []struct {
+		name        string
+		options     ParseOptions
+		expectedErr string
+	}{
+		{
+			name:    "empty is valid",
+			options: ParseOptions{},
+		},
+		{
+			name:    "json is valid",
+			options: ParseOptions{Parse: ParseFormatJSON},
+		},
+		{
+			name:    "yaml is valid",
+			options: ParseOptions{Parse: ParseFormatYAML},
+		},
+		{
+			name:    "json with innerPath is valid",
+			options: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		},
+		{
+			name:        "unknown format is rejected",
+			options:     ParseOptions{Parse: "toml"},
+			expectedErr: "invalid parse format 'toml', expected 'json' or 'yaml'",
+		},
+		{
+			name:        "innerPath without parse is rejected",
+			options:     ParseOptions{InnerPath: "server.port"},
+			expectedErr: "field 'innerPath' requires 'parse' to be set",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.options.validate()
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.EqualError(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestParseStructuredContentErrors(t *testing.T) {
+	_, err := parseStructuredContent(`{"port": 8080,}`, ParseFormatJSON)
+	assert.Error(t, err, "malformed JSON must be rejected by the json parser")
+
+	_, err = parseStructuredContent(`{"a":1} {"b":2}`, ParseFormatJSON)
+	assert.EqualError(t, err, "unexpected trailing content after JSON value")
+
+	_, err = parseStructuredContent("a: [unclosed", ParseFormatYAML)
+	assert.Error(t, err, "malformed YAML must be rejected")
+
+	_, err = parseStructuredContent(`{}`, "toml")
+	assert.EqualError(t, err, "invalid parse format 'toml', expected 'json' or 'yaml'")
+}
+
+// A number representable as neither int64 nor float64 falls back to its literal
+// string, matching what go.yaml.in/yaml/v3 does for the same input. Returning an
+// error instead would break the guarantee that json and yaml agree on types.
+func TestParseStructuredContentOversizedNumberFallsBackToLiteral(t *testing.T) {
+	oversized := strings.Repeat("9", 400)
+
+	fromJSON, err := parseStructuredContent(`{"a":`+oversized+`}`, ParseFormatJSON)
+	assert.NoError(t, err)
+
+	fromYAML, err := parseStructuredContent("a: "+oversized, ParseFormatYAML)
+	assert.NoError(t, err)
+
+	assert.Equal(t, oversized, fromJSON.(map[string]any)["a"])
+	assert.IsType(t,
+		fromYAML.(map[string]any)["a"],
+		fromJSON.(map[string]any)["a"],
+		"json and yaml must agree on type even for unrepresentable numbers")
 }
