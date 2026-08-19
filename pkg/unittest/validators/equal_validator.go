@@ -16,6 +16,7 @@ type EqualValidator struct {
 	Path         string
 	Value        any
 	DecodeBase64 bool `yaml:"decodeBase64"`
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {

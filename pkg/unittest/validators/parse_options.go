@@ -31,11 +31,15 @@ type ParseOptions struct {
 // embedding ParseOptions satisfies parseAware.
 func (p ParseOptions) parseSpec() ParseOptions { return p }
 
-// parseAware is satisfied only by validators that embed ParseOptions. It lets
+// ParseAware is satisfied only by validators that embed ParseOptions. It lets
 // assertion parsing reject `parse` on assertions that do not support it,
 // instead of silently ignoring the field.
-type parseAware interface {
+//
+// The unexported parseSpec method keeps this interface unimplementable from
+// outside this package, so support cannot be claimed by accident.
+type ParseAware interface {
 	parseSpec() ParseOptions
+	ValidateParseOptions() error
 }
 
 // validate checks the option combination is coherent, independent of any
@@ -80,6 +84,9 @@ func (p ParseOptions) validate() error {
 
 	return nil
 }
+
+// ValidateParseOptions implements ParseAware.
+func (p ParseOptions) ValidateParseOptions() error { return p.validate() }
 
 // enabled reports whether parsing was requested.
 func (p ParseOptions) enabled() bool { return p.Parse != "" }
