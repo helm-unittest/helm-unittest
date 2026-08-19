@@ -3,9 +3,11 @@ package validators
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
 // Supported values for the `parse` assertion field.
@@ -150,4 +152,78 @@ func parseStructuredContent(content, format string) (any, error) {
 			format, ParseFormatJSON, ParseFormatYAML,
 		)
 	}
+}
+
+// parsedRootKey is a synthetic map key used to wrap non-map parse results, so
+// that innerPath can be resolved by the same path engine used for `path`.
+// GetValueOfSetPath requires a map at the root; a parsed JSON array or scalar
+// is not one.
+const parsedRootKey = "__helmUnittestParsedRoot__"
+
+// resolveParsed applies `parse` and `innerPath` to a single actual value.
+//
+// When parsing is not requested the value is returned unchanged, so callers can
+// use this unconditionally.
+//
+// The result is a slice because innerPath, like path, may match several nodes
+// (for example `servers[*].port`). Each match is validated independently by the
+// caller's existing per-actual loop.
+func (p ParseOptions) resolveParsed(actual any, path string) ([]any, error) {
+	if !p.enabled() {
+		return []any{actual}, nil
+	}
+
+	content, ok := actual.(string)
+	if !ok {
+		return nil, fmt.Errorf(
+			"expect '%s' to be a string to parse as %s, got %s",
+			path, p.Parse, describeType(actual),
+		)
+	}
+
+	parsed, err := parseStructuredContent(content, p.Parse)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse path '%s' as %s: %s", path, p.Parse, err)
+	}
+
+	return p.resolveInnerPath(parsed)
+}
+
+// resolveInnerPath applies InnerPath to an already-parsed value.
+func (p ParseOptions) resolveInnerPath(parsed any) ([]any, error) {
+	if p.InnerPath == "" {
+		return []any{parsed}, nil
+	}
+
+	wrapper, effectivePath := wrapForPathLookup(parsed, p.InnerPath)
+
+	return valueutils.GetValueOfSetPath(wrapper, effectivePath)
+}
+
+// wrapForPathLookup returns a map suitable for GetValueOfSetPath along with the
+// path to use against it. A parsed object is used directly; anything else is
+// nested under parsedRootKey and the path is prefixed accordingly.
+func wrapForPathLookup(parsed any, innerPath string) (common.K8sManifest, string) {
+	if asMap, ok := parsed.(map[string]any); ok {
+		return asMap, innerPath
+	}
+
+	wrapper := common.K8sManifest{parsedRootKey: parsed}
+
+	// An index expression attaches directly; a key expression needs a separator.
+	if strings.HasPrefix(innerPath, "[") {
+		return wrapper, parsedRootKey + innerPath
+	}
+
+	return wrapper, parsedRootKey + "." + innerPath
+}
+
+// describeType names a value's type for error messages, reporting untyped nil
+// as "nil" rather than the empty string reflect returns.
+func describeType(value any) string {
+	valueType := reflect.TypeOf(value)
+	if valueType == nil {
+		return "nil"
+	}
+	return valueType.String()
 }
