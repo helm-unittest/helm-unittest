@@ -1366,18 +1366,15 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	var debugOutput bytes.Buffer
-	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
-		WithDebugWriter(&debugOutput),
-	))
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.True(tj.Debug, "debug should be unmarshalled from the test job definition")
-	a.Contains(debugOutput.String(), "#### file: basic/templates/deployment.yaml")
-	a.Contains(debugOutput.String(), "kind: Deployment")
+	a.Contains(testResult.DebugOutput, "#### file: basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
 }
 
 func TestV3RunJobDebugWritesRenderedManifestsWhenSuiteDebugSet(t *testing.T) {
@@ -1393,10 +1390,8 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	var debugOutput bytes.Buffer
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithDebug(true),
-		WithDebugWriter(&debugOutput),
 	))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
@@ -1404,8 +1399,8 @@ asserts:
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.False(tj.Debug, "the job itself did not opt in; only the suite did")
-	a.Contains(debugOutput.String(), "#### file: basic/templates/deployment.yaml")
-	a.Contains(debugOutput.String(), "kind: Deployment")
+	a.Contains(testResult.DebugOutput, "#### file: basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
 }
 
 func TestV3RunJobDebugWritesNothingWhenDebugNotSet(t *testing.T) {
@@ -1421,16 +1416,13 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	var debugOutput bytes.Buffer
-	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
-		WithDebugWriter(&debugOutput),
-	))
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
-	a.Empty(debugOutput.String(), "no debug output expected when neither job nor suite enables debug")
+	a.Empty(testResult.DebugOutput, "no debug output expected when neither job nor suite enables debug")
 }
 
 func TestV3RunJobDebugPrintsPostRenderedManifests(t *testing.T) {
@@ -1455,17 +1447,14 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	var debugOutput bytes.Buffer
-	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
-		WithDebugWriter(&debugOutput),
-	))
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	// debug output must reflect the POST-rendered manifest, not the raw render
-	a.Contains(debugOutput.String(), "appended: new")
+	a.Contains(testResult.DebugOutput, "appended: new")
 }
 
 func TestV3RunJobDebugPrintsRenderedManifestsWhenPostRenderFails(t *testing.T) {
@@ -1485,17 +1474,14 @@ asserts:
 	var tj TestJob
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
-	var debugOutput bytes.Buffer
-	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
-		WithDebugWriter(&debugOutput),
-	))
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
 	testResult := tj.RunV3(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.Error(testResult.ExecError, "the failing post-renderer should be reported")
 	// the chart itself rendered fine, so debug must still show that output,
 	// clearly marked as being from before the post-renderer ran
-	a.Contains(debugOutput.String(), "pre-post-render")
-	a.Contains(debugOutput.String(), "basic/templates/deployment.yaml")
-	a.Contains(debugOutput.String(), "kind: Deployment")
+	a.Contains(testResult.DebugOutput, "pre-post-render")
+	a.Contains(testResult.DebugOutput, "basic/templates/deployment.yaml")
+	a.Contains(testResult.DebugOutput, "kind: Deployment")
 }

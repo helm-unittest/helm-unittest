@@ -14,7 +14,8 @@
       ExecError: (error) <nil>,
       AssertsResult: ([]*results.AssertionResult) {
       },
-      Duration: (time.Duration) 0s
+      Duration: (time.Duration) 0s,
+      DebugOutput: (string) ""
     })
   },
   SnapshotCounting: (struct { Total uint; Failed uint; Created uint; Vanished uint }) {

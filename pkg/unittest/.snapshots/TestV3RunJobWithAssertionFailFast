@@ -31,5 +31,6 @@
       CustomInfo: (string) ""
     })
   },
-  Duration: (time.Duration) 0s
+  Duration: (time.Duration) 0s,
+  DebugOutput: (string) ""
 })

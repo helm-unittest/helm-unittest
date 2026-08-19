@@ -4,6 +4,32 @@
 
  PASS  	../../test/data/v3/with-post-renderer/tests/basic_no_postrender_test.yaml
  PASS  	../../test/data/v3/with-post-renderer/tests/basic_postrender_test.yaml
+	- manifest should match snapshot
+		
+#### file: with-post-renderer/templates/basic.yaml
+		---
+		metadata:
+		  annotations:
+		    foo: "bar"
+		    appended: new
+
+	- manifest should include an extra annotation due to suite yq post-renderer
+		
+#### file: with-post-renderer/templates/basic.yaml
+		---
+		metadata:
+		  annotations:
+		    foo: "bar"
+		    appended: new
+
+	- manifest should overwrite existing annotation due to test-job yq post-renderer
+		
+#### file: with-post-renderer/templates/basic.yaml
+		---
+		metadata:
+		  annotations:
+		    foo: "baz"
+
 
 
 Charts:      1 passed, 1 total

@@ -1,9 +1,6 @@
 package unittest
 
 import (
-	"io"
-	"os"
-
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
@@ -21,16 +18,6 @@ type TestConfig struct {
 	postRenderer           PostRendererConfig
 	includeCrds            bool
 	debug                  bool
-	debugWriter            io.Writer
-}
-
-// debugWriterOrDefault returns the writer debug output should be written to,
-// falling back to stdout when none was configured.
-func (c TestConfig) debugWriterOrDefault() io.Writer {
-	if c.debugWriter == nil {
-		return os.Stdout
-	}
-	return c.debugWriter
 }
 
 func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -104,13 +91,6 @@ func WithSkipSchemaValidation(skip bool) LoadTestOptionsFunc {
 func WithDebug(debug bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
 		c.debug = debug
-	}
-}
-
-// WithDebugWriter sets where debug output is written to, defaulting to stdout.
-func WithDebugWriter(writer io.Writer) LoadTestOptionsFunc {
-	return func(c *TestConfig) {
-		c.debugWriter = writer
 	}
 }
 
