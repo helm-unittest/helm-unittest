@@ -502,6 +502,9 @@ data:
 	assert.Equal(t, []string{}, diff)
 }
 
+// The Value here is the raw JSON text, so this test only passes when parsing
+// actually happened: unparsed, the actual WOULD equal Value and the negative
+// assertion would fail.
 func TestEqualValidatorParsedNegative(t *testing.T) {
 	manifest := makeManifest(`
 data:
@@ -509,18 +512,35 @@ data:
     {"server":{"port":8080}}
 `)
 
-	validator := EqualValidator{
+	rawContent := "{\"server\":{\"port\":8080}}\n"
+
+	unparsedWouldMatch := EqualValidator{
+		Path:  `data["config.json"]`,
+		Value: rawContent,
+	}
+	pass, _ := unparsedWouldMatch.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+	assert.True(t, pass, "sanity check: the raw actual equals the raw JSON text")
+
+	// Same Value, but with parsing the actual becomes the number 8080, which
+	// does not equal the raw text, so the negative assertion holds.
+	parsedNegative := EqualValidator{
 		Path:         `data["config.json"]`,
 		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
-		Value:        9090,
+		Value:        rawContent,
 	}
-
-	pass, _ := validator.Validate(&ValidateContext{
+	pass, _ = parsedNegative.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
 	})
+	assert.True(t, pass, "parsed actual 8080 differs from the raw text")
 
-	assert.True(t, pass)
+	// And the positive form must fail, proving the comparison really ran.
+	pass, _ = parsedNegative.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+	assert.False(t, pass)
 }
 
 func TestEqualValidatorParseFailureReportsPath(t *testing.T) {
@@ -562,7 +582,8 @@ spec:
 }
 
 // An innerPath that matches nothing behaves like an unknown path: a failure
-// normally, a pass under a negative assertion.
+// normally, a pass under a negative assertion. Asserting on the message proves
+// the parse path produced it, rather than an ordinary comparison failure.
 func TestEqualValidatorParsedUnmatchedInnerPath(t *testing.T) {
 	manifest := makeManifest(`
 data:
@@ -576,14 +597,18 @@ data:
 		Value:        1,
 	}
 
-	pass, _ := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
 	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), "unknown path",
+		"an unmatched innerPath must report unknown path, not a value mismatch")
+	assert.Contains(t, strings.Join(diff, "\n"), "server.missing")
 
-	pass, _ = validator.Validate(&ValidateContext{
+	pass, diff = validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
 	})
 	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
 }
 
 // Two distinct failing nodes in a parse fan-out must be distinguishable in the
