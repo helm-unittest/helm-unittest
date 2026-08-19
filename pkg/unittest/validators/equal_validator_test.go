@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -365,4 +366,222 @@ func TestEqualValidatorWhenNoManifestNegativeOk(t *testing.T) {
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+// This is the canary for the whole design: without number normalization the
+// test-file int 8080 would not equal the parsed JSON value, because
+// encoding/json decodes numbers as float64.
+func TestEqualValidatorParsedJSONNumberMatchesIntExpectation(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedJSONIgnoresKeyOrdering(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"zebra":1,"alpha":2,"middle":3}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value: map[string]any{
+			"alpha":  2,
+			"middle": 3,
+			"zebra":  1,
+		},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedYAMLDeepLeaf(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    server:
+      tls:
+        enabled: true
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "server.tls.enabled"},
+		Value:        true,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedArrayElement(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  dashboard.json: |
+    [{"title":"Latency"},{"title":"QPS"}]
+`)
+
+	validator := EqualValidator{
+		Path:         `data["dashboard.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "[1].title"},
+		Value:        "QPS",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// innerPath, like path, may match several nodes; all of them must satisfy the
+// comparison.
+func TestEqualValidatorParsedFanOutRequiresAllToMatch(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":8080}]}
+`)
+
+	allMatch := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        8080,
+	}
+
+	pass, diff := allMatch.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mixed := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":9090}]}
+`)
+
+	pass, _ = allMatch.Validate(&ValidateContext{Docs: []common.K8sManifest{mixed}})
+	assert.False(t, pass, "a single non-matching node must fail the assertion")
+}
+
+func TestEqualValidatorParseComposesWithDecodeBase64(t *testing.T) {
+	// base64 of {"server":{"port":8080}}
+	manifest := makeManifest(`
+data:
+  config: eyJzZXJ2ZXIiOnsicG9ydCI6ODA4MH19
+`)
+
+	validator := EqualValidator{
+		Path:         "data.config",
+		DecodeBase64: true,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        9090,
+	}
+
+	pass, _ := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+}
+
+func TestEqualValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"port": 8080,}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value:        map[string]any{"port": 8080},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), `unable to parse path 'data["config.json"]' as json`)
+}
+
+func TestEqualValidatorParseOnNonStringReportsType(t *testing.T) {
+	manifest := makeManifest(`
+spec:
+  replicas: 3
+`)
+
+	validator := EqualValidator{
+		Path:         "spec.replicas",
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value:        3,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"),
+		"expect 'spec.replicas' to be a string to parse as json, got int")
+}
+
+// An innerPath that matches nothing behaves like an unknown path: a failure
+// normally, a pass under a negative assertion.
+func TestEqualValidatorParsedUnmatchedInnerPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.missing"},
+		Value:        1,
+	}
+
+	pass, _ := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	assert.False(t, pass)
+
+	pass, _ = validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass)
 }
