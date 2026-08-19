@@ -38,7 +38,19 @@ type parseAware interface {
 
 // validate checks the option combination is coherent, independent of any
 // actual value.
+//
+// An InnerPath consisting solely of whitespace is rejected up front, before
+// the other checks: it is indistinguishable from a typo, and the underlying
+// path engine's behavior for such input is inconsistent (some whitespace
+// produces a cryptic parse error, other whitespace produces no matches and
+// no error at all, which downstream validators cannot tell apart from an
+// absent value). An empty InnerPath remains valid; it means "use the whole
+// parsed document".
 func (p ParseOptions) validate() error {
+	if p.InnerPath != "" && strings.TrimSpace(p.InnerPath) == "" {
+		return fmt.Errorf("field 'innerPath' must not be blank")
+	}
+
 	if p.Parse == "" {
 		if p.InnerPath != "" {
 			return fmt.Errorf("field 'innerPath' requires 'parse' to be set")
