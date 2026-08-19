@@ -439,7 +439,8 @@ data:
 }
 
 // isSubset requires an object. A parsed top-level array must report the
-// existing "to be an object" error rather than silently passing.
+// existing "to be an object" error, showing the DECODED array as the actual —
+// which is what distinguishes this from the unparsed raw-string case.
 func TestIsSubsetValidatorParsedArrayIsNotAnObject(t *testing.T) {
 	manifest := makeManifest(`
 data:
@@ -456,7 +457,11 @@ data:
 	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
 
 	assert.False(t, pass)
-	assert.Contains(t, strings.Join(diff, "\n"), "to be an object")
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "to be an object")
+	// The decoded array renders as a YAML list; the raw string would not.
+	assert.Contains(t, joined, "- a: 1",
+		"the actual must be the decoded array, proving parsing ran")
 }
 
 func TestIsSubsetValidatorParseFailureReportsPath(t *testing.T) {
