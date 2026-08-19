@@ -31,7 +31,7 @@ a:
 
 func TestEqualValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -43,7 +43,7 @@ func TestEqualValidatorWhenOk(t *testing.T) {
 
 func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.e", "Line1\nLine2\n", false}
+	validator := EqualValidator{Path: "a.e", Value: "Line1\nLine2\n", DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -55,7 +55,7 @@ func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
 
 func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.e", "Line1\nLine2\n", true}
+	validator := EqualValidator{Path: "a.e", Value: "Line1\nLine2\n", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -67,7 +67,7 @@ func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
 
 func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualWithBase64)
-	validator := EqualValidator{"a", "123", true}
+	validator := EqualValidator{Path: "a", Value: "123", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -79,7 +79,7 @@ func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
 
 func TestEqualValidatorMultiLineWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualWithBase64)
-	validator := EqualValidator{"b", "Line1\nLine2\n", true}
+	validator := EqualValidator{Path: "b", Value: "Line1\nLine2\n", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -92,7 +92,7 @@ func TestEqualValidatorMultiLineWithBase64WhenOk(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	validator := EqualValidator{"a.b[0].c", 321, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 321, DecodeBase64: false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -108,9 +108,9 @@ func TestEqualValidatorWhenFail(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[any]any{"d": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[any]any{"d": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -144,9 +144,9 @@ a:
 	manifest2 := makeManifest(docToTestEqual)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[string]any{"c": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[string]any{"c": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest1, manifest2},
@@ -174,9 +174,9 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[string]any{"c": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[string]any{"c": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest, manifest},
@@ -216,7 +216,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[0]", map[string]any{"c": 123}, false}
+	v := EqualValidator{Path: "a.b[0]", Value: map[string]any{"c": 123}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -235,7 +235,7 @@ func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 func TestEqualValidatorWhenWrongPath(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[e]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[e]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -251,7 +251,7 @@ func TestEqualValidatorWhenWrongPath(t *testing.T) {
 func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -267,7 +267,7 @@ func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 func TestEqualValidatorWhenUnknownPathNegative(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -280,7 +280,7 @@ func TestEqualValidatorWhenUnknownPathNegative(t *testing.T) {
 func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		FailFast: true,
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -296,7 +296,7 @@ func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
 
 func TestEqualValidatorWhenOkWithMultiplePaths(t *testing.T) {
 	manifest := makeManifest(docToTestEqualMultiplePaths)
-	validator := EqualValidator{"a.*", 1, false}
+	validator := EqualValidator{Path: "a.*", Value: 1, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
@@ -309,7 +309,7 @@ func TestEqualValidatorWhenOkWithMultiplePaths(t *testing.T) {
 
 func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqualMultiplePaths)
-	validator := EqualValidator{"a.*", 2, true}
+	validator := EqualValidator{Path: "a.*", Value: 2, DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
@@ -334,7 +334,7 @@ func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 }
 
 func TestEqualValidatorWhenNoManifestFail(t *testing.T) {
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{},
@@ -356,7 +356,7 @@ func TestEqualValidatorWhenNoManifestFail(t *testing.T) {
 }
 
 func TestEqualValidatorWhenNoManifestNegativeOk(t *testing.T) {
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{},

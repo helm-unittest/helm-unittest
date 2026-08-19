@@ -325,6 +325,10 @@ func (a *Assertion) constructValidator(assertDef map[string]any) error {
 				return err
 			}
 
+			if err := validateParseSupport(assertName, params, validator); err != nil {
+				return err
+			}
+
 			a.AssertType = assertName
 			a.validator = validator.(validators.Validatable)
 			a.requireRenderSuccess = correspondDef.expectRenderSuccess
@@ -333,6 +337,35 @@ func (a *Assertion) constructValidator(assertDef map[string]any) error {
 		}
 	}
 	return nil
+}
+
+// validateParseSupport rejects the `parse` and `innerPath` fields on assertions
+// that do not support them, and validates the option combination on those that
+// do.
+//
+// This check is required because mapstructure.Decode ignores unknown keys, so
+// without it `parse` on an unsupported assertion would be silently dropped and
+// the assertion would pass while appearing to assert on parsed content.
+func validateParseSupport(assertName string, params, validator any) error {
+	paramsMap, ok := params.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	parseAwareValidator, supportsParse := validator.(validators.ParseAware)
+	if !supportsParse {
+		for _, field := range []string{"parse", "innerPath"} {
+			if _, declared := paramsMap[field]; declared {
+				return fmt.Errorf(
+					"'%s' is not supported for assertion type '%s'",
+					field, assertName,
+				)
+			}
+		}
+		return nil
+	}
+
+	return parseAwareValidator.ValidateParseOptions()
 }
 
 func (a *Assertion) computeTemplatesWithPostRender() map[string][]common.K8sManifest {

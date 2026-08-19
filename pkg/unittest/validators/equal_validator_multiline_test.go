@@ -25,7 +25,7 @@ items:
 // TestEqualValidatorArrayAnyWithMultilineWhenOk verifies []any normalization
 func TestEqualValidatorArrayAnyWithMultilineWhenOk(t *testing.T) {
 	manifest := makeManifest(docWithArrayAny)
-	validator := EqualValidator{"items", []any{
+	validator := EqualValidator{Path: "items", Value: []any{
 		map[string]any{
 			"name":    "item1",
 			"content": "Multi\nLine\nContent\n",
@@ -34,7 +34,7 @@ func TestEqualValidatorArrayAnyWithMultilineWhenOk(t *testing.T) {
 			"name": "item2",
 			"data": "simple",
 		},
-	}, false}
+	}, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -47,7 +47,7 @@ func TestEqualValidatorArrayAnyWithMultilineWhenOk(t *testing.T) {
 // TestEqualValidatorArrayAnyWithMultilineWhenFail verifies []any mismatch detection
 func TestEqualValidatorArrayAnyWithMultilineWhenFail(t *testing.T) {
 	manifest := makeManifest(docWithArrayAny)
-	validator := EqualValidator{"items", []any{
+	validator := EqualValidator{Path: "items", Value: []any{
 		map[string]any{
 			"name":    "item1",
 			"content": "Wrong\nContent\n",
@@ -56,7 +56,7 @@ func TestEqualValidatorArrayAnyWithMultilineWhenFail(t *testing.T) {
 			"name": "item2",
 			"data": "simple",
 		},
-	}, false}
+	}, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -88,7 +88,7 @@ func TestEqualValidatorMapWithLeadingNewlineInValue(t *testing.T) {
 		"bus.lua": "TEST CONFIG\nWITH MULTILINE CONFIG\n",
 	}
 
-	validator := EqualValidator{"data", expectedData, false}
+	validator := EqualValidator{Path: "data", Value: expectedData, DecodeBase64: false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -114,7 +114,7 @@ func TestEqualValidatorMapWithTrailingSpacesInValue(t *testing.T) {
 		"bus.lua": "TEST CONFIG\nWITH MULTILINE CONFIG\n",
 	}
 
-	validator := EqualValidator{"data", expectedData, false}
+	validator := EqualValidator{Path: "data", Value: expectedData, DecodeBase64: false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -139,7 +139,7 @@ func TestEqualValidatorMapWithDifferentValuesStillFails(t *testing.T) {
 		"bus.lua": "TEST CONFIG\n",
 	}
 
-	validator := EqualValidator{"data", expectedData, false}
+	validator := EqualValidator{Path: "data", Value: expectedData, DecodeBase64: false}
 	pass, _ := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -164,7 +164,7 @@ func TestEqualValidatorNestedMapWithLeadingNewline(t *testing.T) {
 		"config.yaml": "key: value\nnested:\n  data: test\n",
 	}
 
-	validator := EqualValidator{"data", expectedData, false}
+	validator := EqualValidator{Path: "data", Value: expectedData, DecodeBase64: false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})

@@ -611,3 +611,131 @@ x:
 		assert.True(t, result.Skipped)
 	}
 }
+
+func TestAssertionRejectsParseOnUnsupportedAssertionTypes(t *testing.T) {
+	tests := []struct {
+		name        string
+		manifest    string
+		expectedErr string
+	}{
+		{
+			name: "matchRegex does not support parse",
+			manifest: `
+matchRegex:
+  path: metadata.name
+  pattern: -my-chart$
+  parse: json
+`,
+			expectedErr: "'parse' is not supported for assertion type 'matchRegex'",
+		},
+		{
+			name: "isKind does not support parse",
+			manifest: `
+isKind:
+  of: Deployment
+  parse: json
+`,
+			expectedErr: "'parse' is not supported for assertion type 'isKind'",
+		},
+		{
+			name: "equalRaw does not support parse",
+			manifest: `
+equalRaw:
+  value: some-content
+  parse: json
+`,
+			expectedErr: "'parse' is not supported for assertion type 'equalRaw'",
+		},
+		{
+			name: "matchRegex does not support innerPath",
+			manifest: `
+matchRegex:
+  path: metadata.name
+  pattern: x
+  innerPath: server.port
+`,
+			expectedErr: "'innerPath' is not supported for assertion type 'matchRegex'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertion := new(Assertion)
+			err := common.YmlUnmarshal(tt.manifest, &assertion)
+			assert.EqualError(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestAssertionRejectsInvalidParseOptions(t *testing.T) {
+	tests := []struct {
+		name        string
+		manifest    string
+		expectedErr string
+	}{
+		{
+			name: "unknown parse format",
+			manifest: `
+equal:
+  path: data["config.json"]
+  value: {}
+  parse: toml
+`,
+			expectedErr: "invalid parse format 'toml', expected 'json' or 'yaml'",
+		},
+		{
+			name: "innerPath without parse",
+			manifest: `
+equal:
+  path: data["config.json"]
+  value: 1
+  innerPath: server.port
+`,
+			expectedErr: "field 'innerPath' requires 'parse' to be set",
+		},
+		{
+			name: "blank innerPath",
+			manifest: `
+equal:
+  path: data["config.json"]
+  value: 1
+  parse: json
+  innerPath: "   "
+`,
+			expectedErr: "field 'innerPath' must not be blank",
+		},
+		{
+			name: "innerPath with leading dot",
+			manifest: `
+equal:
+  path: data["config.json"]
+  value: 1
+  parse: json
+  innerPath: .server.port
+`,
+			expectedErr: "field 'innerPath' must not start with '.'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertion := new(Assertion)
+			err := common.YmlUnmarshal(tt.manifest, &assertion)
+			assert.EqualError(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestAssertionAcceptsParseOnSupportedAssertionTypes(t *testing.T) {
+	manifest := `
+equal:
+  path: data["config.json"]
+  parse: json
+  innerPath: server.port
+  value: 8080
+`
+	assertion := new(Assertion)
+	err := common.YmlUnmarshal(manifest, &assertion)
+	assert.NoError(t, err)
+	assert.Equal(t, "equal", assertion.AssertType)
+}
