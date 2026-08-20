@@ -3,6 +3,7 @@ package validators
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 
@@ -91,16 +92,24 @@ func (p ParseOptions) ValidateParseOptions() error { return p.validate() }
 // enabled reports whether parsing was requested.
 func (p ParseOptions) enabled() bool { return p.Parse != "" }
 
-// normalizeParsedNumbers converts json.Number values to int or float64 using
-// the same rule go.yaml.in/yaml/v3 applies, so that `parse: json` and
-// `parse: yaml` produce identical Go types for identical input:
+// normalizeParsedNumbers converts json.Number values to int or float64 by
+// integrality, not by written form, so that `parse: json` matches the type
+// valueutils.GetValueOfSetPath produces for the exact same source value on an
+// ordinary (non-parse) assertion path:
 //
-//	integer syntax                     -> int
-//	decimal point or exponent syntax   -> float64
+//	integral value      -> int      (e.g. 1, 1.0, 1e3, 0.0, -0.0)
+//	non-integral value   -> float64 (e.g. 1.5, 0.1, 2.50)
 //
-// Using json.Decoder.UseNumber() keeps the original literal text available for
-// this decision, and preserves the full precision of large integers that a
-// direct float64 decode would corrupt.
+// GetValueOfSetPath round-trips a value through a yaml.Node and decodes it
+// back, which re-types by value rather than by lexical form. Typing by
+// lexical form here would make `parse` disagree with every other assertion,
+// and would make `parse` disagree with itself depending on whether innerPath
+// is set, since innerPath resolution is routed through GetValueOfSetPath while
+// a bare `parse` result is not.
+//
+// Using json.Decoder.UseNumber() keeps the original literal text available,
+// which preserves the full precision of large integers that a direct float64
+// decode would corrupt.
 func normalizeParsedNumbers(value any) any {
 	switch typed := value.(type) {
 	case json.Number:
@@ -122,22 +131,37 @@ func normalizeParsedNumbers(value any) any {
 	}
 }
 
+// maxInt64AsFloat is the smallest float64 that is out of int64's representable
+// range (2^63; int64's actual max, 2^63-1, cannot itself be represented
+// exactly as a float64). Used to guard against converting an integral float
+// too large for int64 into a bogus, overflowed int.
+const maxInt64AsFloat = 1 << 63
+
 func normalizeJSONNumber(number json.Number) any {
 	literal := number.String()
 
+	// Integer-syntax literals are tried against Int64 first, before the float
+	// path below, so that large integers keep exact int64 precision instead of
+	// being rounded by a float64 round-trip.
 	if !strings.ContainsAny(literal, ".eE") {
 		if integer, err := number.Int64(); err == nil {
 			return int(integer)
 		}
 	}
 
-	if float, err := number.Float64(); err == nil {
-		return float
+	float, err := number.Float64()
+	if err != nil {
+		// Unrepresentable as either int64 or float64; keep the literal so the
+		// mismatch surfaces in the assertion failure rather than being
+		// silently dropped.
+		return literal
 	}
 
-	// Unrepresentable as either; keep the literal so the mismatch surfaces in
-	// the assertion failure rather than being silently dropped.
-	return literal
+	if float == math.Trunc(float) && float >= math.MinInt64 && float < maxInt64AsFloat {
+		return int(int64(float))
+	}
+
+	return float
 }
 
 // parseStructuredContent parses content in the given format and normalizes
