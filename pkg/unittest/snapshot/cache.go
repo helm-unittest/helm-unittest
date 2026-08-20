@@ -31,6 +31,36 @@ type Cache struct {
 	updatedCount  uint
 	insertedCount uint
 	currentCount  uint
+	// Counts of the suites that already ran against this cache. Every test suite
+	// of one test file writes to the same snapshot file and therefore shares one
+	// cache, so the exported counters report the running suite only while storing
+	// to file needs the totals of all suites that used the cache.
+	previousUpdated  uint
+	previousInserted uint
+}
+
+// BeginSuite marks the start of a test suite running against this cache. Suites
+// sharing a snapshot file run one after another, so the exported counters are
+// reset to report the snapshots of the running suite only, while the snapshots
+// collected by the previous suites are kept for storing.
+func (s *Cache) BeginSuite() {
+	s.previousUpdated += s.updatedCount
+	s.previousInserted += s.insertedCount
+	s.updatedCount = 0
+	s.insertedCount = 0
+	s.currentCount = 0
+}
+
+// totalUpdated returns the mismatching snapshot count of every suite that ran
+// against this cache.
+func (s *Cache) totalUpdated() uint {
+	return s.previousUpdated + s.updatedCount
+}
+
+// totalInserted returns the newly inserted snapshot count of every suite that ran
+// against this cache.
+func (s *Cache) totalInserted() uint {
+	return s.previousInserted + s.insertedCount
 }
 
 // RestoreFromFile restore cached snapshot from cache file
@@ -138,7 +168,7 @@ func (s *Cache) setNewSnapshot(test string, idx uint, snapshot string) {
 
 // Changed check if content have changed according to all Compare called
 func (s *Cache) Changed() bool {
-	if s.updatedCount > 0 || s.insertedCount > 0 {
+	if s.totalUpdated() > 0 || s.totalInserted() > 0 {
 		return true
 	}
 
@@ -161,7 +191,7 @@ func (s *Cache) StoreToFileIfNeeded() (bool, error) {
 		return false, nil
 	}
 
-	if s.IsUpdating || s.insertedCount > 0 || s.VanishedCount() > 0 {
+	if s.IsUpdating || s.totalInserted() > 0 || s.VanishedCount() > 0 {
 		byteBuffer := new(bytes.Buffer)
 		yamlEncoder := common.YamlNewEncoder(byteBuffer)
 		yamlEncoder.SetIndent(common.YAMLINDENTION)

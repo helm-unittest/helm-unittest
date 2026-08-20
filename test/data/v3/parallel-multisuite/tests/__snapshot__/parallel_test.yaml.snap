@@ -1,0 +1,25 @@
+renders configmap:
+  1: |
+    apiVersion: v1
+    data:
+      name: parallel
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders configmap with override:
+  1: |
+    apiVersion: v1
+    data:
+      name: overridden
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders service:
+  1: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: RELEASE-NAME-svc
+    spec:
+      ports:
+        - port: 80

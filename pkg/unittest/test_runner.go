@@ -467,65 +467,116 @@ func (r suiteRunResult) failFast() bool {
 // runV3SuitesOfChartSequential runs the suites one after another, printing as it goes.
 func (tr *TestRunner) runV3SuitesOfChartSequential(suites []*TestSuite, chart *v3chart.Chart) bool {
 	chartPassed := true
-	for _, suite := range suites {
-		suiteResult := tr.runSingleSuite(suite, chart)
-		for _, result := range suiteResult.toPrint {
-			chartPassed = chartPassed && result.Passed
-			tr.handleSuiteResult(result)
-		}
-		if suiteResult.toAppend != nil {
-			tr.testResults = append(tr.testResults, suiteResult.toAppend)
-		}
+	for _, group := range groupSuitesBySnapshotFile(suites) {
+		for _, suiteResult := range tr.runSuiteGroup(group, chart) {
+			for _, result := range suiteResult.toPrint {
+				chartPassed = chartPassed && result.Passed
+				tr.handleSuiteResult(result)
+			}
+			if suiteResult.toAppend != nil {
+				tr.testResults = append(tr.testResults, suiteResult.toAppend)
+			}
 
-		if !chartPassed && suiteResult.failFast() {
-			break
+			if !chartPassed && suiteResult.failFast() {
+				return chartPassed
+			}
 		}
 	}
 
 	return chartPassed
 }
 
-// runSingleSuite runs one suite and returns its results. The snapshot cache-creation
-// error and the store error are synthesized as extra results that get printed and
-// counted but are kept out of tr.testResults, matching the original sequential path.
-// It never prints or mutates runner counters, so it is safe to call concurrently for
-// suites that do not share a snapshot file.
-func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v3chart.Chart) suiteRunResult {
+// runSuiteGroup runs every suite that shares a snapshot file, in order, against one
+// shared snapshot cache. All suites of a test file write to the same `.snap` file, so
+// giving each of them its own cache would let the suite that stores last overwrite the
+// snapshots of the others. The cache is stored once, after the whole group ran.
+//
+// The snapshot cache-creation error and the store error are synthesized as extra
+// results that get printed and counted but are kept out of tr.testResults, matching the
+// original sequential path. It never prints or mutates runner counters, so it is safe
+// to call concurrently for groups that do not share a snapshot file.
+func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v3chart.Chart) []suiteRunResult {
+	groupResults := make([]suiteRunResult, 0, len(group.suites))
+
+	snapshotCache, err := snapshot.CreateSnapshotOfSuite(group.snapshotFileUrl, tr.UpdateSnapshot)
+	if err != nil {
+		for _, suite := range group.suites {
+			groupResults = append(groupResults, suiteRunResult{
+				toPrint: []*results.TestSuiteResult{{
+					FilePath:  suite.definitionFile,
+					ExecError: err,
+				}},
+			})
+		}
+		return groupResults
+	}
+
+	completed := true
+	for i, suite := range group.suites {
+		suiteResult := tr.runSingleSuite(suite, chart, snapshotCache)
+		groupResults = append(groupResults, suiteResult)
+		if suiteResult.failFast() && i < len(group.suites)-1 {
+			completed = false
+			break
+		}
+	}
+
+	attributeVanishedSnapshots(groupResults, snapshotCache)
+
+	// Storing a cache that only saw part of the group would drop the snapshots of the
+	// suites that never ran, so a group cut short by --failfast is left untouched.
+	if completed && len(groupResults) > 0 {
+		if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
+			last := &groupResults[len(groupResults)-1]
+			last.toPrint = append(last.toPrint, &results.TestSuiteResult{
+				FilePath:  group.snapshotFileUrl,
+				ExecError: storeErr,
+			})
+		}
+	}
+
+	return groupResults
+}
+
+// attributeVanishedSnapshots reports the vanished snapshots of the group on its last
+// suite. Whether a cached snapshot vanished is a property of the whole snapshot file,
+// so it is only known once every suite sharing that file has run.
+func attributeVanishedSnapshots(groupResults []suiteRunResult, snapshotCache *snapshot.Cache) {
+	var last *results.TestSuiteResult
+	for _, suiteResult := range groupResults {
+		if suiteResult.toAppend == nil {
+			continue
+		}
+		suiteResult.toAppend.SnapshotCounting.Vanished = 0
+		last = suiteResult.toAppend
+	}
+	if last != nil {
+		last.SnapshotCounting.Vanished = snapshotCache.VanishedCount()
+	}
+}
+
+// runSingleSuite runs one suite against the snapshot cache of its snapshot file and
+// returns its results.
+func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v3chart.Chart, snapshotCache *snapshot.Cache) suiteRunResult {
 	if tr.suiteStartHook != nil {
 		tr.suiteStartHook()
 	}
 
-	snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)
-	if err != nil {
-		return suiteRunResult{
-			toPrint: []*results.TestSuiteResult{{
-				FilePath:  suite.definitionFile,
-				ExecError: err,
-			}},
-		}
-	}
-
+	snapshotCache.BeginSuite()
 	suite.skipSchemaValidation = tr.SkipSchemaValidation
 	result := suite.RunV3(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
-	suiteResult := suiteRunResult{
+
+	return suiteRunResult{
 		toPrint:  []*results.TestSuiteResult{result},
 		toAppend: result,
 	}
-
-	if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
-		suiteResult.toPrint = append(suiteResult.toPrint, &results.TestSuiteResult{
-			FilePath:  suite.SnapshotFileUrl(),
-			ExecError: storeErr,
-		})
-	}
-
-	return suiteResult
 }
 
 // suiteGroup is a set of suites that share a snapshot file and therefore must run
 // sequentially with respect to each other; distinct groups may run concurrently.
 type suiteGroup struct {
-	suites []*TestSuite
+	snapshotFileUrl string
+	suites          []*TestSuite
 }
 
 // groupSuitesBySnapshotFile groups suites by their SnapshotFileUrl, preserving the
@@ -540,7 +591,7 @@ func groupSuitesBySnapshotFile(suites []*TestSuite) []*suiteGroup {
 			continue
 		}
 		index[key] = len(groups)
-		groups = append(groups, &suiteGroup{suites: []*TestSuite{suite}})
+		groups = append(groups, &suiteGroup{snapshotFileUrl: key, suites: []*TestSuite{suite}})
 	}
 	return groups
 }
@@ -595,10 +646,8 @@ func (tr *TestRunner) runV3SuitesOfChartParallel(suites []*TestSuite, chart *v3c
 				return
 			}
 
-			out := make([]suiteRunResult, 0, len(g.suites))
-			for _, suite := range g.suites {
-				suiteResult := tr.runSingleSuite(suite, chart)
-				out = append(out, suiteResult)
+			out := tr.runSuiteGroup(g, chart)
+			for _, suiteResult := range out {
 				// Trigger failfast only on the primary result, matching the
 				// sequential break; synthesized snapshot errors must not stop
 				// scheduling of later groups.

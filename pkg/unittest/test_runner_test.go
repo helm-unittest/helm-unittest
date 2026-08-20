@@ -3,9 +3,11 @@ package unittest_test
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -684,6 +686,144 @@ func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 		Parallel:  true,
 	}
 	assert.True(t, rerunRunner.RunV3([]string{parChart}), rerunBuffer.String())
+}
+
+// copyMultiSuiteChart copies the multi-suite fixture into a throwaway directory so
+// runs that write snapshots never touch the committed fixture.
+func copyMultiSuiteChart(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "chart")
+	if err := os.CopyFS(dir, os.DirFS(testV3ParallelMultiSuiteChart)); err != nil {
+		t.Fatalf("failed to copy fixture: %v", err)
+	}
+	return dir
+}
+
+func multiSuiteSnapshotPath(chartDir string) string {
+	return filepath.Join(chartDir, "tests", "__snapshot__", "parallel_test.yaml.snap")
+}
+
+func runMultiSuiteChart(chartDir string, parallel, update bool) (bool, string) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:        printer.NewPrinter(buffer, nil),
+		TestFiles:      []string{testTestFiles},
+		Parallel:       parallel,
+		UpdateSnapshot: update,
+	}
+	return runner.RunV3([]string{chartDir}), buffer.String()
+}
+
+// All suites of one test file write to the same .snap file. Every suite's
+// snapshots must survive, instead of the last suite overwriting the file.
+func TestV3RunnerSharedSnapshotFileKeepsEverySuite(t *testing.T) {
+	for _, parallel := range []bool{false, true} {
+		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
+			chartDir := copyMultiSuiteChart(t)
+			passed, output := runMultiSuiteChart(chartDir, parallel, true)
+			assert.True(t, passed, output)
+
+			snap, err := os.ReadFile(multiSuiteSnapshotPath(chartDir))
+			assert.NoError(t, err)
+
+			var parsed map[string]any
+			assert.NoError(t, common.YmlUnmarshal(string(snap), &parsed))
+			assert.ElementsMatch(t,
+				[]string{"renders configmap", "renders service", "renders configmap with override"},
+				slices.Collect(maps.Keys(parsed)),
+			)
+		})
+	}
+}
+
+// Once written, re-running without -u must compare against the stored snapshots
+// and leave the file untouched.
+func TestV3RunnerSharedSnapshotFileIsStableAcrossRuns(t *testing.T) {
+	for _, parallel := range []bool{false, true} {
+		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
+			chartDir := copyMultiSuiteChart(t)
+			passed, output := runMultiSuiteChart(chartDir, parallel, true)
+			assert.True(t, passed, output)
+
+			written, err := os.ReadFile(multiSuiteSnapshotPath(chartDir))
+			assert.NoError(t, err)
+
+			passed, output = runMultiSuiteChart(chartDir, parallel, false)
+			assert.True(t, passed, output)
+
+			after, err := os.ReadFile(multiSuiteSnapshotPath(chartDir))
+			assert.NoError(t, err)
+			assert.Equal(t, string(written), string(after), "a verifying run must not rewrite the snapshot file")
+		})
+	}
+}
+
+// A changed template must be detected for every suite in the shared file, not
+// only for the suite that happened to write the file last.
+func TestV3RunnerSharedSnapshotFileDetectsChangePerSuite(t *testing.T) {
+	chartDir := copyMultiSuiteChart(t)
+	passed, output := runMultiSuiteChart(chartDir, false, true)
+	assert.True(t, passed, output)
+
+	// Change the service template, which only the second suite renders.
+	servicePath := filepath.Join(chartDir, "templates", "service.yaml")
+	original, err := os.ReadFile(servicePath)
+	assert.NoError(t, err)
+	assert.NoError(t, os.WriteFile(servicePath, bytes.ReplaceAll(original, []byte("port: 80"), []byte("port: 8080")), 0644))
+
+	passed, output = runMultiSuiteChart(chartDir, false, false)
+	assert.False(t, passed, "changing a template must fail the suite that snapshots it")
+	assert.Contains(t, output, "service suite")
+}
+
+// Each suite reports only its own snapshots, so sharing one cache must not make
+// the summary count the same snapshot several times.
+func TestV3RunnerSharedSnapshotFileCountsEachSuiteOnce(t *testing.T) {
+	for _, parallel := range []bool{false, true} {
+		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
+			chartDir := copyMultiSuiteChart(t)
+			_, output := runMultiSuiteChart(chartDir, parallel, true)
+			assert.Contains(t, output, "Test Suites: 3 passed, 3 total")
+			assert.Contains(t, output, "Snapshot:    3 passed, 3 total")
+		})
+	}
+}
+
+// Entries of tests that no longer exist must still be pruned from a shared file.
+func TestV3RunnerSharedSnapshotFileRemovesStaleEntries(t *testing.T) {
+	chartDir := copyMultiSuiteChart(t)
+	passed, output := runMultiSuiteChart(chartDir, false, true)
+	assert.True(t, passed, output)
+
+	snapPath := multiSuiteSnapshotPath(chartDir)
+	written, err := os.ReadFile(snapPath)
+	assert.NoError(t, err)
+	stale := string(written) + "renders something removed long ago:\n  1: |\n    stale: true\n"
+	assert.NoError(t, os.WriteFile(snapPath, []byte(stale), 0644))
+
+	passed, output = runMultiSuiteChart(chartDir, false, true)
+	assert.True(t, passed, output)
+
+	after, err := os.ReadFile(snapPath)
+	assert.NoError(t, err)
+	assert.NotContains(t, string(after), "renders something removed long ago")
+	assert.Equal(t, string(written), string(after))
+}
+
+// The fixture ships its snapshots, so the runs above compare against known content
+// instead of silently regenerating it (helm-unittest#246). Guard that the committed
+// snapshot stays in sync with the fixture and is never rewritten by a verifying run.
+func TestV3RunnerMultiSuiteFixtureShipsItsSnapshot(t *testing.T) {
+	snapPath := multiSuiteSnapshotPath(testV3ParallelMultiSuiteChart)
+	committed, err := os.ReadFile(snapPath)
+	assert.NoError(t, err, "the fixture must ship its snapshot file")
+
+	passed, output := runMultiSuiteChart(testV3ParallelMultiSuiteChart, true, false)
+	assert.True(t, passed, output)
+
+	after, err := os.ReadFile(snapPath)
+	assert.NoError(t, err)
+	assert.Equal(t, string(committed), string(after), "a verifying run must not rewrite the committed snapshot")
 }
 
 func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
