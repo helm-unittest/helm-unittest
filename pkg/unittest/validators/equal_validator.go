@@ -49,17 +49,14 @@ func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not
 }
 
 func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+	rawActuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actuals, decodeErrors := a.decodeBase64Actuals(actuals, manifestIndex)
-	if decodeErrors != nil {
-		return false, decodeErrors
-	}
+	decoded, decodeFailures := a.decodeBase64Actuals(rawActuals, manifestIndex)
 
-	actuals, err = a.ParseOptions.resolveActuals(actuals, a.Path)
+	actuals, failureAt, err := a.resolveActualsWithDecodeFailures(decoded, decodeFailures, manifestIndex)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
@@ -73,7 +70,17 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 	var validateManifestErrors []string
 
 	for actualIndex, actual := range actuals {
-		validateSingleSuccess, validateSingleErrors := a.validateSingleActual(actual, manifestIndex, actualIndex, context)
+		var validateSingleSuccess bool
+		var validateSingleErrors []string
+
+		if failureMessage, failed := failureAt[actualIndex]; failed {
+			// A failed decode is always a failure, regardless of Negative,
+			// matching the pre-refactor per-actual behavior.
+			validateSingleSuccess, validateSingleErrors = false, failureMessage
+		} else {
+			validateSingleSuccess, validateSingleErrors = a.validateSingleActual(actual, manifestIndex, actualIndex, context)
+		}
+
 		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
 		validateManifestSuccess = determineSuccess(actualIndex, validateManifestSuccess, validateSingleSuccess)
 		if !validateSingleSuccess && context.FailFast {
@@ -90,14 +97,23 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 // applied. Non-string actuals pass through untouched, matching the previous
 // per-actual behavior.
 //
-// The returned []string is non-nil only on failure, in which case it is the
-// complete splitInfof error output and the caller must return it immediately.
-func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([]any, []string) {
+// Every actual is attempted, so a decode failure in one does not prevent the
+// others from being decoded: this matches the pre-refactor behavior, where
+// decoding happened inside the per-actual validation loop and one actual's
+// failure never stopped the loop from reaching the next one.
+//
+// The returned failures map is keyed by the actual's index in the input (and
+// therefore output) slice, and holds the complete splitInfof error output for
+// that index. decoded[i] is a meaningless placeholder wherever failures[i] is
+// present; callers must check failures first. When DecodeBase64 is unset,
+// decoded is the input slice unchanged and failures is nil.
+func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([]any, map[int][]string) {
 	if !a.DecodeBase64 {
 		return actuals, nil
 	}
 
 	decoded := make([]any, len(actuals))
+	var failures map[int][]string
 
 	for actualIndex, actual := range actuals {
 		s, ok := actual.(string)
@@ -108,13 +124,58 @@ func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([
 
 		decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
 		if err != nil {
-			return nil, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
+			if failures == nil {
+				failures = make(map[int][]string)
+			}
+			failures[actualIndex] = splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
+			continue
 		}
 
 		decoded[actualIndex] = string(decodedSingleActual)
 	}
 
-	return decoded, nil
+	return decoded, failures
+}
+
+// resolveActualsWithDecodeFailures applies parse/innerPath to every decoded
+// actual, flattening fan-out the same way ParseOptions.resolveActuals does,
+// except for actuals that failed base64 decoding: since there is no valid
+// content to parse for those, each contributes exactly one placeholder slot
+// instead of being fanned out, skipping resolveParsed entirely.
+//
+// The returned failureAt map re-keys decodeFailures from the input slice's
+// indices to the corresponding index in the returned (possibly fanned-out)
+// actuals slice, so the caller's per-actual loop - which walks the flattened
+// slice - can find them.
+//
+// When there are no decode failures this is exactly ParseOptions.resolveActuals,
+// preserving its existing behavior (including that a parse error aborts the
+// whole batch) for the common case.
+func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFailures map[int][]string, manifestIndex int) ([]any, map[int][]string, error) {
+	if len(decodeFailures) == 0 {
+		actuals, err := a.ParseOptions.resolveActuals(decoded, a.Path)
+		return actuals, nil, err
+	}
+
+	actuals := make([]any, 0, len(decoded))
+	failureAt := make(map[int][]string, len(decodeFailures))
+
+	for index, actual := range decoded {
+		if message, failed := decodeFailures[index]; failed {
+			failureAt[len(actuals)] = message
+			actuals = append(actuals, nil)
+			continue
+		}
+
+		parsed, err := a.ParseOptions.resolveParsed(actual, a.Path)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		actuals = append(actuals, parsed...)
+	}
+
+	return actuals, failureAt, nil
 }
 
 func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
