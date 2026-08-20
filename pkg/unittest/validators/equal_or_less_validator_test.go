@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -256,6 +257,96 @@ func TestEqualOrLessValidatorWhenNoManifestNegativeOk(t *testing.T) {
 		Docs:     []common.K8sManifest{},
 		Negative: true,
 	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualOrLessValidatorParsedJSONNumber(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"replicas":2}
+`)
+
+	validator := EqualOrLessValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+		Value:        5,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualOrLessValidatorParsedAboveThresholdFails(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"replicas":10}
+`)
+
+	validator := EqualOrLessValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+		Value:        5,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), "10",
+		"the failure must report the decoded number, proving parsing ran")
+}
+
+// Covers the notLessOrEqual antonym path.
+func TestEqualOrLessValidatorParsedNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"replicas":10}
+`)
+
+	validator := EqualOrLessValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+		Value:        5,
+	}
+
+	pass, _ := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "10 is not <= 5, so the negative assertion holds")
+
+	withinLimit := EqualOrLessValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+		Value:        20,
+	}
+	pass, _ = withinLimit.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.False(t, pass, "10 IS <= 20, so the negative assertion must fail")
+}
+
+func TestEqualOrLessValidatorParsedYAML(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  limits.yaml: |
+    memory: 128
+`)
+
+	validator := EqualOrLessValidator{
+		Path:         `data["limits.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "memory"},
+		Value:        256,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
