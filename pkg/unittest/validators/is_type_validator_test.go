@@ -373,7 +373,11 @@ data:
 	assert.Equal(t, []string{}, diff)
 }
 
-// Normalization means an integer JSON literal reports int, not float64.
+// Normalization means an integer JSON literal reports int, not float64. The
+// float64 assertion below only means something paired with the preceding int
+// assertion on the same manifest: on its own it would also "pass" against the
+// raw unparsed JSON text (which is a string, so also not float64), so it must
+// stay coupled to the positive check rather than become a standalone case.
 func TestIsTypeValidatorParsedIntegerReportsInt(t *testing.T) {
 	manifest := makeManifest(`
 data:
@@ -399,30 +403,59 @@ data:
 	assert.False(t, pass, "integer syntax must not report float64")
 }
 
-func TestIsTypeValidatorParsedDecimalReportsFloat64(t *testing.T) {
-	// 1.5 (rather than an integral decimal like 1.0) avoids a known
-	// unrelated quirk of innerPath resolution: it re-encodes the parsed
-	// value to YAML and back (via GetValueOfSetPath) to apply the JSONPath
-	// lookup, and the YAML library renders an integral float without a
-	// fractional part (e.g. "1"), which then decodes back as int. A
-	// non-integral decimal round-trips through YAML without ambiguity and
-	// still exercises "decimal-point syntax reports float64".
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"ratio":1.5}
-`)
-
-	validator := IsTypeValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "ratio"},
-		Type:         "float64",
+// Both cases parse a single scalar to its expected native type: a decimal
+// JSON literal must report float64 (not int), and a YAML bool literal must
+// report bool.
+func TestIsTypeValidatorParsedScalarTypes(t *testing.T) {
+	tests := []struct {
+		name         string
+		fileName     string
+		content      string
+		parseFormat  string
+		innerPath    string
+		expectedType string
+	}{
+		{
+			// 1.5 (rather than an integral decimal like 1.0) avoids a known
+			// unrelated quirk of innerPath resolution: it re-encodes the parsed
+			// value to YAML and back (via GetValueOfSetPath) to apply the JSONPath
+			// lookup, and the YAML library renders an integral float without a
+			// fractional part (e.g. "1"), which then decodes back as int. A
+			// non-integral decimal round-trips through YAML without ambiguity and
+			// still exercises "decimal-point syntax reports float64".
+			name:         "decimal literal reports float64",
+			fileName:     "config.json",
+			content:      `{"ratio":1.5}`,
+			parseFormat:  ParseFormatJSON,
+			innerPath:    "ratio",
+			expectedType: "float64",
+		},
+		{
+			name:         "yaml bool",
+			fileName:     "config.yaml",
+			content:      "debug: true",
+			parseFormat:  ParseFormatYAML,
+			innerPath:    "debug",
+			expectedType: "bool",
+		},
 	}
 
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manifest := makeManifest("data:\n  " + tt.fileName + ": |\n    " + tt.content + "\n")
 
-	assert.True(t, pass, "decimal-point syntax reports float64")
-	assert.Equal(t, []string{}, diff)
+			validator := IsTypeValidator{
+				Path:         `data["` + tt.fileName + `"]`,
+				ParseOptions: ParseOptions{Parse: tt.parseFormat, InnerPath: tt.innerPath},
+				Type:         tt.expectedType,
+			}
+
+			pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+			assert.True(t, pass)
+			assert.Equal(t, []string{}, diff)
+		})
+	}
 }
 
 func TestIsTypeValidatorParsedObjectAndArray(t *testing.T) {
@@ -447,25 +480,6 @@ data:
 		Type:         "[]interface {}",
 	}
 	pass, diff = array.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
-func TestIsTypeValidatorParsedYAMLBool(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.yaml: |
-    debug: true
-`)
-
-	validator := IsTypeValidator{
-		Path:         `data["config.yaml"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "debug"},
-		Type:         "bool",
-	}
-
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
