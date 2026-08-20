@@ -12,7 +12,8 @@ import (
 
 // IsNullOrEmptyValidator validate value of Path is empty
 type IsNullOrEmptyValidator struct {
-	Path string
+	Path         string
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (v IsNullOrEmptyValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
@@ -35,8 +36,14 @@ func (v IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, ma
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actual) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
 	}
 
 	manifestSuccess := (len(actual) == 0 && context.Negative)

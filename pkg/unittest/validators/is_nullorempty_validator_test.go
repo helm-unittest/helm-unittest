@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -30,7 +31,7 @@ func TestIsNullOrEmptyValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
 	for key := range manifest {
-		validator := IsNullOrEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{Path: key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs: []common.K8sManifest{manifest},
 		})
@@ -44,7 +45,7 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docWithNonEmptyElement)
 
 	for key := range manifest {
-		validator := IsNullOrEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{Path: key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs:     []common.K8sManifest{manifest},
 			Negative: true,
@@ -61,7 +62,7 @@ func TestIsNullOrEmptyValidatorWhenFail(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
 	for key, value := range manifest {
-		validator := IsNullOrEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{Path: key}
 		valueYAML := common.TrustedMarshalYAML(value)
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs: []common.K8sManifest{manifest},
@@ -81,7 +82,7 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
 	for key, value := range manifest {
-		validator := IsNullOrEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{Path: key}
 		pass, diff := validator.Validate(&ValidateContext{
 			Docs:     []common.K8sManifest{manifest},
 			Negative: true,
@@ -103,7 +104,7 @@ func TestIsNullOrEmptyValidatorWhenNegativeAndFail(t *testing.T) {
 func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsNullOrEmptyValidator{"x.a"}
+	validator := IsNullOrEmptyValidator{Path: "x.a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -119,7 +120,7 @@ func TestIsNullOrEmptyValidatorWhenInvalidPath(t *testing.T) {
 func TestIsNullOrEmptyValidatorWhenInvalidPathNegative(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsNullOrEmptyValidator{"x.a"}
+	validator := IsNullOrEmptyValidator{Path: "x.a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -132,7 +133,7 @@ func TestIsNullOrEmptyValidatorWhenInvalidPathNegative(t *testing.T) {
 func TestIsNullOrEmptyValidatorWhenInvalidPathFailFast(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsNullOrEmptyValidator{"x.a"}
+	validator := IsNullOrEmptyValidator{Path: "x.a"}
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -152,7 +153,7 @@ func TestIsNullOrEmptyValidatorWhenFailFast(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
 	for key, value := range manifest {
-		validator := IsNullOrEmptyValidator{key}
+		validator := IsNullOrEmptyValidator{Path: key}
 		valueYAML := common.TrustedMarshalYAML(value)
 		pass, diff := validator.Validate(&ValidateContext{
 			FailFast: true,
@@ -172,7 +173,7 @@ func TestIsNullOrEmptyValidatorWhenFailFast(t *testing.T) {
 func TestFailWhenInvalidJsonPath(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsNullOrEmptyValidator{"x[b]"}
+	validator := IsNullOrEmptyValidator{Path: "x[b]"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest, manifest},
 	})
@@ -191,7 +192,7 @@ func TestFailWhenInvalidJsonPath(t *testing.T) {
 func TestFailWhenInvalidJsonPathFailFast(t *testing.T) {
 	manifest := makeManifest(docWithEmptyElements)
 
-	validator := IsNullOrEmptyValidator{"x[b]"}
+	validator := IsNullOrEmptyValidator{Path: "x[b]"}
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -206,7 +207,7 @@ func TestFailWhenInvalidJsonPathFailFast(t *testing.T) {
 }
 
 func TestIsNullOrEmptyValidatorWhenNoManifestFail(t *testing.T) {
-	validator := IsNullOrEmptyValidator{"key"}
+	validator := IsNullOrEmptyValidator{Path: "key"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{},
 	})
@@ -219,11 +220,233 @@ func TestIsNullOrEmptyValidatorWhenNoManifestFail(t *testing.T) {
 }
 
 func TestIsNullOrEmptyValidatorWhenNoManifestNegativeOk(t *testing.T) {
-	validator := IsNullOrEmptyValidator{"key"}
+	validator := IsNullOrEmptyValidator{Path: "key"}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{},
 		Negative: true,
 	})
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullOrEmptyValidatorParsedEmptyString(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"name":""}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "name"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// A parsed JSON zero must be recognised as empty. Unparsed, the actual is the
+// raw JSON text, which is NOT empty, so this only passes when parsing ran.
+func TestIsNullOrEmptyValidatorParsedZeroNumber(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"replicas":0}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullOrEmptyValidatorParsedEmptyArray(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[]}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullOrEmptyValidatorParsedEmptyObject(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"opts":{}}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "opts"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullOrEmptyValidatorParsedNullValue(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"maybe":null}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "maybe"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestIsNullOrEmptyValidatorParsedNonEmptyFails(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"name":"svc"}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "name"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "svc",
+		"the failure must show the decoded value, proving parsing ran")
+	assert.NotContains(t, joined, `{"name"`,
+		"the failure must show the decoded value, not the raw unparsed JSON text")
+}
+
+// Covers the isNotEmpty / isNotNullOrEmpty antonym path.
+func TestIsNullOrEmptyValidatorParsedNonEmptyPassesNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    name: svc
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "name"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	// And an EMPTY value must fail the negative form, proving the emptiness
+	// check really ran against the parsed value.
+	emptyManifest := makeManifest(`
+data:
+  config.yaml: |
+    name: ""
+`)
+	pass, _ = validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{emptyManifest},
+		Negative: true,
+	})
+	assert.False(t, pass)
+}
+
+func TestIsNullOrEmptyValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {oops
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "name"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"),
+		`unable to parse path 'data["config.json"]' as json`)
+}
+
+func TestIsNullOrEmptyValidatorParsedUnmatchedInnerPathNamesBothPaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"a":1}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "missing"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "unknown path")
+	assert.Contains(t, joined, `data["config.json"]`)
+	assert.Contains(t, joined, "missing")
+
+	pass, _ = validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "an unmatched innerPath passes a negative assertion")
+}
+
+// innerPath may match several nodes; every one must be empty.
+func TestIsNullOrEmptyValidatorParsedFanOut(t *testing.T) {
+	allEmpty := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"tag":""},{"tag":""}]}
+`)
+
+	validator := IsNullOrEmptyValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].tag"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{allEmpty}})
+	assert.True(t, pass, "both tags are empty")
+	assert.Equal(t, []string{}, diff)
+
+	oneFilled := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"tag":""},{"tag":"x"}]}
+`)
+
+	pass, _ = validator.Validate(&ValidateContext{Docs: []common.K8sManifest{oneFilled}})
+	assert.False(t, pass, "one tag is non-empty, so the assertion fails")
 }
