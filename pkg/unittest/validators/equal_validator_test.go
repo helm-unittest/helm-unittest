@@ -712,3 +712,49 @@ data:
 	assert.Contains(t, joined, `data["config.json"]`)
 	assert.Contains(t, joined, "server.missing")
 }
+
+// A failed base64 decode must not suppress the other actuals' results. This
+// matched pre-existing behavior before decoding moved ahead of parsing.
+func TestEqualValidatorDecodeBase64ReportsEveryFailure(t *testing.T) {
+	manifest := makeManifest(`
+a:
+  - aGVsbG8=
+  - "not valid base64!!"
+  - aGVsbG8=
+`)
+
+	validator := EqualValidator{
+		Path:         "a[*]",
+		DecodeBase64: true,
+		Value:        "nomatch",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	joined := strings.Join(diff, "\n")
+
+	assert.False(t, pass)
+	assert.Equal(t, 1, strings.Count(joined, "unable to decode base64"),
+		"the invalid entry reports a decode error")
+	assert.Equal(t, 3, strings.Count(joined, "ValuesIndex"),
+		"all three actuals must be reported, not just the first failure")
+}
+
+// parse: yaml with no innerPath must type numbers the same way an ordinary path
+// does, so an integral float in the source matches an integer expectation.
+func TestEqualValidatorParsedYAMLIntegralFloatMatchesInt(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    port: 8080.0
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML},
+		Value:        map[string]any{"port": 8080},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass, strings.Join(diff, "\n"))
+}
