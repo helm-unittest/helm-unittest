@@ -1,21 +1,14 @@
-name: "Helm-Unittest Release"
-
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_call:
     inputs:
       run_release_job:
         description: "Run release artifact job"
-        required: false
+        required: true
         type: boolean
-        default: true
       oci_push_enabled:
         description: "Whether to push signed package to OCI"
-        required: false
+        required: true
         type: boolean
-        default: true
       oci_tag_suffix:
         description: "Optional OCI tag suffix, e.g. -alpha"
         required: false
@@ -23,14 +16,12 @@ on:
         default: ""
       oci_tag_latest:
         description: "Whether to tag OCI image as latest"
-        required: false
+        required: true
         type: boolean
-        default: true
       publish_release_artifacts:
         description: "Whether to publish GitHub release artifacts"
-        required: false
+        required: true
         type: boolean
-        default: true
       helm_tags_per_page:
         description: "How many Helm tags to fetch"
         required: false
@@ -43,13 +34,9 @@ on:
         default: 2
       run_docker_publish:
         description: "Run docker build and merge jobs"
-        required: false
-        type: boolean
-        default: true
-    secrets:
-      GITHUB_TOKEN:
-        description: "GitHub token for API access, required for signing test workflow"
         required: true
+        type: boolean
+    secrets:
       GPG_KEYRING_BASE64:
         description: "Base64 encoded GPG keyring for signing, required for signing test workflow"
         required: false
@@ -66,7 +53,7 @@ env:
   HELM_REPO: helm/helm
   PLUGIN_REPO: helm-unittest/helm-unittest
   GO_VERSION: 1.26.x
-  HELM_VERSION: "4.1.4"
+  HELM_VERSION: "4.2.1"
 
 permissions:
   contents: read
@@ -74,7 +61,7 @@ permissions:
 jobs:
   release:
     name: create distribution and upload to release
-    if: ${{ github.event_name != 'workflow_call' || inputs.run_release_job }}
+    if: ${{ inputs.run_release_job }}
     permissions:
       contents: write # to publish assets to the release
       packages: write
@@ -84,26 +71,26 @@ jobs:
     steps:
       - name: checkout
         # https://github.com/actions/checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: setup go
         # https://github.com/actions/setup-go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: setup helm 4
         # https://github.com/Azure/setup-helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: ${{ env.HELM_VERSION }}
 
       - name: setup ORAS
         # https://github.com/oras-project/setup-oras
-        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1.2.4
+        uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
 
       - name: login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ${{ env.PACKAGE_REGISTRY }}
           username: ${{ github.actor }}
@@ -144,24 +131,24 @@ jobs:
           fi
 
       - name: push to OCI registry
-        if: ${{ github.event_name != 'workflow_call' || inputs.oci_push_enabled }}
+        if: ${{ inputs.oci_push_enabled }}
         run: |
-          cd _package
+          cd _dist
           oras push $NAME \
             --artifact-type application/vnd.helm.plugin.v1+json \
             $PACKAGE \
             $PACKAGE.prov
-          if [[ "${{ github.event_name != 'workflow_call' || inputs.oci_tag_latest }}" == "true" ]]; then
+          if [[ "${{ inputs.oci_tag_latest }}" == "true" ]]; then
             oras tag $NAME latest
           fi
         env:
           PACKAGE: "${{ steps.plugin.outputs.name }}-${{ steps.plugin.outputs.version }}.tgz"
-          NAME: "${{ env.PACKAGE_REGISTRY }}/${{ github.repository }}/${{ steps.plugin.outputs.name }}:${{ steps.plugin.outputs.version }}${{ github.event_name == 'workflow_call' && inputs.oci_tag_suffix || '' }}"
+          NAME: "${{ env.PACKAGE_REGISTRY }}/${{ github.repository }}/${{ steps.plugin.outputs.name }}:${{ steps.plugin.outputs.version }}${{ inputs.oci_tag_suffix }}"
 
       - name: publish artifacts
-        if: ${{ github.event_name != 'workflow_call' || inputs.publish_release_artifacts }}
+        if: ${{ inputs.publish_release_artifacts }}
         # https://github.com/softprops/action-gh-release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           files: _dist/**
 
@@ -183,20 +170,20 @@ jobs:
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          helmLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=${{ github.event_name == 'workflow_call' && inputs.helm_tags_per_page || 4 }} |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          helmLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ env.HELM_REPO }}/tags?per_page=${{ inputs.helm_tags_per_page }} |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmversions=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmlatestversion=$(printf '%s\n' ${helmLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
       - id: helm-plugin-versions
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pluginLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ github.repository }}/tags?per_page=${{ github.event_name == 'workflow_call' && inputs.plugin_tags_per_page || 2 }} |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
+          pluginLatest=`curl --proto "=https" -sL -H "Authorization: token $TOKEN" https://api.github.com/repos/${{ github.repository }}/tags?per_page=${{ inputs.plugin_tags_per_page }} |jq -r ".[].name"|sed 's/^v//'|sort -V |grep -v -`
           echo "helmpluginversions=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
           echo "helmpluginlatestversion=$(printf '%s\n' ${pluginLatest[@]} | jq -R . | jq -cs .[-1])" >> $GITHUB_OUTPUT
 
   release-docker:
     name: create multi-arch docker images and upload to dockerhub
-    if: ${{ github.event_name != 'workflow_call' || inputs.run_docker_publish }}
+    if: ${{ always() && (needs.determine-versions.result == 'success') && inputs.run_docker_publish }}
     permissions:
       contents: write # to publish assets to the release
     runs-on: ubuntu-24.04
@@ -219,22 +206,22 @@ jobs:
       - name: Docker meta
         id: meta
         # https://github.com/docker/metadata-action
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: ${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}
 
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
         # https://github.com/docker/setup-buildx-action
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to Docker Hub
         # https://github.com/docker/login-action
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -242,7 +229,7 @@ jobs:
       - name: Build and push by digest
         id: build
         # https://github.com/docker/build-push-action
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           build-args: |
             HELM_VERSION=${{ matrix.helmVersion }}
@@ -260,7 +247,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -269,7 +256,7 @@ jobs:
           overwrite: true
 
   merge:
-    if: ${{ github.event_name != 'workflow_call' || inputs.run_docker_publish }}
+    if: ${{ always() && (needs.release-docker.result == 'success') && inputs.run_docker_publish }}
     permissions:
       contents: read # to download assets from the release
     runs-on: ubuntu-24.04
@@ -284,18 +271,18 @@ jobs:
         pluginVersion: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_VERSIONS) }}
     steps:
       - name: Download digests
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: /tmp/digests
           pattern: digests-${{ matrix.helmVersion }}-${{ matrix.pluginVersion }}-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         env:
           HELM_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_LATEST_VERSION) }}
           PLUGIN_LATEST: ${{ fromJson(needs.determine-versions.outputs.HELM_PLUGIN_LATEST_VERSION) }}
@@ -306,7 +293,7 @@ jobs:
             type=raw,value=latest,enable=${{ (matrix.helmVersion == env.HELM_LATEST) && (matrix.pluginVersion == env.PLUGIN_LATEST) }}
 
       - name: Login to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

@@ -35,5 +35,13 @@ data:
   file.json: |
   {{ range .Values.configJsonTests | toStrings }}
     {{ . | nindent 4 }}
+  {{- end -}}
   {{- end }}
+  {{- range $profile, $profileRoot := .Values.profiles }}
+  {{- if $profileRoot }}
+  {{- if $profileRoot.config }}
+  {{ printf "%s.lua" $profile }}: |
+    {{ $profileRoot.config | nindent 4 }}
+  {{- end -}}
+  {{- end -}}
   {{- end }}

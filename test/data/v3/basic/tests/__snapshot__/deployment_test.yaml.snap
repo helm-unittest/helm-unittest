@@ -29,7 +29,7 @@ should pass all kinds of assertion:
     kind: Deployment
     metadata:
       annotations:
-        checksum/health: 5bde893f09313c69274774e2d93a68c7b5aa97256ea073a96832016c749b3f63
+        checksum/health: 94357473dad1a32dd682ff3ac1b965e6bb464eacb8ab31572daf2c3cf0c6e932
       labels:
         app: basic
         appVersion: 9.9.9
