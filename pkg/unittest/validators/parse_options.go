@@ -114,6 +114,8 @@ func normalizeParsedNumbers(value any) any {
 	switch typed := value.(type) {
 	case json.Number:
 		return normalizeJSONNumber(typed)
+	case float64:
+		return normalizeFloat(typed)
 	case map[string]any:
 		normalized := make(map[string]any, len(typed))
 		for key, element := range typed {
@@ -157,6 +159,20 @@ func normalizeJSONNumber(number json.Number) any {
 		return literal
 	}
 
+	return normalizeFloat(float)
+}
+
+// normalizeFloat converts an integral float64 within int64's representable
+// range to int, matching the type valueutils.GetValueOfSetPath produces for
+// the same source value on an ordinary (non-parse) assertion path. A
+// non-integral float, or one too large to fit in an int64, is returned
+// unchanged.
+//
+// This is shared by normalizeJSONNumber's float path (json.Number decoded via
+// Float64) and normalizeParsedNumbers' float64 case (YAML's decoder, which
+// hands back float64 directly instead of an intermediate literal-preserving
+// type), so both formats agree on when an integral value becomes an int.
+func normalizeFloat(float float64) any {
 	if float == math.Trunc(float) && float >= math.MinInt64 && float < maxInt64AsFloat {
 		return int(int64(float))
 	}
@@ -186,7 +202,7 @@ func parseStructuredContent(content, format string) (any, error) {
 		if err := common.YmlUnmarshal(content, &parsed); err != nil {
 			return nil, err
 		}
-		return parsed, nil
+		return normalizeParsedNumbers(parsed), nil
 
 	default:
 		return nil, fmt.Errorf(

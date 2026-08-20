@@ -71,19 +71,14 @@ func TestNormalizedNumbersMatchPathEngine(t *testing.T) {
 	}
 }
 
-// parse: json and parse: yaml must still agree on types for literals where the
-// raw go.yaml.in/yaml/v3 decoder (used directly by parse: yaml, with no
-// integrality re-typing) and the new by-value JSON rule land on the same type:
-// plain integer syntax, and fractional values that aren't integral. Literals
-// like "1.0" or "1e3" are intentionally excluded here because the raw yaml
-// decoder types them lexically (float64) while parse: json now types them by
-// value (int) - see TestNormalizedNumbersMatchPathEngine above. That divergence
-// is invisible end-to-end: whenever innerPath is used, parse: yaml's result is
-// additionally routed through the same path engine (GetValueOfSetPath) that
-// parse: json is compared against, which re-types integral floats to int, so
-// parse: json and parse: yaml agree on the value actually asserted on.
+// parse: json and parse: yaml must agree on types for every literal, including
+// integral floats and exponent forms, since both now normalize numbers by
+// value rather than by written form.
 func TestParseJSONAndYAMLAgreeOnTypes(t *testing.T) {
-	literals := []string{"1", "8080", "0", "1.5", "9007199254740993"}
+	literals := []string{
+		"1", "8080", "0", "1.5", "9007199254740993",
+		"1.0", "1e3", "8080.0", "1.0e2", "0.0",
+	}
 
 	for _, literal := range literals {
 		t.Run(literal, func(t *testing.T) {
