@@ -4,10 +4,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNormalizeParsedNumbersByLexicalForm(t *testing.T) {
+// Numbers are typed by value, not by written form, matching what
+// valueutils.GetValueOfSetPath produces for an ordinary path: an integral value
+// becomes int, a non-integral value stays float64. This keeps parse consistent
+// with every other assertion, and consistent with itself whether or not
+// innerPath is used (innerPath resolution round-trips through the path engine,
+// which applies the same rule).
+func TestNormalizeParsedNumbersByValue(t *testing.T) {
 	tests := []struct {
 		name     string
 		literal  string
@@ -16,10 +24,13 @@ func TestNormalizeParsedNumbersByLexicalForm(t *testing.T) {
 		{"integer", "1", 1},
 		{"large integer", "8080", 8080},
 		{"zero", "0", 0},
-		{"integral with decimal point stays float", "1.0", float64(1)},
+		{"integral with decimal point", "1.0", 1},
+		{"integral with trailing zero", "2.50", 2.5},
+		{"integral exponent", "1e3", 1000},
+		{"integral exponent with decimal", "1.0e2", 100},
+		{"negative zero", "-0.0", 0},
 		{"fractional", "1.5", 1.5},
-		{"exponent", "1e3", float64(1000)},
-		{"negative zero float", "-0.0", float64(0)},
+		{"small fractional", "0.1", 0.1},
 		{"int64 precision preserved", "9007199254740993", 9007199254740993},
 	}
 
@@ -34,8 +45,45 @@ func TestNormalizeParsedNumbersByLexicalForm(t *testing.T) {
 	}
 }
 
+// The parse rule must agree with what the assertion path engine produces, so
+// that `parse` behaves like every other assertion and so that parse with and
+// without innerPath agree with each other.
+func TestNormalizedNumbersMatchPathEngine(t *testing.T) {
+	literals := []string{"1", "1.0", "1.5", "1e3", "1.0e2", "0.0", "-0.0", "2.50", "8080", "0.1"}
+
+	for _, literal := range literals {
+		t.Run(literal, func(t *testing.T) {
+			fromParse, err := parseStructuredContent(`{"a":`+literal+`}`, ParseFormatJSON)
+			assert.NoError(t, err)
+			parsedValue := fromParse.(map[string]any)["a"]
+
+			var manifest common.K8sManifest
+			assert.NoError(t, common.YmlUnmarshal("a: "+literal, &manifest))
+			fromPath, err := valueutils.GetValueOfSetPath(manifest, "a")
+			assert.NoError(t, err)
+			assert.Len(t, fromPath, 1)
+
+			assert.IsType(t, fromPath[0], parsedValue,
+				"parse and the path engine must agree on the type of %s", literal)
+			assert.Equal(t, fromPath[0], parsedValue,
+				"parse and the path engine must agree on the value of %s", literal)
+		})
+	}
+}
+
+// parse: json and parse: yaml must still agree on types for literals where the
+// raw go.yaml.in/yaml/v3 decoder (used directly by parse: yaml, with no
+// integrality re-typing) and the new by-value JSON rule land on the same type:
+// plain integer syntax, and fractional values that aren't integral. Literals
+// like "1.0" or "1e3" are intentionally excluded here because the raw yaml
+// decoder types them lexically (float64) while parse: json now types them by
+// value (int) - see TestNormalizedNumbersMatchPathEngine above. That divergence
+// is invisible end-to-end: whenever innerPath is used, parse: yaml's result is
+// additionally routed through the same path engine (GetValueOfSetPath) that
+// parse: json is compared against, which re-types integral floats to int, so
+// parse: json and parse: yaml agree on the value actually asserted on.
 func TestParseJSONAndYAMLAgreeOnTypes(t *testing.T) {
-	literals := []string{"1", "8080", "0", "1.0", "1.5", "1e3", "9007199254740993"}
+	literals := []string{"1", "8080", "0", "1.5", "9007199254740993"}
 
 	for _, literal := range literals {
 		t.Run(literal, func(t *testing.T) {
@@ -66,7 +114,7 @@ func TestParseStructuredContentNestedNormalization(t *testing.T) {
 
 	list := root["list"].([]any)
 	assert.Equal(t, 1, list[0])
-	assert.Equal(t, float64(2), list[1])
+	assert.Equal(t, 2, list[1], "2.0 is integral, so it normalizes to int")
 	assert.Equal(t, 3, list[2].(map[string]any)["deep"])
 }
 
