@@ -229,96 +229,37 @@ func TestIsNullOrEmptyValidatorWhenNoManifestNegativeOk(t *testing.T) {
 	assert.Equal(t, []string{}, diff)
 }
 
-func TestIsNullOrEmptyValidatorParsedEmptyString(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"name":""}
-`)
-
-	validator := IsNullOrEmptyValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "name"},
+// The emptiness check recognises every empty form JSON can produce once parsed.
+// Unparsed, the actual is the raw JSON text, which is never empty, so each case
+// depends on parsing having run.
+func TestIsNullOrEmptyValidatorParsedEmptyValues(t *testing.T) {
+	tests := []struct {
+		name      string
+		content   string
+		innerPath string
+	}{
+		{name: "empty string", content: `{"name":""}`, innerPath: "name"},
+		{name: "zero number", content: `{"replicas":0}`, innerPath: "replicas"},
+		{name: "empty array", content: `{"servers":[]}`, innerPath: "servers"},
+		{name: "empty object", content: `{"opts":{}}`, innerPath: "opts"},
+		{name: "null value", content: `{"maybe":null}`, innerPath: "maybe"},
 	}
 
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manifest := makeManifest("data:\n  config.json: |\n    " + tt.content + "\n")
 
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
+			validator := IsNullOrEmptyValidator{
+				Path:         `data["config.json"]`,
+				ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: tt.innerPath},
+			}
 
-// A parsed JSON zero must be recognised as empty. Unparsed, the actual is the
-// raw JSON text, which is NOT empty, so this only passes when parsing ran.
-func TestIsNullOrEmptyValidatorParsedZeroNumber(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"replicas":0}
-`)
+			pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
 
-	validator := IsNullOrEmptyValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "replicas"},
+			assert.True(t, pass)
+			assert.Equal(t, []string{}, diff)
+		})
 	}
-
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
-func TestIsNullOrEmptyValidatorParsedEmptyArray(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"servers":[]}
-`)
-
-	validator := IsNullOrEmptyValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
-	}
-
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
-func TestIsNullOrEmptyValidatorParsedEmptyObject(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"opts":{}}
-`)
-
-	validator := IsNullOrEmptyValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "opts"},
-	}
-
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
-}
-
-func TestIsNullOrEmptyValidatorParsedNullValue(t *testing.T) {
-	manifest := makeManifest(`
-data:
-  config.json: |
-    {"maybe":null}
-`)
-
-	validator := IsNullOrEmptyValidator{
-		Path:         `data["config.json"]`,
-		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "maybe"},
-	}
-
-	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
-
-	assert.True(t, pass)
-	assert.Equal(t, []string{}, diff)
 }
 
 func TestIsNullOrEmptyValidatorParsedNonEmptyFails(t *testing.T) {
