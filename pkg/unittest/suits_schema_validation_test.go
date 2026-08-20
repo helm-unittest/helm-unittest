@@ -96,6 +96,9 @@ func TestValidateExampleChartsWithTestSuitsAgainstLocalSchema(t *testing.T) {
 			testsPath: "../../test/data/v3/nested_glob/tests",
 		},
 		{
+			testsPath: "../../test/data/v3/parse-structured/tests",
+		},
+		{
 			testsPath: "../../test/data/v3/with-document-select/tests",
 		},
 		{

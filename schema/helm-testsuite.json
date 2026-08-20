@@ -244,6 +244,20 @@
                           "type": "boolean",
                           "description": "Ignores any other values within the found content.",
                           "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other values within the found content."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -275,6 +289,20 @@
                           "type": "boolean",
                           "description": "Ignores any other values within the found content.",
                           "markdownDescription": "**any** (boolean) _optional_\n\nIgnores any other values within the found content."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -306,6 +334,20 @@
                           "type": "boolean",
                           "description": "Decode the base64 before checking.",
                           "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -337,6 +379,20 @@
                           "type": "boolean",
                           "description": "Decode the base64 before checking.",
                           "markdownDescription": "**decodeBase64** (boolean) _optional_\n\nDecode the base64 before checking."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -401,6 +457,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -419,6 +489,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -510,6 +594,20 @@
                         "value": {
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -536,6 +634,20 @@
                         "value": {
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -590,6 +702,20 @@
                         "value": {
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -616,6 +742,20 @@
                         "value": {
                           "description": "The expected value.",
                           "markdownDescription": "**value** (number|string) _required_\n\nThe expected value."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -674,6 +814,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -692,6 +846,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -718,6 +886,20 @@
                         "content": {
                           "description": "The content to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content to be contained."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -744,6 +926,20 @@
                         "content": {
                           "description": "The content NOT to be contained.",
                           "markdownDescription": "**content** (object) _required_\n\nThe content NOT to be contained."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -771,6 +967,20 @@
                           "type": "string",
                           "description": "The expected type.",
                           "markdownDescription": "**type** (string) _required_\n\nThe expected type."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -798,6 +1008,20 @@
                           "type": "string",
                           "description": "The expected type.",
                           "markdownDescription": "**type** (string) _required_\n\nThe expected type."
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -819,6 +1043,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -840,6 +1078,20 @@
                       "properties": {
                         "path": {
                           "$ref": "#/definitions/assertion/path"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -866,6 +1118,20 @@
                         },
                         "paths": {
                           "$ref": "#/definitions/assertion/paths"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
@@ -892,6 +1158,20 @@
                         },
                         "paths": {
                           "$ref": "#/definitions/assertion/paths"
+                        },
+                        "parse": {
+                          "type": "string",
+                          "enum": [
+                            "json",
+                            "yaml"
+                          ],
+                          "description": "Parse the string value at path as structured content before asserting.",
+                          "markdownDescription": "**parse** (string) _optional_\n\nParse the string value at `path` as structured content before asserting. Accepts `json` or `yaml`. Use this when a chart emits serialized content into a string field, so the assertion compares structure instead of exact text."
+                        },
+                        "innerPath": {
+                          "type": "string",
+                          "description": "Path within the parsed content. Requires parse.",
+                          "markdownDescription": "**innerPath** (string) _optional_\n\nPath within the parsed content, using the same syntax as `path`. Requires `parse` to be set. Example: `server.tls.enabled` or `panels[0].title`."
                         }
                       },
                       "additionalProperties": false
