@@ -1,0 +1,5 @@
+apiVersion: v2
+description: A chart emitting serialized JSON and YAML to demonstrate parse assertions
+name: parse-structured
+version: 0.1.0
+appVersion: 1.0.0
