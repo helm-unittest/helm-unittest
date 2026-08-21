@@ -578,8 +578,6 @@ func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
 	assert.Contains(t, buffer.String(), "Test Suites: 4 passed, 4 total")
 }
 
-const testV3ParallelMultiSuiteChart string = "../../test/data/v3/parallel-multisuite"
-
 // summaryCountLines returns just the summary counting lines (Charts/Test Suites/
 // Tests/Snapshot) so parallel and sequential runs can be compared regardless of
 // timing noise in the footer.
