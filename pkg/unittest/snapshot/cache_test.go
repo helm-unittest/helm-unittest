@@ -474,3 +474,70 @@ func TestWithNotMatchRegexPattern(t *testing.T) {
 		})
 	}
 }
+
+// Suites that live in one test file share a single snapshot file, and therefore
+// a single Cache. The cache must keep every suite's snapshots when storing, and
+// must report counts per suite so the runner does not count them repeatedly.
+func TestCacheSharedBetweenSuitesKeepsAllSnapshots(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, false)
+
+	cache.BeginSuite()
+	cache.Compare("suite a test", 1, content1)
+
+	cache.BeginSuite()
+	cache.Compare("suite b test", 1, content2)
+
+	stored, err := cache.StoreToFileIfNeeded()
+	a.NoError(err)
+	a.True(stored)
+
+	content, err := os.ReadFile(cache.Filepath)
+	a.NoError(err)
+	a.Contains(string(content), "suite a test:")
+	a.Contains(string(content), "suite b test:")
+}
+
+func TestCacheBeginSuiteScopesCountsToCurrentSuite(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, false)
+
+	cache.BeginSuite()
+	cache.Compare("suite a test", 1, content1)
+	cache.Compare("suite a test", 2, content2)
+	a.Equal(uint(2), cache.CurrentCount())
+	a.Equal(uint(2), cache.InsertedCount())
+
+	cache.BeginSuite()
+	cache.Compare("suite b test", 1, contentNew)
+	a.Equal(uint(1), cache.CurrentCount(), "counts must not include the previous suite")
+	a.Equal(uint(1), cache.InsertedCount(), "counts must not include the previous suite")
+}
+
+// A suite that only compares its own snapshots must not make the entries of the
+// other suites in the same file look vanished.
+func TestCacheSharedBetweenSuitesDoesNotVanishOtherSuites(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, false)
+
+	cache.BeginSuite()
+	cache.Compare("suite a test", 1, content1)
+	cache.BeginSuite()
+	cache.Compare("suite b test", 1, content2)
+
+	stored, err := cache.StoreToFileIfNeeded()
+	a.NoError(err)
+	a.True(stored)
+
+	// Second run against the file just written: both suites match, nothing vanished.
+	reread := &Cache{Filepath: cache.Filepath}
+	a.NoError(reread.RestoreFromFile())
+	reread.BeginSuite()
+	reread.Compare("suite a test", 1, content1)
+	reread.BeginSuite()
+	reread.Compare("suite b test", 1, content2)
+
+	a.Equal(uint(0), reread.VanishedCount())
+	a.Equal(uint(0), reread.InsertedCount())
+	a.False(reread.Changed())
+}

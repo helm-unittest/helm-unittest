@@ -46,6 +46,7 @@ const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-cl
 const testV3WithPostRendererChart string = "../../test/data/v3/with-post-renderer"
 const testV3WithDisabledSubChartOnConditionChart string = "../../test/data/v3/with-disabled-subchart-on-condition"
 const testV3WithDisabledSubChartOnTagsChart string = "../../test/data/v3/with-disabled-subchart-on-tags"
+const testV3ParallelMultiSuiteChart string = "../../test/data/v3/parallel-multisuite"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 

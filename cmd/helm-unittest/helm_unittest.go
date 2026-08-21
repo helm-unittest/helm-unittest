@@ -22,6 +22,8 @@ type testOptions struct {
 	updateSnapshot          bool
 	withSubChart            bool
 	useSkipSchemaValidation bool
+	useParallel             bool
+	maxWorkers              int
 	testFiles               []string
 	valuesFiles             []string
 	outputFile              string
@@ -85,6 +87,10 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	if testConfig.useParallel && renderPath != "" {
+		log.Warn("--parallel is ignored when --debugPlugin is set; running sequentially")
+	}
+
 	if len(testConfig.testFiles) == 0 {
 		testConfig.testFiles = []string{defaultFilePattern}
 	}
@@ -99,6 +105,8 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		Strict:               testConfig.useStrict,
 		Failfast:             testConfig.useFailfast,
 		SkipSchemaValidation: testConfig.useSkipSchemaValidation,
+		Parallel:             testConfig.useParallel,
+		MaxWorkers:           testConfig.maxWorkers,
 		TestFiles:            testConfig.testFiles,
 		ValuesFiles:          testConfig.valuesFiles,
 		OutputFile:           testConfig.outputFile,
@@ -189,6 +197,16 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useSkipSchemaValidation, "skip-schema-validation", false,
 		"skip values schema validation when rendering the chart",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.useParallel, "parallel", false,
+		"run test suites in parallel (ignored when --debugPlugin is set)",
+	)
+
+	cmd.PersistentFlags().IntVar(
+		&testConfig.maxWorkers, "max-workers", 0,
+		"maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel)",
 	)
 }
 

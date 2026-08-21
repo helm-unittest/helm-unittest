@@ -361,6 +361,120 @@ func TestValidateUnittestSkipSchemaValidationFlag(t *testing.T) {
 	}
 }
 
+func TestValidateUnittestParallelFlag(t *testing.T) {
+	a := assert.New(t)
+
+	parallelFlags := map[string]bool{
+		"":                 false,
+		"--parallel":       true,
+		"--parallel=true":  true,
+		"--parallel=false": false,
+	}
+
+	for parallelFlag, parallelFlagValue := range parallelFlags {
+		cmd := setupTestCmd()
+
+		// Setup actual parameter
+		if len(parallelFlag) > 0 {
+			cmd.SetArgs([]string{parallelFlag})
+		}
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(parallelFlagValue, runner.Parallel)
+	}
+}
+
+func TestValidateUnittestMaxWorkersFlag(t *testing.T) {
+	a := assert.New(t)
+
+	maxWorkersFlags := map[string]int{
+		"":                 0,
+		"--max-workers=0":  0,
+		"--max-workers=1":  1,
+		"--max-workers=4":  4,
+		"--max-workers=-1": -1,
+	}
+
+	for maxWorkersFlag, maxWorkersFlagValue := range maxWorkersFlags {
+		cmd := setupTestCmd()
+
+		// Setup actual parameter
+		if len(maxWorkersFlag) > 0 {
+			cmd.SetArgs([]string{maxWorkersFlag})
+		}
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(maxWorkersFlagValue, runner.MaxWorkers)
+	}
+}
+
+// --parallel and --max-workers are independent flags, --max-workers is only
+// meaningful when --parallel is set, but it is passed through either way.
+func TestValidateUnittestParallelWithMaxWorkersFlags(t *testing.T) {
+	a := assert.New(t)
+
+	tests := []struct {
+		args               []string
+		expectedParallel   bool
+		expectedMaxWorkers int
+	}{
+		{[]string{}, false, 0},
+		{[]string{"--parallel"}, true, 0},
+		{[]string{"--parallel", "--max-workers", "2"}, true, 2},
+		{[]string{"--parallel=false", "--max-workers=8"}, false, 8},
+	}
+
+	for _, test := range tests {
+		cmd := setupTestCmd()
+
+		// Setup actual parameter
+		if len(test.args) > 0 {
+			cmd.SetArgs(test.args)
+		}
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(test.expectedParallel, runner.Parallel, "args: %v", test.args)
+		a.Equal(test.expectedMaxWorkers, runner.MaxWorkers, "args: %v", test.args)
+	}
+}
+
+// --debugPlugin sets a RenderPath, the parallel fallback to sequential is
+// decided by the testrunner itself, so the configuration keeps both values.
+func TestValidateUnittestParallelWithDebugFlags(t *testing.T) {
+	a := assert.New(t)
+
+	tests := []struct {
+		args               []string
+		expectedParallel   bool
+		expectedRenderPath string
+	}{
+		{[]string{"--parallel"}, true, ""},
+		{[]string{"--debugPlugin"}, false, ".debug"},
+		{[]string{"--parallel", "--debugPlugin"}, true, ".debug"},
+	}
+
+	for _, test := range tests {
+		cmd := setupTestCmd()
+		cmd.SetArgs(test.args)
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err)
+		a.Equal(test.expectedParallel, runner.Parallel, "args: %v", test.args)
+		a.Equal(test.expectedRenderPath, runner.RenderPath, "args: %v", test.args)
+	}
+}
+
 // Using %T
 func typeofObject(variable any) string {
 	return fmt.Sprintf("%T", variable)
