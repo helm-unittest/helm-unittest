@@ -1,0 +1,11 @@
+templates:
+  - templates/basic.yaml
+tests:
+  - it: manifest should match snapshot
+    asserts:
+      - matchSnapshot: {}
+      - notExists:
+          path: metadata.annotations.appended
+      - equal:
+          path: metadata.annotations.foo
+          value: bar

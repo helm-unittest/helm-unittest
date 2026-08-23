@@ -1212,6 +1212,11 @@
       "description": "A helm 'post-renderer' to apply after chart rendering but before validation.",
       "markdownDescription": "**postRenderer** (object) _optional_\n\nA helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.",
       "properties": {
+        "cmd": {
+          "type": "string",
+          "description": "The full path to the command to invoke, or just its name if it's on `$PATH`.",
+          "markdownDescription": "**cmd** (string)\n\nThe full path to the command to invoke, or just its name if it's on '$PATH'."
+        },
         "plugin": {
           "type": "string",
           "description": "Name of the installed Helm post-renderer plugin to invoke.",
@@ -1226,8 +1231,13 @@
           }
         }
       },
-      "required": [
-        "plugin"
+      "oneOf": [
+        {
+          "required": ["cmd"]
+        },
+        {
+          "required": ["plugin"]
+        }
       ],
       "additionalProperties": false
     },

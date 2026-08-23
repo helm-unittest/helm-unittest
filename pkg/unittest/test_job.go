@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"helm.sh/helm/v3/pkg/postrender"
+
 	"helm.sh/helm/v4/pkg/cli"
 	"helm.sh/helm/v4/pkg/postrenderer"
 
@@ -24,9 +26,9 @@ import (
 
 	chartcommon "helm.sh/helm/v4/pkg/chart/common"
 	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
-	v3chart "helm.sh/helm/v4/pkg/chart/v2"
-	chartv2util "helm.sh/helm/v4/pkg/chart/v2/util"
-	v3engine "helm.sh/helm/v4/pkg/engine"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
+	v2chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
+	v4engine "helm.sh/helm/v4/pkg/engine"
 )
 
 const LOG_TEST_JOB = "test-job"
@@ -80,11 +82,6 @@ func scopeValuesWithRoutes(routes []string, values map[string]any) map[string]an
 		)
 	}
 	return values
-}
-
-func parseV3RenderError(errorMessage string) (string, map[string]string) {
-	filePath, content := parseRenderError(errorMessage)
-	return filePath, content
 }
 
 func parseRenderError(errorMessage string) (string, map[string]string) {
@@ -260,8 +257,8 @@ func (t *TestJob) WithConfig(config TestConfig) {
 
 func (t *TestJob) configOrDefault() TestConfig {
 	if t.config.targetChart == nil {
-		t.config.targetChart = &v3chart.Chart{
-			Metadata: &v3chart.Metadata{},
+		t.config.targetChart = &v2chart.Chart{
+			Metadata: &v2chart.Metadata{},
 		}
 	}
 	if t.config.cache == nil {
@@ -270,8 +267,8 @@ func (t *TestJob) configOrDefault() TestConfig {
 	return t.config
 }
 
-// RunV3 render the chart and validate it with assertions in TestJob.
-func (t *TestJob) RunV3(
+// RunV4 render the chart and validate it with assertions in TestJob.
+func (t *TestJob) RunV4(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
@@ -284,7 +281,7 @@ func (t *TestJob) RunV3(
 		return result
 	}
 
-	outputOfFiles, renderSucceed, renderError := t.renderV3Chart([]byte(userValues))
+	outputOfFiles, renderSucceed, renderError := t.renderv2chart([]byte(userValues))
 	writeError := writeRenderedOutput(t.configOrDefault().renderPath, outputOfFiles)
 	if writeError != nil {
 		result.ExecError = writeError
@@ -395,27 +392,27 @@ func (t *TestJob) getUserValues() (string, error) {
 }
 
 // render the chart and return result map
-func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, error) {
+func (t *TestJob) renderv2chart(userValues []byte) (map[string]string, bool, error) {
 	values, err := chartcommon.ReadValues(userValues)
 	if err != nil {
 		return nil, false, err
 	}
-	options := *t.releaseV3Option()
+	options := *t.releaseV4Option()
 
 	// Check Release Name length
 	if t.Release.Name != "" {
-		err = chartv2util.ValidateReleaseName(t.Release.Name)
+		err = v2chartutil.ValidateReleaseName(t.Release.Name)
 		if err != nil {
 			return nil, false, err
 		}
 	}
 
-	err = chartv2util.ProcessDependencies(t.configOrDefault().targetChart, values)
+	err = v2chartutil.ProcessDependencies(t.configOrDefault().targetChart, values)
 	if err != nil {
 		return nil, false, err
 	}
 
-	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV3(), t.configOrDefault().isSkipSchemaValidation)
+	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV4(), t.configOrDefault().isSkipSchemaValidation)
 	if err != nil {
 		return nil, false, err
 	}
@@ -426,15 +423,15 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 	}
 
 	// Filter the files that needs to be validated
-	filteredChart := CopyV3Chart(t.chartRoute, t.configOrDefault().targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.configOrDefault().targetChart)
+	filteredChart := CopyV2Chart(t.chartRoute, t.configOrDefault().targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.configOrDefault().targetChart)
 
 	var outputOfFiles map[string]string
 	// modify chart metadata before rendering
 	t.ModifyChartMetadata(t.configOrDefault().targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
-		outputOfFiles, err = v3engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
+		outputOfFiles, err = v4engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
-		outputOfFiles, err = v3engine.Render(filteredChart, vals)
+		outputOfFiles, err = v4engine.Render(filteredChart, vals)
 	}
 
 	var renderSucceed bool
@@ -446,8 +443,35 @@ func (t *TestJob) renderV3Chart(userValues []byte) (map[string]string, bool, err
 	return outputOfFiles, renderSucceed, nil
 }
 
-// MergeAndPostRender merge the map into a single file, post-render it, and split it out again
-func MergeAndPostRender(renderedManifestsMap map[string]string, postRenderer postrenderer.PostRenderer) (*bytes.Buffer, error) {
+// MergeAndPostRenderUsingPlugin merge the map into a single file, post-render it using the helm 4 plugin, and split it out again
+func MergeAndPostRenderUsingPlugin(renderedManifestsMap map[string]string, postRenderer postrenderer.PostRenderer) (*bytes.Buffer, error) {
+	var renderedManifests bytes.Buffer
+
+	// stable iteration order
+	orderedManifests := make([]string, 0, len(renderedManifestsMap))
+	for k := range renderedManifestsMap {
+		orderedManifests = append(orderedManifests, k)
+	}
+	sort.Strings(orderedManifests)
+
+	for _, key := range orderedManifests {
+		manifest := renderedManifestsMap[key]
+		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
+		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
+	}
+	var modifiedManifests *bytes.Buffer
+
+	modifiedManifests, err := postRenderer.Run(&renderedManifests)
+	if err != nil {
+		return nil, fmt.Errorf("post-render failed: %w", err)
+	}
+	renderedManifests = *modifiedManifests
+
+	return &renderedManifests, nil
+}
+
+// MergeAndPostRenderUsingExec merge the map into a single file, post-render it using the helm 3 external command, and split it out again
+func MergeAndPostRenderUsingExec(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
 	var renderedManifests bytes.Buffer
 
 	// stable iteration order
@@ -519,6 +543,7 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, bool, error) {
 
 	var cfg PostRendererConfig
+	var renderedManifests *bytes.Buffer
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
 	if t.PostRendererConfig.Plugin != "" || t.PostRendererConfig.Cmd != "" {
 		cfg = t.PostRendererConfig
@@ -528,21 +553,32 @@ func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string
 		return renderedManifestsMap, false, nil
 	}
 
+	if cfg.Cmd != "" && cfg.Plugin != "" {
+		return nil, true, fmt.Errorf("can't configure postRenderer.cmd and postRenderer.plugin at the same time;")
+	}
+
 	if cfg.Cmd != "" {
-		return nil, true, fmt.Errorf("postRenderer.cmd is no longer supported with Helm v4; use postRenderer.plugin")
-	}
-	if cfg.Plugin == "" {
-		return nil, true, fmt.Errorf("postRenderer.plugin is required when postRenderer is configured")
+		postRenderer, err := postrender.NewExec(cfg.Cmd, cfg.ArgSlice...)
+		if err != nil {
+			return nil, true, err
+		}
+
+		renderedManifests, err = MergeAndPostRenderUsingExec(renderedManifestsMap, postRenderer)
+		if err != nil {
+			return nil, true, err
+		}
 	}
 
-	postRenderer, err := postrenderer.NewPostRendererPlugin(cli.New(), cfg.Plugin, cfg.ArgSlice...)
-	if err != nil {
-		return nil, true, err
-	}
+	if cfg.Plugin != "" {
+		postRenderer, err := postrenderer.NewPostRendererPlugin(cli.New(), cfg.Plugin, cfg.ArgSlice...)
+		if err != nil {
+			return nil, true, err
+		}
 
-	renderedManifests, err := MergeAndPostRender(renderedManifestsMap, postRenderer)
-	if err != nil {
-		return nil, true, err
+		renderedManifests, err = MergeAndPostRenderUsingPlugin(renderedManifestsMap, postRenderer)
+		if err != nil {
+			return nil, true, err
+		}
 	}
 
 	postRenderedManifestsMap := SplitManifests(renderedManifests)
@@ -561,7 +597,7 @@ func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[strin
 		}
 
 		// Parse the error and create an outputFile
-		filePath, content := parseV3RenderError(err.Error())
+		filePath, content := parseRenderError(err.Error())
 		// If error not parsed well, rethrow as normal.
 		if filePath == "" && len(content[common.RAW]) == 0 {
 			return nil, renderSucceed, err
@@ -582,7 +618,7 @@ func (t *TestJob) translateErrorToOutputFiles(err error, outputOfFiles map[strin
 }
 
 // get chartutil.ReleaseOptions ready for render
-func (t *TestJob) releaseV3Option() *chartcommon.ReleaseOptions {
+func (t *TestJob) releaseV4Option() *chartcommon.ReleaseOptions {
 	options := chartcommon.ReleaseOptions{
 		Name:      "RELEASE-NAME",
 		Namespace: "NAMESPACE",
@@ -599,10 +635,10 @@ func (t *TestJob) releaseV3Option() *chartcommon.ReleaseOptions {
 	return &options
 }
 
-// capabilitiesV3 chartutil.Capabilities ready for render
+// capabilitiesV4 chartutil.Capabilities ready for render
 // function returns a v3util.Capabilities struct based on the TestJob's capabilities.
 // It overrides the KubeVersion field if majorVersion or minorVersion are set
-func (t *TestJob) capabilitiesV3() *chartcommon.Capabilities {
+func (t *TestJob) capabilitiesV4() *chartcommon.Capabilities {
 	capabilities := chartcommon.DefaultCapabilities.Copy()
 
 	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
@@ -805,7 +841,7 @@ func (t *TestJob) prefixTemplatesToAssert(templatesToAssert []string, prefixedCh
 // it updates the target chart's version and also propagates the same version to all
 // chart dependencies. Similarly, if an appVersion is set (t.Chart.AppVersion),
 // it updates the target chart's appVersion and also propagates it to all dependencies.
-func (t *TestJob) ModifyChartMetadata(targetChart *v3chart.Chart) {
+func (t *TestJob) ModifyChartMetadata(targetChart *v2chart.Chart) {
 	targetChart.Metadata.Version = cmp.Or(t.Chart.Version, targetChart.Metadata.Version)
 	targetChart.Metadata.AppVersion = cmp.Or(t.Chart.AppVersion, targetChart.Metadata.AppVersion)
 

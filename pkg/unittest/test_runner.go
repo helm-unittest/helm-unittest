@@ -15,10 +15,10 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	log "github.com/sirupsen/logrus"
 
-	v3chart "helm.sh/helm/v4/pkg/chart/v2"
-	v3loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 	chartcommon "helm.sh/helm/v4/pkg/chart/common"
 	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
+	v2loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
 const LOG_TEST_RUNNER = "test-runner"
@@ -93,12 +93,12 @@ type TestRunner struct {
 	testResults          []*results.TestSuiteResult
 }
 
-// RunV3 test suites in chart in ChartPaths.
-func (tr *TestRunner) RunV3(ChartPaths []string) bool {
+// RunV4 test suites in chart in ChartPaths.
+func (tr *TestRunner) RunV4(ChartPaths []string) bool {
 	allPassed := true
 	start := time.Now()
 	for _, chartPath := range ChartPaths {
-		chart, err := v3loader.Load(chartPath)
+		chart, err := v2loader.Load(chartPath)
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
@@ -109,7 +109,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 			continue
 		}
 		chartRoute := chart.Name()
-		testSuites, err := tr.getV3TestSuites(chartPath, chartRoute, chart)
+		testSuites, err := tr.getV4TestSuites(chartPath, chartRoute, chart)
 		if err != nil {
 			tr.printErroredChartHeader(err)
 			tr.countChart(false, err)
@@ -121,7 +121,7 @@ func (tr *TestRunner) RunV3(ChartPaths []string) bool {
 		}
 
 		tr.printChartHeader(chart.Name(), chartPath)
-		chartPassed := tr.runV3SuitesOfChart(testSuites, chart)
+		chartPassed := tr.runV4SuitesOfChart(testSuites, chart)
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -189,7 +189,7 @@ func (tr *TestRunner) getTestSuites(chartPath, chartRoute string) ([]*TestSuite,
 // chartPath is the file system path to the chart directory.
 //
 // It returns the merged values as chartcommon.Values and an error if any occurred during processing.
-func (tr *TestRunner) buildMergedValuesForChart(chart *v3chart.Chart, chartPath string) (chartcommon.Values, error) {
+func (tr *TestRunner) buildMergedValuesForChart(chart *v2chart.Chart, chartPath string) (chartcommon.Values, error) {
 	base := chart.Values
 	if base == nil {
 		base = make(map[string]any)
@@ -309,7 +309,7 @@ func evaluateTagsCondition(tags []string, values chartcommon.Values) bool {
 // subchartName is the name of the subchart (which might be an alias)
 //
 // Returns the Dependency metadata if found, nil otherwise
-func getDependencyMetadata(parentChart *v3chart.Chart, subchartName string) *v3chart.Dependency {
+func getDependencyMetadata(parentChart *v2chart.Chart, subchartName string) *v2chart.Dependency {
 	if parentChart.Metadata == nil || parentChart.Metadata.Dependencies == nil {
 		return nil
 	}
@@ -342,7 +342,7 @@ func getDependencyMetadata(parentChart *v3chart.Chart, subchartName string) *v3c
 // values are the merged values to evaluate the condition/tags against
 //
 // It returns true if the subchart should be enabled, false otherwise.
-func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3chart.Chart, values chartcommon.Values) bool {
+func (tr *TestRunner) isSubchartEnabled(parentChart *v2chart.Chart, subchart *v2chart.Chart, values chartcommon.Values) bool {
 	if subchart.Metadata == nil {
 		return true
 	}
@@ -370,7 +370,7 @@ func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3
 	return true
 }
 
-// getV3TestSuitesWithValues retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
+// getV4TestSuitesWithValues retrieves the list of test suites for the given chart and its dependencies (if WithSubChart is true).
 // It recursively calls itself for each subchart dependency. This function accepts pre-computed merged values to avoid
 // recomputing them for each subchart, and to ensure values file paths are resolved relative to the root chart.
 //
@@ -380,7 +380,7 @@ func (tr *TestRunner) isSubchartEnabled(parentChart *v3chart.Chart, subchart *v3
 // mergedValues are the pre-computed merged values (nil means compute them from chartPath).
 //
 // It returns a slice of TestSuite pointers and an error if any occurred during processing.
-func (tr *TestRunner) getV3TestSuitesWithValues(chartPath, chartRoute string, chart *v3chart.Chart, mergedValues chartcommon.Values) ([]*TestSuite, error) {
+func (tr *TestRunner) getV4TestSuitesWithValues(chartPath, chartRoute string, chart *v2chart.Chart, mergedValues chartcommon.Values) ([]*TestSuite, error) {
 	resultSuites, err := tr.getTestSuites(chartPath, chartRoute)
 	if err != nil {
 		return nil, err
@@ -406,7 +406,7 @@ func (tr *TestRunner) getV3TestSuitesWithValues(chartPath, chartRoute string, ch
 			continue
 		}
 
-		subchartSuites, err := tr.getV3TestSuitesWithValues(
+		subchartSuites, err := tr.getV4TestSuitesWithValues(
 			filepath.Join(chartPath, "charts", subchart.Metadata.Name),
 			filepath.Join(chartRoute, "charts", subchart.Metadata.Name),
 			subchart,
@@ -423,16 +423,16 @@ func (tr *TestRunner) getV3TestSuitesWithValues(chartPath, chartRoute string, ch
 	return resultSuites, nil
 }
 
-// getV3TestSuites retrieves test suites for the given chart and its dependencies (if WithSubChart is true).
+// getV4TestSuites retrieves test suites for the given chart and its dependencies (if WithSubChart is true).
 // This is a convenience wrapper that automatically computes merged values.
 //
 // It returns a slice of TestSuite pointers and an error if any occurred during processing.
-func (tr *TestRunner) getV3TestSuites(chartPath, chartRoute string, chart *v3chart.Chart) ([]*TestSuite, error) {
-	return tr.getV3TestSuitesWithValues(chartPath, chartRoute, chart, nil)
+func (tr *TestRunner) getV4TestSuites(chartPath, chartRoute string, chart *v2chart.Chart) ([]*TestSuite, error) {
+	return tr.getV4TestSuitesWithValues(chartPath, chartRoute, chart, nil)
 }
 
-// runV3SuitesOfChart runs suite files of the chart and print output
-func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Chart) bool {
+// runV4SuitesOfChart runs suite files of the chart and print output
+func (tr *TestRunner) runV4SuitesOfChart(suites []*TestSuite, chart *v2chart.Chart) bool {
 	chartPassed := true
 	for _, suite := range suites {
 		snapshotCache, err := snapshot.CreateSnapshotOfSuite(suite.SnapshotFileUrl(), tr.UpdateSnapshot)
@@ -445,7 +445,7 @@ func (tr *TestRunner) runV3SuitesOfChart(suites []*TestSuite, chart *v3chart.Cha
 			continue
 		}
 		suite.skipSchemaValidation = tr.SkipSchemaValidation
-		result := suite.RunV3(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
+		result := suite.RunV4(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 		chartPassed = chartPassed && result.Passed
 		tr.handleSuiteResult(result)
 		tr.testResults = append(tr.testResults, result)

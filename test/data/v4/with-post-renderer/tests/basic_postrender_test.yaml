@@ -1,7 +1,7 @@
 templates:
   - templates/basic.yaml
 postRenderer:
-  cmd: "yq"
+  plugin: "annotation-tester"
   args:
     - "eval"
     - '.metadata.annotations.appended="new"'
@@ -10,7 +10,7 @@ tests:
   - it: manifest should match snapshot
     asserts:
       - matchSnapshot: {}
-  - it: manifest should include an extra annotation due to suite yq post-renderer
+  - it: manifest should include an extra annotation due to suite annotation-tester post-renderer
     asserts:
       - equal:
           path: metadata.annotations.foo
@@ -18,9 +18,9 @@ tests:
       - equal:
           path: metadata.annotations.appended
           value: new
-  - it: manifest should overwrite existing annotation due to test-job yq post-renderer
+  - it: manifest should overwrite existing annotation due to test-job annotation-tester post-renderer
     postRenderer:
-      cmd: "yq"
+      plugin: "annotation-tester"
       args:
         - "eval"
         - '.metadata.annotations.foo="baz"'

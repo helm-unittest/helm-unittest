@@ -62,18 +62,18 @@ func makeOutputSnapshotable(originalOutput string) []any {
 	return sectionsToRetrun
 }
 
-func TestV3RunnerInvalidChartDirFailfast(t *testing.T) {
+func TestV4RunnerInvalidChartDirFailfast(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testTestFiles})
+	passed := runner.RunV4([]string{testTestFiles})
 	assert.False(t, passed, buffer.String())
 }
 
-func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
+func TestV4RunnerInvalidTestSuiteFailfast(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
@@ -81,22 +81,22 @@ func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3InvalidBasicChart})
+	passed := runner.RunV4([]string{testV4InvalidBasicChart})
 	assert.False(t, passed, buffer.String())
 }
 
-func TestV3RunnerOkWithPassedTests(t *testing.T) {
+func TestV4RunnerOkWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
+func TestV4RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 	outputFile := "output.txt"
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -105,7 +105,7 @@ func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 		OutputFile: outputFile,
 		Formatter:  formatter.NewSonarReportXML(),
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	// clean up output file if exists
 	if _, err := os.Stat(outputFile); err == nil {
@@ -116,42 +116,42 @@ func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 	}
 }
 
-func TestV3RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
+func TestV4RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		WithSubChart: true,
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubSubFolderChart})
+	passed := runner.RunV4([]string{testV4WithSubSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFailingTemplatePassedTest(t *testing.T) {
+func TestV4RunnerOkWithFailingTemplatePassedTest(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFailingTemplateChart})
+	passed := runner.RunV4([]string{testV4WithFailingTemplateChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
+func TestV4RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{testValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
+func TestV4RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{
@@ -159,181 +159,181 @@ func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{fullPath},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFailedTests(t *testing.T) {
+func TestV4RunnerOkWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFailedFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithSubSubfolder(t *testing.T) {
+func TestV4RunnerOkWithSubSubfolder(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubFolderChart})
+	passed := runner.RunV4([]string{testV4WithSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerWithTestsInSubchart(t *testing.T) {
+func TestV4RunnerWithTestsInSubchart(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		WithSubChart: true,
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubChart})
+	passed := runner.RunV4([]string{testV4WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
+func TestV4RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		WithSubChart: false,
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubChart})
+	passed := runner.RunV4([]string{testV4WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkGlobalDoubleWithPassedTests(t *testing.T) {
+func TestV4RunnerOkGlobalDoubleWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3GlobalDoubleChart})
+	passed := runner.RunV4([]string{testV4GlobalDoubleChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFiles(t *testing.T) {
+func TestV4RunnerOkWithFiles(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFilesChart})
+	passed := runner.RunV4([]string{testV4WithFilesChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFullsnapshot(t *testing.T) {
+func TestV4RunnerOkWithFullsnapshot(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3FullSnapshotChart})
+	passed := runner.RunV4([]string{testV4FullSnapshotChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithRenderedTests(t *testing.T) {
+func TestV4RunnerOkWithRenderedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:        printer.NewPrinter(buffer, nil),
 		ChartTestsPath: "tests-chart",
 	}
-	passed := runner.RunV3([]string{testV3WithHelmTestsChart})
+	passed := runner.RunV4([]string{testV4WithHelmTestsChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithDocumentSelector(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelector(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFailedFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
+func TestV4RunnerOkWithFakeK8sClient(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFakeK8sClientChart})
+	passed := runner.RunV4([]string{testV4WithFakeK8sClientChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithPostRenderer(t *testing.T) {
+func TestV4RunnerOkWithPostRenderer(t *testing.T) {
 	setPostRendererPluginEnv(t)
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPostRendererChart})
+	passed := runner.RunV4([]string{testV4WithPostRendererChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithSchemaValidation(t *testing.T) {
+func TestV4RunnerOkWithSchemaValidation(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSchemaChart})
+	passed := runner.RunV4([]string{testV4WithSchemaChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkPackagedChartWithExternalUnittest(t *testing.T) {
+func TestV4RunnerOkPackagedChartWithExternalUnittest(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testExternalSubTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPackagedSubChart})
+	passed := runner.RunV4([]string{testV4WithPackagedSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkPackagedChart(t *testing.T) {
+func TestV4RunnerOkPackagedChart(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testExternalTestFiles},
 		ValuesFiles: []string{testExternalValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPackagedChart})
+	passed := runner.RunV4([]string{testV4WithPackagedChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
+func TestV4RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
@@ -344,45 +344,45 @@ func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 		failFast  bool
 	}{
 		{
-			chartPath: []string{testV3WithFailingTemplateChart},
+			chartPath: []string{testV4WithFailingTemplateChart},
 			failFast:  true,
 		},
 		{
-			chartPath: []string{testV3WithFailingTemplateChart},
+			chartPath: []string{testV4WithFailingTemplateChart},
 			failFast:  false,
 		},
 		{
-			chartPath: []string{testV3InvalidBasicChart},
+			chartPath: []string{testV4InvalidBasicChart},
 			failFast:  true,
 		},
 		{
-			chartPath: []string{testV3InvalidBasicChart},
+			chartPath: []string{testV4InvalidBasicChart},
 			failFast:  false,
 		},
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("chart %s fail fast: %v", tt.chartPath[0], tt.failFast), func(t *testing.T) {
 			runner.Failfast = tt.failFast
-			result := runner.RunV3([]string{testV3WithFailingTemplateChart})
+			result := runner.RunV4([]string{testV4WithFailingTemplateChart})
 			assert.True(t, result)
 		})
 	}
 }
 
-func TestV3RunnerOkWithDocumentSelect(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelect(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Test Suites: 8 passed, 8 total")
 	assert.Contains(t, buffer.String(), "Tests:       13 passed, 13 total")
 }
 
-func TestV3RunnerOkWithTestSkipped(t *testing.T) {
+func TestV4RunnerOkWithTestSkipped(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -403,11 +403,11 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSchemaChart})
+	passed := runner.RunV4([]string{testV4WithSchemaChart})
 	assert.True(t, passed, buffer.String())
 }
 
-func TestV3RunnerOkWithSkippedTests_Output(t *testing.T) {
+func TestV4RunnerOkWithSkippedTests_Output(t *testing.T) {
 	chart := `
 apiVersion: v2
 name: basic
@@ -482,14 +482,14 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	_ = runner.RunV3([]string{filepath.Join(tmp, "chart")})
+	_ = runner.RunV4([]string{filepath.Join(tmp, "chart")})
 
 	assert.Contains(t, buffer.String(), "Test Suites: 1 failed, 1 passed, 1 skipped, 3 total")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should render deployment'")
 	assert.Contains(t, buffer.String(), "Tests:       1 failed, 1 passed, 1 skipped, 3 total")
 }
 
-func TestV3RunnerOkWithSkippedSuits_Output(t *testing.T) {
+func TestV4RunnerOkWithSkippedSuits_Output(t *testing.T) {
 	chart := `
 apiVersion: v2
 name: basic
@@ -543,34 +543,34 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	_ = runner.RunV3([]string{filepath.Join(tmp, "chart")})
+	_ = runner.RunV4([]string{filepath.Join(tmp, "chart")})
 	assert.Contains(t, buffer.String(), "PASS  should skip one and execute one")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should skip test'")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 skipped, 2 total")
 }
 
-func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T) {
+func TestV4RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnConditionChart})
+	passed := runner.RunV4([]string{testV4WithDisabledSubChartOnConditionChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Test Suites: 0 passed, 0 total")
 }
 
-func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
+func TestV4RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnTagsChart})
+	passed := runner.RunV4([]string{testV4WithDisabledSubChartOnTagsChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
