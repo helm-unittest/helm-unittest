@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.2.1
+HELM_VERSION := 4.2.4
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -35,8 +35,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-	$(eval HELM_3_PLUGINS := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
-	$(eval HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest)
+	$(eval HELM_PLUGINS_VALUE := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
+	$(eval HELM_PLUGIN_DIR := $(HELM_PLUGINS_VALUE)/helm-unittest)
 
 .PHONY: install
 install: bootstrap build plugin-dir

@@ -367,7 +367,10 @@
 				1
  FAIL  test deployment that would be fail as it is missing the include	../../test/data/v3/basic/tests_failed/include_deployment_test.yaml
 	- should not render
-		Error: template: basic/templates/deployment.yaml:13:24: executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>: error calling include: template: no template "basic/templates/configmap.yaml" associated with template "gotpl"
+		Error: basic/templates/deployment.yaml:13:24
+  executing "basic/templates/deployment.yaml" at <include (print $.Template.BasePath "/configmap.yaml") .>:
+    error calling include:
+template: no template "basic/templates/configmap.yaml" associated with template "gotpl"
  FAIL  test ingress that should fail	../../test/data/v3/basic/tests_failed/ingress_test.yaml
 	- should fail render nothing if not enabled
 

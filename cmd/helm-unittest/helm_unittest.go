@@ -18,7 +18,7 @@ type testOptions struct {
 	debugLogging            bool
 	useFailfast             bool
 	useStrict               bool
-	colored                 bool
+	colored                 string
 	updateSnapshot          bool
 	withSubChart            bool
 	useSkipSchemaValidation bool
@@ -74,9 +74,14 @@ details about how to write tests.
 }
 
 func RunPlugin(cmd *cobra.Command, chartPaths []string) {
-	var colored *bool
+	var colored bool
 	if cmd.PersistentFlags().Changed("color") {
-		colored = &testConfig.colored
+		if testConfig.colored == "true" || testConfig.colored == "always" {
+			colored = true
+		}
+		if testConfig.colored == "false" || testConfig.colored == "never" || testConfig.colored == "auto" {
+			colored = false
+		}
 	}
 
 	renderPath := ""
@@ -90,7 +95,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
-	printer := printer.NewPrinter(os.Stdout, colored)
+	printer := printer.NewPrinter(os.Stdout, &colored)
 	testRunner = unittest.TestRunner{
 		Printer:              printer,
 		Formatter:            formatter,
@@ -107,11 +112,11 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		DisableColors: !testConfig.colored,
+		DisableColors: !colored,
 		FullTimestamp: true,
 	})
 
-	passed := testRunner.RunV3(chartPaths)
+	passed := testRunner.RunV4(chartPaths)
 
 	if !passed {
 		os.Exit(1)
@@ -131,10 +136,14 @@ func init() {
 }
 
 func InitPluginFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVar(
-		&testConfig.colored, "color", false,
-		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
+	cmd.PersistentFlags().StringVar(
+		&testConfig.colored, "color", "false",
+		"enforce printing colored output even stdout is not a tty. Set to auto, never or false to disable color, always or true to enable color",
 	)
+	colorFlag := cmd.PersistentFlags().Lookup("color")
+	if colorFlag != nil {
+		colorFlag.NoOptDefVal = "true"
+	}
 
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useStrict, "strict", false,
