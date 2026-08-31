@@ -9,7 +9,7 @@ spec:
       served: true
       storage: true
       schema:
-        openAPIV4Schema:
+        openAPIV3Schema:
           type: object
           properties:
             spec:

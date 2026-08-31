@@ -100,8 +100,9 @@ tests:
   - **minimumVersion**: *string, optional*. Define a minimum version of the plugin required to run this test. If set, do not set reason, otherwise the test suite will be skipped regardless of the version.
 
 - **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.
-  - **plugin**: *string, required*. Name of the installed Helm post-renderer plugin to invoke.
-  - **args**: *array of strings*. Command-line arguments to pass to the selected `plugin`.
+  - **cmd**: *string, required when testing for deployments using helm 3*. The command to execute as the post-renderer.
+  - **plugin**: *string, required, when testing for deployments using helm 4*. Name of the installed Helm post-renderer plugin to invoke.
+  - **args**: *array of strings*. Command-line arguments to pass to the selected `cmd` or `plugin`.
 
 - **tests**: *array of test job, required*. Where you define your test jobs to run, check [Test Job](#test-job).
 
@@ -191,8 +192,9 @@ tests:
   - **reason**: *string, required*. Define the reason for skipping. If all tests skipped, marks 'suite' as skipped.
 
 - **postRenderer**: *object, optional*. A helm [post-renderer](https://helm.sh/docs/topics/advanced/#post-rendering) to apply after chart rendering but before validation.
-    - **plugin**: *string, required*. Name of the installed Helm post-renderer plugin to invoke.
-    - **args**: *array of strings*. Command-line arguments to pass to the selected `plugin`.
+    - **cmd**: *string, required when testing for deployments using helm 3*. The command to execute as the post-renderer.
+    - **plugin**: *string, required, when testing for deployments using helm 4*. Name of the installed Helm post-renderer plugin to invoke.
+    - **args**: *array of strings*. Command-line arguments to pass to the selected `cmd` or `plugin`.
 
 - **asserts**: *array of assertion, required*. The assertions to validate the rendered chart, check [Assertion](#assertion).
 
