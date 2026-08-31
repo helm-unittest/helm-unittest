@@ -31,11 +31,11 @@ jobs:
     steps:
       - name: Checkout
         # https://github.com/actions/checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Go
         # https://github.com/actions/setup-go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -70,7 +70,7 @@ jobs:
 
       - name: SonarCloud Scan
         # https://github.com/SonarSource/sonarqube-scan-action
-        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
         if: matrix.os == 'ubuntu-24.04' && env.SONAR_TOKEN != ''
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -78,7 +78,7 @@ jobs:
       # Upload the original go test log as an artifact for later review.
       - name: Upload Testlog
         # https://github.com/EnricoMi/publish-unit-test-result-action
-        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
+        uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
         if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
         with:
           files: |
@@ -101,13 +101,13 @@ jobs:
     steps:
       - name: Checkout
         # https://github.com/actions/checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
 
       - name: Setup go
         # https://github.com/actions/setup-go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -132,7 +132,7 @@ jobs:
           skip-files: /usr/bin/helm
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         if: always()
         with:
           sarif_file: trivy-results-${{ matrix.image }}.sarif

@@ -8,7 +8,7 @@ import (
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
 
-	v3util "helm.sh/helm/v3/pkg/chartutil"
+	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
 )
 
 func TestGetValueOfSetPathWithSingleResults(t *testing.T) {
@@ -233,7 +233,7 @@ func TestMergeValues(t *testing.T) {
 			"e.f": "yes",
 		},
 	}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	a.Equal(expected, actual)
 }
 
@@ -243,7 +243,7 @@ func TestMergeValues_Cases(t *testing.T) {
 		src := map[string]any{"a": 1, "b": 2}
 		dest := map[string]any{"c": 3, "d": 4}
 		expected := map[string]any{"a": 1, "b": 2, "c": 3, "d": 4}
-		result := v3util.MergeTables(dest, src)
+		result := chartcommonutil.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
@@ -251,7 +251,7 @@ func TestMergeValues_Cases(t *testing.T) {
 		src := map[string]any{"a": 1}
 		dest := map[string]any{"a": 2}
 		expected := map[string]any{"a": 2}
-		result := v3util.MergeTables(dest, src)
+		result := chartcommonutil.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
@@ -259,7 +259,7 @@ func TestMergeValues_Cases(t *testing.T) {
 		src := map[string]any{"a": map[string]any{"b": 1}}
 		dest := map[string]any{"a": map[string]any{"c": 2}}
 		expected := map[string]any{"a": map[string]any{"b": 1, "c": 2}}
-		result := v3util.MergeTables(dest, src)
+		result := chartcommonutil.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
@@ -267,7 +267,7 @@ func TestMergeValues_Cases(t *testing.T) {
 		src := map[string]any{"a": map[string]any{"b": 1}}
 		dest := map[string]any{"a": 2}
 		expected := map[string]any{"a": 2}
-		result := v3util.MergeTables(dest, src)
+		result := chartcommonutil.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 
@@ -293,7 +293,7 @@ func TestMergeValues_Cases(t *testing.T) {
 			},
 			"e": 5,
 		}
-		result := v3util.MergeTables(dest, src)
+		result := chartcommonutil.MergeTables(dest, src)
 		assert.Equal(t, expected, result)
 	})
 }
@@ -320,7 +320,7 @@ a:
 		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
-		output := v3util.MergeTables(dataDst, dataSrc)
+		output := chartcommonutil.MergeTables(dataDst, dataSrc)
 		out, _ := common.YmlMarshall(&output)
 		assert.YAMLEq(t, expected, out)
 	})
@@ -351,7 +351,7 @@ a:
 		var dataDst map[string]any
 		common.YmlUnmarshalTestHelper(yamlDst, &dataDst, t)
 
-		output := v3util.MergeTables(dataDst, dataSrc)
+		output := chartcommonutil.MergeTables(dataDst, dataSrc)
 		out := common.YmlMarshallTestHelper(&output, t)
 		assert.YAMLEq(t, expected, out)
 	})
@@ -434,7 +434,7 @@ func TestMergeValues_EmptySource(t *testing.T) {
 	src := map[string]any{"a": 1}
 	dest := map[string]any{}
 	expected := map[string]any{"a": 1}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -442,7 +442,7 @@ func TestMergeValues_EmptyDestination(t *testing.T) {
 	src := map[string]any{}
 	dest := map[string]any{"a": 1}
 	expected := map[string]any{"a": 1}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -450,7 +450,7 @@ func TestMergeValues_NilDestination(t *testing.T) {
 	src := map[string]any{"a": 1}
 	dest := map[string]any{}
 	expected := map[string]any{"a": 1}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -458,7 +458,7 @@ func TestMergeValues_NilSource(t *testing.T) {
 	src := map[string]any{}
 	dest := map[string]any{"a": 1}
 	expected := map[string]any{"a": 1}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -466,7 +466,7 @@ func TestMergeValues_OverwriteWithNonMap(t *testing.T) {
 	src := map[string]any{"a": map[string]any{"b": 1}}
 	dest := map[string]any{"a": 2}
 	expected := map[string]any{"a": 2}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -474,7 +474,7 @@ func TestMergeValues_DeepMerge(t *testing.T) {
 	src := map[string]any{"a": map[string]any{"b": 1}}
 	dest := map[string]any{"a": map[string]any{"c": 2}}
 	expected := map[string]any{"a": map[string]any{"b": 1, "c": 2}}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -500,7 +500,7 @@ func TestMergeValues_ComplexMerge(t *testing.T) {
 		},
 		"e": 5,
 	}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -515,7 +515,7 @@ func TestMergeValues_KeyExistsButNotMap(t *testing.T) {
 	expected := map[string]any{
 		"a": map[string]any{"b": 2},
 	}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -529,7 +529,7 @@ func TestMergeValues_KeyExistsAndIsMap(t *testing.T) {
 	expected := map[string]any{
 		"a": map[string]any{"b": 1, "c": 2},
 	}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -537,7 +537,7 @@ func TestMergeValues_EmptySourceAndDestination(t *testing.T) {
 	src := map[string]any{}
 	dest := map[string]any{}
 	expected := map[string]any{}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -545,7 +545,7 @@ func TestMergeValues_DestinationWithNilValue(t *testing.T) {
 	src := map[string]any{"a": 1}
 	dest := map[string]any{"b": nil}
 	expected := map[string]any{"a": 1, "b": nil}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -553,7 +553,7 @@ func TestMergeValues_SourceWithNilValue(t *testing.T) {
 	src := map[string]any{"a": nil}
 	dest := map[string]any{"b": 2}
 	expected := map[string]any{"a": nil, "b": 2}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -561,7 +561,7 @@ func TestMergeValues_NestedMapWithEmptyMap(t *testing.T) {
 	src := map[string]any{"a": map[string]any{"b": 1}}
 	dest := map[string]any{"a": map[string]any{}}
 	expected := map[string]any{"a": map[string]any{"b": 1}}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -569,7 +569,7 @@ func TestMergeValues_EmptyNestedMap(t *testing.T) {
 	src := map[string]any{"a": map[string]any{}}
 	dest := map[string]any{"a": map[string]any{"b": 1}}
 	expected := map[string]any{"a": map[string]any{"b": 1}}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -578,8 +578,8 @@ func TestMergeValues_OverwriteWithEmptyMap(t *testing.T) {
 	dest := map[string]any{"a": map[string]any{"b": nil}}
 	expected := map[string]any{"a": map[string]any{"b": nil}}
 	// expected := map[string]interface{}{"a": map[string]interface{}{}}
-	// this is the expected result when v3util.CoalesceTables is used
-	actual := v3util.MergeTables(dest, src)
+	// this is the expected result when chartcommonutil.MergeTables is used
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 
@@ -587,7 +587,7 @@ func TestMergeValues_OverwriteWithNil(t *testing.T) {
 	src := map[string]any{"a": map[string]any{"b": 1}}
 	dest := map[string]any{"a": nil}
 	expected := map[string]any{"a": nil}
-	actual := v3util.MergeTables(dest, src)
+	actual := chartcommonutil.MergeTables(dest, src)
 	assert.Equal(t, expected, actual)
 }
 

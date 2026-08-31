@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// This benchmark test measures the CPU and memory performance of the RunV3 method in the
+// This benchmark test measures the CPU and memory performance of the RunV4 method in the
 // TestRunner type when running against a large number of test files. It programmatically
 // creates 400 copies of a sample test file, runs the test suite using these files,
 // and cleans up the generated files after the benchmark completes.
@@ -70,7 +70,7 @@ func BenchmarkNewTestForCPUAndMemory(b *testing.B) {
 	runtime.GC() // get up-to-date statistics
 
 	for b.Loop() {
-		_ = runner.RunV3([]string{"testdata/chart-benchmark"})
+		_ = runner.RunV4([]string{"testdata/chart-benchmark"})
 	}
 
 	pperr := pprof.StartCPUProfile(cpuProfileFile)
