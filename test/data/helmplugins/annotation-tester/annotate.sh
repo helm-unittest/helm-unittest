@@ -1,25 +1,28 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 expression=""
+key=""
+value=""
+
 for arg in "$@"; do
-  if [[ "$arg" =~ ^\.metadata\.annotations\.([A-Za-z0-9._-]+)=\"([^\"]*)\"$ ]]; then
+  if printf '%s\n' "$arg" | grep -E '^\.metadata\.annotations\.[A-Za-z0-9._-]+="[^"]*"$' > /dev/null 2>&1; then
     expression="$arg"
-    key="${BASH_REMATCH[1]}"
-    value="${BASH_REMATCH[2]}"
+    key=$(printf '%s\n' "$arg" | sed 's/^\.metadata\.annotations\.\([A-Za-z0-9._-]*\)="\([^"]*\)"$/\1/')
+    value=$(printf '%s\n' "$arg" | sed 's/^\.metadata\.annotations\.\([A-Za-z0-9._-]*\)="\([^"]*\)"$/\2/')
     break
   fi
 done
 
 input="$(cat)"
 
-if [[ -z "$expression" ]]; then
+if [ -z "$expression" ]; then
   printf '%s' "$input"
   exit 0
 fi
 
 has_key=0
-if printf '%s\n' "$input" | grep -Eq "^[[:space:]]*${key}:[[:space:]]*"; then
+if printf '%s\n' "$input" | grep -E "^[[:space:]]*${key}:[[:space:]]*" > /dev/null 2>&1; then
   has_key=1
 fi
 

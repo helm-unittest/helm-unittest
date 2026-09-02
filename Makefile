@@ -28,6 +28,7 @@ TEST_NAMES ?=basic \
 	with-subchart \
 	with-subfolder \
 	with-subsubcharts
+TEST_HELM4_NAMES ?=	with-post-renderer
 
 .PHONY: help
 help:
@@ -140,9 +141,17 @@ dependency: ## Dependency maintenance
 dockerimage-alpine: build-amd64 ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-alpine -f AlpineTest.Dockerfile .
 
+.PHONY: dockerimage-plugin-alpine
+dockerimage-plugin-alpine: dockerimage-alpine
+	docker build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
+
 .PHONY: dockerimage-fedora
 dockerimage-fedora: build-amd64 ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
+
+.PHONY: dockerimage-plugin-fedora
+dockerimage-plugin-fedora: dockerimage-fedora
+	docker build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
 
 .PHONY: test-docker-alpine
 test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
@@ -154,6 +163,16 @@ test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
 			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml .;\
 	done
 
+.PHONY: test-docker-plugin-alpine
+test-docker-plugin-alpine: dockerimage-plugin-alpine ## Execute 'helm unittests' in container
+	@for f in $(TEST_HELM4_NAMES); do \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v4/$${f}'"; \
+		docker run \
+			--platform linux/amd64 \
+			-v $(PROJECT_DIR)/test/data/v4/$${f}:/apps:z \
+			--rm  $(DOCKER):$(VERSION)-plugin-alpine -f tests/*.yaml .;\
+	done
+
 .PHONY: test-docker-fedora
 test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 	@for f in $(TEST_NAMES); do \
@@ -162,6 +181,16 @@ test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
 			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml .;\
+	done
+
+.PHONY: test-docker-plugin-fedora
+test-docker-plugin-fedora: dockerimage-plugin-fedora ## Execute 'helm unittests' in container
+	@for f in $(TEST_HELM4_NAMES); do \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v4/$${f}'"; \
+		docker run \
+			--platform linux/amd64 \
+			-v $(PROJECT_DIR)/test/data/v4/$${f}:/apps:z \
+			--rm  $(DOCKER):$(VERSION)-plugin-fedora -f tests/*.yaml .;\
 	done
 
 .PHONY: go-lint

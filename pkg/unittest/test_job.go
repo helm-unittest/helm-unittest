@@ -554,7 +554,7 @@ func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string
 	}
 
 	if cfg.Cmd != "" && cfg.Plugin != "" {
-		return nil, true, fmt.Errorf("can't configure postRenderer.cmd and postRenderer.plugin at the same time;")
+		return nil, true, fmt.Errorf("postRenderer.cmd and postRenderer.plugin are mutually exclusive")
 	}
 
 	if cfg.Cmd != "" {

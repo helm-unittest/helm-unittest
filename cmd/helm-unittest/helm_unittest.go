@@ -74,13 +74,15 @@ details about how to write tests.
 }
 
 func RunPlugin(cmd *cobra.Command, chartPaths []string) {
-	var colored bool
+	var colored *bool
 	if cmd.PersistentFlags().Changed("color") {
 		if testConfig.colored == "true" || testConfig.colored == "always" {
-			colored = true
+			colored = new(bool)
+			*colored = true
 		}
-		if testConfig.colored == "false" || testConfig.colored == "never" || testConfig.colored == "auto" {
-			colored = false
+		if testConfig.colored == "false" || testConfig.colored == "never" {
+			colored = new(bool)
+			*colored = false
 		}
 	}
 
@@ -95,7 +97,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
-	printer := printer.NewPrinter(os.Stdout, &colored)
+	printer := printer.NewPrinter(os.Stdout, colored)
 	testRunner = unittest.TestRunner{
 		Printer:              printer,
 		Formatter:            formatter,
@@ -112,7 +114,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		DisableColors: !colored,
+		DisableColors: colored == nil || !*colored,
 		FullTimestamp: true,
 	})
 
