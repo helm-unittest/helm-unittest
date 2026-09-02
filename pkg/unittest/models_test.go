@@ -7,11 +7,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 func TestNewTestConfig(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache)
 
@@ -26,7 +26,7 @@ func TestNewTestConfig(t *testing.T) {
 }
 
 func TestWithFailFast(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithFailFast(true))
 
@@ -34,7 +34,7 @@ func TestWithFailFast(t *testing.T) {
 }
 
 func TestWithRenderPath(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithRenderPath("/path/to/render"))
 
@@ -42,7 +42,7 @@ func TestWithRenderPath(t *testing.T) {
 }
 
 func TestWithPostRendererConfig(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	postRendererConfig := PostRendererConfig{}
 	config := NewTestConfig(chart, cache, WithPostRendererConfig(postRendererConfig))
@@ -51,7 +51,7 @@ func TestWithPostRendererConfig(t *testing.T) {
 }
 
 func TestWithDocumentSelector(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	config := NewTestConfig(chart, nil, WithDocumentSelector(&valueutils.DocumentSelector{
 		SkipEmptyTemplates: true,
 	}))
@@ -61,7 +61,7 @@ func TestWithDocumentSelector(t *testing.T) {
 }
 
 func TestWithSkipEmptyTemplate(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithSkipEmptyTemplate(true))
 
@@ -69,7 +69,7 @@ func TestWithSkipEmptyTemplate(t *testing.T) {
 }
 
 func TestWithSkipSchemaValidation(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithSkipSchemaValidation(true))
 

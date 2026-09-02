@@ -1217,15 +1217,29 @@
           "description": "The full path to the command to invoke, or just its name if it's on `$PATH`.",
           "markdownDescription": "**cmd** (string)\n\nThe full path to the command to invoke, or just its name if it's on '$PATH'."
         },
+        "plugin": {
+          "type": "string",
+          "description": "Name of the installed Helm post-renderer plugin to invoke.",
+          "markdownDescription": "**plugin** (string)\n\nName of the installed Helm post-renderer plugin to invoke."
+        },
         "args": {
           "type": "array",
-          "description": "A list of command-line arguments to pass to the 'cmd'.",
-          "markdownDescription": "**args** (array<string>)\n\nA list of command-line arguments to pass to the `cmd`.",
+          "description": "A list of arguments to pass to the selected 'cmd' or 'plugin', depending on which post-renderer is being used.",
+          "markdownDescription": "**args** (array<string>)\n\nA list of command-line arguments to pass to the selected `cmd` or `plugin`, depending on which post-renderer is being used.",
           "items": {
             "type": "string"
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": ["cmd"]
+        },
+        {
+          "required": ["plugin"]
+        }
+      ],
+      "additionalProperties": false
     },
     "kubernetesProvider": {
       "type": "object",

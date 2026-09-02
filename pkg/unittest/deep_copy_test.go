@@ -9,12 +9,13 @@ import (
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
+
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
+	v2loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
-func templatesCount(targetChart *chart.Chart) int {
+func templatesCount(targetChart *v2chart.Chart) int {
 	totalCount := len(targetChart.Templates)
 
 	for _, template := range targetChart.Templates {
@@ -35,11 +36,11 @@ func TestCopyHelmChartSingleDeployment(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3GlobalDoubleChart)
+	initialChart, _ := v2loader.Load(testV4GlobalDoubleChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -53,11 +54,11 @@ func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	initialChart, _ := v2loader.Load(testV4WithSubChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -69,11 +70,11 @@ func TestCopyHelmChartWithSubChartsNoFilter(t *testing.T) {
 func TestFullCopyHelmChartWithSubCharts(t *testing.T) {
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	initialChart, _ := v2loader.Load(testV4WithSubChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := FullCopyV3Chart(initialChart.Name(), initialChart.Name(), initialChart)
+	sut := FullCopyV2Chart(initialChart.Name(), initialChart.Name(), initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -87,11 +88,11 @@ func TestCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithFilesChart)
+	initialChart, _ := v2loader.Load(testV4WithFilesChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -103,11 +104,11 @@ func TestCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
 func TestFullCopyHelmChartSingleChartSpecialFilenames(t *testing.T) {
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithFilesChart)
+	initialChart, _ := v2loader.Load(testV4WithFilesChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := FullCopyV3Chart(initialChart.Name(), initialChart.Name(), initialChart)
+	sut := FullCopyV2Chart(initialChart.Name(), initialChart.Name(), initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -121,11 +122,11 @@ func TestCopyHelmChartSingleSubChartInRootDeployment(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	initialChart, _ := v2loader.Load(testV4WithSubChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -139,11 +140,11 @@ func TestCopyHelmChartSingleSubSubChartInRootDeployment(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithSubSubFolderChart)
+	initialChart, _ := v2loader.Load(testV4WithSubSubFolderChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -157,12 +158,12 @@ func TestCopyHelmChartSingleSubChartInSubChartDeployment(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WithSubChart)
+	initialChart, _ := v2loader.Load(testV4WithSubChart)
 	log.SetOutput(os.Stdout)
 	chartRoute := filepath.Join(initialChart.Name(), "charts", "child-chart")
 
 	// Copy
-	sut := CopyV3Chart(chartRoute, initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(chartRoute, initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -176,11 +177,11 @@ func TestCopyHelmChartWithSubSubChartsAllConfigMapFilter(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3GlobalDoubleChart)
+	initialChart, _ := v2loader.Load(testV4GlobalDoubleChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -194,11 +195,11 @@ func TestCopyHelmChartWithSubSubChartsRootchartConfigMapFilter(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3GlobalDoubleChart)
+	initialChart, _ := v2loader.Load(testV4GlobalDoubleChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -212,11 +213,11 @@ func TestCopyHelmChartWithSamenameSubSubChartsConfigMapFilter(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3WitSamenameSubSubChart)
+	initialChart, _ := v2loader.Load(testV4WitSamenameSubSubChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, []string{}, initialChart)
 
 	templatesCount := templatesCount(sut)
 
@@ -231,11 +232,11 @@ func TestCopyHelmChartWithExcludedTemplatesFilter(t *testing.T) {
 
 	// Load the chart used by this suite (with logging temporarily disabled)
 	log.SetOutput(io.Discard)
-	initialChart, _ := v3loader.Load(testV3BasicChart)
+	initialChart, _ := v2loader.Load(testV4BasicChart)
 	log.SetOutput(os.Stdout)
 
 	// Copy
-	sut := CopyV3Chart(initialChart.Name(), initialChart.Name(), templateAsserts, excludedTemplateAsserts, initialChart)
+	sut := CopyV2Chart(initialChart.Name(), initialChart.Name(), templateAsserts, excludedTemplateAsserts, initialChart)
 
 	templatesCount := templatesCount(sut)
 

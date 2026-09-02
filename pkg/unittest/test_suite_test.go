@@ -14,7 +14,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
+	v2loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
 // Most used test files
@@ -27,27 +27,33 @@ const testExternalTestFiles = "../../test/data/external/tests/*.yaml"
 const testTestFiles string = "tests/*_test.yaml"
 const testTestFailedFiles string = "tests_failed/*_test.yaml"
 
-const testV3InvalidBasicChart string = "../../test/data/v3/invalidbasic"
-const testV3BasicChart string = "../../test/data/v3/basic"
-const testV3FullSnapshotChart string = "../../test/data/v3/full-snapshot"
-const testV3WithSubChart string = "../../test/data/v3/with-subchart"
-const testV3WithSubFolderChart string = "../../test/data/v3/with-subfolder"
-const testV3WithSubSubFolderChart string = "../../test/data/v3/with-subsubcharts"
-const testV3WithFilesChart string = "../../test/data/v3/with-files"
-const testV3WithFailingTemplateChart string = "../../test/data/v3/failing-template"
-const testV3WithSchemaChart string = "../../test/data/v3/with-schema"
-const testV3WithPackagedChart string = "../../test/data/v3/with-packaged-0.1.0.tgz"
-const testV3WithPackagedSubChart string = "../../test/data/v3/with-subchart/charts/postgresql-0.8.3.tgz"
-const testV3GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
-const testV3WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
-const testV3WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
-const testV3WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
-const testV3WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
-const testV3WithPostRendererChart string = "../../test/data/v3/with-post-renderer"
-const testV3WithDisabledSubChartOnConditionChart string = "../../test/data/v3/with-disabled-subchart-on-condition"
-const testV3WithDisabledSubChartOnTagsChart string = "../../test/data/v3/with-disabled-subchart-on-tags"
+const testV4InvalidBasicChart string = "../../test/data/v3/invalidbasic"
+const testV4BasicChart string = "../../test/data/v3/basic"
+const testV4FullSnapshotChart string = "../../test/data/v3/full-snapshot"
+const testV4WithSubChart string = "../../test/data/v3/with-subchart"
+const testV4WithSubFolderChart string = "../../test/data/v3/with-subfolder"
+const testV4WithSubSubFolderChart string = "../../test/data/v3/with-subsubcharts"
+const testV4WithFilesChart string = "../../test/data/v3/with-files"
+const testV4WithFailingTemplateChart string = "../../test/data/v3/failing-template"
+const testV4WithSchemaChart string = "../../test/data/v3/with-schema"
+const testV4WithPackagedChart string = "../../test/data/v3/with-packaged-0.1.0.tgz"
+const testV4WithPackagedSubChart string = "../../test/data/v3/with-subchart/charts/postgresql-0.8.3.tgz"
+const testV4GlobalDoubleChart string = "../../test/data/v3/global-double-setting"
+const testV4WithHelmTestsChart string = "../../test/data/v3/with-helm-tests"
+const testV4WitSamenameSubSubChart string = "../../test/data/v3/with-samenamesubsubcharts"
+const testV4WithDocumentSelectorChart string = "../../test/data/v3/with-document-select"
+const testV4WithFakeK8sClientChart string = "../../test/data/v3/with-k8s-fake-client"
+const testV4WithPostRendererChart string = "../../test/data/v3/with-post-renderer"
+const testV4WithDisabledSubChartOnConditionChart string = "../../test/data/v3/with-disabled-subchart-on-condition"
+const testV4WithDisabledSubChartOnTagsChart string = "../../test/data/v3/with-disabled-subchart-on-tags"
+const testHelmPluginsDir string = "../../test/data/helmplugins"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
+
+func setPostRendererPluginEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("HELM_PLUGINS", testHelmPluginsDir)
+}
 
 func makeTestSuiteResultSnapshotable(result *results.TestSuiteResult) *results.TestSuiteResult {
 
@@ -208,12 +214,12 @@ asserts:
 	}
 }
 
-func TestV3ParseTestSuite_FileNotExist(t *testing.T) {
+func TestV4ParseTestSuite_FileNotExist(t *testing.T) {
 	_, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment.yaml", "basic", false, []string{})
 	assert.Error(t, err)
 }
 
-func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
+func TestV4ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", false, []string{})
 
@@ -226,7 +232,7 @@ func TestV3ParseTestSuiteUnstrictFileOk(t *testing.T) {
 	}
 }
 
-func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
+func TestV4ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_notests_test.yaml", "basic", false, []string{})
 
@@ -239,7 +245,7 @@ func TestV3ParseTestSuiteUnstrictNoTestsFileFail(t *testing.T) {
 	}
 }
 
-func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
+func TestV4ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_noasserts_test.yaml", "basic", false, []string{})
 
@@ -253,7 +259,7 @@ func TestV3ParseTestSuiteUnstrictNoAssertsFileFail(t *testing.T) {
 	}
 }
 
-func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
+func TestV4ParseTestSuiteStrictFileError(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/invalidbasic/tests/deployment_test.yaml", "basic", true, []string{})
 
@@ -267,7 +273,7 @@ func TestV3ParseTestSuiteStrictFileError(t *testing.T) {
 	}
 }
 
-func TestV3ParseTestSuiteFileOk(t *testing.T) {
+func TestV4ParseTestSuiteFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{})
 
@@ -279,7 +285,7 @@ func TestV3ParseTestSuiteFileOk(t *testing.T) {
 	}
 }
 
-func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
+func TestV4ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := ParseTestSuiteFile("../../test/data/v3/basic/tests/deployment_test.yaml", "basic", true, []string{testValuesFiles})
 
@@ -292,7 +298,7 @@ func TestV3ParseTestSuiteFileWithOverrideValuesOk(t *testing.T) {
 	}
 }
 
-func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
+func TestV4RenderSuitesUnstrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", false, []string{}, map[string]any{
 		"unexpectedField": false,
@@ -311,7 +317,7 @@ func TestV3RenderSuitesUnstrictFileOk(t *testing.T) {
 	}
 }
 
-func TestV3RenderSuitesStrictFileFail(t *testing.T) {
+func TestV4RenderSuitesStrictFileFail(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"unexpectedField": true,
@@ -321,7 +327,7 @@ func TestV3RenderSuitesStrictFileFail(t *testing.T) {
 	a.ErrorContains(err, "field something not found in type unittest.TestSuite")
 }
 
-func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
+func TestV4RenderSuites_InvalidDirectory(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart-not-exist", "basic", true, []string{}, map[string]any{
 		"unexpectedField": true,
@@ -330,7 +336,7 @@ func TestV3RenderSuites_InvalidDirectory(t *testing.T) {
 	a.ErrorIs(err, os.ErrNotExist)
 }
 
-func TestV3RenderSuites_LoadError(t *testing.T) {
+func TestV4RenderSuites_LoadError(t *testing.T) {
 	a := assert.New(t)
 	tmp := t.TempDir()
 	chartPath := path.Join(tmp, "basic")
@@ -349,7 +355,7 @@ name: basic
 	a.ErrorContains(err, "validation: chart.metadata.version is required")
 }
 
-func TestV3RenderSuites_RenderError(t *testing.T) {
+func TestV4RenderSuites_RenderError(t *testing.T) {
 	a := assert.New(t)
 	tmp := t.TempDir()
 	chartPath := path.Join(tmp, "basic")
@@ -362,7 +368,7 @@ version: 1.0.0
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .BreakV3engine.Render }}-basic
+  name: {{ .BreakV4engine.Render }}-basic
 spec:
   replicas: 3
 `
@@ -376,10 +382,10 @@ spec:
 	_, err := RenderTestSuiteFiles(chartPath, "basic", false, []string{}, nil)
 
 	a.Error(err)
-	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV3engine.Render>")
+	a.ErrorContains(err, "executing \"basic/templates/deployment.yaml\" at <.BreakV4engine.Render>")
 }
 
-func TestV3RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
+func TestV4RenderSuites_RenderValuesWithIterateAllKeysError(t *testing.T) {
 	a := assert.New(t)
 	tmp := t.TempDir()
 	chartPath := path.Join(tmp, "basic")
@@ -405,7 +411,7 @@ version: 1.0.0
 	a.ErrorContains(err, "file did not render a manifest")
 }
 
-func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
+func TestV4RenderSuitesFailNoSuiteName(t *testing.T) {
 	a := assert.New(t)
 	_, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"includeSuite": false,
@@ -414,7 +420,7 @@ func TestV3RenderSuitesFailNoSuiteName(t *testing.T) {
 	a.ErrorContains(err, "helm chart based test suites must include `suite` field")
 }
 
-func TestV3RenderSuitesStrictFileOk(t *testing.T) {
+func TestV4RenderSuitesStrictFileOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, nil)
 
@@ -431,7 +437,7 @@ func TestV3RenderSuitesStrictFileOk(t *testing.T) {
 	}
 }
 
-func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
+func TestV4RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 	a := assert.New(t)
 	suites, err := RenderTestSuiteFiles("../../test/data/v3/with-helm-tests/tests-chart", "basic", true, []string{}, map[string]any{
 		"customSnapshotIds": true,
@@ -450,7 +456,7 @@ func TestV3RenderSuitesCustomSnapshotIdOk(t *testing.T) {
 	}
 }
 
-func TestV3RunSuiteWithNoAssertsShouldFail(t *testing.T) {
+func TestV4RunSuiteWithNoAssertsShouldFail(t *testing.T) {
 	suiteDoc := `
 suite: validate empty asserts
 tests:
@@ -459,16 +465,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_noasserts_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "validate empty asserts", 1, 0, 0, 0, 0)
 }
 
-func TestV3RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
+func TestV4RunSuiteWithMultipleTemplatesWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: validate metadata
 templates:
@@ -500,16 +506,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_multiple_template_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "validate metadata", 1, 5, 5, 0, 0)
 }
 
-func TestV3RunSuiteWhenPass(t *testing.T) {
+func TestV4RunSuiteWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -526,16 +532,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
-func TestV3RunSuiteWithOverridesWhenPass(t *testing.T) {
+func TestV4RunSuiteWithOverridesWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -564,16 +570,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_override_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 1, 1, 0, 0)
 }
 
-func TestV3RunSuiteWhenFail(t *testing.T) {
+func TestV4RunSuiteWhenFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -589,16 +595,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, false, "test suite name", 1, 0, 0, 0, 0)
 }
 
-func TestV3RunSuiteWithSubfolderWhenPass(t *testing.T) {
+func TestV4RunSuiteWithSubfolderWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite name
 templates:
@@ -614,16 +620,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubFolderChart)
+	chart, chartErr := v2loader.Load(testV4WithSubFolderChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subfolder_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name", 1, 2, 2, 0, 0)
 }
 
-func TestV3RunSuiteWithSubChartsWhenPass(t *testing.T) {
+func TestV4RunSuiteWithSubChartsWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -638,16 +644,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchart_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 1, 1, 1, 0, 0)
 }
 
-func TestV3RunSuiteWithSubChartAliasAndVersionOverride(t *testing.T) {
+func TestV4RunSuiteWithSubChartAliasAndVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart and version override
 chart:
@@ -664,14 +670,14 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 	assert.True(t, suiteResult.Passed)
 }
 
-func TestV3RunSuiteWithSubChartsTrimmingWhenPass(t *testing.T) {
+func TestV4RunSuiteWithSubChartsTrimmingWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test cert-manager rbac with trimming
 templates:
@@ -686,16 +692,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithtrimming_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test cert-manager rbac with trimming", 1, 0, 0, 0, 0)
 }
 
-func TestV3RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
+func TestV4RunSuiteWithSubChartsWithAliasWhenPass(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -718,16 +724,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_subchartwithalias_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite with subchart", 2, 2, 2, 0, 0)
 }
 
-func TestV3RunSuiteWithSubChartsWithAliasWithoutChartVersionOverride(t *testing.T) {
+func TestV4RunSuiteWithSubChartsWithAliasWithoutChartVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite without subchart version override
 templates:
@@ -746,17 +752,17 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Empty(t, testSuite.Chart.Version)
 	assert.True(t, suiteResult.Passed)
 }
 
-func TestV3RunSuiteWithSubChartsWithAliasWithSuiteChartVersionOverride(t *testing.T) {
+func TestV4RunSuiteWithSubChartsWithAliasWithSuiteChartVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with suite version override
 templates:
@@ -776,17 +782,17 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.3")
 	assert.True(t, suiteResult.Passed)
 }
 
-func TestV3RunSuiteWithSubChartsWithAliasWithJobChartVersionOverride(t *testing.T) {
+func TestV4RunSuiteWithSubChartsWithAliasWithJobChartVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with suite version override
 templates:
@@ -808,17 +814,17 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3WithSubChart)
+	chart, chartErr := v2loader.Load(testV4WithSubChart)
 	assert.NoError(t, chartErr)
 
-	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	assert.Empty(t, testSuite.Chart.AppVersion)
 	assert.Equal(t, testSuite.Chart.Version, "0.6.2")
 	assert.True(t, suiteResult.Passed)
 }
 
-func TestV3RunSuiteNameOverrideFail(t *testing.T) {
+func TestV4RunSuiteNameOverrideFail(t *testing.T) {
 	suiteDoc := `
 suite: test suite name too long
 templates:
@@ -833,16 +839,16 @@ tests:
 `
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	assert.NoError(t, chartErr)
 
 	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_nameoverride_failed_suite_test.yaml"), false)
-	suiteResult := testSuite.RunV3(chart, cache, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
 
 	validateTestResultAndSnapshots(t, suiteResult, true, "test suite name too long", 1, 0, 0, 0, 0)
 }
 
-func TestV3ParseTestMultipleSuitesWithSingleSeparator(t *testing.T) {
+func TestV4ParseTestMultipleSuitesWithSingleSeparator(t *testing.T) {
 	suiteDoc := `
 suite: first suite without leading triple dashes
 templates:
@@ -879,7 +885,7 @@ tests:
 	a.Len(suites, 2)
 }
 
-func TestV3ParseTestMultipleSuitesWithSeparatorsAndSetMultilineValue(t *testing.T) {
+func TestV4ParseTestMultipleSuitesWithSeparatorsAndSetMultilineValue(t *testing.T) {
 	suiteDoc := `
 ---
 suite: first test suite for deployment
@@ -938,7 +944,7 @@ tests:
 	a.Len(suites, 3)
 }
 
-func TestV3ParseTestSingleSuitesWithSuiteChartMetadataOverride(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithSuiteChartMetadataOverride(t *testing.T) {
 	suiteDoc := `
 ---
 suite: test suite with explicit version and appVersion
@@ -973,7 +979,7 @@ tests:
 	}
 }
 
-func TestV3ParseTestSingleSuiteWithTestChartMetadataOverride(t *testing.T) {
+func TestV4ParseTestSingleSuiteWithTestChartMetadataOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with explicit version and appVersion
 templates:
@@ -1012,7 +1018,7 @@ tests:
 	}
 }
 
-func TestV3ParseTestSingleSuitesWithMutlipleTestChartMetadataOverride(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithMutlipleTestChartMetadataOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite without chart metadata
 templates:
@@ -1055,7 +1061,7 @@ tests:
 	}
 }
 
-func TestV3ParseTestSingleSuitesWithChartMetadataAndEmptyVersionOverride(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithChartMetadataAndEmptyVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1091,7 +1097,7 @@ tests:
 	}
 }
 
-func TestV3ParseTestSingleSuitesWithKubeCapabilitiesUnset(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithKubeCapabilitiesUnset(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1123,7 +1129,7 @@ tests:
 	a.Equal([]string(nil), suites[0].Tests[0].Capabilities.APIVersions)
 }
 
-func TestV3ParseTestSingleSuitesWithKubeCapabilitiesOverrided(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithKubeCapabilitiesOverrided(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1157,7 +1163,7 @@ tests:
 	a.Equal([]string{"autoscaling/v1", "monitoring.coreos.com/v1", "autoscaling/v2"}, suites[0].Tests[0].Capabilities.APIVersions)
 }
 
-func TestV3ParseTestSingleSuitesShouldNotUnsetSuiteK8sVersions(t *testing.T) {
+func TestV4ParseTestSingleSuitesShouldNotUnsetSuiteK8sVersions(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1190,7 +1196,7 @@ tests:
 	a.Equal(suites[0].Capabilities.MinorVersion, suites[0].Tests[0].Capabilities.MinorVersion)
 }
 
-func TestV3ParseTestSingleSuitesWithSuiteK8sVersionOverride(t *testing.T) {
+func TestV4ParseTestSingleSuitesWithSuiteK8sVersionOverride(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1225,7 +1231,7 @@ tests:
 	a.Equal("10", suites[0].Tests[0].Capabilities.MinorVersion)
 }
 
-func TestV3ParseTestMultipleSuitesWithK8sVersionOverrides(t *testing.T) {
+func TestV4ParseTestMultipleSuitesWithK8sVersionOverrides(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1306,7 +1312,7 @@ tests:
 	a.NotEqual(len(suites[2].Capabilities.APIVersions), len(suites[2].Tests[0].Capabilities.APIVersions))
 }
 
-func TestV3ParseTestMultipleSuitesWithNotSupportedAssert(t *testing.T) {
+func TestV4ParseTestMultipleSuitesWithNotSupportedAssert(t *testing.T) {
 	suiteDoc := `
 suite: test suite with assert that not supported
 templates:
@@ -1331,7 +1337,7 @@ tests:
 	a.ErrorContains(err, "Assertion type `notSupportedAssert` is invalid")
 }
 
-func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInAssertIgnored(t *testing.T) {
+func TestV4ParseTestMultipleSuitesDocumentSelectorWithPoisonInAssertIgnored(t *testing.T) {
 	suiteDoc := `
 suite: test suite with assert that not supported
 templates:
@@ -1356,7 +1362,7 @@ tests:
 	a.NoError(err)
 }
 
-func TestV3ParseTestMultipleSuitesDocumentSelectorWithPoisonInTestNotIgnored(t *testing.T) {
+func TestV4ParseTestMultipleSuitesDocumentSelectorWithPoisonInTestNotIgnored(t *testing.T) {
 	suiteDoc := `
 suite: test suite with assert that not supported
 templates:
@@ -1382,7 +1388,7 @@ tests:
 	a.ErrorContains(err, "empty 'documentSelector.path' not supported")
 }
 
-func TestV3ParseTestMultipleSuites_With_FailFast(t *testing.T) {
+func TestV4ParseTestMultipleSuites_With_FailFast(t *testing.T) {
 	suiteDoc := `
 suite: test suite with partial chart metadata
 templates:
@@ -1425,16 +1431,16 @@ tests:
 
 	testSuite := TestSuite{}
 	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
-	chart, chartErr := v3loader.Load(testV3BasicChart)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
 	a.NoError(chartErr)
 
-	suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
+	suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, true, "", &results.TestSuiteResult{})
 
 	a.True(suiteResult.FailFast)
 	a.False(suiteResult.Passed)
 }
 
-func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
+func TestV4RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
 	testSuite := TestSuite{}
 	testSuite.Tests = []*TestJob{
 		{
@@ -1457,17 +1463,17 @@ func TestV3RunSuiteWithSuite_With_EmptyTestJobs(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			chart, chartErr := v3loader.Load(testV3BasicChart)
+			chart, chartErr := v2loader.Load(testV4BasicChart)
 			assert.NoError(t, chartErr)
 
-			suiteResult := testSuite.RunV3(chart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
+			suiteResult := testSuite.RunV4(chart, &snapshot.Cache{}, tt.failFast, "", &results.TestSuiteResult{})
 			assert.False(t, suiteResult.Passed)
 			assert.True(t, len(suiteResult.TestsResult) == 2)
 		})
 	}
 }
 
-func TestV3MultipleSuitesWithSkip(t *testing.T) {
+func TestV4MultipleSuitesWithSkip(t *testing.T) {
 	suiteDoc := `
 ---
 suite: test skip on suite level
@@ -1654,12 +1660,12 @@ tests:
 
 			// Check if the skip reason propagates correctly
 			testSuite := suites[0]
-			chart, chartErr := v3loader.Load(testV3BasicChart)
+			chart, chartErr := v2loader.Load(testV4BasicChart)
 			a.NoError(chartErr)
 
 			// Run the suite
 			cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, fmt.Sprintf("skip-reason-snapshot-%s.yaml", tc.name)), false)
-			suiteResult := testSuite.RunV3(chart, cache, false, "", &results.TestSuiteResult{})
+			suiteResult := testSuite.RunV4(chart, cache, false, "", &results.TestSuiteResult{})
 
 			// Verify skipped status
 			a.True(suiteResult.Skipped)
@@ -1678,7 +1684,7 @@ tests:
 	}
 }
 
-func TestV3RunSuiteWithSkipTests(t *testing.T) {
+func TestV4RunSuiteWithSkipTests(t *testing.T) {
 	testSuite := TestSuite{}
 	testSuite.Tests = []*TestJob{
 		{
@@ -1705,10 +1711,10 @@ func TestV3RunSuiteWithSkipTests(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			chart, chartErr := v3loader.Load(testV3BasicChart)
+			chart, chartErr := v2loader.Load(testV4BasicChart)
 			assert.NoError(t, chartErr)
 
-			suiteResult := testSuite.RunV3(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
+			suiteResult := testSuite.RunV4(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
 
 			assert.False(t, suiteResult.Skipped)
 			assert.False(t, suiteResult.Passed)
@@ -1716,7 +1722,7 @@ func TestV3RunSuiteWithSkipTests(t *testing.T) {
 	}
 }
 
-func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
+func TestV4RunSuiteWithSuiteLevelSkip(t *testing.T) {
 	testSuite := TestSuite{
 		Skip: struct {
 			Reason         string `yaml:"reason"`
@@ -1746,10 +1752,10 @@ func TestV3RunSuiteWithSuiteLevelSkip(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("fail fast: %v", tt.failFast), func(t *testing.T) {
-			chart, chartErr := v3loader.Load(testV3BasicChart)
+			chart, chartErr := v2loader.Load(testV4BasicChart)
 			assert.NoError(t, chartErr)
 
-			suiteResult := testSuite.RunV3(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
+			suiteResult := testSuite.RunV4(chart, cache, tt.failFast, "", &results.TestSuiteResult{})
 
 			assert.True(t, suiteResult.Skipped)
 			assert.True(t, suiteResult.Passed)
