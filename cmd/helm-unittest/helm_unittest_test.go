@@ -38,10 +38,13 @@ func TestValidateUnittestColorFlags(t *testing.T) {
 	a := assert.New(t)
 
 	colorFlags := map[string]bool{
-		"":              false,
-		"--color":       true,
-		"--color=true":  true,
-		"--color=false": false,
+		"":               false,
+		"--color":        true,
+		"--color=true":   true,
+		"--color=false":  false,
+		"--color=always": true,
+		"--color=never":  false,
+		"--color=auto":   false,
 	}
 
 	for colorFlag, colorValue := range colorFlags {

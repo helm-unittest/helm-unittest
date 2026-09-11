@@ -1,7 +1,7 @@
 templates:
   - templates/basic.yaml
 postRenderer:
-  plugin: "annotation-tester"
+  cmd: "yq"
   args:
     - "eval"
     - '.metadata.annotations.appended="new"'
@@ -20,7 +20,7 @@ tests:
           value: new
   - it: manifest should overwrite existing annotation due to test-job yq post-renderer
     postRenderer:
-      plugin: "annotation-tester"
+      cmd: "yq"
       args:
         - "eval"
         - '.metadata.annotations.foo="baz"'

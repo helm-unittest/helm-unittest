@@ -116,6 +116,11 @@ jobs:
         run: |
           make test-docker-${{ matrix.image }}
 
+      # Run docker-tests with postrenderer plugin
+      - name: Build docker-test with postrenderer plugin
+        run: |
+          make test-docker-plugin-${{ matrix.image }}
+
       - name: Retrieve versions
         run: |
           helmPluginVersion=$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)

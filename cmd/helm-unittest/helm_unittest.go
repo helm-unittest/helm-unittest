@@ -18,7 +18,7 @@ type testOptions struct {
 	debugLogging            bool
 	useFailfast             bool
 	useStrict               bool
-	colored                 bool
+	colored                 string
 	updateSnapshot          bool
 	withSubChart            bool
 	useSkipSchemaValidation bool
@@ -76,7 +76,14 @@ details about how to write tests.
 func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	var colored *bool
 	if cmd.PersistentFlags().Changed("color") {
-		colored = &testConfig.colored
+		if testConfig.colored == "true" || testConfig.colored == "always" {
+			colored = new(bool)
+			*colored = true
+		}
+		if testConfig.colored == "false" || testConfig.colored == "never" {
+			colored = new(bool)
+			*colored = false
+		}
 	}
 
 	renderPath := ""
@@ -107,11 +114,11 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		DisableColors: !testConfig.colored,
+		DisableColors: colored == nil || !*colored,
 		FullTimestamp: true,
 	})
 
-	passed := testRunner.RunV3(chartPaths)
+	passed := testRunner.RunV4(chartPaths)
 
 	if !passed {
 		os.Exit(1)
@@ -131,10 +138,14 @@ func init() {
 }
 
 func InitPluginFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVar(
-		&testConfig.colored, "color", false,
-		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
+	cmd.PersistentFlags().StringVar(
+		&testConfig.colored, "color", "false",
+		"enforce printing colored output even stdout is not a tty. Set to auto, never or false to disable color, always or true to enable color",
 	)
+	colorFlag := cmd.PersistentFlags().Lookup("color")
+	if colorFlag != nil {
+		colorFlag.NoOptDefVal = "true"
+	}
 
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useStrict, "strict", false,
