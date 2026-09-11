@@ -445,20 +445,7 @@ func (t *TestJob) renderv2chart(userValues []byte) (map[string]string, bool, err
 
 // MergeAndPostRenderUsingPlugin merge the map into a single file, post-render it using the helm 4 plugin, and split it out again
 func MergeAndPostRenderUsingPlugin(renderedManifestsMap map[string]string, postRenderer postrenderer.PostRenderer) (*bytes.Buffer, error) {
-	var renderedManifests bytes.Buffer
-
-	// stable iteration order
-	orderedManifests := make([]string, 0, len(renderedManifestsMap))
-	for k := range renderedManifestsMap {
-		orderedManifests = append(orderedManifests, k)
-	}
-	sort.Strings(orderedManifests)
-
-	for _, key := range orderedManifests {
-		manifest := renderedManifestsMap[key]
-		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
-		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
-	}
+	renderedManifests := orderAndStringifyRenderedManifests(renderedManifestsMap)
 	var modifiedManifests *bytes.Buffer
 
 	modifiedManifests, err := postRenderer.Run(&renderedManifests)
@@ -472,20 +459,7 @@ func MergeAndPostRenderUsingPlugin(renderedManifestsMap map[string]string, postR
 
 // MergeAndPostRenderUsingExec merge the map into a single file, post-render it using the helm 3 external command, and split it out again
 func MergeAndPostRenderUsingExec(renderedManifestsMap map[string]string, postRenderer postrender.PostRenderer) (*bytes.Buffer, error) {
-	var renderedManifests bytes.Buffer
-
-	// stable iteration order
-	orderedManifests := make([]string, 0, len(renderedManifestsMap))
-	for k := range renderedManifestsMap {
-		orderedManifests = append(orderedManifests, k)
-	}
-	sort.Strings(orderedManifests)
-
-	for _, key := range orderedManifests {
-		manifest := renderedManifestsMap[key]
-		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
-		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
-	}
+	renderedManifests := orderAndStringifyRenderedManifests(renderedManifestsMap)
 	var modifiedManifests *bytes.Buffer
 
 	modifiedManifests, err := postRenderer.Run(&renderedManifests)
@@ -540,10 +514,28 @@ func SplitManifests(renderedManifests *bytes.Buffer) map[string]string {
 	return postRenderedManifestsMap
 }
 
-func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, bool, error) {
+func orderAndStringifyRenderedManifests(renderedManifestsMap map[string]string) bytes.Buffer {
+	var renderedManifests bytes.Buffer
 
+	// stable iteration order
+	orderedManifests := make([]string, 0, len(renderedManifestsMap))
+	for k := range renderedManifestsMap {
+		orderedManifests = append(orderedManifests, k)
+	}
+	sort.Strings(orderedManifests)
+
+	for _, key := range orderedManifests {
+		manifest := renderedManifestsMap[key]
+		renderedManifests.WriteString(yamlFileSeparator + " " + key + "\n")
+		renderedManifests.WriteString(strings.TrimSpace(manifest) + "\n")
+	}
+	return renderedManifests
+}
+
+func (t *TestJob) postRender(renderedManifestsMap map[string]string) (map[string]string, bool, error) {
 	var cfg PostRendererConfig
 	var renderedManifests *bytes.Buffer
+
 	// use job-level post-renderer if it exists; else try suite; else return what we were passed as input
 	if t.PostRendererConfig.Plugin != "" || t.PostRendererConfig.Cmd != "" {
 		cfg = t.PostRendererConfig
