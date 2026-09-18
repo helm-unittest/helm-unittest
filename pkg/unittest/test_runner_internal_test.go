@@ -56,7 +56,7 @@ func TestRunSingleSuiteSnapshotErrorNotAppendedToResults(t *testing.T) {
 				TestFiles: []string{"tests/*_test.yaml"},
 				Parallel:  parallel,
 			}
-			passed := tr.RunV3([]string{chartDir})
+			passed := tr.RunV4([]string{chartDir})
 
 			assert.False(t, passed, buffer.String())
 			// The suites errored: they are counted...
@@ -71,7 +71,7 @@ func TestRunSingleSuiteSnapshotErrorNotAppendedToResults(t *testing.T) {
 // The parallel dispatch must actually run suites concurrently. Each suite blocks in
 // suiteStartHook until released; if the parallel path engages, MaxWorkers suites reach
 // the hook before any is released. A sequential path would start only one and time out.
-func TestRunV3SuitesParallelEngagesConcurrency(t *testing.T) {
+func TestRunV4SuitesParallelEngagesConcurrency(t *testing.T) {
 	const workers = 3
 
 	started := make(chan struct{}, 64)
@@ -90,7 +90,7 @@ func TestRunV3SuitesParallelEngagesConcurrency(t *testing.T) {
 	}
 
 	finished := make(chan bool, 1)
-	go func() { finished <- tr.RunV3([]string{internalTestBasicChart}) }()
+	go func() { finished <- tr.RunV4([]string{internalTestBasicChart}) }()
 
 	for i := 0; i < workers; i++ {
 		select {
@@ -123,7 +123,7 @@ func TestParallelFailfastIgnoresSnapshotErrors(t *testing.T) {
 			Failfast:   failfast,
 			MaxWorkers: 1,
 		}
-		assert.False(t, tr.RunV3([]string{chartDir}), buffer.String())
+		assert.False(t, tr.RunV4([]string{chartDir}), buffer.String())
 		return tr.suiteCounting.failed
 	}
 

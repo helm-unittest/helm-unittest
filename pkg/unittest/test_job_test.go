@@ -19,8 +19,9 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
+	v2loader "helm.sh/helm/v4/pkg/chart/v2/loader"
 )
 
 func makeTestJobResultSnapshotable(result *results.TestJobResult) *results.TestJobResult {
@@ -67,8 +68,8 @@ asserts:
 	a.Equal(tj.Assertions, assertions)
 }
 
-func TestV3RunJobOk(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -91,7 +92,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -101,10 +102,10 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithRenderPathOk(t *testing.T) {
+func TestV4RunJobWithRenderPathOk(t *testing.T) {
 	a := assert.New(t)
 	renderPath := "testdebug"
-	c, _ := loader.Load(testV3BasicChart)
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -128,7 +129,7 @@ asserts:
 		WithRenderPath(renderPath),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 	defer func() {
 		ferr := os.RemoveAll(renderPath)
 		a.NoError(ferr)
@@ -143,8 +144,8 @@ asserts:
 	a.DirExists(renderPath)
 }
 
-func TestV3RunJobWithTestJobTemplateOk(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithTestJobTemplateOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 template: templates/deployment.yaml
@@ -164,7 +165,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -174,8 +175,8 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithTestJobDocumentSelectorOk(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithTestJobDocumentSelectorOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 template: templates/deployment.yaml
@@ -197,7 +198,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -207,8 +208,8 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithTestJobTemplatesOk(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithTestJobTemplatesOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 templates:
@@ -233,7 +234,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -243,8 +244,8 @@ asserts:
 	a.Equal(3, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithTestMissingRequiredValueOk(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithTestMissingRequiredValueOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 set:
@@ -261,7 +262,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -271,8 +272,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithAssertionFail(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithAssertionFail(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -291,7 +292,7 @@ asserts:
 	common.YmlUnmarshalTestHelper(manifest, &tj, t)
 
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{}))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -301,8 +302,8 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithAssertionFailFast(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithAssertionFailFast(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -323,7 +324,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -333,8 +334,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithValueSet(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithValueSet(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 set:
@@ -352,7 +353,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -362,8 +363,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithValuesFile(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithValuesFile(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 values:
@@ -389,7 +390,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -399,8 +400,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithReleaseSettings(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithReleaseSettings(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 release:
@@ -419,7 +420,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -429,8 +430,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithNoCapabilitySettingsEmptyDoc(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithNoCapabilitySettingsEmptyDoc(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 asserts:
@@ -444,7 +445,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -454,8 +455,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithTooLongReleaseName(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithTooLongReleaseName(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: to long releasename
 release:
@@ -472,7 +473,7 @@ asserts:
 		WithFailFast(true),
 	)
 	tj.WithConfig(*cfg)
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -482,8 +483,8 @@ asserts:
 	a.False(testResult.Passed)
 }
 
-func TestV3RunJobWithCapabilitySettings(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithCapabilitySettings(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 capabilities:
@@ -502,7 +503,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -512,8 +513,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithCapabilityApiVersionUnset(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithCapabilityApiVersionUnset(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 capabilities:
@@ -531,15 +532,15 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
 	a.Equal(0, len(tj.Capabilities.APIVersions))
 }
 
-func TestV3RunJobWithCapabilityApiVersionNotSet(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithCapabilityApiVersionNotSet(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 capabilities:
@@ -555,7 +556,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.False(testResult.Passed)
@@ -563,8 +564,8 @@ asserts:
 	a.Equal("12", tj.Capabilities.MinorVersion)
 }
 
-func TestV3RunJobWithCapabilityMinorVersionSet(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithCapabilityMinorVersionSet(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 capabilities:
@@ -580,13 +581,13 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 	assert.False(t, testResult.Passed)
 	assert.Equal(t, "7", tj.Capabilities.MinorVersion)
 }
 
-func TestV3RunJobWithChartSettings(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithChartSettings(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 set:
@@ -610,7 +611,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
@@ -620,8 +621,8 @@ asserts:
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithFailingTemplate(t *testing.T) {
-	c, _ := loader.Load(testV3WithFailingTemplateChart)
+func TestV4RunJobWithFailingTemplate(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithFailingTemplateChart)
 	manifest := `
 it: should load complete chart and validate configMap
 release:
@@ -635,7 +636,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -645,8 +646,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithSchema(t *testing.T) {
-	c, _ := loader.Load(testV3WithSchemaChart)
+func TestV4RunJobWithSchema(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSchemaChart)
 	manifest := `
 it: should work
 template: templates/dummy.yaml
@@ -660,7 +661,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -671,8 +672,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithSchemaAndNullValue(t *testing.T) {
-	c, _ := loader.Load(testV3WithSchemaChart)
+func TestV4RunJobWithSchemaAndNullValue(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSchemaChart)
 	manifest := `
 it: should work
 set:
@@ -689,7 +690,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a := assert.New(t)
@@ -698,8 +699,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithSchemaOk(t *testing.T) {
-	c, _ := loader.Load(testV3WithSchemaChart)
+func TestV4RunJobWithSchemaOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSchemaChart)
 	manifest := `
 it: should work
 template: templates/dummy.yaml
@@ -716,7 +717,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -726,8 +727,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithSkipSchemaValidation(t *testing.T) {
-	c, _ := loader.Load(testV3WithSchemaChart)
+func TestV4RunJobWithSkipSchemaValidation(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSchemaChart)
 	manifest := `
 it: should work with invalid schema when skipped
 template: templates/dummy.yaml
@@ -741,7 +742,7 @@ asserts:
 		WithFailFast(true),
 		WithSkipSchemaValidation(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -752,8 +753,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobWithSkipSchemaValidationInvalidValues(t *testing.T) {
-	c, _ := loader.Load(testV3WithSchemaChart)
+func TestV4RunJobWithSkipSchemaValidationInvalidValues(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSchemaChart)
 	manifest := `
 it: should work with invalid pullPolicy when schema validation skipped
 template: templates/dummy.yaml
@@ -771,7 +772,7 @@ asserts:
 		WithFailFast(true),
 		WithSkipSchemaValidation(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
@@ -782,8 +783,8 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunSubChartWithVersionOverride(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubChart)
+func TestV4RunSubChartWithVersionOverride(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSubChart)
 	manifest := `
 it: should contain subchart and alias subchart when chart version is explicitly set
 chart:
@@ -803,15 +804,15 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestV3RunSubChartWithoutVersionOverride(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubChart)
+func TestV4RunSubChartWithoutVersionOverride(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSubChart)
 	manifest := `
 it: should contain subchart and alias subchart without version override
 templates:
@@ -827,7 +828,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)
@@ -844,7 +845,7 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 		name                 string
 		testJob              TestJob
 		initialChartVersions ChartVersions
-		dependencies         []*v3chart.Chart // List of dependencies to add
+		dependencies         []*v2chart.Chart // List of dependencies to add
 		expectedVersions     ChartVersions
 	}{
 		{
@@ -859,9 +860,9 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 				},
 			},
 			initialChartVersions: ChartVersions{"1.0.3", "1.0.8"},
-			dependencies: []*v3chart.Chart{
-				{Metadata: &v3chart.Metadata{Version: "0.1.0"}},
-				{Metadata: &v3chart.Metadata{AppVersion: "11.1.0"}},
+			dependencies: []*v2chart.Chart{
+				{Metadata: &v2chart.Metadata{Version: "0.1.0"}},
+				{Metadata: &v2chart.Metadata{AppVersion: "11.1.0"}},
 			},
 			expectedVersions: ChartVersions{"1.2.3", "1.1.0"},
 		},
@@ -876,8 +877,8 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 				},
 			},
 			initialChartVersions: ChartVersions{AppVersion: "1.0.0"},
-			dependencies: []*v3chart.Chart{
-				{Metadata: &v3chart.Metadata{AppVersion: "1.0.0"}},
+			dependencies: []*v2chart.Chart{
+				{Metadata: &v2chart.Metadata{AppVersion: "1.0.0"}},
 			},
 			expectedVersions: ChartVersions{AppVersion: "2.0.0"},
 		},
@@ -890,9 +891,9 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 				}{},
 			},
 			initialChartVersions: ChartVersions{Version: "0.1.0", AppVersion: "1.0.0"},
-			dependencies: []*v3chart.Chart{
-				{Metadata: &v3chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
-				{Metadata: &v3chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
+			dependencies: []*v2chart.Chart{
+				{Metadata: &v2chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
+				{Metadata: &v2chart.Metadata{Version: "0.1.0", AppVersion: "1.0.0"}},
 			},
 			expectedVersions: ChartVersions{Version: "0.1.0", AppVersion: "1.0.0"},
 		},
@@ -900,8 +901,8 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parent := &v3chart.Chart{
-				Metadata: &v3chart.Metadata{
+			parent := &v2chart.Chart{
+				Metadata: &v2chart.Metadata{
 					Version:    tt.expectedVersions.Version,
 					AppVersion: tt.expectedVersions.AppVersion,
 				},
@@ -928,8 +929,8 @@ func TestModifyChartMetadataVersions(t *testing.T) {
 	}
 }
 
-func TestV3RunJobWithTestJobNotesOk(t *testing.T) {
-	c, _ := loader.Load(testV3WithSubChart)
+func TestV4RunJobWithTestJobNotesOk(t *testing.T) {
+	c, _ := v2loader.Load(testV4WithSubChart)
 	manifest := `
 it: should generate notes
 template: charts/child-chart/templates/NOTES-with-separator.txt
@@ -951,16 +952,16 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed, testResult.AssertsResult)
 }
 
-func TestV3RunJobWithWithNotSupportedAssert(t *testing.T) {
+func TestV4RunJobWithWithNotSupportedAssert(t *testing.T) {
 	a := assert.New(t)
-	c, _ := loader.Load(testV3BasicChart)
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should skip when not supported assert is found
 template: templates/deployment.yaml
@@ -979,7 +980,7 @@ asserts:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a.NoError(testResult.ExecError)
 	a.Equal(1, len(testResult.AssertsResult))
@@ -987,8 +988,8 @@ asserts:
 	a.NotEqual(testResult.AssertsResult[0].AssertType, "notSupportedAssert")
 }
 
-func TestV3RunJobPatchArrayValue(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobPatchArrayValue(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should patch second element
 template: templates/configmap.yaml
@@ -1032,15 +1033,15 @@ ingress:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(3, len(testResult.AssertsResult))
 }
 
-func TestV3RunJobPatchPointArrayValue(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobPatchPointArrayValue(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should patch second element
 template: templates/configmap.yaml
@@ -1083,33 +1084,33 @@ ingress:
 	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 		WithFailFast(true),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a.NoError(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(3, len(testResult.AssertsResult))
 }
 
-func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
-	c := &v3chart.Chart{
-		Metadata: &v3chart.Metadata{
+func TestV4RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
+	c := &v2chart.Chart{
+		Metadata: &v2chart.Metadata{
 			Name:    "moby",
 			Version: "1.2.3",
 		},
-		Templates: []*v3chart.File{},
+		Templates: []*chartcommon.File{},
 		Values:    map[string]any{},
 	}
 
 	tests := []struct {
-		template *v3chart.File
+		template *chartcommon.File
 		error    error
 	}{
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
 			error:    errors.New("execution error at (moby/templates/validate.tpl:1:4): `root`"),
 		},
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
 			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
 		},
 	}
@@ -1118,39 +1119,39 @@ func TestV3RunJob_TplFunction_Fail_WithoutAssertion(t *testing.T) {
 
 	for _, test := range tests {
 		tj := TestJob{}
-		c.Templates = []*v3chart.File{test.template}
+		c.Templates = []*chartcommon.File{test.template}
 		tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 			WithFailFast(true),
 		))
-		testResult := tj.RunV3(&results.TestJobResult{})
+		testResult := tj.RunV4(&results.TestJobResult{})
 		a.Error(testResult.ExecError)
 		a.False(testResult.Passed)
 		a.EqualError(testResult.ExecError, test.error.Error())
 	}
 }
 
-func TestV3RunJob_TplFunction_Fail_WithAssertion(t *testing.T) {
-	c := &v3chart.Chart{
-		Metadata: &v3chart.Metadata{
+func TestV4RunJob_TplFunction_Fail_WithAssertion(t *testing.T) {
+	c := &v2chart.Chart{
+		Metadata: &v2chart.Metadata{
 			Name:    "moby",
 			Version: "1.2.3",
 		},
-		Templates: []*v3chart.File{},
+		Templates: []*chartcommon.File{},
 		Values:    map[string]any{},
 	}
 
 	tests := []struct {
-		template *v3chart.File
+		template *chartcommon.File
 		error    error
 		expected bool
 	}{
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"`root`\") }}")},
 			error:    nil,
 			expected: true,
 		},
 		{
-			template: &v3chart.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
+			template: &chartcommon.File{Name: "templates/validate.tpl", Data: []byte("{{- fail (printf \"\n`root`\") }}")},
 			error:    errors.New("parse error at (moby/templates/validate.tpl:1): unterminated quoted string"),
 			expected: false,
 		},
@@ -1169,11 +1170,11 @@ asserts:
 	a := assert.New(t)
 
 	for _, test := range tests {
-		c.Templates = []*v3chart.File{test.template}
+		c.Templates = []*chartcommon.File{test.template}
 		tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
 			WithFailFast(true),
 		))
-		testResult := tj.RunV3(&results.TestJobResult{})
+		testResult := tj.RunV4(&results.TestJobResult{})
 		a.Equal(test.expected, testResult.Passed)
 		if test.error != nil {
 			a.Error(testResult.ExecError)
@@ -1257,7 +1258,7 @@ func Test_SplitManifests(t *testing.T) {
 	}
 }
 
-func Test_MergeAndPostRender(t *testing.T) {
+func Test_MergeAndPostRenderUsingPlugin(t *testing.T) {
 	tests := []struct {
 		name           string
 		inputManifests map[string]string
@@ -1296,7 +1297,55 @@ func Test_MergeAndPostRender(t *testing.T) {
 				assert.Equal(t, expectedBuffer.String(), arg.String())
 			})
 
-			output, err := MergeAndPostRender(test.inputManifests, test.postRenderer)
+			output, err := MergeAndPostRenderUsingPlugin(test.inputManifests, test.postRenderer)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedOutput, output.String())
+
+			test.postRenderer.AssertExpectations(t) // Verify the mock was called as expected
+		})
+	}
+}
+
+func Test_MergeAndPostRenderUsingExec(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputManifests map[string]string
+		expectedOutput string
+		postRenderer   *mockPostRenderer // Use the mock type
+		expectedInput  string            // Add expected input for postRenderer
+	}{
+		{
+			name: "With Post-render newlines",
+			inputManifests: map[string]string{
+				"test-key1": "manifest1\n",
+				"test-key2": "manifest2\n",
+			},
+			expectedOutput: "---\n" + fileKeyPrefix + " test-key1\nmanifest1-modified\n\n---\n" + fileKeyPrefix + " test-key2\nmanifest2-modified\n\n",
+			postRenderer:   &mockPostRenderer{},
+			expectedInput:  "---\n" + fileKeyPrefix + " test-key1\nmanifest1\n---\n" + fileKeyPrefix + " test-key2\nmanifest2\n", // Input *before* post-rendering
+		},
+		{
+			name: "With Post-render no newlines",
+			inputManifests: map[string]string{
+				"test-key1": "manifest1\n",
+				"test-key2": "manifest2\n",
+			},
+			expectedOutput: "---\n" + fileKeyPrefix + " test-key1\nmanifest1-modified\n---\n" + fileKeyPrefix + " test-key2\nmanifest2-modified",
+			postRenderer:   &mockPostRenderer{},
+			expectedInput:  "---\n" + fileKeyPrefix + " test-key1\nmanifest1\n---\n" + fileKeyPrefix + " test-key2\nmanifest2\n", // Input *before* post-rendering
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Set up the mock expectation *before* calling MergeAndPostRender
+			expectedBuffer := bytes.NewBufferString(test.expectedInput)
+			test.postRenderer.On("Run", mock.Anything).Return(bytes.NewBufferString(test.expectedOutput), nil).Run(func(args mock.Arguments) {
+				arg := args.Get(0).(*bytes.Buffer)
+				assert.Equal(t, expectedBuffer.String(), arg.String())
+			})
+
+			output, err := MergeAndPostRenderUsingExec(test.inputManifests, test.postRenderer)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedOutput, output.String())
 
@@ -1317,8 +1366,8 @@ func (m *mockPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, 
 	return args.Get(0).(*bytes.Buffer), args.Error(1)
 }
 
-func TestV3RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
-	c, _ := loader.Load(testV3BasicChart)
+func TestV4RunJobWithSuccessWhenNoDocumentSelectorSkipEmptyTemplateAndNoTemplatesUnderTest(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
 it: should work
 release:
@@ -1343,7 +1392,7 @@ asserts:
 			SkipEmptyTemplates: true,
 		}),
 	))
-	testResult := tj.RunV3(&results.TestJobResult{})
+	testResult := tj.RunV4(&results.TestJobResult{})
 
 	a := assert.New(t)
 	a.NoError(testResult.ExecError)

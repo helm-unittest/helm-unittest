@@ -15,10 +15,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
-	v3chart "helm.sh/helm/v3/pkg/chart"
-	v3loader "helm.sh/helm/v3/pkg/chart/loader"
-	v3util "helm.sh/helm/v3/pkg/chartutil"
-	v3engine "helm.sh/helm/v3/pkg/engine"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
+	v2loader "helm.sh/helm/v4/pkg/chart/v2/loader"
+	engine "helm.sh/helm/v4/pkg/engine"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -117,12 +118,12 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		return nil, err
 	}
 
-	chart, err := v3loader.Load(helmTestSuiteDir)
+	chart, err := v2loader.Load(helmTestSuiteDir)
 	if err != nil {
 		return nil, err
 	}
 
-	options := v3util.ReleaseOptions{
+	options := chartcommon.ReleaseOptions{
 		Name:      "TEST-SUITE-RELEASE",
 		Namespace: "NAMESPACE",
 		Revision:  1,
@@ -130,11 +131,11 @@ func RenderTestSuiteFiles(helmTestSuiteDir string, chartRoute string, strict boo
 		IsUpgrade: false,
 	}
 
-	values, err := v3util.ToRenderValues(chart, renderValues, options, nil)
+	values, err := chartcommonutil.ToRenderValues(chart, renderValues, options, nil)
 	if err != nil {
 		return nil, err
 	}
-	renderedFiles, err := v3engine.Render(chart, values)
+	renderedFiles, err := engine.Render(chart, values)
 	if err != nil {
 		return nil, err
 	}
@@ -251,9 +252,9 @@ type TestSuite struct {
 	} `yaml:"skip"`
 }
 
-// RunV3 runs all the test jobs defined in TestSuite.
-func (s *TestSuite) RunV3(
-	chart *v3chart.Chart,
+// RunV4 runs all the test jobs defined in TestSuite.
+func (s *TestSuite) RunV4(
+	chart *v2chart.Chart,
 	snapshotCache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
@@ -264,7 +265,7 @@ func (s *TestSuite) RunV3(
 	result.DisplayName = s.Name
 	result.FilePath = s.definitionFile
 
-	r := s.runV3TestJobs(
+	r := s.runV4TestJobs(
 		chart,
 		snapshotCache,
 		failFast,
@@ -383,8 +384,8 @@ type SuiteResult struct {
 	JobResults []*results.TestJobResult
 }
 
-func (s *TestSuite) runV3TestJobs(
-	chart *v3chart.Chart,
+func (s *TestSuite) runV4TestJobs(
+	chart *v2chart.Chart,
 	cache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
@@ -395,7 +396,7 @@ func (s *TestSuite) runV3TestJobs(
 
 	for idx, testJob := range s.Tests {
 		// Deep clone of chart
-		chartClone := FullCopyV3Chart(s.chartRoute, chart.Name(), chart)
+		chartClone := FullCopyV2Chart(s.chartRoute, chart.Name(), chart)
 
 		var jobResult *results.TestJobResult
 		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
@@ -416,7 +417,7 @@ func (s *TestSuite) runV3TestJobs(
 				WithIncludeCrds(s.IncludeCrds),
 				WithSkipSchemaValidation(s.skipSchemaValidation),
 			))
-			jobResult = testJob.RunV3(&job)
+			jobResult = testJob.RunV4(&job)
 			jobResults[idx] = jobResult
 			if idx == 0 {
 				result.Pass = jobResult.Passed

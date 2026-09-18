@@ -64,18 +64,18 @@ func makeOutputSnapshotable(originalOutput string) []any {
 	return sectionsToRetrun
 }
 
-func TestV3RunnerInvalidChartDirFailfast(t *testing.T) {
+func TestV4RunnerInvalidChartDirFailfast(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testTestFiles})
+	passed := runner.RunV4([]string{testTestFiles})
 	assert.False(t, passed, buffer.String())
 }
 
-func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
+func TestV4RunnerInvalidTestSuiteFailfast(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
@@ -83,22 +83,22 @@ func TestV3RunnerInvalidTestSuiteFailfast(t *testing.T) {
 		Failfast:  true,
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3InvalidBasicChart})
+	passed := runner.RunV4([]string{testV4InvalidBasicChart})
 	assert.False(t, passed, buffer.String())
 }
 
-func TestV3RunnerOkWithPassedTests(t *testing.T) {
+func TestV4RunnerOkWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
+func TestV4RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 	outputFile := "output.txt"
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
@@ -107,7 +107,7 @@ func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 		OutputFile: outputFile,
 		Formatter:  formatter.NewSonarReportXML(),
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	// clean up output file if exists
 	if _, err := os.Stat(outputFile); err == nil {
@@ -118,42 +118,42 @@ func TestV3RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 	}
 }
 
-func TestV3RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
+func TestV4RunnerOkWithSubSubChartsPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		WithSubChart: true,
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubSubFolderChart})
+	passed := runner.RunV4([]string{testV4WithSubSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFailingTemplatePassedTest(t *testing.T) {
+func TestV4RunnerOkWithFailingTemplatePassedTest(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFailingTemplateChart})
+	passed := runner.RunV4([]string{testV4WithFailingTemplateChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
+func TestV4RunnerOkWithOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{testValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
+func TestV4RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	fullPath, _ := filepath.Abs(testValuesFiles)
 	runner := TestRunner{
@@ -161,180 +161,181 @@ func TestV3RunnerOkWithAbsoluteOverrideValuesPassedTests(t *testing.T) {
 		TestFiles:   []string{testTestFiles},
 		ValuesFiles: []string{fullPath},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFailedTests(t *testing.T) {
+func TestV4RunnerOkWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFailedFiles},
 	}
-	passed := runner.RunV3([]string{testV3BasicChart})
+	passed := runner.RunV4([]string{testV4BasicChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithSubSubfolder(t *testing.T) {
+func TestV4RunnerOkWithSubSubfolder(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubFolderChart})
+	passed := runner.RunV4([]string{testV4WithSubFolderChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerWithTestsInSubchart(t *testing.T) {
+func TestV4RunnerWithTestsInSubchart(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		WithSubChart: true,
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubChart})
+	passed := runner.RunV4([]string{testV4WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
+func TestV4RunnerWithTestsInSubchartButFlagFalse(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		WithSubChart: false,
 		TestFiles:    []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSubChart})
+	passed := runner.RunV4([]string{testV4WithSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkGlobalDoubleWithPassedTests(t *testing.T) {
+func TestV4RunnerOkGlobalDoubleWithPassedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3GlobalDoubleChart})
+	passed := runner.RunV4([]string{testV4GlobalDoubleChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFiles(t *testing.T) {
+func TestV4RunnerOkWithFiles(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFilesChart})
+	passed := runner.RunV4([]string{testV4WithFilesChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFullsnapshot(t *testing.T) {
+func TestV4RunnerOkWithFullsnapshot(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3FullSnapshotChart})
+	passed := runner.RunV4([]string{testV4FullSnapshotChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithRenderedTests(t *testing.T) {
+func TestV4RunnerOkWithRenderedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:        printer.NewPrinter(buffer, nil),
 		ChartTestsPath: "tests-chart",
 	}
-	passed := runner.RunV3([]string{testV3WithHelmTestsChart})
+	passed := runner.RunV4([]string{testV4WithHelmTestsChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithDocumentSelector(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelector(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelectorWithFailedTests(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFailedFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.False(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithFakeK8sClient(t *testing.T) {
+func TestV4RunnerOkWithFakeK8sClient(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithFakeK8sClientChart})
+	passed := runner.RunV4([]string{testV4WithFakeK8sClientChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithPostRenderer(t *testing.T) {
+func TestV4RunnerOkWithPostRenderer(t *testing.T) {
+	setPostRendererPluginEnv(t)
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPostRendererChart})
+	passed := runner.RunV4([]string{testV4WithPostRendererChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkWithSchemaValidation(t *testing.T) {
+func TestV4RunnerOkWithSchemaValidation(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSchemaChart})
+	passed := runner.RunV4([]string{testV4WithSchemaChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkPackagedChartWithExternalUnittest(t *testing.T) {
+func TestV4RunnerOkPackagedChartWithExternalUnittest(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testExternalSubTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPackagedSubChart})
+	passed := runner.RunV4([]string{testV4WithPackagedSubChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOkPackagedChart(t *testing.T) {
+func TestV4RunnerOkPackagedChart(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:     printer.NewPrinter(buffer, nil),
 		TestFiles:   []string{testExternalTestFiles},
 		ValuesFiles: []string{testExternalValuesFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithPackagedChart})
+	passed := runner.RunV4([]string{testV4WithPackagedChart})
 	assert.True(t, passed, buffer.String())
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
-func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
+func TestV4RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
@@ -345,45 +346,45 @@ func TestV3RunnerOk_With_FailFast_NoPanic(t *testing.T) {
 		failFast  bool
 	}{
 		{
-			chartPath: []string{testV3WithFailingTemplateChart},
+			chartPath: []string{testV4WithFailingTemplateChart},
 			failFast:  true,
 		},
 		{
-			chartPath: []string{testV3WithFailingTemplateChart},
+			chartPath: []string{testV4WithFailingTemplateChart},
 			failFast:  false,
 		},
 		{
-			chartPath: []string{testV3InvalidBasicChart},
+			chartPath: []string{testV4InvalidBasicChart},
 			failFast:  true,
 		},
 		{
-			chartPath: []string{testV3InvalidBasicChart},
+			chartPath: []string{testV4InvalidBasicChart},
 			failFast:  false,
 		},
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("chart %s fail fast: %v", tt.chartPath[0], tt.failFast), func(t *testing.T) {
 			runner.Failfast = tt.failFast
-			result := runner.RunV3([]string{testV3WithFailingTemplateChart})
+			result := runner.RunV4([]string{testV4WithFailingTemplateChart})
 			assert.True(t, result)
 		})
 	}
 }
 
-func TestV3RunnerOkWithDocumentSelect(t *testing.T) {
+func TestV4RunnerOkWithDocumentSelect(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithDocumentSelectorChart})
+	passed := runner.RunV4([]string{testV4WithDocumentSelectorChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Test Suites: 8 passed, 8 total")
 	assert.Contains(t, buffer.String(), "Tests:       13 passed, 13 total")
 }
 
-func TestV3RunnerOkWithTestSkipped(t *testing.T) {
+func TestV4RunnerOkWithTestSkipped(t *testing.T) {
 	suiteDoc := `
 suite: test suite with subchart
 templates:
@@ -404,11 +405,11 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	passed := runner.RunV3([]string{testV3WithSchemaChart})
+	passed := runner.RunV4([]string{testV4WithSchemaChart})
 	assert.True(t, passed, buffer.String())
 }
 
-func TestV3RunnerOkWithSkippedTests_Output(t *testing.T) {
+func TestV4RunnerOkWithSkippedTests_Output(t *testing.T) {
 	chart := `
 apiVersion: v2
 name: basic
@@ -483,14 +484,14 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	_ = runner.RunV3([]string{filepath.Join(tmp, "chart")})
+	_ = runner.RunV4([]string{filepath.Join(tmp, "chart")})
 
 	assert.Contains(t, buffer.String(), "Test Suites: 1 failed, 1 passed, 1 skipped, 3 total")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should render deployment'")
 	assert.Contains(t, buffer.String(), "Tests:       1 failed, 1 passed, 1 skipped, 3 total")
 }
 
-func TestV3RunnerOkWithSkippedSuits_Output(t *testing.T) {
+func TestV4RunnerOkWithSkippedSuits_Output(t *testing.T) {
 	chart := `
 apiVersion: v2
 name: basic
@@ -544,34 +545,34 @@ tests:
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	_ = runner.RunV3([]string{filepath.Join(tmp, "chart")})
+	_ = runner.RunV4([]string{filepath.Join(tmp, "chart")})
 	assert.Contains(t, buffer.String(), "PASS  should skip one and execute one")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should skip test'")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 skipped, 2 total")
 }
 
-func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T) {
+func TestV4RunnerOkWithSkippedTestsWhenSubchartDisabledOnCondition(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnConditionChart})
+	passed := runner.RunV4([]string{testV4WithDisabledSubChartOnConditionChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Test Suites: 0 passed, 0 total")
 }
 
-func TestV3RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
+func TestV4RunnerOkWithSkippedTestsWhenSubchartDisabledOnTags(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:      printer.NewPrinter(buffer, nil),
 		TestFiles:    []string{testTestFiles},
 		WithSubChart: true,
 	}
-	passed := runner.RunV3([]string{testV3WithDisabledSubChartOnTagsChart})
+	passed := runner.RunV4([]string{testV4WithDisabledSubChartOnTagsChart})
 	assert.True(t, passed, buffer.String())
 
 	assert.Contains(t, buffer.String(), "Charts:      1 passed, 1 total")
@@ -595,13 +596,13 @@ func summaryCountLines(output string) []string {
 	return lines
 }
 
-func TestV3RunnerParallelSameOutcomeAsSequential(t *testing.T) {
+func TestV4RunnerParallelSameOutcomeAsSequential(t *testing.T) {
 	seqBuffer := new(bytes.Buffer)
 	seqRunner := TestRunner{
 		Printer:   printer.NewPrinter(seqBuffer, nil),
 		TestFiles: []string{testTestFiles},
 	}
-	seqPassed := seqRunner.RunV3([]string{testV3BasicChart})
+	seqPassed := seqRunner.RunV4([]string{testV4BasicChart})
 
 	parBuffer := new(bytes.Buffer)
 	parRunner := TestRunner{
@@ -609,13 +610,13 @@ func TestV3RunnerParallelSameOutcomeAsSequential(t *testing.T) {
 		TestFiles: []string{testTestFiles},
 		Parallel:  true,
 	}
-	parPassed := parRunner.RunV3([]string{testV3BasicChart})
+	parPassed := parRunner.RunV4([]string{testV4BasicChart})
 
 	assert.Equal(t, seqPassed, parPassed)
 	assert.Equal(t, summaryCountLines(seqBuffer.String()), summaryCountLines(parBuffer.String()))
 }
 
-func TestV3RunnerParallelDeterministicOutput(t *testing.T) {
+func TestV4RunnerParallelDeterministicOutput(t *testing.T) {
 	run := func(parallel bool) string {
 		buffer := new(bytes.Buffer)
 		runner := TestRunner{
@@ -623,7 +624,7 @@ func TestV3RunnerParallelDeterministicOutput(t *testing.T) {
 			TestFiles: []string{testTestFiles},
 			Parallel:  parallel,
 		}
-		runner.RunV3([]string{testV3BasicChart})
+		runner.RunV4([]string{testV4BasicChart})
 		return timePattern.ReplaceAllString(buffer.String(), "${1}XX.XXXms")
 	}
 
@@ -635,11 +636,11 @@ func TestV3RunnerParallelDeterministicOutput(t *testing.T) {
 	assert.Equal(t, sequential, parallelFirst, "parallel output must match sequential order")
 }
 
-func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
+func TestV4RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 	// Copy the fixture so the update run writes into a throwaway location.
 	copyChart := func() string {
 		dir := filepath.Join(t.TempDir(), "chart")
-		if err := os.CopyFS(dir, os.DirFS(testV3ParallelMultiSuiteChart)); err != nil {
+		if err := os.CopyFS(dir, os.DirFS(testV4ParallelMultiSuiteChart)); err != nil {
 			t.Fatalf("failed to copy fixture: %v", err)
 		}
 		return dir
@@ -653,7 +654,7 @@ func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 		Parallel:       true,
 		UpdateSnapshot: true,
 	}
-	assert.True(t, parRunner.RunV3([]string{parChart}), parBuffer.String())
+	assert.True(t, parRunner.RunV4([]string{parChart}), parBuffer.String())
 
 	// The suites share one .snap file; grouping keeps them on a single goroutine
 	// so the file must be byte-identical to a sequential update and valid YAML.
@@ -664,7 +665,7 @@ func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 		TestFiles:      []string{testTestFiles},
 		UpdateSnapshot: true,
 	}
-	assert.True(t, seqRunner.RunV3([]string{seqChart}), seqBuffer.String())
+	assert.True(t, seqRunner.RunV4([]string{seqChart}), seqBuffer.String())
 
 	snapPath := filepath.Join("tests", "__snapshot__", "parallel_test.yaml.snap")
 	parSnap, err := os.ReadFile(filepath.Join(parChart, snapPath))
@@ -683,7 +684,7 @@ func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 		TestFiles: []string{testTestFiles},
 		Parallel:  true,
 	}
-	assert.True(t, rerunRunner.RunV3([]string{parChart}), rerunBuffer.String())
+	assert.True(t, rerunRunner.RunV4([]string{parChart}), rerunBuffer.String())
 }
 
 // copyMultiSuiteChart copies the multi-suite fixture into a throwaway directory so
@@ -691,7 +692,7 @@ func TestV3RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 func copyMultiSuiteChart(t *testing.T) string {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "chart")
-	if err := os.CopyFS(dir, os.DirFS(testV3ParallelMultiSuiteChart)); err != nil {
+	if err := os.CopyFS(dir, os.DirFS(testV4ParallelMultiSuiteChart)); err != nil {
 		t.Fatalf("failed to copy fixture: %v", err)
 	}
 	return dir
@@ -709,12 +710,12 @@ func runMultiSuiteChart(chartDir string, parallel, update bool) (bool, string) {
 		Parallel:       parallel,
 		UpdateSnapshot: update,
 	}
-	return runner.RunV3([]string{chartDir}), buffer.String()
+	return runner.RunV4([]string{chartDir}), buffer.String()
 }
 
 // All suites of one test file write to the same .snap file. Every suite's
 // snapshots must survive, instead of the last suite overwriting the file.
-func TestV3RunnerSharedSnapshotFileKeepsEverySuite(t *testing.T) {
+func TestV4RunnerSharedSnapshotFileKeepsEverySuite(t *testing.T) {
 	for _, parallel := range []bool{false, true} {
 		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
 			chartDir := copyMultiSuiteChart(t)
@@ -736,7 +737,7 @@ func TestV3RunnerSharedSnapshotFileKeepsEverySuite(t *testing.T) {
 
 // Once written, re-running without -u must compare against the stored snapshots
 // and leave the file untouched.
-func TestV3RunnerSharedSnapshotFileIsStableAcrossRuns(t *testing.T) {
+func TestV4RunnerSharedSnapshotFileIsStableAcrossRuns(t *testing.T) {
 	for _, parallel := range []bool{false, true} {
 		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
 			chartDir := copyMultiSuiteChart(t)
@@ -758,7 +759,7 @@ func TestV3RunnerSharedSnapshotFileIsStableAcrossRuns(t *testing.T) {
 
 // A changed template must be detected for every suite in the shared file, not
 // only for the suite that happened to write the file last.
-func TestV3RunnerSharedSnapshotFileDetectsChangePerSuite(t *testing.T) {
+func TestV4RunnerSharedSnapshotFileDetectsChangePerSuite(t *testing.T) {
 	chartDir := copyMultiSuiteChart(t)
 	passed, output := runMultiSuiteChart(chartDir, false, true)
 	assert.True(t, passed, output)
@@ -776,7 +777,7 @@ func TestV3RunnerSharedSnapshotFileDetectsChangePerSuite(t *testing.T) {
 
 // Each suite reports only its own snapshots, so sharing one cache must not make
 // the summary count the same snapshot several times.
-func TestV3RunnerSharedSnapshotFileCountsEachSuiteOnce(t *testing.T) {
+func TestV4RunnerSharedSnapshotFileCountsEachSuiteOnce(t *testing.T) {
 	for _, parallel := range []bool{false, true} {
 		t.Run(fmt.Sprintf("parallel=%v", parallel), func(t *testing.T) {
 			chartDir := copyMultiSuiteChart(t)
@@ -788,7 +789,7 @@ func TestV3RunnerSharedSnapshotFileCountsEachSuiteOnce(t *testing.T) {
 }
 
 // Entries of tests that no longer exist must still be pruned from a shared file.
-func TestV3RunnerSharedSnapshotFileRemovesStaleEntries(t *testing.T) {
+func TestV4RunnerSharedSnapshotFileRemovesStaleEntries(t *testing.T) {
 	chartDir := copyMultiSuiteChart(t)
 	passed, output := runMultiSuiteChart(chartDir, false, true)
 	assert.True(t, passed, output)
@@ -811,12 +812,12 @@ func TestV3RunnerSharedSnapshotFileRemovesStaleEntries(t *testing.T) {
 // The fixture ships its snapshots, so the runs above compare against known content
 // instead of silently regenerating it (helm-unittest#246). Guard that the committed
 // snapshot stays in sync with the fixture and is never rewritten by a verifying run.
-func TestV3RunnerMultiSuiteFixtureShipsItsSnapshot(t *testing.T) {
-	snapPath := multiSuiteSnapshotPath(testV3ParallelMultiSuiteChart)
+func TestV4RunnerMultiSuiteFixtureShipsItsSnapshot(t *testing.T) {
+	snapPath := multiSuiteSnapshotPath(testV4ParallelMultiSuiteChart)
 	committed, err := os.ReadFile(snapPath)
 	assert.NoError(t, err, "the fixture must ship its snapshot file")
 
-	passed, output := runMultiSuiteChart(testV3ParallelMultiSuiteChart, true, false)
+	passed, output := runMultiSuiteChart(testV4ParallelMultiSuiteChart, true, false)
 	assert.True(t, passed, output)
 
 	after, err := os.ReadFile(snapPath)
@@ -824,7 +825,7 @@ func TestV3RunnerMultiSuiteFixtureShipsItsSnapshot(t *testing.T) {
 	assert.Equal(t, string(committed), string(after), "a verifying run must not rewrite the committed snapshot")
 }
 
-func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
+func TestV4RunnerParallelFailfastStopsScheduling(t *testing.T) {
 	countFailedSuites := func(output string) int {
 		return strings.Count(output, " FAIL ")
 	}
@@ -832,7 +833,7 @@ func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
 	// Work on a throwaway copy so the failing suites (which may rewrite snapshots)
 	// never touch the committed fixture.
 	chartDir := filepath.Join(t.TempDir(), "chart")
-	if err := os.CopyFS(chartDir, os.DirFS(testV3BasicChart)); err != nil {
+	if err := os.CopyFS(chartDir, os.DirFS(testV4BasicChart)); err != nil {
 		t.Fatalf("failed to copy fixture: %v", err)
 	}
 
@@ -843,7 +844,7 @@ func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
 		TestFiles: []string{testTestFailedFiles},
 		Parallel:  true,
 	}
-	assert.False(t, fullRunner.RunV3([]string{chartDir}), fullBuffer.String())
+	assert.False(t, fullRunner.RunV4([]string{chartDir}), fullBuffer.String())
 	fullCount := countFailedSuites(fullBuffer.String())
 	assert.Greater(t, fullCount, 1)
 
@@ -857,6 +858,6 @@ func TestV3RunnerParallelFailfastStopsScheduling(t *testing.T) {
 		Failfast:   true,
 		MaxWorkers: 1,
 	}
-	assert.False(t, ffRunner.RunV3([]string{chartDir}), ffBuffer.String())
+	assert.False(t, ffRunner.RunV4([]string{chartDir}), ffBuffer.String())
 	assert.Less(t, countFailedSuites(ffBuffer.String()), fullCount, "failfast must skip unstarted groups")
 }

@@ -62,22 +62,22 @@ func writeToFile(data string, filename string) error {
 // The tests ensure that the TestRunner can correctly process and report the results of the tests.
 
 // How to add more end-2-end tests
-// 1. Create a new function called TestV3RunnerWith_Fixture_Chart_<Context>
+// 1. Create a new function called TestV4RunnerWith_Fixture_Chart_<Context>
 // 2. Create fixtures in the `testdata` directory. Example `testdata/chart<number>`
 // 3. Create test files in the `tests` directory. Example `testdata/chart<number>/<name>_test.yaml`
 // 4. Add metadata information to the test files. Example `testdata/chart<number>/Chart.yaml`
 
-func TestV3RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_ErrorWhenMetaCharacters(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 	}
-	passed := runner.RunV3([]string{"testdata/chart-failed-template"})
+	passed := runner.RunV4([]string{"testdata/chart-failed-template"})
 	assert.True(t, passed, buffer.String())
 }
 
-func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
 	cases := []struct {
 		chart      string
 		failFast   bool
@@ -136,7 +136,7 @@ func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
 				TestFiles: []string{fmt.Sprintf("tests/*-%s_test.yaml", tt.testFlavor)},
 				Failfast:  tt.failFast,
 			}
-			_ = runner.RunV3([]string{"testdata/chart-fail-fast"})
+			_ = runner.RunV4([]string{"testdata/chart-fail-fast"})
 			for _, e := range tt.expected {
 				assert.Contains(t, buffer.String(), e)
 			}
@@ -144,19 +144,19 @@ func TestV3RunnerWith_Fixture_Chart_FailFast(t *testing.T) {
 	}
 }
 
-func TestV3RunnerWith_Fixture_Chart_YamlSeparator(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_YamlSeparator(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    false,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-yaml-separator"})
+	_ = runner.RunV4([]string{"testdata/chart-yaml-separator"})
 	assert.Contains(t, buffer.String(), "Test Suites: 5 passed, 5 total")
 	assert.Contains(t, buffer.String(), "Tests:       6 passed, 6 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 	cases := []struct {
 		chart      string
 		testFlavor string
@@ -206,7 +206,7 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 				Printer:   printer.NewPrinter(buffer, nil),
 				TestFiles: []string{fmt.Sprintf("tests/%s_test.yaml", tt.testFlavor)},
 			}
-			_ = runner.RunV3([]string{tt.chart})
+			_ = runner.RunV4([]string{tt.chart})
 			for _, e := range tt.expected {
 				assert.Contains(t, buffer.String(), e)
 			}
@@ -214,14 +214,14 @@ func TestV3RunnerWith_Fixture_Chart_DocumentSelector(t *testing.T) {
 	}
 }
 
-func TestV3RunnerWith_Fixture_Chart_SkipTest(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_SkipTest(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    false,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-skip-test"})
+	_ = runner.RunV4([]string{"testdata/chart-skip-test"})
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should skip first test'")
 	assert.Contains(t, buffer.String(), "- SKIPPED 'should third test'")
 	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 1 skipped, 3 total")
@@ -235,19 +235,32 @@ func TestV3RunnerWith_Fixture_Chart_PostRenderer(t *testing.T) {
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    false,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-post-renderer"})
+	_ = runner.RunV4([]string{"testdata/helm3-chart-post-renderer"})
 	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 2 total")
 	assert.Contains(t, buffer.String(), "Tests:       4 passed, 4 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_WithSubchartV1(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_PostRenderer(t *testing.T) {
+	setPostRendererPluginEnv(t)
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{"tests/*_test.yaml"},
+		Strict:    false,
+	}
+	_ = runner.RunV4([]string{"testdata/chart-post-renderer"})
+	assert.Contains(t, buffer.String(), "Test Suites: 2 passed, 2 total")
+	assert.Contains(t, buffer.String(), "Tests:       4 passed, 4 total")
+}
+
+func TestV4RunnerWith_Fixture_Chart_WithSubchartV1(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    true,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-subchart-v1"})
+	_ = runner.RunV4([]string{"testdata/chart-subchart-v1"})
 
 	assert.Contains(t, buffer.String(), "Test Suites: 3 passed, 3 total")
 	assert.Contains(t, buffer.String(), "Tests:       9 passed, 9 total")
@@ -361,46 +374,46 @@ func TestSplitBefore(t *testing.T) {
 	}
 }
 
-func TestV3RunnerWith_Fixture_Chart_SkipEmptyTemplateWhenEmpty(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_SkipEmptyTemplateWhenEmpty(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    true,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-skipemptytemplate-no-match"})
+	_ = runner.RunV4([]string{"testdata/chart-skipemptytemplate-no-match"})
 
 	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_SpecialCharacters(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_SpecialCharacters(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/*_test.yaml"},
 		Strict:    true,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-special-characters"})
+	_ = runner.RunV4([]string{"testdata/chart-special-characters"})
 
 	assert.Contains(t, buffer.String(), "Test Suites: 1 passed, 1 total")
 	assert.Contains(t, buffer.String(), "Tests:       1 passed, 1 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Success(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_WithSnapshot_Success(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/success/*_test.yaml"},
 		Strict:    true,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+	_ = runner.RunV4([]string{"testdata/chart-snapshot"})
 
 	assert.Contains(t, buffer.String(), "Tests:       2 passed, 2 total")
 	assert.Contains(t, buffer.String(), "Snapshot:    5 passed, 5 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Modify(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_WithSnapshot_Modify(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
@@ -418,21 +431,21 @@ func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Modify(t *testing.T) {
 	err = writeToFile("foo: modified-bar", filePath)
 	require.NoError(t, err)
 
-	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+	_ = runner.RunV4([]string{"testdata/chart-snapshot"})
 
 	assert.Contains(t, buffer.String(), "-foo: bar")
 	assert.Contains(t, buffer.String(), "+foo: modified-bar")
 	assert.Contains(t, buffer.String(), "Snapshot:    1 failed, 0 passed, 1 total")
 }
 
-func TestV3RunnerWith_Fixture_Chart_WithSnapshot_Failed(t *testing.T) {
+func TestV4RunnerWith_Fixture_Chart_WithSnapshot_Failed(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	runner := TestRunner{
 		Printer:   printer.NewPrinter(buffer, nil),
 		TestFiles: []string{"tests/failed/*_test.yaml"},
 		Strict:    true,
 	}
-	_ = runner.RunV3([]string{"testdata/chart-snapshot"})
+	_ = runner.RunV4([]string{"testdata/chart-snapshot"})
 
 	failMsg := `
 Template:	snapshot/templates/network.yaml

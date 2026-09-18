@@ -12,17 +12,17 @@ platformHooks:
     - command: "$HELM_PLUGIN_DIR/install-binary.sh"
     - os: windows
       command: "powershell.exe"
-      args: 
-        - -ExecutionPolicy 
-        - Bypass 
-        - -File 
+      args:
+        - -ExecutionPolicy
+        - Bypass
+        - -File
         - "$HELM_PLUGIN_DIR\\install-binary.ps1"
   update:
     - command: "$HELM_PLUGIN_DIR/install-binary.sh"
     - os: windows
-      command: "powershell.exe" 
-      args: 
-        - -ExecutionPolicy 
-        - Bypass 
-        - -File 
+      command: "powershell.exe"
+      args:
+        - -ExecutionPolicy
+        - Bypass
+        - -File
         - "$HELM_PLUGIN_DIR\\install-binary.ps1"
