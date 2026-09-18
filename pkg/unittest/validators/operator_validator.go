@@ -3,6 +3,8 @@ package validators
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -40,7 +42,19 @@ func (o operatorValidator) compareValues(expected, actual any, comparisonType st
 
 	switch exp := expected.(type) {
 	case string:
-		result = o.compareStringValues(exp, actual.(string), comparisonType, negative)
+		// Try Kubernetes resource quantity parsing first (e.g., "50m", "256Mi", "1Gi")
+		if actStr, ok := actual.(string); ok {
+			if expQ, expErr := parseK8sResourceQuantity(exp); expErr == nil {
+				if actQ, actErr := parseK8sResourceQuantity(actStr); actErr == nil {
+					result = compareResourceQuantities(expQ, actQ, comparisonType, negative)
+					if result {
+						return true, nil
+					}
+					return false, []string{fmt.Sprintf("the actual '%s' is not %s or equal to the expected '%s'", actStr, comparisonType, expStr)}
+				}
+			}
+		}
+		result = o.compareStringValues(exp, actStr, comparisonType, negative)
 	case int:
 		result = o.compareIntValues(exp, actual.(int), comparisonType, negative)
 	case float64:
@@ -54,6 +68,53 @@ func (o operatorValidator) compareValues(expected, actual any, comparisonType st
 	}
 
 	return true, nil
+}
+
+// parseK8sResourceQuantity parses a Kubernetes resource string like "50m", "256Mi", "1Gi"
+// Returns the quantity in base units (millicores for CPU, bytes for memory) or an error if not parseable
+func parseK8sResourceQuantity(s string) (float64, error) {
+	s = strings.TrimSpace(s)
+
+	// Try plain number first
+	if v, err := strconv.ParseFloat(s, 64); err == nil {
+		return v, nil
+	}
+
+	// Parse Kubernetes resource suffixes
+	multipliers := map[string]float64{
+		"m":  0.001,  // millicores
+		"Ki": 1024,
+		"Mi": 1024 * 1024,
+		"Gi": 1024 * 1024 * 1024,
+		"Ti": 1024 * 1024 * 1024 * 1024,
+		"Pi": 1024 * 1024 * 1024 * 1024 * 1024,
+		"Ei": 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+		"K":  1000,
+		"M":  1000 * 1000,
+		"G":  1000 * 1000 * 1000,
+		"T":  1000 * 1000 * 1000 * 1000,
+		"P":  1000 * 1000 * 1000 * 1000 * 1000,
+		"E":  1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+	}
+
+	for suffix, mult := range multipliers {
+		if strings.HasSuffix(s, suffix) {
+			numPart := s[:len(s)-len(suffix)]
+			if v, err := strconv.ParseFloat(numPart, 64); err == nil {
+				return v * mult, nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("not a valid Kubernetes resource quantity: %s", s)
+}
+
+// compareResourceQuantities compares two parsed quantities
+func compareResourceQuantities(expected, actual float64, comparisonType string, negative bool) bool {
+	if (comparisonType == "greater" && actual >= expected) || (comparisonType == "less" && actual <= expected) == negative {
+		return true
+	}
+	return false
 }
 
 func (o operatorValidator) compareStringValues(expected, actual string, comparisonType string, negative bool) bool {
