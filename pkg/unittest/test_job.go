@@ -628,9 +628,12 @@ func (t *TestJob) releaseV4Option() *chartcommon.ReleaseOptions {
 }
 
 // capabilitiesV4 chartutil.Capabilities ready for render
-// function returns a v3util.Capabilities struct based on the TestJob's capabilities.
+// function returns a chartcommon.Capabilities struct based on the TestJob's capabilities.
 // It overrides the KubeVersion field if majorVersion or minorVersion are set
 func (t *TestJob) capabilitiesV4() *chartcommon.Capabilities {
+	// Copy the shared global so we never mutate chartcommon.DefaultCapabilities
+	// (a data race under parallel runs). APIVersions is fully replaced below,
+	// so the shallow copy of that slice is never observed.
 	capabilities := chartcommon.DefaultCapabilities.Copy()
 
 	majorVersion := cmp.Or(t.Capabilities.MajorVersion, capabilities.KubeVersion.Major)
