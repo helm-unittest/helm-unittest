@@ -388,6 +388,8 @@ var assertTypeMapping = map[string]assertTypeDef{
 	"isNotSubset":       {reflect.TypeOf(validators.IsSubsetValidator{}), true, true},
 	"isNullOrEmpty":     {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), false, true},
 	"isNotNullOrEmpty":  {reflect.TypeOf(validators.IsNullOrEmptyValidator{}), true, true},
+	"isSome":            {reflect.TypeOf(validators.IsSomeValidator{}), false, true},
+	"isNotSome":         {reflect.TypeOf(validators.IsSomeValidator{}), true, true},
 	"failedTemplate":    {reflect.TypeOf(validators.FailedTemplateValidator{}), false, false},
 	"notFailedTemplate": {reflect.TypeOf(validators.FailedTemplateValidator{}), true, true},
 	"containsDocument":  {reflect.TypeOf(validators.ContainsDocumentValidator{}), false, true},
