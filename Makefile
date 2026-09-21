@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.2.4
+HELM_VERSION := 4.3.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -15,6 +15,7 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	parallel-mulisuite \
 	with-crds \
 	with-disabled-subchart-on-condition \
 	with-disabled-subchart-on-tags \
@@ -52,11 +53,11 @@ install-dbg: bootstrap build-debug plugin-dir
 	cp plugin-dbg.yaml $(HELM_PLUGIN_DIR)/plugin.yaml
 
 .PHONY: hookInstall
-hookInstall: bootstrap build
+exphookInstall: bootstrap build
 
 .PHONY: unittest
 unittest: ## Run unit tests
-	go test ./... -v -cover -race
+	CGO_ENABLED=1 go test ./... -v -cover -race
 
 .PHONY: test-coverage
 test-coverage: build ## Test coverage with open report in default browser
@@ -143,15 +144,15 @@ dockerimage-alpine: build-amd64 ## Build docker image
 
 .PHONY: dockerimage-plugin-alpine
 dockerimage-plugin-alpine: dockerimage-alpine
-	docker build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
+	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
 
 .PHONY: dockerimage-fedora
 dockerimage-fedora: build-amd64 ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
+	docker buildx build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
 
 .PHONY: dockerimage-plugin-fedora
 dockerimage-plugin-fedora: dockerimage-fedora
-	docker build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
+	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
 
 .PHONY: test-docker-alpine
 test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
@@ -160,7 +161,7 @@ test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml . --parallel;\
 	done
 
 .PHONY: test-docker-plugin-alpine
@@ -180,7 +181,7 @@ test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml . --parallel;\
 	done
 
 .PHONY: test-docker-plugin-fedora
