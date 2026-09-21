@@ -15,6 +15,7 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	parallel-mulisuite \
 	with-crds \
 	with-disabled-subchart-on-condition \
 	with-disabled-subchart-on-tags \
