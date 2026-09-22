@@ -1,0 +1,46 @@
+package unittest
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// Regression: an earlier suite that renders coverage with a subchart disabled must not corrupt the shared instrumented chart used by a later suite's coverage render.
+func TestV4RunnerCoverageIsolatedAcrossSuites(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:      printer.NewPrinter(buffer, nil),
+		Coverage:     true,
+		WithSubChart: true,
+		TestFiles:    []string{"tests/*_test.yaml"},
+	}
+
+	passed := runner.RunV4([]string{"../../test/data/v3/coverage-subchart"})
+	require.True(t, passed, buffer.String())
+	require.Len(t, runner.coverageReports, 1)
+
+	byName := func(suffix string) (coverage.FileCoverage, bool) {
+		for _, f := range runner.coverageReports[0].Files {
+			if strings.HasSuffix(f.Name, suffix) {
+				return f, true
+			}
+		}
+		return coverage.FileCoverage{}, false
+	}
+
+	childCM, ok := byName("charts/child/templates/cm.yaml")
+	require.True(t, ok, "child subchart template missing from coverage report")
+	assert.True(t, childCM.Rendered, "child subchart template lost its Rendered flag across suites")
+	assert.Positive(t, childCM.Branches.Covered, "child subchart branch coverage lost across suites")
+
+	parentUsesChild, ok := byName("templates/parent-uses-child.yaml")
+	require.True(t, ok, "parent template missing from coverage report")
+	assert.True(t, parentUsesChild.Rendered, "parent template that includes a child define lost coverage across suites")
+	assert.Positive(t, parentUsesChild.Actions.Covered, "parent template action coverage lost across suites")
+}

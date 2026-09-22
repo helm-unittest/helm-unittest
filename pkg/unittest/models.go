@@ -2,6 +2,7 @@ package unittest
 
 import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -17,6 +18,7 @@ type TestConfig struct {
 	isSkipSchemaValidation bool
 	postRenderer           PostRendererConfig
 	includeCrds            bool
+	coverageTracker        *coverage.Tracker
 }
 
 func NewTestConfig(chart *v2chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
@@ -37,6 +39,13 @@ func NewTestConfig(chart *v2chart.Chart, cache *snapshot.Cache, options ...func(
 }
 
 type LoadTestOptionsFunc func(*TestConfig)
+
+// WithCoverageTracker enables the extra instrumented render; a nil tracker disables coverage.
+func WithCoverageTracker(tr *coverage.Tracker) LoadTestOptionsFunc {
+	return func(c *TestConfig) {
+		c.coverageTracker = tr
+	}
+}
 
 func WithFailFast(failFast bool) LoadTestOptionsFunc {
 	return func(c *TestConfig) {
