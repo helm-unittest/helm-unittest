@@ -19,6 +19,7 @@ import (
 	"helm.sh/helm/v4/pkg/postrenderer"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -338,8 +339,62 @@ func (t *TestJob) RunV4(
 		}
 	}
 
+	// Coverage is a side activity: failures are logged, never fail the user's test.
+	if tracker := t.configOrDefault().coverageTracker; tracker != nil {
+		if covOutput, covErr := t.renderForCoverage([]byte(userValues), tracker); covErr != nil {
+			log.WithField(LOG_TEST_JOB, "coverage-render").Debugf("coverage render failed: %v", covErr)
+		} else {
+			tracker.Absorb(covOutput)
+		}
+	}
+
 	result.Duration = time.Since(startTestRun)
 	return result
+}
+
+// renderForCoverage re-renders the job through the instrumented chart so covprobe calls fire. The returned map is only scanned for the Rendered flag and is otherwise discarded.
+func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker) (map[string]string, error) {
+	if tracker == nil {
+		return nil, nil
+	}
+	sharedInstrumented := tracker.InstrumentedChart()
+	if sharedInstrumented == nil {
+		return nil, nil
+	}
+	// Deep-copy first: the mutations below (ProcessDependencies subchart pruning, ModifyChartMetadata) would otherwise corrupt the tracker's shared instrumented chart for later jobs.
+	instrumented := FullCopyV2Chart(t.chartRoute, sharedInstrumented.Name(), sharedInstrumented)
+
+	values, err := chartcommon.ReadValues(userValues)
+	if err != nil {
+		return nil, err
+	}
+	options := *t.releaseV4Option()
+	if t.Release.Name != "" {
+		if err = v2chartutil.ValidateReleaseName(t.Release.Name); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = v2chartutil.ProcessDependencies(instrumented, values); err != nil {
+		return nil, err
+	}
+
+	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(instrumented, values.AsMap(), options, t.capabilitiesV4(), t.configOrDefault().isSkipSchemaValidation)
+	if err != nil {
+		return nil, err
+	}
+
+	t.ModifyChartMetadata(instrumented)
+	templatesToAssert := t.defaultTemplatesToAssert
+	if len(templatesToAssert) == 0 {
+		templatesToAssert = []string{multiWildcard}
+	}
+	filtered := CopyV2Chart(t.chartRoute, instrumented.Name(), templatesToAssert, t.defaultTemplatesToSkip, instrumented)
+
+	if len(t.KubernetesProvider.Objects) > 0 {
+		return v4engine.RenderWithClientProvider(filtered, vals, &t.KubernetesProvider)
+	}
+	return v4engine.Render(filtered, vals)
 }
 
 // liberally borrows from helm-template
