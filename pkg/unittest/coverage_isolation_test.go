@@ -63,3 +63,31 @@ func TestV4RunnerCoverageResolvesLookups(t *testing.T) {
 	assert.Positive(t, totals.Total)
 	assert.Equal(t, totals.Total, totals.Covered, "lookup-dependent templates must be fully credited in the coverage render")
 }
+
+// Regression: a define whose output is consumed as data via `include ... | fromJson` must have its own branches credited without corrupting the parsed JSON.
+func TestV4RunnerCoverageCreditsFromJsonHelper(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:      printer.NewPrinter(buffer, nil),
+		Coverage:     true,
+		WithSubChart: true,
+		TestFiles:    []string{"tests/*_test.yaml"},
+	}
+
+	passed := runner.RunV4([]string{"../../test/data/v3/coverage-fromjson"})
+	require.True(t, passed, buffer.String())
+	require.Len(t, runner.coverageReports, 1)
+
+	var helper coverage.FileCoverage
+	found := false
+	for _, f := range runner.coverageReports[0].Files {
+		if strings.HasSuffix(f.Name, "templates/_helpers.tpl") {
+			helper = f
+			found = true
+		}
+	}
+	require.True(t, found, "fromJson-consumed helper missing from coverage report")
+	assert.True(t, helper.Rendered, "fromJson-consumed helper must be credited")
+	assert.Equal(t, 2, helper.Branches.Total)
+	assert.Equal(t, 2, helper.Branches.Covered, "both branches of the fromJson-consumed helper must be credited")
+}
