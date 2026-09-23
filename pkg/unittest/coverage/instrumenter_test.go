@@ -1,8 +1,7 @@
 package coverage
 
 import (
-	"regexp"
-	"strings"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,10 +45,8 @@ data: {}
 	assert.Equal(t, 3, branches, "if + else + with should produce 3 branch probes")
 	assert.Equal(t, 1, loops, "range body should produce 1 loop probe")
 
-	// Every probe must reference our token format and the source must still
-	// parse as a valid Go template after instrumentation.
 	for _, idx := range meta.ProbeIdxs {
-		assert.Contains(t, string(instr), ProbeToken(idx))
+		assert.Contains(t, string(instr), fmt.Sprintf("{{ %s %d }}", probeFuncName, idx))
 	}
 }
 
@@ -80,13 +77,13 @@ func TestInstrument_TemplateWithParseError(t *testing.T) {
 	assert.Empty(t, meta.ProbeIdxs)
 }
 
-func TestProbeToken_Format(t *testing.T) {
-	tok := ProbeToken(42)
-	re := regexp.MustCompile(regexp.QuoteMeta(tokenPrefix) + `\d+` + regexp.QuoteMeta(tokenSuffix))
-	assert.True(t, re.MatchString(tok), "token should match the documented format")
-	// Must NOT contain quotes or YAML-special characters that would break
-	// raw inclusion into the rendered output.
-	assert.False(t, strings.ContainsAny(tok, " \"\n\t:"))
+func TestInstrument_EmitsNoOutputTokens(t *testing.T) {
+	tr := NewTrackerForTest(t)
+	instr, meta := tr.Instrument("templates/cm.yaml", []byte("data: {{ .Values.x }}\n"))
+	require.NoError(t, meta.ParseError)
+	require.NotEmpty(t, meta.ProbeIdxs)
+	assert.Contains(t, string(instr), fmt.Sprintf("{{ %s %d }}", probeFuncName, meta.ProbeIdxs[0]))
+	assert.NotContains(t, string(instr), "__HELMCOV", "legacy output tokens must be gone")
 }
 
 func TestPositionLineCol(t *testing.T) {

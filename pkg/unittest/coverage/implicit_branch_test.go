@@ -7,17 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 	chartcommon "helm.sh/helm/v4/pkg/chart/common"
 	chartcommonutil "helm.sh/helm/v4/pkg/chart/common/util"
-	v2chart "helm.sh/helm/v4/pkg/chart/v2"
 	v4engine "helm.sh/helm/v4/pkg/engine"
 )
 
-func renderChart(t *testing.T, chart *v2chart.Chart, values map[string]any) map[string]string {
+func renderChart(t *testing.T, tracker *Tracker, values map[string]any) map[string]string {
 	t.Helper()
+	chart := tracker.InstrumentedChart()
 	vals, err := chartcommonutil.ToRenderValues(chart, values, chartcommon.ReleaseOptions{
 		Name: "rel", Namespace: "ns", IsInstall: true,
 	}, nil)
 	require.NoError(t, err)
-	out, err := v4engine.Render(chart, vals)
+	eng := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}
+	out, err := eng.Render(chart, vals)
 	require.NoError(t, err)
 	return out
 }
@@ -33,9 +34,9 @@ metadata:
 	tracker := NewTracker(chart)
 
 	// First render: .Values.name is set → primary branch.
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{"name": "real"}))
+	tracker.Absorb(renderChart(t, tracker, map[string]any{"name": "real"}))
 	// Second render: .Values.name empty → fallback branch.
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{}))
+	tracker.Absorb(renderChart(t, tracker, map[string]any{}))
 
 	cov := tracker.Snapshot()
 	require.Len(t, cov.Files, 1)
@@ -56,7 +57,7 @@ metadata:
 	})
 	tracker := NewTracker(chart)
 
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{}))
+	tracker.Absorb(renderChart(t, tracker, map[string]any{}))
 
 	cov := tracker.Snapshot()
 	require.Len(t, cov.Files, 1)
@@ -76,8 +77,8 @@ metadata:
 	})
 	tracker := NewTracker(chart)
 
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{"flag": true}))
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{"flag": false}))
+	tracker.Absorb(renderChart(t, tracker, map[string]any{"flag": true}))
+	tracker.Absorb(renderChart(t, tracker, map[string]any{"flag": false}))
 
 	cov := tracker.Snapshot()
 	f := cov.Files[0]
@@ -118,7 +119,7 @@ data:
 	})
 	tracker := NewTracker(chart)
 
-	tracker.Absorb(renderChart(t, tracker.InstrumentedChart(), map[string]any{
+	tracker.Absorb(renderChart(t, tracker, map[string]any{
 		"items": map[string]any{"a": "1", "b": "2", "c": "3"},
 	}))
 

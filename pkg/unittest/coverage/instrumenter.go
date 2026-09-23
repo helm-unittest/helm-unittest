@@ -8,16 +8,8 @@ import (
 	"github.com/Masterminds/sprig/v3"
 )
 
-// tokenPrefix is the inline marker emitted by every probe. It is intentionally
-// unlikely to appear in real chart output and uses only word characters so it
-// survives most YAML quoting / escaping.
-const tokenPrefix = "__HELMCOV_PROBE_"
-const tokenSuffix = "__"
-
-// ProbeToken returns the inline marker text for a given global probe index.
-func ProbeToken(idx int) string {
-	return fmt.Sprintf("%s%d%s", tokenPrefix, idx, tokenSuffix)
-}
+// probeFuncName must emit no output so helpers whose result is consumed as data (include ... | fromJson) stay valid after instrumentation.
+const probeFuncName = "covprobe"
 
 // stubFuncs provides placeholder funcs (seeded from Sprig plus Helm's extras) so the
 // parser accepts any function reference; Helm binds and executes the real ones at render time.
@@ -168,12 +160,7 @@ func (in *Instrumenter) emitProbe(kind ProbeKind, pos parse.Pos, label string, m
 		Label:        label,
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, idx)
-	// Wrap the token in a string-literal action so any surrounding template
-	// whitespace ("{{-" / "-}}") still applies cleanly; the literal is emitted
-	// verbatim into the output.
-	in.out.WriteString("{{ \"")
-	in.out.WriteString(ProbeToken(idx))
-	in.out.WriteString("\" }}")
+	fmt.Fprintf(&in.out, "{{ %s %d }}", probeFuncName, idx)
 }
 
 func computeLineOffsets(data []byte) []int {
