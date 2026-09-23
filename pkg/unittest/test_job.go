@@ -391,7 +391,11 @@ func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker
 	}
 	filtered := CopyV2Chart(t.chartRoute, instrumented.Name(), templatesToAssert, t.defaultTemplatesToSkip, instrumented)
 
-	eng := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}
+	funcs := tracker.ProbeFuncMap()
+	if len(t.KubernetesProvider.Objects) > 0 {
+		funcs["lookup"] = coverageLookupFunc(&t.KubernetesProvider)
+	}
+	eng := v4engine.Engine{CustomTemplateFuncs: funcs}
 	return eng.Render(filtered, vals)
 }
 
