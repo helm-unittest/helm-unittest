@@ -3,6 +3,7 @@ package coverage
 import (
 	"fmt"
 	"testing"
+	"text/template/parse"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,6 +85,21 @@ func TestInstrument_EmitsNoOutputTokens(t *testing.T) {
 	require.NotEmpty(t, meta.ProbeIdxs)
 	assert.Contains(t, string(instr), fmt.Sprintf("{{ %s %d }}", probeFuncName, meta.ProbeIdxs[0]))
 	assert.NotContains(t, string(instr), "__HELMCOV", "legacy output tokens must be gone")
+}
+
+// A literal "{" (a shell brace) before a left-trimmed action must not reconstruct into "{{{", which the template parser rejects.
+func TestInstrument_AvoidsBraceCollisionAfterTrim(t *testing.T) {
+	src := []byte("foo() {\n{{- if .x }}\nbar\n{{- end }}\n}\n")
+	tr := NewTrackerForTest(t)
+	instr, meta := tr.Instrument("templates/cm.yaml", src)
+	require.NoError(t, meta.ParseError)
+	require.NotEmpty(t, meta.ProbeIdxs)
+
+	assert.NotContains(t, string(instr), "{{{")
+	tree := parse.New("x", stubFuncs())
+	tree.Mode = parse.SkipFuncCheck
+	_, err := tree.Parse(string(instr), "{{", "}}", map[string]*parse.Tree{})
+	require.NoError(t, err, "instrumented output must parse")
 }
 
 func TestPositionLineCol(t *testing.T) {

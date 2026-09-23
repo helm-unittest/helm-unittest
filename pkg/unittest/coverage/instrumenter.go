@@ -41,6 +41,19 @@ type Instrumenter struct {
 	out          strings.Builder
 	source       []byte
 	lineOffsets  []int // byte offset where each 1-based line starts
+	lastByte     byte
+}
+
+// emit writes s, inserting a space when a reconstructed action ("{{") would collide with a preceding literal "{" and lex as "{{{" (the original {{- trim is not preserved by the AST).
+func (in *Instrumenter) emit(s string) {
+	if s == "" {
+		return
+	}
+	if in.lastByte == '{' && len(s) >= 2 && s[0] == '{' && s[1] == '{' {
+		in.out.WriteByte(' ')
+	}
+	in.out.WriteString(s)
+	in.lastByte = s[len(s)-1]
 }
 
 // Instrument returns the instrumented source; on parse failure it returns the input unchanged with meta.ParseError set.
@@ -79,11 +92,11 @@ func (t *Tracker) Instrument(name string, data []byte) ([]byte, TemplateMeta) {
 		if tname == mainName {
 			continue
 		}
-		ins.out.WriteString("\n{{- define \"")
-		ins.out.WriteString(tname)
-		ins.out.WriteString("\" -}}\n")
+		ins.emit("\n{{- define \"")
+		ins.emit(tname)
+		ins.emit("\" -}}\n")
 		ins.walkList(tree.Root, &meta)
-		ins.out.WriteString("\n{{- end -}}\n")
+		ins.emit("\n{{- end -}}\n")
 	}
 
 	return []byte(ins.out.String()), meta
@@ -102,51 +115,51 @@ func (in *Instrumenter) walk(node parse.Node, meta *TemplateMeta) {
 	switch n := node.(type) {
 	case *parse.ActionNode:
 		in.maybeEmitImplicitBranch(n, meta)
-		in.out.WriteString(n.String())
+		in.emit(n.String())
 		in.emitProbe(ProbeAction, n.Pos, "action", meta)
 	case *parse.TemplateNode:
-		in.out.WriteString(n.String())
+		in.emit(n.String())
 		in.emitProbe(ProbeAction, n.Pos, "template-call", meta)
 	case *parse.IfNode:
-		in.out.WriteString("{{ if ")
-		in.out.WriteString(n.Pipe.String())
-		in.out.WriteString(" }}")
+		in.emit("{{ if ")
+		in.emit(n.Pipe.String())
+		in.emit(" }}")
 		in.emitProbe(ProbeBranch, n.Pos, "if", meta)
 		in.walkList(n.List, meta)
 		if n.ElseList != nil {
-			in.out.WriteString("{{ else }}")
+			in.emit("{{ else }}")
 			in.emitProbe(ProbeBranch, n.Pos, "else", meta)
 			in.walkList(n.ElseList, meta)
 		}
-		in.out.WriteString("{{ end }}")
+		in.emit("{{ end }}")
 	case *parse.WithNode:
-		in.out.WriteString("{{ with ")
-		in.out.WriteString(n.Pipe.String())
-		in.out.WriteString(" }}")
+		in.emit("{{ with ")
+		in.emit(n.Pipe.String())
+		in.emit(" }}")
 		in.emitProbe(ProbeBranch, n.Pos, "with", meta)
 		in.walkList(n.List, meta)
 		if n.ElseList != nil {
-			in.out.WriteString("{{ else }}")
+			in.emit("{{ else }}")
 			in.emitProbe(ProbeBranch, n.Pos, "with-else", meta)
 			in.walkList(n.ElseList, meta)
 		}
-		in.out.WriteString("{{ end }}")
+		in.emit("{{ end }}")
 	case *parse.RangeNode:
-		in.out.WriteString("{{ range ")
-		in.out.WriteString(n.Pipe.String())
-		in.out.WriteString(" }}")
+		in.emit("{{ range ")
+		in.emit(n.Pipe.String())
+		in.emit(" }}")
 		in.emitProbe(ProbeLoop, n.Pos, "range-body", meta)
 		in.walkList(n.List, meta)
 		if n.ElseList != nil {
-			in.out.WriteString("{{ else }}")
+			in.emit("{{ else }}")
 			in.emitProbe(ProbeLoop, n.Pos, "range-else", meta)
 			in.walkList(n.ElseList, meta)
 		}
-		in.out.WriteString("{{ end }}")
+		in.emit("{{ end }}")
 	case *parse.ListNode:
 		in.walkList(n, meta)
 	default:
-		in.out.WriteString(node.String())
+		in.emit(node.String())
 	}
 }
 
@@ -160,7 +173,7 @@ func (in *Instrumenter) emitProbe(kind ProbeKind, pos parse.Pos, label string, m
 		Label:        label,
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, idx)
-	fmt.Fprintf(&in.out, "{{ %s %d }}", probeFuncName, idx)
+	in.emit(fmt.Sprintf("{{ %s %d }}", probeFuncName, idx))
 }
 
 func computeLineOffsets(data []byte) []int {
