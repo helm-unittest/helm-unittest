@@ -71,8 +71,8 @@ func (in *Instrumenter) emitDefaultProbe(pipe *parse.PipeNode, last *parse.Comma
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, primary, fallback)
 
-	fmt.Fprintf(&in.out, `{{- if empty %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
-		input, probeFuncName, fallback, probeFuncName, primary)
+	in.emit(fmt.Sprintf(`{{- if empty %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
+		input, probeFuncName, fallback, probeFuncName, primary))
 }
 
 // emitTernaryProbe handles both call shapes:
@@ -96,8 +96,8 @@ func (in *Instrumenter) emitTernaryProbe(pipe *parse.PipeNode, last *parse.Comma
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, truth, falsy)
 
-	fmt.Fprintf(&in.out, `{{- if %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
-		cond, probeFuncName, truth, probeFuncName, falsy)
+	in.emit(fmt.Sprintf(`{{- if %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
+		cond, probeFuncName, truth, probeFuncName, falsy))
 }
 
 // extractImplicitInput pulls the "interesting" argument out of a default /
