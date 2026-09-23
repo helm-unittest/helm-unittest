@@ -52,7 +52,7 @@ func (in *Instrumenter) maybeEmitImplicitBranch(action *parse.ActionNode, meta *
 //
 // The instrumented form prepends:
 //
-//	{{- if empty <INPUT> }}{{ "<token-fallback>" }}{{- else }}{{ "<token-primary>" }}{{- end -}}
+//	{{- if empty <INPUT> }}{{ covprobe <fallback> }}{{- else }}{{ covprobe <primary> }}{{- end -}}
 //	<original action>
 func (in *Instrumenter) emitDefaultProbe(pipe *parse.PipeNode, last *parse.CommandNode, pos parse.Pos, meta *TemplateMeta) {
 	input, ok := extractImplicitInput(pipe, last, 2) // default expects (id, fallback, input)
@@ -71,8 +71,8 @@ func (in *Instrumenter) emitDefaultProbe(pipe *parse.PipeNode, last *parse.Comma
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, primary, fallback)
 
-	fmt.Fprintf(&in.out, `{{- if empty %s }}{{ "%s" }}{{- else }}{{ "%s" }}{{- end -}}`,
-		input, ProbeToken(fallback), ProbeToken(primary))
+	fmt.Fprintf(&in.out, `{{- if empty %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
+		input, probeFuncName, fallback, probeFuncName, primary)
 }
 
 // emitTernaryProbe handles both call shapes:
@@ -96,8 +96,8 @@ func (in *Instrumenter) emitTernaryProbe(pipe *parse.PipeNode, last *parse.Comma
 	})
 	meta.ProbeIdxs = append(meta.ProbeIdxs, truth, falsy)
 
-	fmt.Fprintf(&in.out, `{{- if %s }}{{ "%s" }}{{- else }}{{ "%s" }}{{- end -}}`,
-		cond, ProbeToken(truth), ProbeToken(falsy))
+	fmt.Fprintf(&in.out, `{{- if %s }}{{ %s %d }}{{- else }}{{ %s %d }}{{- end -}}`,
+		cond, probeFuncName, truth, probeFuncName, falsy)
 }
 
 // extractImplicitInput pulls the "interesting" argument out of a default /

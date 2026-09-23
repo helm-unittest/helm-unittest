@@ -391,10 +391,8 @@ func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker
 	}
 	filtered := CopyV2Chart(t.chartRoute, instrumented.Name(), templatesToAssert, t.defaultTemplatesToSkip, instrumented)
 
-	if len(t.KubernetesProvider.Objects) > 0 {
-		return v4engine.RenderWithClientProvider(filtered, vals, &t.KubernetesProvider)
-	}
-	return v4engine.Render(filtered, vals)
+	eng := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}
+	return eng.Render(filtered, vals)
 }
 
 // liberally borrows from helm-template

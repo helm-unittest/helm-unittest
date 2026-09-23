@@ -2,11 +2,10 @@ package coverage
 
 import (
 	"path/filepath"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 
 	log "github.com/sirupsen/logrus"
 	chartcommon "helm.sh/helm/v4/pkg/chart/common"
@@ -186,46 +185,38 @@ func (t *Tracker) HasProbes() bool {
 	return len(t.probes) > 0
 }
 
-var probeTokenRe = regexp.MustCompile(regexp.QuoteMeta(tokenPrefix) + `(\d+)` + regexp.QuoteMeta(tokenSuffix))
+// RecordHit increments the hit count for probe idx; called by covprobe during the coverage render. Safe for concurrent use.
+func (t *Tracker) RecordHit(idx int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if idx >= 0 && idx < len(t.hits) {
+		t.hits[idx]++
+	} else {
+		log.WithField(logField, "record-hit").Debugf("probe index %d out of range", idx)
+	}
+}
 
-// Absorb scans the output map produced by v3engine.Render for probe tokens,
-// increments hit counts, and records which files produced non-empty output
-// (with probe tokens stripped) so the Rendered flag can be set. It is safe to
-// call from concurrent goroutines.
+// ProbeFuncMap returns the covprobe template func the coverage render registers so instrumented templates can record probe execution.
+func (t *Tracker) ProbeFuncMap() template.FuncMap {
+	return template.FuncMap{
+		probeFuncName: func(idx int) string {
+			t.RecordHit(idx)
+			return ""
+		},
+	}
+}
+
+// Absorb marks files that produced non-empty output (the Rendered flag); hits are recorded via RecordHit during the render. Safe for concurrent use.
 func (t *Tracker) Absorb(rendered map[string]string) {
 	if len(rendered) == 0 {
 		return
 	}
-	local := make(map[int]int)
-	rendNonEmpty := make(map[string]bool)
-	for key, content := range rendered {
-		matches := probeTokenRe.FindAllStringSubmatch(content, -1)
-		for _, m := range matches {
-			idx, err := strconv.Atoi(m[1])
-			if err != nil {
-				continue
-			}
-			local[idx]++
-		}
-		// Detect "did this file produce anything real?" by stripping our own
-		// probe tokens and checking whether the remaining text has any
-		// non-whitespace characters.
-		cleaned := probeTokenRe.ReplaceAllString(content, "")
-		if strings.TrimSpace(cleaned) != "" {
-			rendNonEmpty[key] = true
-		}
-	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	for idx, n := range local {
-		if idx >= 0 && idx < len(t.hits) {
-			t.hits[idx] += int64(n)
-		} else {
-			log.WithField(logField, "absorb").Debugf("probe index %d out of range", idx)
+	for key, content := range rendered {
+		if strings.TrimSpace(content) != "" {
+			t.renderedFiles[key] = true
 		}
-	}
-	for key := range rendNonEmpty {
-		t.renderedFiles[key] = true
 	}
 }
 
