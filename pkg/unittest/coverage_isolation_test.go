@@ -44,3 +44,22 @@ func TestV4RunnerCoverageIsolatedAcrossSuites(t *testing.T) {
 	assert.True(t, parentUsesChild.Rendered, "parent template that includes a child define lost coverage across suites")
 	assert.Positive(t, parentUsesChild.Actions.Covered, "parent template action coverage lost across suites")
 }
+
+// Regression: the coverage render must resolve `lookup` against the test's KubernetesProvider, or lookup-dependent branches diverge from the primary render and coverage is lost.
+func TestV4RunnerCoverageResolvesLookups(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:      printer.NewPrinter(buffer, nil),
+		Coverage:     true,
+		WithSubChart: true,
+		TestFiles:    []string{"tests/*_test.yaml"},
+	}
+
+	passed := runner.RunV4([]string{"../../test/data/v3/with-k8s-fake-client"})
+	require.True(t, passed, buffer.String())
+	require.Len(t, runner.coverageReports, 1)
+
+	totals := runner.coverageReports[0].Totals.Actions
+	assert.Positive(t, totals.Total)
+	assert.Equal(t, totals.Total, totals.Covered, "lookup-dependent templates must be fully credited in the coverage render")
+}
