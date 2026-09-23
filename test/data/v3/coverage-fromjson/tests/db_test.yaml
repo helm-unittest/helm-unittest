@@ -1,0 +1,18 @@
+suite: fromjson
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: primary branch
+    set:
+      enabled: true
+    asserts:
+      - equal:
+          path: data.mode
+          value: primary
+  - it: fallback branch
+    set:
+      enabled: false
+    asserts:
+      - equal:
+          path: data.mode
+          value: fallback
