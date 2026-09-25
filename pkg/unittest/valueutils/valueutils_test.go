@@ -557,6 +557,16 @@ func TestMergeValues_SourceWithNilValue(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestMergeValues_NilRemovesKey(t *testing.T) {
+	// When source sets a key to null, it should remove the key from the merged result
+	// This matches real Helm behavior: null in values file removes the key
+	src := map[string]any{"a": map[string]any{"b": nil}}
+	dest := map[string]any{"a": map[string]any{"b": "keep", "c": 2}}
+	expected := map[string]any{"a": map[string]any{"c": 2}}
+	actual := v3util.MergeTables(dest, src)
+	assert.Equal(t, expected, actual)
+}
+
 func TestMergeValues_NestedMapWithEmptyMap(t *testing.T) {
 	src := map[string]any{"a": map[string]any{"b": 1}}
 	dest := map[string]any{"a": map[string]any{}}
