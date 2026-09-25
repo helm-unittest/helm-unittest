@@ -10,6 +10,29 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 )
 
+// RemapRoot rewrites each file's path from being rooted at chartName to
+// reportRoot instead, since a chart's Chart.yaml name doesn't have to match
+// the directory report consumers resolve filename/SF: paths against.
+func RemapRoot(cov Coverage, chartName, reportRoot string) Coverage {
+	if reportRoot == chartName {
+		return cov
+	}
+	prefix := chartName + "/"
+	out := cov
+	out.Files = make([]FileCoverage, len(cov.Files))
+	for i, f := range cov.Files {
+		if rest, ok := strings.CutPrefix(f.Name, prefix); ok {
+			if reportRoot == "" {
+				f.Name = rest
+			} else {
+				f.Name = reportRoot + "/" + rest
+			}
+		}
+		out.Files[i] = f
+	}
+	return out
+}
+
 // RenderConsole prints a human-friendly per-template coverage table to the
 // provided printer. If p is nil, plain text is written to os.Stdout.
 func RenderConsole(p *printer.Printer, cov Coverage) {

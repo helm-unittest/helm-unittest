@@ -152,7 +152,14 @@ func (tr *TestRunner) RunV4(ChartPaths []string) bool {
 		chartPassed := tr.runV4SuitesOfChart(testSuites, chart)
 
 		if tracker != nil {
-			tr.coverageReports = append(tr.coverageReports, tracker.Snapshot())
+			// Chart.yaml's declared name doesn't have to match the directory
+			// the chart was loaded from; report file paths need to resolve
+			// against the real directory so external tools can find the source.
+			reportRoot := filepath.ToSlash(filepath.Clean(chartPath))
+			if reportRoot == "." {
+				reportRoot = ""
+			}
+			tr.coverageReports = append(tr.coverageReports, coverage.RemapRoot(tracker.Snapshot(), chart.Name(), reportRoot))
 		}
 
 		tr.countChart(chartPassed, nil)

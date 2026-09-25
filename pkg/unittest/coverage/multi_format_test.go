@@ -130,3 +130,16 @@ func TestWriteReport_AcceptsAllResolvedFormats(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(info), "end_of_record", "lcov output should have records")
 }
+
+func TestRemapRoot(t *testing.T) {
+	cov := Coverage{ChartName: "demo", Files: []FileCoverage{{Name: "demo/templates/cm.yaml"}}}
+
+	same := RemapRoot(cov, "demo", "demo")
+	assert.Equal(t, "demo/templates/cm.yaml", same.Files[0].Name, "no-op when reportRoot matches chartName")
+
+	remapped := RemapRoot(cov, "demo", "charts/my-chart-dir")
+	assert.Equal(t, "charts/my-chart-dir/templates/cm.yaml", remapped.Files[0].Name)
+
+	rootless := RemapRoot(cov, "demo", "")
+	assert.Equal(t, "templates/cm.yaml", rootless.Files[0].Name, "empty reportRoot drops the chart prefix entirely")
+}
