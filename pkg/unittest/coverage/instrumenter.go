@@ -90,7 +90,6 @@ func (in *Instrumenter) walkList(list *parse.ListNode, meta *TemplateMeta) {
 func (in *Instrumenter) walk(node parse.Node, meta *TemplateMeta) {
 	switch n := node.(type) {
 	case *parse.ActionNode:
-		in.maybeEmitImplicitBranch(n, meta)
 		in.emit(n.String())
 		in.emitProbe(ProbeAction, n.Pos, "action", meta)
 	case *parse.TemplateNode:
