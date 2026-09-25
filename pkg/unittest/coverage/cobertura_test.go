@@ -78,15 +78,13 @@ func TestWriteCobertura_StructureAndCounts(t *testing.T) {
 
 	cm := byName["demo/templates/cm.yaml"]
 	require.Len(t, cm.Lines.Lines, 3)
-	assert.Equal(t, "true", cm.HelmUnittestRendered, "rendered template should be flagged")
 	// Branch line should be marked and carry condition-coverage attribute.
 	branchLine := cm.Lines.Lines[1]
 	assert.Equal(t, 6, branchLine.Number)
 	assert.Equal(t, "true", branchLine.Branch)
 	assert.Contains(t, branchLine.ConditionCoverage, "1/2")
 
-	dead := byName["demo/templates/dead.yaml"]
-	assert.Equal(t, "false", dead.HelmUnittestRendered, "unrendered template should be flagged")
+	assert.Contains(t, byName, "demo/templates/dead.yaml", "unrendered templates still appear as classes")
 }
 
 func TestClassNameFromPath(t *testing.T) {

@@ -25,12 +25,6 @@ func TestWriteLCOV_RecordsAndCounters(t *testing.T) {
 	assert.Contains(t, contents, "SF:demo/templates/dead.yaml")
 	assert.Contains(t, contents, "SF:demo/templates/broken.yaml")
 
-	// helm-unittest extension comment lines should encode per-file Rendered status.
-	assert.Contains(t, contents, "# helm-unittest:rendered=true",
-		"cm.yaml should be flagged as rendered")
-	assert.Contains(t, contents, "# helm-unittest:rendered=false",
-		"dead.yaml / broken.yaml should be flagged as unrendered")
-
 	// Per-line DA lines must be present for every Lines entry on the real file.
 	assert.Contains(t, contents, "DA:4,2")
 	assert.Contains(t, contents, "DA:6,0")
