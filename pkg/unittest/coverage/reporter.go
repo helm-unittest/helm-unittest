@@ -217,7 +217,6 @@ const (
 	FormatJSON      = "json"
 	FormatCobertura = "cobertura"
 	FormatLCOV      = "lcov"
-	FormatHTML      = "html"
 )
 
 // FormatExt returns the conventional file extension for a coverage format
@@ -232,8 +231,6 @@ func FormatExt(format string) string {
 		return ".xml"
 	case FormatLCOV:
 		return ".info"
-	case FormatHTML:
-		return ".html"
 	default:
 		return ""
 	}
@@ -248,7 +245,7 @@ func ParseFormats(s string) ([]string, error) {
 		return []string{FormatJSON}, nil
 	}
 	known := map[string]bool{
-		FormatJSON: true, FormatCobertura: true, FormatLCOV: true, FormatHTML: true,
+		FormatJSON: true, FormatCobertura: true, FormatLCOV: true,
 	}
 	parts := strings.Split(s, ",")
 	out := make([]string, 0, len(parts))
@@ -259,7 +256,7 @@ func ParseFormats(s string) ([]string, error) {
 			continue
 		}
 		if !known[p] {
-			return nil, fmt.Errorf("unsupported coverage format %q (want json, cobertura, lcov, or html)", p)
+			return nil, fmt.Errorf("unsupported coverage format %q (want json, cobertura, or lcov)", p)
 		}
 		if seen[p] {
 			continue // ignore duplicates rather than writing the same file twice
@@ -280,7 +277,7 @@ type FileTarget struct {
 
 // knownExtensions lists every extension ResolveOutputPaths is willing to strip
 // when treating a user-provided --coverage-file as a stem.
-var knownExtensions = []string{".json", ".xml", ".info", ".html"}
+var knownExtensions = []string{".json", ".xml", ".info"}
 
 // ResolveOutputPaths maps the user's --coverage-file value to a list of
 // concrete (path, format) targets.
@@ -326,10 +323,8 @@ func WriteReport(path, format string, cov Coverage) error {
 		return WriteCobertura(path, cov)
 	case FormatLCOV:
 		return WriteLCOV(path, cov)
-	case FormatHTML:
-		return WriteHTML(path, cov)
 	default:
-		return fmt.Errorf("unsupported coverage format %q (want json, cobertura, lcov, or html)", format)
+		return fmt.Errorf("unsupported coverage format %q (want json, cobertura, or lcov)", format)
 	}
 }
 

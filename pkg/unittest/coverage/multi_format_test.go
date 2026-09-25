@@ -19,11 +19,12 @@ func TestParseFormats(t *testing.T) {
 		{in: "", want: []string{FormatJSON}},
 		{in: "   ", want: []string{FormatJSON}},
 		{in: "json", want: []string{FormatJSON}},
-		{in: "cobertura,lcov,html", want: []string{FormatCobertura, FormatLCOV, FormatHTML}},
-		{in: "cobertura , lcov , html", want: []string{FormatCobertura, FormatLCOV, FormatHTML}}, // whitespace tolerated
+		{in: "cobertura,lcov", want: []string{FormatCobertura, FormatLCOV}},
+		{in: "cobertura , lcov", want: []string{FormatCobertura, FormatLCOV}}, // whitespace tolerated
 
-		{in: "html,html,html", want: []string{FormatHTML}}, // duplicates collapsed
+		{in: "lcov,lcov,lcov", want: []string{FormatLCOV}}, // duplicates collapsed
 		{in: "json,nope", err: true},
+		{in: "html", err: true},
 		{in: ",,,", err: true}, // nothing usable
 	}
 	for _, c := range cases {
@@ -60,7 +61,6 @@ func TestResolveOutputPaths_SingleFormatAppendsExtensionWhenMissing(t *testing.T
 		{"coverage", FormatJSON, "coverage.json"},
 		{"./reports/cov", FormatCobertura, "./reports/cov.xml"},
 		{"out", FormatLCOV, "out.info"},
-		{"report", FormatHTML, "report.html"},
 		// User-provided extension wins, even when it doesn't match the format.
 		{"coverage.report", FormatJSON, "coverage.report"},
 	}
@@ -73,26 +73,25 @@ func TestResolveOutputPaths_SingleFormatAppendsExtensionWhenMissing(t *testing.T
 
 func TestResolveOutputPaths_MultiFormatStem(t *testing.T) {
 	// Multiple formats → path is a stem; each format gets its own extension.
-	got := ResolveOutputPaths("./reports/cov", []string{FormatCobertura, FormatLCOV, FormatHTML, FormatJSON})
+	got := ResolveOutputPaths("./reports/cov", []string{FormatCobertura, FormatLCOV, FormatJSON})
 	want := map[string]string{
 		"./reports/cov.xml":  FormatCobertura,
 		"./reports/cov.info": FormatLCOV,
-		"./reports/cov.html": FormatHTML,
 		"./reports/cov.json": FormatJSON,
 	}
 	for _, target := range got {
 		assert.Equal(t, want[target.Path], target.Format, target.Path)
 	}
-	assert.Len(t, got, 4)
+	assert.Len(t, got, 3)
 }
 
 func TestResolveOutputPaths_MultiFormatStripsKnownExtension(t *testing.T) {
 	// If the user accidentally passes a path with a known extension, we
 	// strip it so we don't end up writing `coverage.xml.xml`.
-	got := ResolveOutputPaths("coverage.xml", []string{FormatCobertura, FormatHTML})
+	got := ResolveOutputPaths("coverage.xml", []string{FormatCobertura, FormatJSON})
 	paths := []string{got[0].Path, got[1].Path}
 	assert.Contains(t, paths, "coverage.xml")
-	assert.Contains(t, paths, "coverage.html")
+	assert.Contains(t, paths, "coverage.json")
 }
 
 func TestResolveOutputPaths_MultiFormatUnknownExtensionKept(t *testing.T) {
@@ -107,7 +106,6 @@ func TestFormatExt(t *testing.T) {
 	assert.Equal(t, ".json", FormatExt(FormatJSON))
 	assert.Equal(t, ".xml", FormatExt(FormatCobertura))
 	assert.Equal(t, ".info", FormatExt(FormatLCOV))
-	assert.Equal(t, ".html", FormatExt(FormatHTML))
 	assert.Equal(t, "", FormatExt("bogus"))
 }
 
@@ -118,7 +116,7 @@ func TestWriteReport_AcceptsAllResolvedFormats(t *testing.T) {
 	dir := t.TempDir()
 	stem := filepath.Join(dir, "cov")
 
-	formats, err := ParseFormats("cobertura,lcov,html,json")
+	formats, err := ParseFormats("cobertura,lcov,json")
 	require.NoError(t, err)
 
 	for _, target := range ResolveOutputPaths(stem, formats) {
@@ -133,10 +131,6 @@ func TestWriteReport_AcceptsAllResolvedFormats(t *testing.T) {
 	info, err := os.ReadFile(stem + ".info")
 	require.NoError(t, err)
 	assert.Contains(t, string(info), "end_of_record", "lcov output should have records")
-
-	html, err := os.ReadFile(stem + ".html")
-	require.NoError(t, err)
-	assert.True(t, strings.HasPrefix(string(html), "<!doctype html>"), "html output should look like HTML")
 
 	js, err := os.ReadFile(stem + ".json")
 	require.NoError(t, err)
