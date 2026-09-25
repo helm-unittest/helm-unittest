@@ -342,7 +342,7 @@ func (t *TestJob) RunV4(
 	// Coverage is a side activity: failures are logged, never fail the user's test.
 	if tracker := t.configOrDefault().coverageTracker; tracker != nil {
 		if covOutput, covErr := t.renderForCoverage([]byte(userValues), tracker); covErr != nil {
-			log.WithField(LOG_TEST_JOB, "coverage-render").Debugf("coverage render failed: %v", covErr)
+			log.WithField(LOG_TEST_JOB, "coverage-render").Warnf("coverage render failed for job %q: %v", t.Name, covErr)
 		} else {
 			tracker.Absorb(covOutput)
 		}
