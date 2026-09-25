@@ -1,7 +1,6 @@
 package coverage
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -214,7 +213,6 @@ func joinInts(xs []int) string {
 }
 
 const (
-	FormatJSON      = "json"
 	FormatCobertura = "cobertura"
 	FormatLCOV      = "lcov"
 )
@@ -225,8 +223,6 @@ const (
 // for unknown formats.
 func FormatExt(format string) string {
 	switch format {
-	case FormatJSON:
-		return ".json"
 	case FormatCobertura:
 		return ".xml"
 	case FormatLCOV:
@@ -237,15 +233,15 @@ func FormatExt(format string) string {
 }
 
 // ParseFormats parses a comma-separated --coverage-format value, trimming
-// whitespace around each entry. An empty string defaults to ["json"]. Any
-// unrecognised format produces an error so misspellings fail loudly instead
-// of being silently dropped.
+// whitespace around each entry. An empty string defaults to ["cobertura"].
+// Any unrecognised format produces an error so misspellings fail loudly
+// instead of being silently dropped.
 func ParseFormats(s string) ([]string, error) {
 	if strings.TrimSpace(s) == "" {
-		return []string{FormatJSON}, nil
+		return []string{FormatCobertura}, nil
 	}
 	known := map[string]bool{
-		FormatJSON: true, FormatCobertura: true, FormatLCOV: true,
+		FormatCobertura: true, FormatLCOV: true,
 	}
 	parts := strings.Split(s, ",")
 	out := make([]string, 0, len(parts))
@@ -256,7 +252,7 @@ func ParseFormats(s string) ([]string, error) {
 			continue
 		}
 		if !known[p] {
-			return nil, fmt.Errorf("unsupported coverage format %q (want json, cobertura, or lcov)", p)
+			return nil, fmt.Errorf("unsupported coverage format %q (want cobertura or lcov)", p)
 		}
 		if seen[p] {
 			continue // ignore duplicates rather than writing the same file twice
@@ -277,7 +273,7 @@ type FileTarget struct {
 
 // knownExtensions lists every extension ResolveOutputPaths is willing to strip
 // when treating a user-provided --coverage-file as a stem.
-var knownExtensions = []string{".json", ".xml", ".info"}
+var knownExtensions = []string{".xml", ".info"}
 
 // ResolveOutputPaths maps the user's --coverage-file value to a list of
 // concrete (path, format) targets.
@@ -317,85 +313,11 @@ func ResolveOutputPaths(file string, formats []string) []FileTarget {
 // expected to validate user input before calling.
 func WriteReport(path, format string, cov Coverage) error {
 	switch format {
-	case "", FormatJSON:
-		return WriteJSON(path, cov)
-	case FormatCobertura:
+	case "", FormatCobertura:
 		return WriteCobertura(path, cov)
 	case FormatLCOV:
 		return WriteLCOV(path, cov)
 	default:
-		return fmt.Errorf("unsupported coverage format %q (want json, cobertura, or lcov)", format)
+		return fmt.Errorf("unsupported coverage format %q (want cobertura or lcov)", format)
 	}
-}
-
-// WriteJSON writes a stable JSON document to path describing per-file and
-// total coverage. The schema is intended for CI consumption and is documented
-// in DOCUMENT.md.
-func WriteJSON(path string, cov Coverage) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = f.Close() }()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	return enc.Encode(toJSONReport(cov))
-}
-
-type jsonStat struct {
-	Covered int     `json:"covered"`
-	Total   int     `json:"total"`
-	Pct     float64 `json:"pct"`
-	Hits    int64   `json:"hits"`
-}
-
-type jsonFile struct {
-	Name        string   `json:"name"`
-	ParseError  string   `json:"parseError,omitempty"`
-	Rendered    bool     `json:"rendered"`
-	Actions     jsonStat `json:"actions"`
-	Branches    jsonStat `json:"branches"`
-	Loops       jsonStat `json:"loops"`
-	MissedLines []int    `json:"missedLines,omitempty"`
-}
-
-type jsonReport struct {
-	Chart  string     `json:"chart"`
-	Files  []jsonFile `json:"files"`
-	Totals struct {
-		Actions  jsonStat `json:"actions"`
-		Branches jsonStat `json:"branches"`
-		Loops    jsonStat `json:"loops"`
-	} `json:"totals"`
-}
-
-func toJSONReport(cov Coverage) jsonReport {
-	r := jsonReport{Chart: cov.ChartName}
-	for _, f := range cov.Files {
-		entry := jsonFile{
-			Name:        f.Name,
-			Rendered:    f.Rendered,
-			Actions:     toJSONStat(f.Actions),
-			Branches:    toJSONStat(f.Branches),
-			Loops:       toJSONStat(f.Loops),
-			MissedLines: f.MissedLines,
-		}
-		if f.ParseError != nil {
-			entry.ParseError = f.ParseError.Error()
-		}
-		r.Files = append(r.Files, entry)
-	}
-	r.Totals.Actions = toJSONStat(cov.Totals.Actions)
-	r.Totals.Branches = toJSONStat(cov.Totals.Branches)
-	r.Totals.Loops = toJSONStat(cov.Totals.Loops)
-	return r
-}
-
-func toJSONStat(s CountStat) jsonStat {
-	pct := s.Pct()
-	if pct < 0 {
-		pct = 0
-	}
-	return jsonStat{Covered: s.Covered, Total: s.Total, Pct: pct, Hits: s.Hits}
 }

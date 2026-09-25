@@ -57,11 +57,11 @@ func TestWriteReport_UnknownFormat(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported coverage format")
 }
 
-func TestWriteReport_DefaultIsJSON(t *testing.T) {
+func TestWriteReport_DefaultIsCobertura(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "out.json")
+	path := filepath.Join(dir, "out.xml")
 	require.NoError(t, WriteReport(path, "", sampleCoverage()))
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)
-	assert.True(t, strings.HasPrefix(strings.TrimSpace(string(data)), "{"), "default writer should emit JSON")
+	assert.True(t, strings.HasPrefix(string(data), "<?xml"), "default writer should emit Cobertura XML")
 }
