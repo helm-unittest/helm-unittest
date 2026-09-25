@@ -96,7 +96,7 @@ func TestInstrument_AvoidsBraceCollisionAfterTrim(t *testing.T) {
 	require.NotEmpty(t, meta.ProbeIdxs)
 
 	assert.NotContains(t, string(instr), "{{{")
-	tree := parse.New("x", stubFuncs())
+	tree := parse.New("x", nil)
 	tree.Mode = parse.SkipFuncCheck
 	_, err := tree.Parse(string(instr), "{{", "}}", map[string]*parse.Tree{})
 	require.NoError(t, err, "instrumented output must parse")
