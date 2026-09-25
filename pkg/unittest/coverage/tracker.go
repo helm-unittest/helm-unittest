@@ -230,7 +230,7 @@ func (t *Tracker) Snapshot() Coverage {
 	// Group probe indexes per template for fast lookup.
 	for _, key := range t.templateOrder {
 		meta := t.templateMetas[key]
-		fc := FileCoverage{Name: key, ParseError: meta.ParseError, Source: meta.Source}
+		fc := FileCoverage{Name: key, ParseError: meta.ParseError}
 		uncoveredLines := map[int]struct{}{}
 		lineAcc := map[int]*LineCoverage{}
 		for _, pi := range meta.ProbeIdxs {

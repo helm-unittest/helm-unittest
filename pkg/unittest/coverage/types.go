@@ -20,7 +20,6 @@ type TemplateMeta struct {
 	Name       string
 	ProbeIdxs  []int
 	ParseError error
-	Source     []byte
 }
 
 type FileCoverage struct {
@@ -31,8 +30,6 @@ type FileCoverage struct {
 	Loops       CountStat
 	MissedLines []int
 	Lines       []LineCoverage
-	// Source is kept only for the HTML report's source view; JSON omits it.
-	Source []byte `json:"-"`
 	// Rendered is true if the template produced output itself OR any of its probes
 	// were exercised (the latter catches _*.tpl partials called via include).
 	Rendered bool

@@ -33,7 +33,7 @@ func (in *Instrumenter) emit(s string) {
 
 // Instrument returns the instrumented source; on parse failure it returns the input unchanged with meta.ParseError set.
 func (t *Tracker) Instrument(name string, data []byte) ([]byte, TemplateMeta) {
-	meta := TemplateMeta{Name: name, Source: data}
+	meta := TemplateMeta{Name: name}
 
 	// SkipFuncCheck: we never execute these templates, so unknown funcs need not resolve; Helm resolves them at render time.
 	// The mode makes the tree ignore its funcs map entirely, so no stub map is needed here.
