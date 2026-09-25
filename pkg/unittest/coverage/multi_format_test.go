@@ -131,6 +131,25 @@ func TestWriteReport_AcceptsAllResolvedFormats(t *testing.T) {
 	assert.Contains(t, string(info), "end_of_record", "lcov output should have records")
 }
 
+func TestMergeReports(t *testing.T) {
+	assert.Equal(t, Coverage{}, MergeReports(nil), "empty input merges to an empty report")
+
+	single := Coverage{ChartName: "demo", Files: []FileCoverage{{Name: "demo/templates/cm.yaml"}}}
+	assert.Equal(t, single, MergeReports([]Coverage{single}), "single-chart input is returned unchanged")
+
+	a := Coverage{ChartName: "chart-a", Files: []FileCoverage{{Name: "chart-a/templates/cm.yaml"}}}
+	a.Totals.Actions = CountStat{Covered: 1, Total: 2}
+	b := Coverage{ChartName: "chart-b", Files: []FileCoverage{{Name: "chart-b/templates/cm.yaml"}}}
+	b.Totals.Actions = CountStat{Covered: 3, Total: 4}
+
+	merged := MergeReports([]Coverage{a, b})
+	assert.Equal(t, "chart-a,chart-b", merged.ChartName)
+	require.Len(t, merged.Files, 2)
+	assert.Equal(t, "chart-a/templates/cm.yaml", merged.Files[0].Name)
+	assert.Equal(t, "chart-b/templates/cm.yaml", merged.Files[1].Name)
+	assert.Equal(t, CountStat{Covered: 4, Total: 6}, merged.Totals.Actions, "totals sum across charts")
+}
+
 func TestRemapRoot(t *testing.T) {
 	cov := Coverage{ChartName: "demo", Files: []FileCoverage{{Name: "demo/templates/cm.yaml"}}}
 

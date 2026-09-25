@@ -33,6 +33,37 @@ func RemapRoot(cov Coverage, chartName, reportRoot string) Coverage {
 	return out
 }
 
+// MergeReports combines multiple per-chart Coverage snapshots into one
+// report; files simply concatenate since each is already rooted at its own
+// chart's directory. A single-chart run is returned unchanged.
+func MergeReports(covs []Coverage) Coverage {
+	if len(covs) <= 1 {
+		if len(covs) == 1 {
+			return covs[0]
+		}
+		return Coverage{}
+	}
+	names := make([]string, 0, len(covs))
+	merged := Coverage{}
+	for _, cov := range covs {
+		if cov.ChartName != "" {
+			names = append(names, cov.ChartName)
+		}
+		merged.Files = append(merged.Files, cov.Files...)
+		merged.Totals.Actions.Covered += cov.Totals.Actions.Covered
+		merged.Totals.Actions.Total += cov.Totals.Actions.Total
+		merged.Totals.Actions.Hits += cov.Totals.Actions.Hits
+		merged.Totals.Branches.Covered += cov.Totals.Branches.Covered
+		merged.Totals.Branches.Total += cov.Totals.Branches.Total
+		merged.Totals.Branches.Hits += cov.Totals.Branches.Hits
+		merged.Totals.Loops.Covered += cov.Totals.Loops.Covered
+		merged.Totals.Loops.Total += cov.Totals.Loops.Total
+		merged.Totals.Loops.Hits += cov.Totals.Loops.Hits
+	}
+	merged.ChartName = strings.Join(names, ",")
+	return merged
+}
+
 // RenderConsole prints a human-friendly per-template coverage table to the
 // provided printer. If p is nil, plain text is written to os.Stdout.
 func RenderConsole(p *printer.Printer, cov Coverage) {

@@ -194,18 +194,13 @@ func (tr *TestRunner) renderCoverage() {
 	}
 	targets := coverage.ResolveOutputPaths(tr.CoverageFile, formats)
 
-	// For multi-chart runs the first chart uses the resolved path as-is and
-	// subsequent charts append a `.<chartName>` suffix to disambiguate. This
-	// matches the long-standing single-format behaviour.
-	for i, cov := range tr.coverageReports {
-		for _, target := range targets {
-			path := target.Path
-			if i > 0 {
-				path = fmt.Sprintf("%s.%s", path, cov.ChartName)
-			}
-			if err := coverage.WriteReport(path, target.Format, cov); err != nil {
-				log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write %s coverage report for %s: %v", target.Format, cov.ChartName, err)
-			}
+	// A multi-chart run writes one merged report per format: each file's
+	// path is already unique (rooted at its own chart's directory), so
+	// merging just concatenates rather than colliding on the same filename.
+	merged := coverage.MergeReports(tr.coverageReports)
+	for _, target := range targets {
+		if err := coverage.WriteReport(target.Path, target.Format, merged); err != nil {
+			log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write %s coverage report: %v", target.Format, err)
 		}
 	}
 }
