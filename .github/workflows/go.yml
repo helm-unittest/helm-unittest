@@ -79,7 +79,7 @@ jobs:
       - name: Upload Testlog
         # https://github.com/EnricoMi/publish-unit-test-result-action
         uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
-        if: always() && matrix.os == 'ubuntu-24.04' && github.ref_name == github.event.repository.default_branch
+        if: always() && github.ref_name == github.event.repository.default_branch
         with:
           files: |
             test-results/go-test-report.xml

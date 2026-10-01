@@ -17,6 +17,7 @@ const internalTestMultiSuiteChart = "../../test/data/v3/parallel-multisuite"
 // copyChartToTemp copies a fixture chart into a throwaway directory.
 func copyChartToTemp(t *testing.T, src string) string {
 	t.Helper()
+	t.Setenv("GOTMPDIR", ".")
 	dir := filepath.Join(t.TempDir(), "chart")
 	if err := os.CopyFS(dir, os.DirFS(src)); err != nil {
 		t.Fatalf("failed to copy fixture %s: %v", src, err)

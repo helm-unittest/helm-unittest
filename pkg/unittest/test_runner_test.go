@@ -639,6 +639,7 @@ func TestV4RunnerParallelDeterministicOutput(t *testing.T) {
 func TestV4RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 	// Copy the fixture so the update run writes into a throwaway location.
 	copyChart := func() string {
+		t.Setenv("GOTMPDIR", ".")
 		dir := filepath.Join(t.TempDir(), "chart")
 		if err := os.CopyFS(dir, os.DirFS(testV4ParallelMultiSuiteChart)); err != nil {
 			t.Fatalf("failed to copy fixture: %v", err)
@@ -691,6 +692,7 @@ func TestV4RunnerParallelMultiSuiteSharedSnapshot(t *testing.T) {
 // runs that write snapshots never touch the committed fixture.
 func copyMultiSuiteChart(t *testing.T) string {
 	t.Helper()
+	t.Setenv("GOTMPDIR", ".")
 	dir := filepath.Join(t.TempDir(), "chart")
 	if err := os.CopyFS(dir, os.DirFS(testV4ParallelMultiSuiteChart)); err != nil {
 		t.Fatalf("failed to copy fixture: %v", err)
@@ -832,6 +834,7 @@ func TestV4RunnerParallelFailfastStopsScheduling(t *testing.T) {
 
 	// Work on a throwaway copy so the failing suites (which may rewrite snapshots)
 	// never touch the committed fixture.
+	t.Setenv("GOTMPDIR", ".")
 	chartDir := filepath.Join(t.TempDir(), "chart")
 	if err := os.CopyFS(chartDir, os.DirFS(testV4BasicChart)); err != nil {
 		t.Fatalf("failed to copy fixture: %v", err)
