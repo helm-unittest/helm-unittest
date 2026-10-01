@@ -272,7 +272,7 @@ func (t *TestJob) RunV4(
 	result *results.TestJobResult,
 ) *results.TestJobResult {
 	startTestRun := time.Now()
-	log.WithField(LOG_TEST_JOB, "run-v3").Debug("job name ", t.Name)
+	log.WithField(LOG_TEST_JOB, "run-v4").Debug("job name ", t.Name)
 	t.determineRenderSuccess()
 	result.DisplayName = t.Name
 	userValues, err := t.getUserValues()
@@ -436,7 +436,7 @@ func (t *TestJob) renderv2chart(userValues []byte) (map[string]string, bool, err
 
 	var renderSucceed bool
 	outputOfFiles, renderSucceed, err = t.translateErrorToOutputFiles(err, outputOfFiles)
-	log.WithField(LOG_TEST_JOB, "render-v3-chart").Debug("outputOfFiles:", outputOfFiles, "renderSucceed:", renderSucceed, "err:", err)
+	log.WithField(LOG_TEST_JOB, "render-v2-chart").Debug("outputOfFiles:", outputOfFiles, "renderSucceed:", renderSucceed, "err:", err)
 	if err != nil {
 		return nil, false, err
 	}

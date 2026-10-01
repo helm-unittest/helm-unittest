@@ -403,14 +403,14 @@ func (tr *TestRunner) getV4TestSuitesWithValues(chartPath, chartRoute string, ch
 	if mergedValues == nil {
 		mergedValues, err = tr.buildMergedValuesForChart(chart, chartPath)
 		if err != nil {
-			log.WithField(LOG_TEST_RUNNER, "get-v3-test-suites").
+			log.WithField(LOG_TEST_RUNNER, "get-v4-test-suites").
 				Warnf("Failed to merge values for condition evaluation: %v. All subchart tests will be included.", err)
 		}
 	}
 
 	for _, subchart := range chart.Dependencies() {
 		if mergedValues != nil && !tr.isSubchartEnabled(chart, subchart, mergedValues) {
-			log.WithField(LOG_TEST_RUNNER, "get-v3-test-suites").
+			log.WithField(LOG_TEST_RUNNER, "get-v4-test-suites").
 				Debugf("Skipping tests for disabled subchart: %s (from chart: %s)", subchart.Metadata.Name, chart.Name())
 			continue
 		}
@@ -422,7 +422,7 @@ func (tr *TestRunner) getV4TestSuitesWithValues(chartPath, chartRoute string, ch
 			mergedValues,
 		)
 		if err != nil {
-			log.WithField(LOG_TEST_RUNNER, "get-v3-test-suites").
+			log.WithField(LOG_TEST_RUNNER, "get-v4-test-suites").
 				Warnf("Failed to get test suites for subchart %s: %v", subchart.Metadata.Name, err)
 			continue
 		}
