@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -31,7 +32,7 @@ a:
 
 func TestEqualValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -43,7 +44,7 @@ func TestEqualValidatorWhenOk(t *testing.T) {
 
 func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.e", "Line1\nLine2\n", false}
+	validator := EqualValidator{Path: "a.e", Value: "Line1\nLine2\n", DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -55,7 +56,7 @@ func TestEqualValidatorMultiLineWhenOk(t *testing.T) {
 
 func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
-	validator := EqualValidator{"a.e", "Line1\nLine2\n", true}
+	validator := EqualValidator{Path: "a.e", Value: "Line1\nLine2\n", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -67,7 +68,7 @@ func TestEqualValidatorWithBase64WhenNOk(t *testing.T) {
 
 func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualWithBase64)
-	validator := EqualValidator{"a", "123", true}
+	validator := EqualValidator{Path: "a", Value: "123", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -79,7 +80,7 @@ func TestEqualValidatorWithBase64WhenOk(t *testing.T) {
 
 func TestEqualValidatorMultiLineWithBase64WhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqualWithBase64)
-	validator := EqualValidator{"b", "Line1\nLine2\n", true}
+	validator := EqualValidator{Path: "b", Value: "Line1\nLine2\n", DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -92,7 +93,7 @@ func TestEqualValidatorMultiLineWithBase64WhenOk(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	validator := EqualValidator{"a.b[0].c", 321, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 321, DecodeBase64: false}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -108,9 +109,9 @@ func TestEqualValidatorWhenFail(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[any]any{"d": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[any]any{"d": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -144,9 +145,9 @@ a:
 	manifest2 := makeManifest(docToTestEqual)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[string]any{"c": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[string]any{"c": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest1, manifest2},
@@ -174,9 +175,9 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
 	validator := EqualValidator{
-		"a.b[0]",
-		map[string]any{"c": 321},
-		false,
+		Path:         "a.b[0]",
+		Value:        map[string]any{"c": 321},
+		DecodeBase64: false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest, manifest},
@@ -216,7 +217,7 @@ func TestEqualValidatorMultiManifestWhenBothFail(t *testing.T) {
 func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[0]", map[string]any{"c": 123}, false}
+	v := EqualValidator{Path: "a.b[0]", Value: map[string]any{"c": 123}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -235,7 +236,7 @@ func TestEqualValidatorWhenNegativeAndFail(t *testing.T) {
 func TestEqualValidatorWhenWrongPath(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[e]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[e]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -251,7 +252,7 @@ func TestEqualValidatorWhenWrongPath(t *testing.T) {
 func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
 	})
@@ -267,7 +268,7 @@ func TestEqualValidatorWhenUnknownPath(t *testing.T) {
 func TestEqualValidatorWhenUnknownPathNegative(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
 		Negative: true,
@@ -280,7 +281,7 @@ func TestEqualValidatorWhenUnknownPathNegative(t *testing.T) {
 func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqual)
 
-	v := EqualValidator{"a.b[5]", map[string]int{"d": 321}, false}
+	v := EqualValidator{Path: "a.b[5]", Value: map[string]int{"d": 321}, DecodeBase64: false}
 	pass, diff := v.Validate(&ValidateContext{
 		FailFast: true,
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -296,7 +297,7 @@ func TestEqualValidatorWhenUnknownPathFailFast(t *testing.T) {
 
 func TestEqualValidatorWhenOkWithMultiplePaths(t *testing.T) {
 	manifest := makeManifest(docToTestEqualMultiplePaths)
-	validator := EqualValidator{"a.*", 1, false}
+	validator := EqualValidator{Path: "a.*", Value: 1, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
@@ -309,7 +310,7 @@ func TestEqualValidatorWhenOkWithMultiplePaths(t *testing.T) {
 
 func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 	manifest := makeManifest(docToTestEqualMultiplePaths)
-	validator := EqualValidator{"a.*", 2, true}
+	validator := EqualValidator{Path: "a.*", Value: 2, DecodeBase64: true}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		FailFast: true,
@@ -334,7 +335,7 @@ func TestEqualValidatorWithMultiplePathsFailFast(t *testing.T) {
 }
 
 func TestEqualValidatorWhenNoManifestFail(t *testing.T) {
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{},
@@ -356,7 +357,7 @@ func TestEqualValidatorWhenNoManifestFail(t *testing.T) {
 }
 
 func TestEqualValidatorWhenNoManifestNegativeOk(t *testing.T) {
-	validator := EqualValidator{"a.b[0].c", 123, false}
+	validator := EqualValidator{Path: "a.b[0].c", Value: 123, DecodeBase64: false}
 
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{},
@@ -365,4 +366,395 @@ func TestEqualValidatorWhenNoManifestNegativeOk(t *testing.T) {
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+// This is the canary for the whole design: without number normalization the
+// test-file int 8080 would not equal the parsed JSON value, because
+// encoding/json decodes numbers as float64.
+func TestEqualValidatorParsedJSONNumberMatchesIntExpectation(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedJSONIgnoresKeyOrdering(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"zebra":1,"alpha":2,"middle":3}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value: map[string]any{
+			"alpha":  2,
+			"middle": 3,
+			"zebra":  1,
+		},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedYAMLDeepLeaf(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    server:
+      tls:
+        enabled: true
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "server.tls.enabled"},
+		Value:        true,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualValidatorParsedArrayElement(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  dashboard.json: |
+    [{"title":"Latency"},{"title":"QPS"}]
+`)
+
+	validator := EqualValidator{
+		Path:         `data["dashboard.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "[1].title"},
+		Value:        "QPS",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// innerPath, like path, may match several nodes; all of them must satisfy the
+// comparison.
+func TestEqualValidatorParsedFanOutRequiresAllToMatch(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":8080}]}
+`)
+
+	allMatch := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        8080,
+	}
+
+	pass, diff := allMatch.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+
+	mixed := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":9090}]}
+`)
+
+	pass, _ = allMatch.Validate(&ValidateContext{Docs: []common.K8sManifest{mixed}})
+	assert.False(t, pass, "a single non-matching node must fail the assertion")
+}
+
+func TestEqualValidatorParseComposesWithDecodeBase64(t *testing.T) {
+	// base64 of {"server":{"port":8080}}
+	manifest := makeManifest(`
+data:
+  config: eyJzZXJ2ZXIiOnsicG9ydCI6ODA4MH19
+`)
+
+	validator := EqualValidator{
+		Path:         "data.config",
+		DecodeBase64: true,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// The Value here is the raw JSON text, so this test only passes when parsing
+// actually happened: unparsed, the actual WOULD equal Value and the negative
+// assertion would fail.
+func TestEqualValidatorParsedNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	rawContent := "{\"server\":{\"port\":8080}}\n"
+
+	unparsedWouldMatch := EqualValidator{
+		Path:  `data["config.json"]`,
+		Value: rawContent,
+	}
+	pass, _ := unparsedWouldMatch.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+	assert.True(t, pass, "sanity check: the raw actual equals the raw JSON text")
+
+	// Same Value, but with parsing the actual becomes the number 8080, which
+	// does not equal the raw text, so the negative assertion holds.
+	parsedNegative := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        rawContent,
+	}
+	pass, _ = parsedNegative.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "parsed actual 8080 differs from the raw text")
+
+	// And the positive form must fail, proving the comparison really ran.
+	pass, _ = parsedNegative.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+	assert.False(t, pass)
+}
+
+func TestEqualValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"port": 8080,}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value:        map[string]any{"port": 8080},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), `unable to parse path 'data["config.json"]' as json`)
+}
+
+func TestEqualValidatorParseOnNonStringReportsType(t *testing.T) {
+	manifest := makeManifest(`
+spec:
+  replicas: 3
+`)
+
+	validator := EqualValidator{
+		Path:         "spec.replicas",
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Value:        3,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"),
+		"expect 'spec.replicas' to be a string to parse as json, got int")
+}
+
+// An innerPath that matches nothing behaves like an unknown path: a failure
+// normally, a pass under a negative assertion. Asserting on the message proves
+// the parse path produced it, rather than an ordinary comparison failure.
+func TestEqualValidatorParsedUnmatchedInnerPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.missing"},
+		Value:        1,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), "unknown path",
+		"an unmatched innerPath must report unknown path, not a value mismatch")
+	assert.Contains(t, strings.Join(diff, "\n"), "server.missing")
+
+	pass, diff = validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// Two distinct failing nodes in a parse fan-out must be distinguishable in the
+// output, the same way a plain multi-match path distinguishes them.
+func TestEqualValidatorParsedFanOutReportsDistinctIndices(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":9090},{"port":7070}]}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "ValuesIndex:\t0")
+	assert.Contains(t, joined, "ValuesIndex:\t1")
+}
+
+func TestEqualValidatorParsedFanOutFailFastReportsOneFailure(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2},{"port":3}]}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        9999,
+	}
+
+	_, failFastDiff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		FailFast: true,
+	})
+	_, fullDiff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.Less(t, len(failFastDiff), len(fullDiff),
+		"FailFast must stop after the first failing parsed node")
+}
+
+// Negation composes with fan-out per node: every node must differ from Value.
+func TestEqualValidatorParsedFanOutNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2}]}
+`)
+
+	noneMatch := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        9999,
+	}
+
+	pass, _ := noneMatch.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "no node equals the value, so notEqual holds")
+
+	oneMatches := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        1,
+	}
+
+	pass, _ = oneMatches.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.False(t, pass, "one node equals the value, so notEqual fails")
+}
+
+func TestEqualValidatorParsedUnmatchedInnerPathNamesBothPaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.missing"},
+		Value:        1,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, `data["config.json"]`)
+	assert.Contains(t, joined, "server.missing")
+}
+
+// A failed base64 decode must not suppress the other actuals' results. This
+// matched pre-existing behavior before decoding moved ahead of parsing.
+func TestEqualValidatorDecodeBase64ReportsEveryFailure(t *testing.T) {
+	manifest := makeManifest(`
+a:
+  - aGVsbG8=
+  - "not valid base64!!"
+  - aGVsbG8=
+`)
+
+	validator := EqualValidator{
+		Path:         "a[*]",
+		DecodeBase64: true,
+		Value:        "nomatch",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	joined := strings.Join(diff, "\n")
+
+	assert.False(t, pass)
+	assert.Equal(t, 1, strings.Count(joined, "unable to decode base64"),
+		"the invalid entry reports a decode error")
+	assert.Equal(t, 3, strings.Count(joined, "ValuesIndex"),
+		"all three actuals must be reported, not just the first failure")
+}
+
+// parse: yaml with no innerPath must type numbers the same way an ordinary path
+// does, so an integral float in the source matches an integer expectation.
+func TestEqualValidatorParsedYAMLIntegralFloatMatchesInt(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    port: 8080.0
+`)
+
+	validator := EqualValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML},
+		Value:        map[string]any{"port": 8080},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass, strings.Join(diff, "\n"))
 }

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-parse-structured
+data:
+  handwritten.json: |
+    {
+      "server": {
+        "port": {{ .Values.portNumber }},
+        "host": "0.0.0.0",
+        "tls": {
+          "enabled": true
+        }
+      },
+      "fromString": {{ .Values.portString }},
+      "quoted": "{{ .Values.portNumber }}",
+      "ratio": {{ .Values.ratio }},
+      "debug": {{ .Values.debug }}
+    }
+  generated.json: |
+    {{ dict "server" (dict "port" .Values.portNumber) "fromString" .Values.portString "tags" .Values.tags | toJson }}
+  config.yaml: |
+    {{- dict "server" (dict "port" .Values.portNumber "host" "0.0.0.0") "debug" .Values.debug | toYaml | nindent 4 }}
+  dashboard.json: |
+    [
+      {"title": "Latency", "index": 0},
+      {"title": "QPS", "index": 1}
+    ]
