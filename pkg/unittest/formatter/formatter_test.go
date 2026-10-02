@@ -15,10 +15,11 @@ import (
 const testSuiteTests string = "_suite_tests"
 const testOutputFile string = "../../../test/data/output/test_output.xml"
 
-func createTestJobResult(name, errorMessage string, passed bool, assertionResults []*results.AssertionResult) *results.TestJobResult {
+func createTestJobResult(name, errorMessage string, passed, skipped bool, assertionResults []*results.AssertionResult) *results.TestJobResult {
 	testJobResult := &results.TestJobResult{
 		DisplayName: name,
 		Passed:      passed,
+		Skipped:     skipped,
 	}
 
 	if len(errorMessage) > 0 {
@@ -32,11 +33,13 @@ func createTestJobResult(name, errorMessage string, passed bool, assertionResult
 	return testJobResult
 }
 
-func createAssertionResult(index int, passed, not bool, assertionType, failInfo, customInfo string) *results.AssertionResult {
+func createAssertionResult(index int, passed, skipped, not bool, assertionType, failInfo, skipReason, customInfo string) *results.AssertionResult {
 	return &results.AssertionResult{
 		Index:      index,
 		FailInfo:   []string{failInfo},
 		Passed:     passed,
+		Skipped:    skipped,
+		SkipReason: skipReason,
 		AssertType: assertionType,
 		Not:        not,
 		CustomInfo: customInfo,

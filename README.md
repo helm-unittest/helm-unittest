@@ -3,14 +3,13 @@
 [![Release](https://img.shields.io/github/v/release/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/releases)
 [![Github Actions](https://github.com/helm-unittest/helm-unittest/actions/workflows/go.yml/badge.svg)](https://github.com/helm-unittest/helm-unittest/actions)
 [![License](https://img.shields.io/github/license/helm-unittest/helm-unittest)](https://github.com/helm-unittest/helm-unittest/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/helm-unittest/helm-unittest)](https://goreportcard.com/report/github.com/helm-unittest/helm-unittest)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=helm-unittest_helm-unittest&metric=alert_status)](https://sonarcloud.io/dashboard?id=helm-unittest_helm-unittest)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9365/badge)](https://www.bestpractices.dev/projects/9365)
 [![OpenSSF](https://api.scorecard.dev/projects/github.com/helm-unittest/helm-unittest/badge)](https://scorecard.dev/viewer/?uri=github.com/helm-unittest/helm-unittest)
 
 Unit test for _helm chart_ in YAML to keep your chart consistent and robust!
 
-Feature:
+Features:
 
 - write test file in pure YAML
 - render locally
@@ -45,11 +44,49 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 
 ## Install
 
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest.git
+When not defining any versions, it will install the latest version of binary into helm plugin directory, otherwise it will install the specified version.
+
+Using Helm 3:
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ```
 
-It will install the latest version of binary into helm plugin directory.
+Using Helm 4<sup>*</sup>:
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+```
+
+Using OCI download<sup>**</sup>:
+```bash
+helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
+```
+or using http download<sup>***</sup>:
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
+```
+
+__Notes:__ </br>
+<sup>*</sup> for Helm 4, installation using webhooks GPG verification is not supported, so `--verify=false` is required when installing from git repository. </br>
+
+<sup>**</sup> when using oci download, please note the following limitations:
+- the download contains all os and architecture binaries, making the package larger;
+- the download is only supported since plugin version 1.1.0 and later;
+- for helm 4 the archive download can perform a GPG verification, when the public-key.asc is imported into the gpg store. </br>
+
+<sup>***</sup> when using http download, please note the same limitations as the oci download, including:
+- the download can only have a fixed version, which needs to be filled twice in the url;
+- the archive download does not support auto update of the plugin
+
+
+__Importing the public key for GPG verification:__
+```
+# Import the public key
+curl -SsL https://github.com/helm-unittest/helm-unittest/raw/refs/heads/main/public-key.asc | gpg --import
+
+# Convert your keyring to the legacy gpg format
+# See https://helm.sh/docs/topics/provenance/
+gpg --export > ~/.gnupg/pubring.gpg
+```
 
 ## Docker Usage
 
@@ -97,8 +134,8 @@ tests:
 
 and run:
 
-```
-$ helm unittest $YOUR_CHART
+```bash
+helm unittest $YOUR_CHART
 ```
 
 Now there is your first test! ;)
@@ -108,16 +145,16 @@ Now there is your first test! ;)
 The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files related to chart directory, like:
 
 ```bash
-$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
+helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
 ```
 
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
 
 ### Templated Test Suites
 
-You may find yourself needing to set up a lots o tests that are a parameterization of a single test. For instance, let's say that you deploy to 3 environments `env = dev | staging | prod`.
+You may find yourself needing to set up a lot of tests that are a parameterization of a single test. For instance, let's say that you deploy to 3 environments `env = dev | staging | prod`.
 
-In order to do this, you can actually write your tests as a helm chart as well. If you go about this route, you
+In order to do this, you can actually write your tests as a helm chart as well. If you go this route, you
 must set the `--chart-tests-path` option. Once you have done so, helm unittest will run a standard helm render
 against the values.yaml in your specified directory.
 
@@ -137,8 +174,8 @@ against the values.yaml in your specified directory.
 ```
 
 In the above example file structure, you would maintain a helm chart that will render out against the Chart.yaml
-that as provided and the values.yaml. With rendered charts, any test suite that is generated is automatically ran
-we do not look for a file postfix or glob.
+that is provided and the values.yaml. With rendered charts, any test suite that is generated is automatically ran
+we do not look for a file suffix or glob.
 
 **Note:** since you can create multiple suites in a single template file, you must provide the suite name, since we can no longer use the test suite file name meaningfully.
 
@@ -148,14 +185,14 @@ we do not look for a file postfix or glob.
 
 The command for the above chart and test configuration would be:
 
-```shell
+```bash
 helm unittest --chart-tests-path tests-chart my-chart
 ```
 
 ## Usage
 
-```
-$ helm unittest [flags] CHART [...]
+```bash
+helm unittest [flags] CHART [...]
 ```
 
 This renders your charts locally (without tiller) and runs tests
@@ -164,19 +201,48 @@ defined in test suite files.
 ### Flags
 
 ```
-      --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
-      --strict                 strict parse the testsuites (default false)
-  -d  --debugPlugin            enable debug logging (default false)
-  -v, --values stringArray     absolute or glob paths of values files location to override helmchart values
-  -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
-  -q, --failfast               direct quit testing, when a test is failed (default false)
-  -h, --help                   help for unittest
-  -t, --output-type string     the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
-  -o, --output-file string     the file where testresults are written in format specified, defaults no output is written to file
-  -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
-  -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
+      --color                   enforce printing colored output even stdout is not a tty. Set to false to disable color
+      --strict                  strict parse the testsuites (default false)
+  -d  --debugPlugin             enable debug logging (default false)
+  -v, --values stringArray      absolute or glob paths of values files location to override helmchart values
+  -f, --file stringArray        glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
+  -q, --failfast                directly quit testing, when a test is failed (default false)
+  -h, --help                    help for unittest
+  -t, --output-type string      the file format in which test results are written, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -o, --output-file string      the file where test results are written in the specified format, defaults no output is written to file
+  -u, --update-snapshot         update the snapshot cached if needed, make sure you review the changes before updating
+  -s, --with-subchart charts    include tests of the subcharts within charts folder (default true)
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
+      --skip-schema-validation  skip values schema validation when rendering the chart (default false)
+      --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
+      --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
 ```
+
+By default test suites run sequentially, exactly as in previous releases. Pass
+`--parallel` to opt in to concurrent execution:
+
+```
+$ helm unittest --parallel my-chart
+```
+
+With `--parallel`, test suites run concurrently. Suites that share a snapshot
+(`.snap`) file are grouped and run sequentially within their group, so snapshot
+files are never written concurrently. Output stays deterministic: suites are
+printed in the same order as a sequential run. Combined with `--failfast`, the
+first failing suite stops any not-yet-started suites from being scheduled while
+in-flight suites finish. `--parallel` is ignored when `--debugPlugin` is set and
+execution falls back to sequential.
+
+By default parallel execution uses one worker per CPU core. Use `--max-workers`
+to cap the number of suite groups that run at once, for example to limit
+resource usage in CI:
+
+```
+$ helm unittest --parallel --max-workers 4 ./charts/my-app
+```
+
+`--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
+(the default) means one worker per CPU core.
 
 ### Yaml JsonPath Support
 
@@ -192,7 +258,7 @@ Due to the change to JsonPath, the map keys in `path` containing periods (`.`) o
     value: nginx
 ```
 
-The next releases it will be possible to validate multiple paths when JsonPath result into multiple results.
+In the next releases, it will be possible to validate multiple paths when JsonPath results in multiple results.
 
 ### DocumentSelector
 
@@ -263,17 +329,17 @@ tests:
               pattern: .*bcde.*
 ```
 
-The `matchSnapshot` assertion validate the content rendered the same as cached last time. It fails if the content changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
+The `matchSnapshot` assertion validates the content rendered the same as cached last time. It fails if the content has changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
 
-```
-$ helm unittest -u my-chart
+```bash
+helm unittest -u my-chart
 ```
 
-The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+The cache files are stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
 ## Dependent subchart Testing
 
-If you have hard dependency subcharts (installed via `helm dependency`) existed in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
+If you have hard dependency subcharts (installed via `helm dependency`) existing in `charts` directory (they don't need to be extracted), it is possible to unittest these from the root chart. This feature can be helpful to validate if good default values are accidentally overwritten within your default helm chart.
 
 ```yaml
 # $YOUR_CHART/tests/xxx_test.yaml
@@ -295,7 +361,7 @@ Check [`test/data/v3/with-subchart/`](./test/data/v3/with-subchart) as an exampl
 
 ## Tests within subchart
 
-If you have customized hard dependency subchart (not installed via `helm dependency`, but added manually) existed in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
+If you have customized hard dependency subcharts (not installed via `helm dependency`, but added manually) existing in `charts` directory, tests inside would also be executed by default. You can disable this behavior by setting `--with-subchart=false` flag in cli, thus only the tests in root chart will be executed. Notice that the values defined in subchart tests will be automatically scoped, you don't have to add dependency scope yourself:
 
 ```yaml
 # with-subchart/charts/child-chart/tests/xxx_test.yaml
@@ -318,7 +384,7 @@ Most popular IDEs (IntelliJ, Visual Studio Code, etc.) support applying schemas 
 
 ![Code completion](./.images/testsuite-yaml-codecompletion.png)
 
-In addition, test-suite files can be validated while editing so wrongfully added additional properties or incorrect data types can be detected while editing:
+In addition, test-suite files can be validated while editing so incorrectly added additional properties or incorrect data types can be detected while editing:
 
 ![Code Validation](./.images/testsuite-yaml-codevalidation.png)
 
@@ -357,7 +423,7 @@ If you are missing an answer to a question, feel free to raise a ticket.
 
 ## Related Projects / Commands
 
-This plugin is inspired by [helm-template](https://github.com/technosophos/helm-template), and the idea of snapshot testing and some printing format comes from [jest](https://github.com/facebook/jest).
+This plugin is inspired by [helm-template](https://github.com/technosophos/helm-template), and the idea of snapshot testing and some printing formats come from [jest](https://github.com/facebook/jest).
 
 And there are some other helm commands you might want to use:
 

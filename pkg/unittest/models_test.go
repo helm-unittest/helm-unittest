@@ -7,11 +7,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 	"github.com/stretchr/testify/assert"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 func TestNewTestConfig(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache)
 
@@ -20,11 +20,13 @@ func TestNewTestConfig(t *testing.T) {
 	assert.Equal(t, cache, config.cache)
 	assert.Equal(t, "", config.renderPath)
 	assert.False(t, config.failFast)
+	assert.False(t, config.isSkipEmptyTemplate)
+	assert.False(t, config.isSkipSchemaValidation)
 	assert.Equal(t, PostRendererConfig{}, config.postRenderer)
 }
 
 func TestWithFailFast(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithFailFast(true))
 
@@ -32,7 +34,7 @@ func TestWithFailFast(t *testing.T) {
 }
 
 func TestWithRenderPath(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	config := NewTestConfig(chart, cache, WithRenderPath("/path/to/render"))
 
@@ -40,7 +42,7 @@ func TestWithRenderPath(t *testing.T) {
 }
 
 func TestWithPostRendererConfig(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	cache := &snapshot.Cache{}
 	postRendererConfig := PostRendererConfig{}
 	config := NewTestConfig(chart, cache, WithPostRendererConfig(postRendererConfig))
@@ -49,7 +51,7 @@ func TestWithPostRendererConfig(t *testing.T) {
 }
 
 func TestWithDocumentSelector(t *testing.T) {
-	chart := &v3chart.Chart{}
+	chart := &v2chart.Chart{}
 	config := NewTestConfig(chart, nil, WithDocumentSelector(&valueutils.DocumentSelector{
 		SkipEmptyTemplates: true,
 	}))
@@ -58,14 +60,32 @@ func TestWithDocumentSelector(t *testing.T) {
 	assert.False(t, config.isSkipEmptyTemplate)
 }
 
+func TestWithSkipEmptyTemplate(t *testing.T) {
+	chart := &v2chart.Chart{}
+	cache := &snapshot.Cache{}
+	config := NewTestConfig(chart, cache, WithSkipEmptyTemplate(true))
+
+	assert.True(t, config.isSkipEmptyTemplate)
+}
+
+func TestWithSkipSchemaValidation(t *testing.T) {
+	chart := &v2chart.Chart{}
+	cache := &snapshot.Cache{}
+	config := NewTestConfig(chart, cache, WithSkipSchemaValidation(true))
+
+	assert.True(t, config.isSkipSchemaValidation)
+}
+
 func TestAssertionConfigBuilder(t *testing.T) {
 	builder := AssertionConfigBuilder{
-		TemplatesResult:  map[string][]common.K8sManifest{},
-		SnapshotComparer: nil,
-		RenderSucceed:    true,
-		FailFast:         true,
-		DidPostRender:    true,
-		RenderError:      nil,
+		TemplatesResult:        map[string][]common.K8sManifest{},
+		SnapshotComparer:       nil,
+		RenderSucceed:          true,
+		FailFast:               true,
+		DidPostRender:          true,
+		RenderError:            nil,
+		IsSkipEmptyTemplate:    false,
+		IsSkipSchemaValidation: false,
 	}
 
 	config := builder.Build()
@@ -77,4 +97,6 @@ func TestAssertionConfigBuilder(t *testing.T) {
 	assert.True(t, config.failFast)
 	assert.True(t, config.didPostRender)
 	assert.Nil(t, config.renderError)
+	assert.False(t, config.isSkipEmptyTemplate)
+	assert.False(t, config.isSkipSchemaValidation)
 }

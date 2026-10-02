@@ -27,7 +27,7 @@ manifest should match snapshot:
       kind: NamespaceList
       metadata:
         continue: ""
-        resourceVersion: ""
+        resourceVersion: "3"
     pod_exists:
       apiVersion: v1
       kind: Pod

@@ -47,8 +47,18 @@ func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestI
 
 	for actualIndex, actual := range actuals {
 		singleSuccess := false
-		var singleErrors []string
-		actualType := reflect.TypeOf(actual).String()
+		var (
+			singleErrors []string
+			actualType   string
+		)
+		// reflect.TypeOf returns nil for a nil interface, which is the
+		// case for a YAML key that exists but is unset (e.g. `foo:` with
+		// no value). Preserve that as the empty string so the type
+		// comparison below cleanly fails the assertion instead of
+		// panicking in String() (#794).
+		if rtoa := reflect.TypeOf(actual); rtoa != nil {
+			actualType = rtoa.String()
+		}
 
 		if (actualType == t.Type) == context.Negative {
 			singleErrors = t.failInfo(actualType, manifestIndex, actualIndex, context.Negative)

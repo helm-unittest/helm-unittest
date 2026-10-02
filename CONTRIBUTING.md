@@ -4,14 +4,14 @@ Issues and PRs are welcome!
 
 ## Issues and Improvements
 
-When you find an Issue or Improvement, please chech first if it already occurs
+When you find an Issue or Improvement, please check first if it already occurs
 otherwise create a [New Issue](https://github.com/helm-unittest/helm-unittest/issues/new/choose)
 
 If you have a Issue related to security, please follow our [Security Policy](./SECURITY.md)
 
 ## Developing
 
-Before start developing this plugin, you must have [Go](https://golang.org/doc/install) >= 1.24 installed, and run:
+Before starting to develop this plugin, you must have [Go](https://golang.org/doc/install) >= 1.26 installed, and run:
 
 ```
 git clone git@github.com:helm-unittest/helm-unittest.git
@@ -29,6 +29,6 @@ In some cases you might need to manually fix the tests in `*_test.go`. If the sn
 UPDATE_SNAPSHOTS=true go test ./...
 ```
 
-This update the snapshot cache file and please add them before you commit.
+This updates the snapshot cache file and please add them before you commit.
 
-In order to run the post-render tests successful, make sure the tool yq is installed on the path.
+In order to run the post-render tests successfully, make sure the tool yq is installed on the path.

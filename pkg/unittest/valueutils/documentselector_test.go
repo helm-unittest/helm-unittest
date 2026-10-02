@@ -178,13 +178,32 @@ func TestFindDocumentIndicesMatchManyAndSkipEmptyTemplatesOk(t *testing.T) {
 	a.Equal(expectedManifests, actualManifests)
 }
 
-func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNOk(t *testing.T) {
+func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesOk(t *testing.T) {
+	a := assert.New(t)
+	expectedManifests := map[string][]common.K8sManifest{
+		"secondTemplate": {parseManifest(secondTemplateDocToTestIndex0), parseManifest(secondTemplateDocToTestIndex1)},
+	}
+
+	selector := DocumentSelector{
+		Path:               "metadata.namespace",
+		Value:              "foo",
+		MatchMany:          true,
+		SkipEmptyTemplates: false,
+	}
+
+	actualManifests, err := selector.SelectDocuments(createMultiTemplateMultiManifest())
+
+	a.Nil(err)
+	a.Equal(expectedManifests, actualManifests)
+}
+
+func TestFindDocumentIndicesMatchManyAndDontSkipEmptyTemplatesNoDocumentNOk(t *testing.T) {
 	a := assert.New(t)
 	expectedManifests := map[string][]common.K8sManifest{}
 
 	selector := DocumentSelector{
 		Path:               "metadata.namespace",
-		Value:              "foo",
+		Value:              "baz",
 		MatchMany:          true,
 		SkipEmptyTemplates: false,
 	}

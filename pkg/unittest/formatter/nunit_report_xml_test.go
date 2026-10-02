@@ -15,13 +15,20 @@ import (
 
 var tmpNunitTestDir, _ = os.MkdirTemp("", testSuiteTests)
 
-func createNUnitTestCase(name, description, failureContent string, executed bool) NUnitTestCase {
+func createNUnitTestCase(name, description, failureContent, skipMessage string, executed bool) NUnitTestCase {
 	testCase := NUnitTestCase{
 		Name:        name,
 		Description: description,
 		Success:     "true",
 		Asserts:     "0",
 		Result:      "Success",
+	}
+
+	if len(skipMessage) > 0 {
+		testCase.Reason = &NUnitReason{
+			Message: skipMessage,
+		}
+		testCase.Result = "Skipped"
 	}
 
 	if len(failureContent) > 0 {
@@ -63,7 +70,8 @@ func validateNUnitTestSuite(assert *assert.Assertions, expected, actual []NUnitT
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -81,17 +89,28 @@ func validatNUnitTestCase(assert *assert.Assertions, expected, actual []NUnitTes
 			assert.Equal(expected[i].Executed, actual[i].Executed)
 			assert.Equal(expected[i].Result, actual[i].Result)
 
-			if expected[i].Failure != nil || actual[i].Failure != nil {
+			if expected[i].Failure != nil {
+				assert.NotNil(actual[i].Failure)
 				assert.Equal(expected[i].Failure.Message, actual[i].Failure.Message)
 				assert.Equal(expected[i].Failure.StackTrace, actual[i].Failure.StackTrace)
 			} else {
 				// Verify if both are nil, otherwise it's still a failure.
-				assert.True(expected[i].Failure == nil && actual[i].Failure == nil)
+				assert.Nil(actual[i].Failure)
+			}
+
+			if expected[i].Reason != nil {
+				assert.NotNil(actual[i].Reason)
+				assert.Equal(expected[i].Reason.Message, actual[i].Reason.Message)
+				assert.Equal(expected[i].Result, actual[i].Result)
+			} else {
+				// Verify if both are nil, otherwise it's still a failure.
+				assert.Nil(actual[i].Reason)
 			}
 		}
 	} else {
 		// Verify if both are nil, otherwise it's still a failure.
-		assert.True(expected == nil && actual == nil)
+		assert.Nil(expected)
+		assert.Nil(actual)
 	}
 }
 
@@ -99,7 +118,7 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 	assert := assert.New(t)
 	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Output.xml")
 	testSuiteDisplayName := "TestingSuite"
-	testCaseDisplayName := "TestCaseSucces"
+	testCaseDisplayName := "TestCaseSuccess"
 
 	expected := NUnitTestResults{
 		Environment: NUnitEnvironment{},
@@ -117,6 +136,7 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 						testCaseDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseDisplayName),
 						"",
+						"",
 						true,
 					),
 				},
@@ -133,7 +153,7 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      true,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseDisplayName, "", true, nil),
+				createTestJobResult(testCaseDisplayName, "", true, false, nil),
 			},
 		},
 	}
@@ -148,6 +168,162 @@ func TestWriteTestOutputAsNUnitMinimalSuccess(t *testing.T) {
 	assert.Equal(expected.Total, actual.Total)
 	assert.Equal(expected.Errors, actual.Errors)
 	assert.Equal(expected.Failures, actual.Failures)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
+}
+
+func TestWriteTestOutputAsNUnitWithSkipped(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_Skipped_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSuccessDisplayName := "TestCaseSuccess"
+	testCaseSkippedDisplayName := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
+	skipReason := "Version mismatch"
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "true",
+				Executed:    "true",
+				Result:      "Success",
+				TestCases: []NUnitTestCase{
+					createNUnitTestCase(
+						testCaseSuccessDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
+						"",
+						"",
+						true,
+					),
+					createNUnitTestCase(
+						testCaseSkippedDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSkippedDisplayName),
+						"",
+						skippedContent,
+						false,
+					),
+				},
+			},
+		},
+		Name:     "helm-unittest",
+		Total:    2,
+		Errors:   0,
+		Failures: 0,
+		Skipped:  1,
+	}
+
+	assertionResults := []*results.AssertionResult{
+		createAssertionResult(0, false, true, false, assertionType, "", skipReason, ""),
+	}
+
+	given := []*results.TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			TestsResult: []*results.TestJobResult{
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseSkippedDisplayName, "", true, true, assertionResults),
+			},
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
+
+	assert.Equal(expected.Name, actual.Name)
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	assert.Equal(expected.Skipped, actual.Skipped)
+	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
+}
+
+func TestWriteTestOutputAsNUnitWithAllSkipped(t *testing.T) {
+	assert := assert.New(t)
+	outputFile := filepath.Join(tmpNunitTestDir, "NUnit_Test_AllSkipped_Output.xml")
+	testSuiteDisplayName := "TestingSuite"
+	testCaseSkippedDisplayName := "TestCaseSkipped"
+	assertionType := "equal"
+	assertIndex := 0
+	skipReason := "Version mismatch"
+	skippedContent := fmt.Sprintf("SKIPPED '%s' \n\t\t - asserts[%v] `%s` fail \n\t\t\t %s \n", testCaseSkippedDisplayName, assertIndex, assertionType, skipReason)
+
+	expected := NUnitTestResults{
+		Environment: NUnitEnvironment{},
+		CultureInfo: NUnitCultureInfo{},
+		TestSuite: []NUnitTestSuite{
+			{
+				Type:        TestFixture,
+				Name:        testSuiteDisplayName,
+				Description: outputFile,
+				Success:     "true",
+				Executed:    "false",
+				Result:      "Skipped",
+				TestCases: []NUnitTestCase{
+					createNUnitTestCase(
+						testCaseSkippedDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSkippedDisplayName),
+						"",
+						skippedContent,
+						false,
+					),
+					createNUnitTestCase(
+						testCaseSkippedDisplayName,
+						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSkippedDisplayName),
+						"",
+						skippedContent,
+						false,
+					),
+				},
+			},
+		},
+		Name:     "helm-unittest",
+		Total:    2,
+		Errors:   0,
+		Failures: 0,
+		Skipped:  2,
+	}
+
+	assertionResults := []*results.AssertionResult{
+		createAssertionResult(assertIndex, true, true, false, assertionType, "", skipReason, ""),
+	}
+
+	given := []*results.TestSuiteResult{
+		{
+			DisplayName: testSuiteDisplayName,
+			FilePath:    outputFile,
+			Passed:      true,
+			Skipped:     true,
+			TestsResult: []*results.TestJobResult{
+				createTestJobResult(testCaseSkippedDisplayName, "", true, true, assertionResults),
+				createTestJobResult(testCaseSkippedDisplayName, "", true, true, assertionResults),
+			},
+		},
+	}
+
+	sut := NewNUnitReportXML()
+	bytevalue := loadFormatterTestcase(assert, outputFile, given, sut)
+
+	var actual NUnitTestResults
+	err := xml.Unmarshal(bytevalue, &actual)
+	assert.Nil(err)
+
+	assert.Equal(expected.Name, actual.Name)
+	assert.Equal(expected.Total, actual.Total)
+	assert.Equal(expected.Errors, actual.Errors)
+	assert.Equal(expected.Failures, actual.Failures)
+	assert.Equal(expected.Skipped, actual.Skipped)
 	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 }
 
@@ -178,12 +354,14 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 						testCaseSuccessDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
 						"",
+						"",
 						true,
 					),
 					createNUnitTestCase(
 						testCaseFailureDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
 						failureContent,
+						"",
 						true,
 					),
 				},
@@ -196,7 +374,7 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -205,8 +383,8 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
 			},
 		},
 	}
@@ -218,9 +396,11 @@ func TestWriteTestOutputAsNUnitWithFailures(t *testing.T) {
 	err := xml.Unmarshal(bytevalue, &actual)
 	assert.Nil(err)
 
+	assert.Equal(expected.Name, actual.Name)
 	assert.Equal(expected.Total, actual.Total)
 	assert.Equal(expected.Errors, actual.Errors)
 	assert.Equal(expected.Failures, actual.Failures)
+	assert.Equal(expected.Skipped, actual.Skipped)
 	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 }
 
@@ -254,18 +434,21 @@ func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 						testCaseSuccessDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseSuccessDisplayName),
 						"",
+						"",
 						true,
 					),
 					createNUnitTestCase(
 						testCaseFailureDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseFailureDisplayName),
 						failureContent,
+						"",
 						true,
 					),
 					createNUnitTestCase(
 						testCaseErrorDisplayName,
 						fmt.Sprintf("%s.%s", testSuiteDisplayName, testCaseErrorDisplayName),
 						failureErrorContent,
+						"",
 						false,
 					),
 				},
@@ -278,7 +461,7 @@ func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 	}
 
 	assertionResults := []*results.AssertionResult{
-		createAssertionResult(0, false, false, assertionType, assertionFailure, ""),
+		createAssertionResult(0, false, false, false, assertionType, assertionFailure, "", ""),
 	}
 
 	given := []*results.TestSuiteResult{
@@ -287,9 +470,9 @@ func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 			FilePath:    outputFile,
 			Passed:      false,
 			TestsResult: []*results.TestJobResult{
-				createTestJobResult(testCaseSuccessDisplayName, "", true, nil),
-				createTestJobResult(testCaseFailureDisplayName, "", false, assertionResults),
-				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, assertionResults),
+				createTestJobResult(testCaseSuccessDisplayName, "", true, false, nil),
+				createTestJobResult(testCaseFailureDisplayName, "", false, false, assertionResults),
+				createTestJobResult(testCaseErrorDisplayName, errorMessage, false, false, assertionResults),
 			},
 		},
 	}
@@ -301,9 +484,11 @@ func TestWriteTestOutputAsNUnitWithFailuresAndErrors(t *testing.T) {
 	err := xml.Unmarshal(bytevalue, &actual)
 	assert.Nil(err)
 
+	assert.Equal(expected.Name, actual.Name)
 	assert.Equal(expected.Total, actual.Total)
 	assert.Equal(expected.Errors, actual.Errors)
 	assert.Equal(expected.Failures, actual.Failures)
+	assert.Equal(expected.Skipped, actual.Skipped)
 	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 }
 
@@ -352,8 +537,10 @@ func TestWriteTestOutputAsNUnitWithErrors(t *testing.T) {
 	err := xml.Unmarshal(bytevalue, &actual)
 	assert.Nil(err)
 
+	assert.Equal(expected.Name, actual.Name)
 	assert.Equal(expected.Total, actual.Total)
 	assert.Equal(expected.Errors, actual.Errors)
 	assert.Equal(expected.Failures, actual.Failures)
+	assert.Equal(expected.Skipped, actual.Skipped)
 	validateNUnitTestSuite(assert, expected.TestSuite, actual.TestSuite)
 }

@@ -1,0 +1,17 @@
+name: "annotation-tester"
+version: "0.1.0"
+apiVersion: v1
+type: postrenderer/v1
+runtime: subprocess
+config: {}
+runtimeConfig:
+  platformCommand:
+    - os: linux
+      command: "${HELM_PLUGIN_DIR}/annotate.sh"
+    - os: darwin
+      command: "${HELM_PLUGIN_DIR}/annotate.sh"
+    - os: windows
+      command: "pwsh"
+      args:
+        - -File
+        - "${HELM_PLUGIN_DIR}\\annotate.ps1"

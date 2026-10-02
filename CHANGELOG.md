@@ -1,3 +1,44 @@
+1.2.0 / 2026-10-01
+==================
+- Add opt-in parallel execution of test suites (credits @michal-marszalek-h2oai)
+- Full helm 4 support (resolves #777, credits @Szpadel)
+- Fix arm64 docker images (resolves #769, resolves #917)
+- Update packages to latest versions
+- Update pipeline actions to latest versions
+- Update base images to latest versions
+- Update documentation
+
+1.1.2 / 2026-07-24
+==================
+- Fix handling multiline block scalars in YAML (resolves #826, credits @AruneshDwivedi)
+- Fix documentSelector not working when multiple templates are used (resolves #781, credits @twixthehero)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation
+
+1.1.1 / 2026-06-05
+==================
+- Publish official plugin on artifacthub.io (resolves #802)
+- Better maintainable release process (resolves #856, resolves #790)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation (credits @Semih702)
+
+1.1.0 / 2026-05-08
+==================
+- Fix handling skipped tests in output properly (resolves #838)
+- Fix documentSelector on unset YAML keys (resolves #812, credits @Semih702) 
+- Fix isType assertion on unset YAML keys (resolves #794, credits @SAY-5)
+- Fix skip tests when subcharts are disabled via conditions (resolves #792, credits @bebosudo)
+- Enable native windows installation (resolves #748)
+- Signed release (resolves #362)
+- Add skip schema validation with a flag to enable and disable it (resolves #772, credits @FinnHuelsbusch)
+- Add support for testing CRDs (credits @blacksd)
+- Update release and package process, so the plugin can also be installed using helm 4 (resolves #785)
+- Update packages to latest patch versions
+- Update pipeline actions
+- Update documentation (credits @pratikshmalik05)
+
 1.0.3 / 2025-04-10
 ==================
 - Corrected newlines which is handled incorrectly by the yaml library (resolves #756) 
@@ -20,7 +61,7 @@
 - Update pipeline actions
 - Update documentation
 
-1.0.0 / 2025-31-07
+1.0.0 / 2025-07-31
 ==================
 - Fix failedTemplate assertion to work with NOTES.txt (resolves #652, resolves #183)
 - Fix failedTemplate jsonSchema validation (resolves #700)
@@ -215,7 +256,7 @@
 - Fix failed_template multi colon handling (resolves #200)
 - Fix glob all valid filenames (resolves #201)
 - Update packages to latest patch versions
-- Update documenation (thanks to @yariksheptykin)
+- Update documentation (thanks to @yariksheptykin)
 
 0.3.4 / 2023-08-01
 ===================
@@ -223,7 +264,7 @@
 - Fix/Refactor containsDocument validation, handles strict validation when multiple documents are found (resolves #167, resolves #173)
 - Fix schema definition types (resolves #174)
 - Fix validation of required fields in suite (resolves #178)
-- Remove GitHub API usage during instal (credits @raxod502-plaid, resolves #181)
+- Remove GitHub API usage during install (credits @raxod502-plaid, resolves #181)
 - Enable suite-level set block (resolves #155)
 - Update packages to latest patch versions
 - Update documentation
@@ -286,7 +327,7 @@
 0.2.9 / 2022-09-24
 ==================
 - Add JSON Schema for validating testsuite files (credits to: @armingerten, resolves quintush/helm-unittest#161)
-- Support failedTemplate assert schema for valdiation errors (credits to: @rquino)
+- Support failedTemplate assert schema for validation errors (credits to: @rquino)
 - Switch shell instead of bash to support other (credits to: @tewfik-ghariani)
 - Correct loading appVersion (resolves quintush/helm-unittest#172)
 - Update plugin to go 1.18
@@ -383,7 +424,7 @@
 
 0.1.7 / 2020-04-02
 ==================
-- added Helm V3 compatiblity (#87, #98)
+- added Helm V3 compatibility (#87, #98)
 - make install-binary.sh version aware (#97)
 
 0.1.6 / 2019-10-14
@@ -415,9 +456,4 @@
 - doc: fix `isAPIVersion` typo
 - upgrade helm to v2.8.2
 - more robust tests (of the plugin)
-
-## [Unreleased]
-
-### Fixed
-- **Subchart tests are now skipped when the subchart is disabled via conditions**: When a parent chart disables a subchart via `enabled: false` in values.yaml (with a corresponding `condition` field in Chart.yaml dependencies), helm-unittest now correctly skips loading and executing that subchart's test files. This fixes issue #792 where tests would fail with "template not exists" errors for disabled subcharts. The fix uses Helm's `ProcessDependenciesWithMerge()` to evaluate subchart conditions before test discovery, ensuring consistency with Helm's rendering behavior.
 

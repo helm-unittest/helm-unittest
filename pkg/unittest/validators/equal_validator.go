@@ -82,6 +82,8 @@ func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIn
 			s = string(decodedSingleActual)
 		}
 		actual = uniformContent(s)
+	} else {
+		actual = normalizeActual(actual)
 	}
 
 	if reflect.DeepEqual(a.Value, actual) == context.Negative {
@@ -89,6 +91,36 @@ func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIn
 	}
 
 	return true, []string{}
+}
+
+// normalizeActual recursively applies uniformContent to all string values
+// within maps and slices, so that leading newlines and trailing spaces before
+// newlines don't cause DeepEqual to fail on semantically identical content.
+func normalizeActual(v any) any {
+	switch val := v.(type) {
+	case string:
+		return uniformContent(val)
+	case map[string]any:
+		result := make(map[string]any, len(val))
+		for k, v := range val {
+			result[k] = normalizeActual(v)
+		}
+		return result
+	case map[any]any:
+		result := make(map[any]any, len(val))
+		for k, v := range val {
+			result[k] = normalizeActual(v)
+		}
+		return result
+	case []any:
+		result := make([]any, len(val))
+		for i, v := range val {
+			result[i] = normalizeActual(v)
+		}
+		return result
+	default:
+		return v
+	}
 }
 
 // Validate implement Validatable

@@ -3,7 +3,7 @@
   Index: (int) 0,
   Passed: (bool) true,
   Skipped: (bool) false,
-  ExecError: (*errors.errorString)(values don't meet the specifications of the schema(s) in the following chart(s):
+  ExecError: (*fmt.wrapError)(values don't meet the specifications of the schema(s) in the following chart(s):
 with-schema:
 - at '': missing property 'image'
 ),

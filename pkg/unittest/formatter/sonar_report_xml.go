@@ -74,16 +74,17 @@ func (j *sonarReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		for _, test := range testSuiteResult.TestsResult {
 			testCase := j.createSonarTestCase(test)
 
-			if !test.Passed {
-				if test.ExecError != nil {
-					testCase.Error = j.createSonarError("Error", test.ExecError.Error())
-				} else {
-					testCase.Failure = j.createSonarFailure("Failed", test.Stringify())
-				}
+			if test.Skipped {
+				testCase.Skipped = j.createSonarSkipped("Skipped", test.Stringify())
 			}
 
-			// skip status currently not supported
-			// testCase.Skipped = j.createSonarSkipped()
+			if !test.Skipped && !test.Passed && test.ExecError != nil {
+				testCase.Error = j.createSonarError("Error", test.ExecError.Error())
+			}
+
+			if !test.Skipped && !test.Passed && test.ExecError == nil {
+				testCase.Failure = j.createSonarFailure("Failed", test.Stringify())
+			}
 
 			ts.TestCases = append(ts.TestCases, testCase)
 		}
@@ -114,25 +115,23 @@ func (j *sonarReportXML) createSonarTestCase(testJobResult *results.TestJobResul
 	}
 }
 
-func (j *sonarReportXML) createSonarError(message string, stacktrace string) *SonarError {
+func (j *sonarReportXML) createSonarError(message, stacktrace string) *SonarError {
 	return &SonarError{
 		Message:    message,
 		Stacktrace: stacktrace,
 	}
 }
 
-func (j *sonarReportXML) createSonarFailure(message string, stacktrace string) *SonarFailure {
+func (j *sonarReportXML) createSonarFailure(message, stacktrace string) *SonarFailure {
 	return &SonarFailure{
 		Message:    message,
 		Stacktrace: stacktrace,
 	}
 }
 
-/* skip status currently not supported
-func (j *sonarReportXML) createSonarSkipped(message string, reason string) *SonarSkipped {
+func (j *sonarReportXML) createSonarSkipped(message, reason string) *SonarSkipped {
 	return &SonarSkipped{
-		Message:    message,
-		Reason: reason,
+		Message: message,
+		Reason:  reason,
 	}
 }
-*/

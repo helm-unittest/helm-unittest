@@ -279,3 +279,37 @@ func TestTypeValidatorWhenNoManifestNegativeOk(t *testing.T) {
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
 }
+
+// #794: reflect.TypeOf(nil) returns nil, so calling .String() on an
+// unset YAML key used to crash the plugin. The validator must fail the
+// assertion cleanly instead of panicking.
+var docToTestTypeNil = `
+a:
+  nil_key:
+  b:
+    - c: 123
+`
+
+func TestTypeValidatorOnNilValueDoesNotPanic(t *testing.T) {
+	manifest := makeManifest(docToTestTypeNil)
+
+	validator := IsTypeValidator{"a.nil_key", "bool"}
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs: []common.K8sManifest{manifest},
+	})
+
+	assert.False(t, pass)
+	assert.NotEmpty(t, diff)
+}
+
+func TestTypeValidatorOnNilValueNegativeStillDoesNotPanic(t *testing.T) {
+	manifest := makeManifest(docToTestTypeNil)
+
+	validator := IsTypeValidator{"a.nil_key", "bool"}
+	pass, _ := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+}

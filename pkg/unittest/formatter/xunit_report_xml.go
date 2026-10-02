@@ -116,33 +116,20 @@ func NewXUnitReportXML() Formatter {
 	return &xUnitReportXML{}
 }
 
-// XUnitReportXML writes a NUnit xml representation of the given report to w
-// in the format described at https://github.com/nunit/docs/wiki/XML-Formats
+// XUnitReportXML writes a XUnit xml representation of the given report to a writer
+// in the format described at https://xunit.net/docs/format-xml-v2
 func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteResult, noXMLHeader bool, w io.Writer) error {
 	currentTime := time.Now()
 	testAssemblies := []XUnitAssembly{}
 
-	// convert TestSuiteResults to NUnit test suites
+	// convert TestSuiteResults to XUnit test suites
 	for _, testSuiteResult := range testSuiteResults {
 		ts := x.createXUnitAssembly(currentTime, testSuiteResult)
 
 		// When ExecError found, direct create error and
 		// add to the list and iterater trough next testSuiteResult.
 		if testSuiteResult.ExecError != nil {
-			ts.TotalTests++
-			ts.ErrorsTests++
-			ts.Errors = []XUnitError{
-				x.createXUnitError(
-					"Error",
-					"Error",
-					x.createXUnitFailure(
-						fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
-						"Error",
-						testSuiteResult.ExecError.Error(),
-					),
-				),
-			}
-
+			x.handleTestSuiteError(&ts, testSuiteResult)
 			testAssemblies = append(testAssemblies, ts)
 			continue
 		}
@@ -152,31 +139,7 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 		}
 
 		// individual test cases
-		for _, test := range testSuiteResult.TestsResult {
-			ts.TotalTests++
-			ts.TestRuns[0].TotalTests++
-
-			testCase := x.createXUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
-
-			// Write when a test is failed
-			if !test.Passed {
-				testCase.Failure = x.createXUnitFailure(XUnitValidationMethod, "Failed", test.Stringify())
-
-				// Update error count and ExceptionType
-				if test.ExecError != nil {
-					ts.ErrorsTests++
-					testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
-				} else {
-					ts.FailedTests++
-					ts.TestRuns[0].FailedTests++
-				}
-			} else {
-				ts.PassedTests++
-				ts.TestRuns[0].PassedTests++
-			}
-
-			ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
-		}
+		x.processTestCases(&ts, testSuiteResult)
 
 		testAssemblies = append(testAssemblies, ts)
 	}
@@ -193,8 +156,64 @@ func (x *xUnitReportXML) WriteTestOutput(testSuiteResults []*results.TestSuiteRe
 	return nil
 }
 
-func (x *xUnitReportXML) formatResult(b bool) string {
-	if !b {
+func (x *xUnitReportXML) handleTestSuiteError(ts *XUnitAssembly, testSuiteResult *results.TestSuiteResult) {
+	ts.TotalTests++
+	ts.ErrorsTests++
+	ts.Errors = []XUnitError{
+		x.createXUnitError(
+			"Error",
+			"Error",
+			x.createXUnitFailure(
+				fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error"),
+				"Error",
+				testSuiteResult.ExecError.Error(),
+			),
+		),
+	}
+}
+
+func (x *xUnitReportXML) processTestCases(ts *XUnitAssembly, testSuiteResult *results.TestSuiteResult) {
+	for _, test := range testSuiteResult.TestsResult {
+		ts.TotalTests++
+		ts.TestRuns[0].TotalTests++
+
+		testCase := x.createXUnitTestCase(determineClassnameFromDisplayName(testSuiteResult.DisplayName), test)
+		x.updateTestCaseStatus(ts, test, &testCase)
+
+		ts.TestRuns[0].TestCases = append(ts.TestRuns[0].TestCases, testCase)
+	}
+}
+
+func (x *xUnitReportXML) updateTestCaseStatus(ts *XUnitAssembly, test *results.TestJobResult, testCase *XUnitTestCase) {
+	if test.Skipped {
+		ts.SkippedTests++
+		ts.TestRuns[0].SkippedTests++
+		testCase.Reason = x.createXUnitSkippedReason(test.Stringify())
+		testCase.Result = "Skip"
+		return
+	}
+
+	if !test.Passed {
+		testCase.Failure = x.createXUnitFailure(XUnitValidationMethod, "Failed", test.Stringify())
+		if test.ExecError != nil {
+			ts.ErrorsTests++
+			testCase.Failure.ExceptionType = fmt.Sprintf("%s-%s", XUnitValidationMethod, "Error")
+		} else {
+			ts.FailedTests++
+			ts.TestRuns[0].FailedTests++
+		}
+		return
+	}
+
+	ts.PassedTests++
+	ts.TestRuns[0].PassedTests++
+}
+
+func (x *xUnitReportXML) formatResult(success, skipped bool) string {
+	if skipped {
+		return "Skip"
+	}
+	if !success {
 		return "Fail"
 	}
 	return "Pass"
@@ -235,8 +254,9 @@ func (x *xUnitReportXML) createXUnitTestCase(className string, testJobResult *re
 		Type:    className,
 		Method:  XUnitValidationMethod,
 		Time:    formatDuration(testJobResult.Duration),
-		Result:  x.formatResult(testJobResult.Passed),
+		Result:  x.formatResult(testJobResult.Passed, testJobResult.Skipped),
 		Failure: nil,
+		Reason:  nil,
 	}
 }
 
@@ -257,5 +277,11 @@ func (x *xUnitReportXML) createXUnitError(errorType, errorName string, xunitFail
 		Type:    errorType,
 		Name:    errorName,
 		Failure: xunitFailure,
+	}
+}
+
+func (x *xUnitReportXML) createXUnitSkippedReason(message string) *XUnitReason {
+	return &XUnitReason{
+		Reason: message,
 	}
 }
