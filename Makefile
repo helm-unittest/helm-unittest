@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.2.1
+HELM_VERSION := 4.3.0
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -15,6 +15,7 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
+	parallel-mulisuite \
 	with-crds \
 	with-disabled-subchart-on-condition \
 	with-disabled-subchart-on-tags \
@@ -28,6 +29,7 @@ TEST_NAMES ?=basic \
 	with-subchart \
 	with-subfolder \
 	with-subsubcharts
+TEST_HELM4_NAMES ?=	with-post-renderer
 
 .PHONY: help
 help:
@@ -35,8 +37,8 @@ help:
 
 .PHONY: plugin-dir
 plugin-dir:
-	$(eval HELM_3_PLUGINS := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
-	$(eval HELM_PLUGIN_DIR := $(HELM_3_PLUGINS)/helm-unittest)
+	$(eval HELM_PLUGINS_VALUE := $(shell helm env | grep HELM_PLUGINS | cut -d '=' -f 2 | tr -d '"'))
+	$(eval HELM_PLUGIN_DIR := $(HELM_PLUGINS_VALUE)/helm-unittest)
 
 .PHONY: install
 install: bootstrap build plugin-dir
@@ -51,11 +53,11 @@ install-dbg: bootstrap build-debug plugin-dir
 	cp plugin-dbg.yaml $(HELM_PLUGIN_DIR)/plugin.yaml
 
 .PHONY: hookInstall
-hookInstall: bootstrap build
+exphookInstall: bootstrap build
 
 .PHONY: unittest
 unittest: ## Run unit tests
-	go test ./... -v -cover
+	CGO_ENABLED=1 go test ./... -v -cover -race
 
 .PHONY: test-coverage
 test-coverage: build ## Test coverage with open report in default browser
@@ -140,9 +142,17 @@ dependency: ## Dependency maintenance
 dockerimage-alpine: build-amd64 ## Build docker image
 	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-alpine -f AlpineTest.Dockerfile .
 
+.PHONY: dockerimage-plugin-alpine
+dockerimage-plugin-alpine: dockerimage-alpine
+	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
+
 .PHONY: dockerimage-fedora
 dockerimage-fedora: build-amd64 ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
+	docker buildx build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
+
+.PHONY: dockerimage-plugin-fedora
+dockerimage-plugin-fedora: dockerimage-fedora
+	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
 
 .PHONY: test-docker-alpine
 test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
@@ -151,7 +161,17 @@ test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml . --parallel;\
+	done
+
+.PHONY: test-docker-plugin-alpine
+test-docker-plugin-alpine: dockerimage-plugin-alpine ## Execute 'helm unittests' in container
+	@for f in $(TEST_HELM4_NAMES); do \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v4/$${f}'"; \
+		docker run \
+			--platform linux/amd64 \
+			-v $(PROJECT_DIR)/test/data/v4/$${f}:/apps:z \
+			--rm  $(DOCKER):$(VERSION)-plugin-alpine -f tests/*.yaml .;\
 	done
 
 .PHONY: test-docker-fedora
@@ -161,7 +181,17 @@ test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml .;\
+			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml . --parallel;\
+	done
+
+.PHONY: test-docker-plugin-fedora
+test-docker-plugin-fedora: dockerimage-plugin-fedora ## Execute 'helm unittests' in container
+	@for f in $(TEST_HELM4_NAMES); do \
+		echo "running helm unit tests in folder '$(PROJECT_DIR)/test/data/v4/$${f}'"; \
+		docker run \
+			--platform linux/amd64 \
+			-v $(PROJECT_DIR)/test/data/v4/$${f}:/apps:z \
+			--rm  $(DOCKER):$(VERSION)-plugin-fedora -f tests/*.yaml .;\
 	done
 
 .PHONY: go-lint

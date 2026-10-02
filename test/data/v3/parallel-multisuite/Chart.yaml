@@ -1,0 +1,6 @@
+apiVersion: v2
+name: parallel-multisuite
+description: A chart with multiple suites in one test file sharing a single snapshot
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

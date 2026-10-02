@@ -10,7 +10,8 @@ import (
 	"github.com/mitchellh/copystructure"
 	log "github.com/sirupsen/logrus"
 
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	chartcommon "helm.sh/helm/v4/pkg/chart/common"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 const templatePrefix string = "templates"
@@ -71,19 +72,20 @@ func CopySet(setValues map[string]any) map[string]any {
 	return copiedSetValues
 }
 
-// Copy the V3Chart and its dependencies with partials and optional selected test files.
-func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart) *v3chart.Chart {
-	copiedChart := new(v3chart.Chart)
+// Copy the V2Chart and its dependencies with partials and optional selected test files.
+func FullCopyV2Chart(chartRoute, currentRoute string, targetChart *v2chart.Chart) *v2chart.Chart {
+	copiedChart := new(v2chart.Chart)
 
 	// Copy
 	for _, rawFile := range targetChart.Raw {
-		copiedRawFile := new(v3chart.File)
+		copiedRawFile := new(chartcommon.File)
 		copiedRawFile.Name = rawFile.Name
+		copiedRawFile.ModTime = rawFile.ModTime
 		copiedRawFile.Data = rawFile.Data
 		copiedChart.Raw = append(copiedChart.Raw, copiedRawFile)
 	}
 
-	copiedChart.Metadata = new(v3chart.Metadata)
+	copiedChart.Metadata = new(v2chart.Metadata)
 	copiedChart.Metadata.Name = targetChart.Metadata.Name
 	copiedChart.Metadata.Home = targetChart.Metadata.Home
 	copiedChart.Metadata.Sources = targetChart.Metadata.Sources
@@ -100,7 +102,7 @@ func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart
 	copiedChart.Metadata.Annotations = maps.Clone(targetChart.Metadata.Annotations)
 
 	for _, maintainer := range targetChart.Metadata.Maintainers {
-		copiedMaintainer := new(v3chart.Maintainer)
+		copiedMaintainer := new(v2chart.Maintainer)
 		copiedMaintainer.Name = maintainer.Name
 		copiedMaintainer.Email = maintainer.Email
 		copiedMaintainer.URL = maintainer.URL
@@ -108,8 +110,9 @@ func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart
 	}
 
 	for _, template := range targetChart.Templates {
-		copiedTemplate := new(v3chart.File)
+		copiedTemplate := new(chartcommon.File)
 		copiedTemplate.Name = template.Name
+		copiedTemplate.ModTime = template.ModTime
 		copiedTemplate.Data = template.Data
 		copiedChart.Templates = append(copiedChart.Templates, copiedTemplate)
 	}
@@ -119,14 +122,15 @@ func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart
 	copiedChart.Schema = targetChart.Schema
 
 	for _, file := range targetChart.Files {
-		copiedFile := new(v3chart.File)
+		copiedFile := new(chartcommon.File)
 		copiedFile.Name = file.Name
+		copiedFile.ModTime = file.ModTime
 		copiedFile.Data = file.Data
 		copiedChart.Files = append(copiedChart.Files, copiedFile)
 	}
 
 	for _, dependency := range targetChart.Metadata.Dependencies {
-		copiedDependency := new(v3chart.Dependency)
+		copiedDependency := new(v2chart.Dependency)
 		copiedDependency.Name = dependency.Name
 		copiedDependency.Version = dependency.Version
 		copiedDependency.Repository = dependency.Repository
@@ -140,10 +144,10 @@ func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart
 
 	// Recreate the dependencies
 	// Filter trough dependencies.
-	copiedChartDependencies := make([]*v3chart.Chart, 0)
+	copiedChartDependencies := make([]*v2chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
 		copiedChartRoute := filepath.Join(currentRoute, subchartPrefix, dependency.Name())
-		copiedDependency := FullCopyV3Chart(chartRoute, copiedChartRoute, dependency)
+		copiedDependency := FullCopyV2Chart(chartRoute, copiedChartRoute, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
 	copiedChart.SetDependencies(copiedChartDependencies...)
@@ -151,9 +155,9 @@ func FullCopyV3Chart(chartRoute, currentRoute string, targetChart *v3chart.Chart
 	return copiedChart
 }
 
-// Copy the V3Chart and its dependencies with partials and optional selected test files.
-func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, templatesToSkip []string, targetChart *v3chart.Chart) *v3chart.Chart {
-	copiedChart := new(v3chart.Chart)
+// Copy the V4Chart and its dependencies with partials and optional selected test files.
+func CopyV2Chart(chartRoute, currentRoute string, templatesToAssert []string, templatesToSkip []string, targetChart *v2chart.Chart) *v2chart.Chart {
+	copiedChart := new(v2chart.Chart)
 	*copiedChart = *targetChart
 
 	// Clean all parts and rebuild the chart which is needed
@@ -161,14 +165,14 @@ func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, te
 
 	// Filter the templates based on the templates to Assert
 	// To filter templates ensure only the original chartname is used.
-	copiedChart.Templates = filterV3Templates(chartRoute, currentRoute, templatesToAssert, templatesToSkip, targetChart)
+	copiedChart.Templates = filterV2Templates(chartRoute, currentRoute, templatesToAssert, templatesToSkip, targetChart)
 
 	// Recreate the dependencies
 	// Filter trough dependencies.
-	copiedChartDependencies := make([]*v3chart.Chart, 0)
+	copiedChartDependencies := make([]*v2chart.Chart, 0)
 	for _, dependency := range targetChart.Dependencies() {
 		copiedChartRoute := filepath.Join(currentRoute, subchartPrefix, dependency.Name())
-		copiedDependency := CopyV3Chart(chartRoute, copiedChartRoute, templatesToAssert, templatesToSkip, dependency)
+		copiedDependency := CopyV2Chart(chartRoute, copiedChartRoute, templatesToAssert, templatesToSkip, dependency)
 		copiedChartDependencies = append(copiedChartDependencies, copiedDependency)
 	}
 	copiedChart.SetDependencies(copiedChartDependencies...)
@@ -176,35 +180,35 @@ func CopyV3Chart(chartRoute, currentRoute string, templatesToAssert []string, te
 	return copiedChart
 }
 
-// filterV3Templates, Filter the V3Templates with only the partials and selected test files.
-func filterV3Templates(chartRoute, currentRoute string, templateToAssert []string, templatesToSkip []string, targetChart *v3chart.Chart) []*v3chart.File {
-	filteredV3Template := make([]*v3chart.File, 0)
+// filterV2Templates, Filter the V2Templates with only the partials and selected test files.
+func filterV2Templates(chartRoute, currentRoute string, templateToAssert []string, templatesToSkip []string, targetChart *v2chart.Chart) []*chartcommon.File {
+	filteredV2Template := make([]*chartcommon.File, 0)
 
-	log.WithField("filterV3Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
-	log.WithField("filterV3Templates", "currentRoute").Debugln("expected currentRoute:", currentRoute)
-	log.WithField("filterV3Templates", "templateToAssert").Debugln("expected templateToAssert:", templateToAssert)
+	log.WithField("filterV2Templates", "chartRoute").Debugln("expected chartRoute:", chartRoute)
+	log.WithField("filterV2Templates", "currentRoute").Debugln("expected currentRoute:", currentRoute)
+	log.WithField("filterV2Templates", "templateToAssert").Debugln("expected templateToAssert:", templateToAssert)
 
 	// check templates in chart
 	for _, fileName := range templateToAssert {
-		selectedV3TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
+		selectedV2TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
 
 		for _, template := range targetChart.Templates {
-			foundV3TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
+			foundV2TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
 
-			if ok, _ := regexp.MatchString(selectedV3TemplateNamePattern, foundV3TemplateName); ok {
-				filteredV3Template = append(filteredV3Template, template)
+			if ok, _ := regexp.MatchString(selectedV2TemplateNamePattern, foundV2TemplateName); ok {
+				filteredV2Template = append(filteredV2Template, template)
 			}
 		}
 	}
 
 	// remove excluded templates
-	filteredV3Template = slices.DeleteFunc(filteredV3Template, func(template *v3chart.File) bool {
-		foundV3TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
+	filteredV2Template = slices.DeleteFunc(filteredV2Template, func(template *chartcommon.File) bool {
+		foundV2TemplateName := filepath.ToSlash(filepath.Join(currentRoute, template.Name))
 
 		return slices.ContainsFunc(templatesToSkip, func(fileName string) bool {
-			selectedV3TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
+			selectedV2TemplateNamePattern := getTemplateFileNamePattern(filepath.ToSlash(filepath.Join(chartRoute, getTemplateFileName(fileName))))
 
-			ok, _ := regexp.MatchString(selectedV3TemplateNamePattern, foundV3TemplateName)
+			ok, _ := regexp.MatchString(selectedV2TemplateNamePattern, foundV2TemplateName)
 			return ok
 		})
 	})
@@ -212,9 +216,9 @@ func filterV3Templates(chartRoute, currentRoute string, templateToAssert []strin
 	// add partial templates
 	for _, template := range targetChart.Templates {
 		if strings.HasPrefix(filepath.Base(template.Name), "_") {
-			filteredV3Template = append(filteredV3Template, template)
+			filteredV2Template = append(filteredV2Template, template)
 		}
 	}
 
-	return filteredV3Template
+	return filteredV2Template
 }

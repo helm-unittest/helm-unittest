@@ -1,3 +1,13 @@
+1.2.0 / 2026-10-01
+==================
+- Add opt-in parallel execution of test suites (credits @michal-marszalek-h2oai)
+- Full helm 4 support (resolves #777, credits @Szpadel)
+- Fix arm64 docker images (resolves #769, resolves #917)
+- Update packages to latest versions
+- Update pipeline actions to latest versions
+- Update base images to latest versions
+- Update documentation
+
 1.1.2 / 2026-07-24
 ==================
 - Fix handling multiline block scalars in YAML (resolves #826, credits @AruneshDwivedi)
