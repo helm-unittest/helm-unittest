@@ -216,7 +216,7 @@ func (tr *TestRunner) buildMergedValuesForChart(chart *v2chart.Chart, chartPath 
 		}
 
 		value := make(map[string]any)
-		if err := common.YmlUnmarshal(string(byteArray), &value); err != nil {
+		if err := common.YmlUnmarshalValues(string(byteArray), &value); err != nil {
 			return nil, fmt.Errorf("failed to parse values file %s: %w", valuesFile, err)
 		}
 
