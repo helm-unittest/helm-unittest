@@ -231,6 +231,7 @@ type TestSuite struct {
 	}
 	KubernetesProvider KubernetesFakeClientProvider `yaml:"kubernetesProvider"`
 	PostRendererConfig PostRendererConfig           `yaml:"postRenderer"`
+	Debug              bool                         `yaml:"debug"`
 
 	Tests []*TestJob
 	// where the test suite file located
@@ -416,6 +417,7 @@ func (s *TestSuite) runV4TestJobs(
 				WithDocumentSelector(testJob.DocumentSelector),
 				WithIncludeCrds(s.IncludeCrds),
 				WithSkipSchemaValidation(s.skipSchemaValidation),
+				WithDebug(s.Debug),
 			))
 			jobResult = testJob.RunV4(&job)
 			jobResults[idx] = jobResult

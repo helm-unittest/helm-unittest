@@ -6,6 +6,7 @@ postRenderer:
     - "eval"
     - '.metadata.annotations.appended="new"'
     - "-"
+debug: true
 tests:
   - it: manifest should match snapshot
     asserts:
