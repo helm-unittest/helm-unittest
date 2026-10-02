@@ -400,6 +400,40 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+func TestV4RunJobWithValuesFileContainingDuplicateKeys(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
+	manifest := `
+it: should accept duplicate keys like helm does
+values:
+  - %s
+asserts:
+  - equal:
+      path: metadata.name
+      value: RELEASE-NAME-mary-jane
+    documentIndex: 0
+    template: templates/deployment.yaml
+`
+	a := assert.New(t)
+
+	file := path.Join("_scratch", "testjob_test_TestRunJobWithValuesFileContainingDuplicateKeys.yaml")
+	a.Nil(writeToFile("nameOverride: john-doe\nnameOverride: mary-jane\n", file))
+	defer func() {
+		ferr := os.RemoveAll(file)
+		a.NoError(ferr)
+	}()
+
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(fmt.Sprintf(manifest, file), &tj, t)
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+	))
+	testResult := tj.RunV4(&results.TestJobResult{})
+
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
 func TestV4RunJobWithReleaseSettings(t *testing.T) {
 	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `

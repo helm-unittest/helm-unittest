@@ -362,7 +362,7 @@ func (t *TestJob) getUserValues() (string, error) {
 			return "", err
 		}
 
-		if err := common.YmlUnmarshal(string(byteArray), &value); err != nil {
+		if err := common.YmlUnmarshalValues(string(byteArray), &value); err != nil {
 			return "", fmt.Errorf("failed to parse %s: %s", specifiedPath, err)
 		}
 
