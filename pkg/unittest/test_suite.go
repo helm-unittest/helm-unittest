@@ -13,6 +13,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/helm-unittest/helm-unittest/internal/build"
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	chartcommon "helm.sh/helm/v4/pkg/chart/common"
@@ -250,6 +251,12 @@ type TestSuite struct {
 		// If the plugin version is less than the minimum version, skip the test suite
 		MinimumVersion string `yaml:"minimumVersion"`
 	} `yaml:"skip"`
+	// coverageTracker is attached by the runner, not the YAML schema.
+	coverageTracker *coverage.Tracker `yaml:"-"`
+}
+
+func (s *TestSuite) WithCoverageTracker(tr *coverage.Tracker) {
+	s.coverageTracker = tr
 }
 
 // RunV4 runs all the test jobs defined in TestSuite.
@@ -270,6 +277,7 @@ func (s *TestSuite) RunV4(
 		snapshotCache,
 		failFast,
 		renderPath,
+		s.coverageTracker,
 	)
 
 	result.Passed = r.Pass
@@ -389,6 +397,7 @@ func (s *TestSuite) runV4TestJobs(
 	cache *snapshot.Cache,
 	failFast bool,
 	renderPath string,
+	tracker *coverage.Tracker,
 ) *SuiteResult {
 	result := SuiteResult{Pass: false, FailFast: false, Skip: false}
 	jobResults := make([]*results.TestJobResult, len(s.Tests))
@@ -416,6 +425,7 @@ func (s *TestSuite) runV4TestJobs(
 				WithDocumentSelector(testJob.DocumentSelector),
 				WithIncludeCrds(s.IncludeCrds),
 				WithSkipSchemaValidation(s.skipSchemaValidation),
+				WithCoverageTracker(tracker),
 			))
 			jobResult = testJob.RunV4(&job)
 			jobResults[idx] = jobResult

@@ -1,0 +1,21 @@
+suite: b-child-enabled
+templates:
+  - charts/child/templates/cm.yaml
+  - templates/parent-uses-child.yaml
+tests:
+  - it: child subchart template renders
+    set:
+      child.enabled: true
+    template: charts/child/templates/cm.yaml
+    asserts:
+      - equal:
+          path: data.tone
+          value: soft
+  - it: parent template includes child-defined template
+    set:
+      child.enabled: true
+    template: templates/parent-uses-child.yaml
+    asserts:
+      - equal:
+          path: data.greeting
+          value: hello-from-child

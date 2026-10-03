@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: child-cm
+data:
+  {{- if eq .Values.tone "soft" }}
+  tone: soft
+  {{- else }}
+  tone: hard
+  {{- end }}

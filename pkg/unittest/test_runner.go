@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
@@ -84,6 +85,9 @@ type TestRunner struct {
 	Strict               bool
 	Failfast             bool
 	SkipSchemaValidation bool
+	Coverage             bool
+	CoverageFile         string
+	CoverageFormat       string
 	Parallel             bool
 	MaxWorkers           int
 	TestFiles            []string
@@ -96,6 +100,7 @@ type TestRunner struct {
 	chartCounting        testUnitCounting
 	snapshotCounting     totalSnapshotCounting
 	testResults          []*results.TestSuiteResult
+	coverageReports      []coverage.Coverage
 	// suiteStartHook is called at the start of running each suite. It is nil in
 	// normal operation and exists only so tests can observe suite scheduling
 	// concurrency.
@@ -130,7 +135,25 @@ func (tr *TestRunner) RunV4(ChartPaths []string) bool {
 		}
 
 		tr.printChartHeader(chart.Name(), chartPath)
+
+		var tracker *coverage.Tracker
+		if tr.Coverage {
+			// Mirror --with-subchart in coverage: when subchart tests are
+			// excluded from the run, their templates also stay out of the
+			// coverage report (but they're still copied into the
+			// instrumented chart so the parent's include/template calls
+			// continue to resolve).
+			tracker = coverage.NewTracker(chart, coverage.WithSubcharts(tr.WithSubChart))
+			for _, suite := range testSuites {
+				suite.WithCoverageTracker(tracker)
+			}
+		}
+
 		chartPassed := tr.runV4SuitesOfChart(testSuites, chart)
+
+		if tracker != nil {
+			tr.coverageReports = append(tr.coverageReports, tracker.Snapshot())
+		}
 
 		tr.countChart(chartPassed, nil)
 		allPassed = allPassed && chartPassed
@@ -141,7 +164,43 @@ func (tr *TestRunner) RunV4(ChartPaths []string) bool {
 	}
 	tr.printSnapshotSummary()
 	tr.printSummary(time.Since(start))
+	tr.renderCoverage()
 	return allPassed
+}
+
+// renderCoverage prints the per-chart tables and, when CoverageFile is set, writes a report per --coverage-format.
+// For multiple formats CoverageFile is treated as a path stem with each format's extension appended.
+func (tr *TestRunner) renderCoverage() {
+	if len(tr.coverageReports) == 0 {
+		return
+	}
+	for _, cov := range tr.coverageReports {
+		coverage.RenderConsole(tr.Printer, cov)
+	}
+	if tr.CoverageFile == "" {
+		return
+	}
+	formats, err := coverage.ParseFormats(tr.CoverageFormat)
+	if err != nil {
+		log.WithField(LOG_TEST_RUNNER, "coverage-format").Errorf("invalid --coverage-format: %v", err)
+		return
+	}
+	targets := coverage.ResolveOutputPaths(tr.CoverageFile, formats)
+
+	// For multi-chart runs the first chart uses the resolved path as-is and
+	// subsequent charts append a `.<chartName>` suffix to disambiguate. This
+	// matches the long-standing single-format behaviour.
+	for i, cov := range tr.coverageReports {
+		for _, target := range targets {
+			path := target.Path
+			if i > 0 {
+				path = fmt.Sprintf("%s.%s", path, cov.ChartName)
+			}
+			if err := coverage.WriteReport(path, target.Format, cov); err != nil {
+				log.WithField(LOG_TEST_RUNNER, "coverage-report").Errorf("failed to write %s coverage report for %s: %v", target.Format, cov.ChartName, err)
+			}
+		}
+	}
 }
 
 // getTestSuites retrieves the list of test suites for the given chart.

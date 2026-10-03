@@ -244,6 +244,87 @@ $ helm unittest --parallel --max-workers 4 ./charts/my-app
 `--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
 (the default) means one worker per CPU core.
 
+### Code Coverage
+
+Pass `--coverage` to print a per-template coverage table after the test summary.
+Each chart template is instrumented by parsing its Go-template AST and injecting
+probe tokens at action, branch and range constructs; helm-unittest then renders
+each test job a second time through the instrumented chart and counts the
+tokens that survived in the output. Coverage rendering is isolated from the
+assertion render, so adding `--coverage` never changes test results.
+
+Output columns:
+
+* **Actions** — `{{ ... }}` expressions executed at least once.
+* **Branches** — `if`, `else`, `with`, `with-else` bodies, plus implicit
+  branches for `default` and `ternary` calls (primary vs fallback / true vs
+  false) when the call sits at the end of a pipeline with a simple field or
+  variable input.
+* **Loops** — `range` body / `range-else` entered at least once. The trailing
+  "`N iters`" annotation is the total iteration count summed across every
+  test run, so a `range` over a large list shows real loop volume even when
+  the binary coverage stat is 100%.
+* **Used** — `yes` if the template rendered non-empty content in any test,
+  or (for `_*.tpl` partials) if any of its `define`-block probes were hit
+  via `template` / `include`. `no` flags dead templates that no test
+  exercises, which the action/branch/loop columns alone can't always
+  surface (e.g. a static-YAML template that's never rendered shows `-` for
+  all three but `no` for Used). The footer row shows the rendered count as
+  `used/total`.
+
+Coverage respects the existing `--with-subchart` flag: when it's set to
+`false`, subchart templates are excluded from coverage instrumentation and
+the report. They are still copied into the chart that's rendered for
+coverage so `include "subchart.foo"` calls from the parent chart still
+work — only their probes and report rows are dropped.
+
+Use `--coverage-file path/to/report` to emit a machine-readable report; this
+flag implies `--coverage`. The format is controlled by `--coverage-format`,
+which accepts a single format or a comma-separated list:
+
+| Format      | Flag value    | Consumed by                                                          |
+|-------------|---------------|----------------------------------------------------------------------|
+| JSON (default) | `json`     | Custom dashboards, this repo's own schema                            |
+| Cobertura XML | `cobertura` | Codecov, SonarQube, GitLab, Jenkins (Cobertura plugin), Azure DevOps |
+| LCOV          | `lcov`      | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import     |
+| HTML          | `html`      | Standalone single-file page — open in any browser, attach as a CI artifact. Source code is embedded with per-line colour coding (covered / missed / partial) and a sortable file list. |
+
+Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
+branch and loop probes are reported as branches (Cobertura `condition-coverage`
+attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
+with empty counters so consumers still see them in the file list.
+
+For a **single** format, `--coverage-file` is the exact output path. For
+**multiple** formats, `--coverage-file` is treated as a path stem; each
+format appends its conventional extension automatically — and a trailing
+known extension on the stem (e.g. `coverage.xml`) is stripped first so you
+don't end up with `coverage.xml.xml`. Example:
+
+```bash
+helm unittest \
+  --coverage-format cobertura,lcov,html,json \
+  --coverage-file ./reports/cov \
+  <chart>
+
+# writes:
+#   ./reports/cov.xml    (cobertura)
+#   ./reports/cov.info   (lcov)
+#   ./reports/cov.html   (html)
+#   ./reports/cov.json   (json)
+```
+
+The per-file **Rendered** signal (whether any test caused this template to
+contribute output) is surfaced in every format:
+
+* JSON: `"rendered": true|false` on each file entry.
+* Cobertura: `helm-unittest-rendered="true|false"` attribute on each `<class>`
+  element (a non-standard extension that compliant consumers ignore).
+* LCOV: a `# helm-unittest:rendered=true|false` comment line emitted right
+  after each `SF:` record. Standard `genhtml` / `lcov` tooling tolerates the
+  comment.
+* HTML: a green `used` / red `unused` pill next to each filename and a count
+  in the summary.
+
 ### Yaml JsonPath Support
 
 Now JsonPath is supported for mappings and arrays.
