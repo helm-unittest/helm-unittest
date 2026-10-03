@@ -47,22 +47,22 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 When not defining any versions, it will install the latest version of binary into helm plugin directory, otherwise it will install the specified version.
 
 Using Helm 3:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest.git
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ```
 
 Using Helm 4<sup>*</sup>:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 ```
 
 Using OCI download<sup>**</sup>:
-```
-$ helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
+```bash
+helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
 ```
 or using http download<sup>***</sup>:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
 ```
 
 __Notes:__ </br>
@@ -134,8 +134,8 @@ tests:
 
 and run:
 
-```
-$ helm unittest $YOUR_CHART
+```bash
+helm unittest $YOUR_CHART
 ```
 
 Now there is your first test! ;)
@@ -145,7 +145,7 @@ Now there is your first test! ;)
 The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files related to chart directory, like:
 
 ```bash
-$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
+helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
 ```
 
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
@@ -185,14 +185,14 @@ we do not look for a file suffix or glob.
 
 The command for the above chart and test configuration would be:
 
-```shell
+```bash
 helm unittest --chart-tests-path tests-chart my-chart
 ```
 
 ## Usage
 
-```
-$ helm unittest [flags] CHART [...]
+```bash
+helm unittest [flags] CHART [...]
 ```
 
 This renders your charts locally (without tiller) and runs tests
@@ -214,7 +214,35 @@ defined in test suite files.
   -s, --with-subchart charts    include tests of the subcharts within charts folder (default true)
       --chart-tests-path string the folder location relative to the chart where a helm chart to render test suites is located
       --skip-schema-validation  skip values schema validation when rendering the chart (default false)
+      --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
+      --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
 ```
+
+By default test suites run sequentially, exactly as in previous releases. Pass
+`--parallel` to opt in to concurrent execution:
+
+```
+$ helm unittest --parallel my-chart
+```
+
+With `--parallel`, test suites run concurrently. Suites that share a snapshot
+(`.snap`) file are grouped and run sequentially within their group, so snapshot
+files are never written concurrently. Output stays deterministic: suites are
+printed in the same order as a sequential run. Combined with `--failfast`, the
+first failing suite stops any not-yet-started suites from being scheduled while
+in-flight suites finish. `--parallel` is ignored when `--debugPlugin` is set and
+execution falls back to sequential.
+
+By default parallel execution uses one worker per CPU core. Use `--max-workers`
+to cap the number of suite groups that run at once, for example to limit
+resource usage in CI:
+
+```
+$ helm unittest --parallel --max-workers 4 ./charts/my-app
+```
+
+`--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
+(the default) means one worker per CPU core.
 
 ### Yaml JsonPath Support
 
@@ -303,8 +331,8 @@ tests:
 
 The `matchSnapshot` assertion validates the content rendered the same as cached last time. It fails if the content has changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
 
-```
-$ helm unittest -u my-chart
+```bash
+helm unittest -u my-chart
 ```
 
 The cache files are stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
