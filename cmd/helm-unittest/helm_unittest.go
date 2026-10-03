@@ -18,10 +18,12 @@ type testOptions struct {
 	debugLogging            bool
 	useFailfast             bool
 	useStrict               bool
-	colored                 bool
+	colored                 string
 	updateSnapshot          bool
 	withSubChart            bool
 	useSkipSchemaValidation bool
+	useParallel             bool
+	maxWorkers              int
 	testFiles               []string
 	valuesFiles             []string
 	outputFile              string
@@ -76,13 +78,24 @@ details about how to write tests.
 func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	var colored *bool
 	if cmd.PersistentFlags().Changed("color") {
-		colored = &testConfig.colored
+		if testConfig.colored == "true" || testConfig.colored == "always" {
+			colored = new(bool)
+			*colored = true
+		}
+		if testConfig.colored == "false" || testConfig.colored == "never" {
+			colored = new(bool)
+			*colored = false
+		}
 	}
 
 	renderPath := ""
 	if testConfig.debugLogging {
 		renderPath = ".debug"
 		log.SetLevel(log.DebugLevel)
+	}
+
+	if testConfig.useParallel && renderPath != "" {
+		log.Warn("--parallel is ignored when --debugPlugin is set; running sequentially")
 	}
 
 	if len(testConfig.testFiles) == 0 {
@@ -99,6 +112,8 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		Strict:               testConfig.useStrict,
 		Failfast:             testConfig.useFailfast,
 		SkipSchemaValidation: testConfig.useSkipSchemaValidation,
+		Parallel:             testConfig.useParallel,
+		MaxWorkers:           testConfig.maxWorkers,
 		TestFiles:            testConfig.testFiles,
 		ValuesFiles:          testConfig.valuesFiles,
 		OutputFile:           testConfig.outputFile,
@@ -107,11 +122,11 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		DisableColors: !testConfig.colored,
+		DisableColors: colored == nil || !*colored,
 		FullTimestamp: true,
 	})
 
-	passed := testRunner.RunV3(chartPaths)
+	passed := testRunner.RunV4(chartPaths)
 
 	if !passed {
 		os.Exit(1)
@@ -131,10 +146,14 @@ func init() {
 }
 
 func InitPluginFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVar(
-		&testConfig.colored, "color", false,
-		"enforce printing colored output even stdout is not a tty. Set to false to disable color",
+	cmd.PersistentFlags().StringVar(
+		&testConfig.colored, "color", "false",
+		"enforce printing colored output even stdout is not a tty. Set to auto, never or false to disable color, always or true to enable color",
 	)
+	colorFlag := cmd.PersistentFlags().Lookup("color")
+	if colorFlag != nil {
+		colorFlag.NoOptDefVal = "true"
+	}
 
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useStrict, "strict", false,
@@ -189,6 +208,16 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&testConfig.useSkipSchemaValidation, "skip-schema-validation", false,
 		"skip values schema validation when rendering the chart",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.useParallel, "parallel", false,
+		"run test suites in parallel (ignored when --debugPlugin is set)",
+	)
+
+	cmd.PersistentFlags().IntVar(
+		&testConfig.maxWorkers, "max-workers", 0,
+		"maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel)",
 	)
 }
 

@@ -5,11 +5,11 @@ import (
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/validators"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
-	v3chart "helm.sh/helm/v3/pkg/chart"
+	v2chart "helm.sh/helm/v4/pkg/chart/v2"
 )
 
 type TestConfig struct {
-	targetChart            *v3chart.Chart
+	targetChart            *v2chart.Chart
 	cache                  *snapshot.Cache
 	renderPath             string
 	failFast               bool
@@ -19,7 +19,7 @@ type TestConfig struct {
 	includeCrds            bool
 }
 
-func NewTestConfig(chart *v3chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
+func NewTestConfig(chart *v2chart.Chart, cache *snapshot.Cache, options ...func(*TestConfig)) *TestConfig {
 	config := &TestConfig{
 		targetChart:            chart,
 		cache:                  cache,
