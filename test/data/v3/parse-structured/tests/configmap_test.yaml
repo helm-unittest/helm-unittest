@@ -1,0 +1,129 @@
+suite: test configmap parse assertions
+templates:
+  - configmap.yaml
+tests:
+  - it: should compare parsed JSON without depending on key order
+    asserts:
+      - equal:
+          path: data["handwritten.json"]
+          parse: json
+          value:
+            debug: false
+            fromString: 8080
+            quoted: "8080"
+            ratio: 1.5
+            server:
+              host: 0.0.0.0
+              port: 8080
+              tls:
+                enabled: true
+
+  - it: should assert a deeply nested leaf via innerPath
+    asserts:
+      - equal:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.tls.enabled
+          value: true
+      - equal:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.port
+          value: 8080
+
+  - it: should detect that a hand-written template dropped the quotes
+    asserts:
+      - isType:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: fromString
+          type: int
+      - isType:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: quoted
+          type: string
+
+  - it: should see the correct type when toJson generated the content
+    asserts:
+      - isType:
+          path: data["generated.json"]
+          parse: json
+          innerPath: fromString
+          type: string
+
+  - it: should assert on parsed YAML
+    asserts:
+      - equal:
+          path: data["config.yaml"]
+          parse: yaml
+          innerPath: server.port
+          value: 8080
+      - isSubset:
+          path: data["config.yaml"]
+          parse: yaml
+          content:
+            debug: false
+
+  - it: should index into a parsed top-level array
+    asserts:
+      - equal:
+          path: data["dashboard.json"]
+          parse: json
+          innerPath: "[0].title"
+          value: Latency
+      - equal:
+          path: data["dashboard.json"]
+          parse: json
+          innerPath: "[1].index"
+          value: 1
+      - lengthEqual:
+          path: data["dashboard.json"]
+          parse: json
+          count: 2
+
+  - it: should support contains and lengthEqual on a parsed array
+    asserts:
+      - contains:
+          path: data["generated.json"]
+          parse: json
+          innerPath: tags
+          content: alpha
+      - lengthEqual:
+          path: data["generated.json"]
+          parse: json
+          innerPath: tags
+          count: 2
+
+  - it: should support exists and numeric comparison on parsed content
+    asserts:
+      - exists:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.tls.enabled
+      - notExists:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.missing
+      - greaterOrEqual:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.port
+          value: 1024
+      - lessOrEqual:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.port
+          value: 9090
+
+  - it: should support negative and emptiness assertions on parsed content
+    asserts:
+      - notEqual:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.port
+          value: 9999
+      - isNotEmpty:
+          path: data["handwritten.json"]
+          parse: json
+          innerPath: server.host

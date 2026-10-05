@@ -98,6 +98,16 @@ func TestV4RunnerOkWithPassedTests(t *testing.T) {
 	cupaloy.SnapshotT(t, makeOutputSnapshotable(buffer.String())...)
 }
 
+func TestV4RunnerOkWithParseStructuredChart(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testTestFiles},
+	}
+	passed := runner.RunV4([]string{testV4ParseStructuredChart})
+	assert.True(t, passed, buffer.String())
+}
+
 func TestV4RunnerOkWithPassedTestsDifferentFormatter(t *testing.T) {
 	outputFile := "output.txt"
 	buffer := new(bytes.Buffer)

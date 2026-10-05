@@ -15,6 +15,7 @@ type operatorValidator struct {
 	Path           string
 	Value          any
 	ComparisonType string
+	ParseOptions
 }
 
 func (o operatorValidator) failInfo(msg, comparisonType string, manifestIndex, actualIndex int, not bool) []string {
@@ -83,8 +84,14 @@ func (o operatorValidator) validateManifest(manifest common.K8sManifest, manifes
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actuals, err = o.ParseOptions.resolveActuals(actuals, o.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actuals) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path '%s'", o.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path '%s'", o.ParseOptions.describePath(o.Path)))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)

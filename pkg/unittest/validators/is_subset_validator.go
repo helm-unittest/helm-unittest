@@ -10,8 +10,9 @@ import (
 
 // IsSubsetValidator validate whether value of Path contains Content
 type IsSubsetValidator struct {
-	Path    string
-	Content any
+	Path         string
+	Content      any
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (v IsSubsetValidator) failInfo(actual any, manifestIndex, valueIndex int, not bool) []string {
@@ -37,8 +38,14 @@ func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifes
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actual) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
 	}
 
 	manifestValidateSuccess := (len(actual) == 0 && context.Negative)

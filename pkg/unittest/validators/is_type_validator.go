@@ -12,8 +12,9 @@ import (
 
 // IsTypeValidator validate the type of the value at Path
 type IsTypeValidator struct {
-	Path string
-	Type string
+	Path         string
+	Type         string
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (t IsTypeValidator) failInfo(actual string, manifestIndex, valueIndex int, not bool) []string {
@@ -38,8 +39,14 @@ func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestI
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actuals, err = t.ParseOptions.resolveActuals(actuals, t.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actuals) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", t.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path %s", t.ParseOptions.describePath(t.Path)))
 	}
 
 	manifestSuccess := (len(actuals) == 0 && context.Negative)
