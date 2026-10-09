@@ -1969,3 +1969,66 @@ tests:
 		})
 	}
 }
+
+func TestV4RunSuiteWithDebugPrintsRenderedManifests(t *testing.T) {
+	suiteDoc := `
+suite: test suite with debug
+debug: true
+templates:
+  - configmap.yaml
+  - deployment.yaml
+tests:
+  - it: should pass
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
+	assert.NoError(t, chartErr)
+
+	a := assert.New(t)
+	a.True(testSuite.Debug, "debug should be unmarshalled from the suite definition")
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_debug_test.yaml"), false)
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
+
+	a.True(suiteResult.Passed)
+	a.Len(suiteResult.TestsResult, 1)
+	a.Contains(suiteResult.TestsResult[0].DebugOutput, "#### file: basic/templates/deployment.yaml",
+		"suite level debug should be passed down to every test job")
+	a.Contains(suiteResult.TestsResult[0].DebugOutput, "kind: Deployment")
+}
+
+func TestV4RunSuiteWithoutDebugPrintsNothing(t *testing.T) {
+	suiteDoc := `
+suite: test suite without debug
+templates:
+  - configmap.yaml
+  - deployment.yaml
+tests:
+  - it: should pass
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: Deployment
+`
+	testSuite := TestSuite{}
+	common.YmlUnmarshalTestHelper(suiteDoc, &testSuite, t)
+	chart, chartErr := v2loader.Load(testV4BasicChart)
+	assert.NoError(t, chartErr)
+
+	a := assert.New(t)
+	a.False(testSuite.Debug)
+
+	cache, _ := snapshot.CreateSnapshotOfSuite(path.Join(tmpdir, "v3_suite_nodebug_test.yaml"), false)
+	suiteResult := testSuite.RunV4(chart, cache, true, "", &results.TestSuiteResult{})
+
+	a.True(suiteResult.Passed)
+	a.Len(suiteResult.TestsResult, 1)
+	a.Empty(suiteResult.TestsResult[0].DebugOutput, "no debug output expected when debug is not enabled")
+}
