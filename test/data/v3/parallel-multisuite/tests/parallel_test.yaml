@@ -1,0 +1,26 @@
+---
+suite: configmap suite
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: renders configmap
+    asserts:
+      - matchSnapshot: {}
+---
+suite: service suite
+templates:
+  - templates/service.yaml
+tests:
+  - it: renders service
+    asserts:
+      - matchSnapshot: {}
+---
+suite: configmap override suite
+templates:
+  - templates/configmap.yaml
+set:
+  name: overridden
+tests:
+  - it: renders configmap with override
+    asserts:
+      - matchSnapshot: {}
