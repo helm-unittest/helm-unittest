@@ -1,4 +1,4 @@
-package unittest
+package unittest_test
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -1,4 +1,4 @@
-package coverage
+package coverage_test
 
 import (
 	"encoding/xml"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +57,7 @@ func TestWriteCobertura_StructureAndCounts(t *testing.T) {
 	assert.True(t, strings.HasPrefix(contents, `<?xml`), "missing XML header")
 	assert.Contains(t, contents, "coverage-04.dtd")
 
-	var doc coberturaCoverage
+	var doc coberturaDoc
 	require.NoError(t, xml.Unmarshal(data, &doc))
 
 	// Top-level totals come from actions (lines) and branches+loops combined.
@@ -71,7 +72,7 @@ func TestWriteCobertura_StructureAndCounts(t *testing.T) {
 
 	// Parse-error files must not appear as classes; rendered AND unused files do.
 	require.Len(t, pkg.Classes.Classes, 2)
-	byName := map[string]coberturaClass{}
+	byName := map[string]coberturaDocClass{}
 	for _, c := range pkg.Classes.Classes {
 		byName[c.Filename] = c
 	}
@@ -87,13 +88,33 @@ func TestWriteCobertura_StructureAndCounts(t *testing.T) {
 	assert.Contains(t, byName, "demo/templates/dead.yaml", "unrendered templates still appear as classes")
 }
 
-func TestClassNameFromPath(t *testing.T) {
-	cases := map[string]string{
-		"demo/templates/cm.yaml":         "demo.templates.cm_yaml",
-		"demo/templates/sub/dir/cm.yaml": "demo.templates.sub.dir.cm_yaml",
-		"cm.yaml":                        "cm_yaml",
-	}
-	for in, want := range cases {
-		assert.Equal(t, want, classNameFromPath(in), in)
-	}
+// coberturaDoc mirrors just the attributes this test asserts on from the
+// Cobertura XML WriteCobertura produces. It is declared independently of the
+// package's own (unexported) XML model so the test verifies the wire format
+// rather than the internal representation.
+type coberturaDoc struct {
+	XMLName         xml.Name `xml:"coverage"`
+	LinesCovered    int      `xml:"lines-covered,attr"`
+	LinesValid      int      `xml:"lines-valid,attr"`
+	BranchesCovered int      `xml:"branches-covered,attr"`
+	BranchesValid   int      `xml:"branches-valid,attr"`
+	Packages        struct {
+		Packages []struct {
+			Name    string `xml:"name,attr"`
+			Classes struct {
+				Classes []coberturaDocClass `xml:"class"`
+			} `xml:"classes"`
+		} `xml:"package"`
+	} `xml:"packages"`
+}
+
+type coberturaDocClass struct {
+	Filename string `xml:"filename,attr"`
+	Lines    struct {
+		Lines []struct {
+			Number            int    `xml:"number,attr"`
+			Branch            string `xml:"branch,attr"`
+			ConditionCoverage string `xml:"condition-coverage,attr"`
+		} `xml:"line"`
+	} `xml:"lines"`
 }

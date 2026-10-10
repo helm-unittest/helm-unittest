@@ -1,4 +1,4 @@
-package coverage
+package coverage_test
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

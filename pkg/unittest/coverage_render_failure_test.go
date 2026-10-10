@@ -1,4 +1,4 @@
-package unittest
+package unittest_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
