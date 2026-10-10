@@ -10,6 +10,8 @@ LDFLAGS := "-X github.com/helm-unittest/helm-unittest/internal/build.version=${V
 DOCKER ?= helmunittest/helm-unittest
 PROJECT_DIR := $(shell pwd)
 TEST_NAMES ?=basic \
+    coverage-fromjson \
+	coverage-subchart \
 	failing-template \
 	full-snapshot \
 	global-double-setting \
@@ -161,7 +163,7 @@ test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml . --parallel;\
+			--rm  $(DOCKER):$(VERSION)-alpine -f tests/*.yaml . --parallel --coverage;\
 	done
 
 .PHONY: test-docker-plugin-alpine
@@ -181,7 +183,7 @@ test-docker-fedora: dockerimage-fedora ## Execute 'helm unittests' in container
 		docker run \
 			--platform linux/amd64 \
 			-v $(PROJECT_DIR)/test/data/v3/$${f}:/apps:z \
-			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml . --parallel;\
+			--rm  $(DOCKER):$(VERSION)-fedora -f tests/*.yaml . --parallel --coverage;\
 	done
 
 .PHONY: test-docker-plugin-fedora

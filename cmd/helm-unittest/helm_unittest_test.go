@@ -16,7 +16,7 @@ func setupTestCmd() *cobra.Command {
 	buf := new(bytes.Buffer)
 	testCmd := &cobra.Command{
 		Use:           "unittest",
-		Run:           RunPlugin,
+		RunE:          RunPlugin,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -476,6 +476,31 @@ func TestValidateUnittestParallelWithDebugFlags(t *testing.T) {
 		a.Equal(test.expectedParallel, runner.Parallel, "args: %v", test.args)
 		a.Equal(test.expectedRenderPath, runner.RenderPath, "args: %v", test.args)
 	}
+}
+
+// --coverage-format is validated before any chart is rendered, so a typo
+// fails the run instead of silently skipping the report file after the full
+// test run has already executed.
+func TestValidateUnittestCoverageFormatFlag(t *testing.T) {
+	a := assert.New(t)
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--coverage", "--coverage-format", "bogus"})
+	err := cmd.Execute()
+
+	if a.Error(err) {
+		a.Contains(err.Error(), "coverage-format")
+	}
+}
+
+func TestValidateUnittestCoverageFormatFlagAcceptsKnownFormats(t *testing.T) {
+	a := assert.New(t)
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--coverage", "--coverage-format", "cobertura,lcov"})
+	err := cmd.Execute()
+
+	a.NoError(err)
 }
 
 // Using %T

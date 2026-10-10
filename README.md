@@ -244,6 +244,80 @@ $ helm unittest --parallel --max-workers 4 ./charts/my-app
 `--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
 (the default) means one worker per CPU core.
 
+### Code Coverage
+
+Pass `--coverage` to print a per-template coverage table after the test summary.
+Each chart template is parsed via `text/template/parse` and instrumented with a
+`covprobe <idx>` call at every action, branch and range node; `covprobe` records
+the hit and emits nothing, so a helper whose output is consumed as data (e.g.
+`include "..." | fromJson`) still gets valid input. Each test job then renders a
+second time through the instrumented chart, against its own deep copy so
+coverage from one job can never leak into another. This coverage render is
+isolated from the assertion render, so adding `--coverage` never changes test
+results.
+
+Output columns:
+
+* **Actions** — `{{ ... }}` expressions executed at least once.
+* **Branches** — `if`, `else`, `with`, `with-else` bodies.
+* **Loops** — `range` body / `range-else` entered at least once. The trailing
+  "`N iters`" annotation is the total iteration count summed across every
+  test run, so a `range` over a large list shows real loop volume even when
+  the binary coverage stat is 100%.
+* **Used** — `yes` if the template rendered non-empty content in any test,
+  or (for `_*.tpl` partials) if any of its `define`-block probes were hit
+  via `template` / `include`. `no` flags dead templates that no test
+  exercises, which the action/branch/loop columns alone can't always
+  surface (e.g. a static-YAML template that's never rendered shows `-` for
+  all three but `no` for Used). The footer row shows the rendered count as
+  `used/total`.
+
+Coverage respects the existing `--with-subchart` flag: when it's set to
+`false`, subchart templates are excluded from coverage instrumentation and
+the report. They are still copied into the chart that's rendered for
+coverage so `include "subchart.foo"` calls from the parent chart still
+work, only their probes and report rows are dropped.
+
+Use `--coverage-file path/to/report` to emit a machine-readable report; this
+flag implies `--coverage`. The format is controlled by `--coverage-format`,
+which accepts a single format or a comma-separated list, and is validated
+before any chart is rendered so a typo fails the run immediately instead of
+producing no report file after a full test run:
+
+| Format      | Flag value    | Consumed by                                                          |
+|-------------|---------------|----------------------------------------------------------------------|
+| Cobertura XML (default) | `cobertura` | Codecov, SonarQube, GitLab, Jenkins (Cobertura plugin), Azure DevOps |
+| LCOV          | `lcov`      | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import     |
+
+Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
+branch and loop probes are reported as branches (Cobertura `condition-coverage`
+attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
+with empty counters so consumers still see them in the file list. Report paths
+(Cobertura `filename`, LCOV `SF:`) are rooted at the chart's actual directory
+on disk, not its declared `Chart.yaml` name, so they resolve correctly for
+tools that read them relative to the working directory.
+
+A multi-chart run (`helm unittest chart-a chart-b`) writes one merged report
+per format; each chart's files are already unique (rooted at their own
+directory), so nothing collides.
+
+For a **single** format, `--coverage-file` is the exact output path. For
+**multiple** formats, `--coverage-file` is treated as a path stem; each
+format appends its conventional extension automatically — and a trailing
+known extension on the stem (e.g. `coverage.xml`) is stripped first so you
+don't end up with `coverage.xml.xml`. Example:
+
+```bash
+helm unittest \
+  --coverage-format cobertura,lcov \
+  --coverage-file ./reports/cov \
+  <chart>
+
+# writes:
+#   ./reports/cov.xml    (cobertura)
+#   ./reports/cov.info   (lcov)
+```
+
 ### Yaml JsonPath Support
 
 Now JsonPath is supported for mappings and arrays.

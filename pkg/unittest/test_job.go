@@ -19,6 +19,7 @@ import (
 	"helm.sh/helm/v4/pkg/postrenderer"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/results"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
@@ -338,8 +339,76 @@ func (t *TestJob) RunV4(
 		}
 	}
 
+	// Coverage is a side activity: failures are logged, never fail the user's test.
+	if tracker := t.configOrDefault().coverageTracker; tracker != nil {
+		if covOutput, covErr := t.renderForCoverage([]byte(userValues), tracker); covErr != nil {
+			log.WithField(LOG_TEST_JOB, "coverage-render").Warnf("coverage render failed for job %q: %v", t.Name, covErr)
+		} else {
+			tracker.Absorb(covOutput)
+		}
+	}
+
 	result.Duration = time.Since(startTestRun)
 	return result
+}
+
+// renderForCoverage re-renders the job through the instrumented chart so covprobe calls fire. The returned map is only scanned for the Rendered flag and is otherwise discarded.
+func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker) (map[string]string, error) {
+	if tracker == nil {
+		return nil, nil
+	}
+	sharedInstrumented := tracker.InstrumentedChart()
+	if sharedInstrumented == nil {
+		return nil, nil
+	}
+	// Deep-copy first: prepareRender's mutations (ProcessDependencies subchart pruning, ModifyChartMetadata) would otherwise corrupt the tracker's shared instrumented chart for later jobs.
+	instrumented := FullCopyV2Chart(t.chartRoute, sharedInstrumented.Name(), sharedInstrumented)
+
+	vals, filtered, err := t.prepareRender(userValues, instrumented)
+	if err != nil {
+		return nil, err
+	}
+
+	funcs := tracker.ProbeFuncMap()
+	if len(t.KubernetesProvider.Objects) > 0 {
+		funcs["lookup"] = coverageLookupFunc(&t.KubernetesProvider)
+	}
+	eng := v4engine.Engine{CustomTemplateFuncs: funcs}
+	return eng.Render(filtered, vals)
+}
+
+// prepareRender resolves values and dependencies and returns the chart
+// filtered down to the templates this job renders. Shared by the primary
+// and coverage render paths; only the engine invocation differs.
+func (t *TestJob) prepareRender(userValues []byte, chart *v2chart.Chart) (chartcommon.Values, *v2chart.Chart, error) {
+	values, err := chartcommon.ReadValues(userValues)
+	if err != nil {
+		return nil, nil, err
+	}
+	options := *t.releaseV4Option()
+	if t.Release.Name != "" {
+		if err := v2chartutil.ValidateReleaseName(t.Release.Name); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if err := v2chartutil.ProcessDependencies(chart, values); err != nil {
+		return nil, nil, err
+	}
+
+	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(chart, values.AsMap(), options, t.capabilitiesV4(), t.configOrDefault().isSkipSchemaValidation)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
+	if len(t.defaultTemplatesToAssert) == 0 {
+		t.defaultTemplatesToAssert = []string{multiWildcard}
+	}
+
+	t.ModifyChartMetadata(chart)
+	filtered := CopyV2Chart(t.chartRoute, chart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, chart)
+	return vals, filtered, nil
 }
 
 // liberally borrows from helm-template
@@ -393,41 +462,12 @@ func (t *TestJob) getUserValues() (string, error) {
 
 // render the chart and return result map
 func (t *TestJob) renderv2chart(userValues []byte) (map[string]string, bool, error) {
-	values, err := chartcommon.ReadValues(userValues)
+	vals, filteredChart, err := t.prepareRender(userValues, t.configOrDefault().targetChart)
 	if err != nil {
 		return nil, false, err
 	}
-	options := *t.releaseV4Option()
-
-	// Check Release Name length
-	if t.Release.Name != "" {
-		err = v2chartutil.ValidateReleaseName(t.Release.Name)
-		if err != nil {
-			return nil, false, err
-		}
-	}
-
-	err = v2chartutil.ProcessDependencies(t.configOrDefault().targetChart, values)
-	if err != nil {
-		return nil, false, err
-	}
-
-	vals, err := chartcommonutil.ToRenderValuesWithSchemaValidation(t.configOrDefault().targetChart, values.AsMap(), options, t.capabilitiesV4(), t.configOrDefault().isSkipSchemaValidation)
-	if err != nil {
-		return nil, false, err
-	}
-	// When defaultTemplatesToAssert is empty, ensure all templates will be validated.
-	if len(t.defaultTemplatesToAssert) == 0 {
-		// Set all files
-		t.defaultTemplatesToAssert = []string{multiWildcard}
-	}
-
-	// Filter the files that needs to be validated
-	filteredChart := CopyV2Chart(t.chartRoute, t.configOrDefault().targetChart.Name(), t.defaultTemplatesToAssert, t.defaultTemplatesToSkip, t.configOrDefault().targetChart)
 
 	var outputOfFiles map[string]string
-	// modify chart metadata before rendering
-	t.ModifyChartMetadata(t.configOrDefault().targetChart)
 	if len(t.KubernetesProvider.Objects) > 0 {
 		outputOfFiles, err = v4engine.RenderWithClientProvider(filteredChart, vals, &t.KubernetesProvider)
 	} else {
