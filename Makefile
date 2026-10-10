@@ -142,19 +142,19 @@ dependency: ## Dependency maintenance
 
 .PHONY: dockerimage-alpine
 dockerimage-alpine: build-amd64 ## Build docker image
-	docker build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-alpine -f AlpineTest.Dockerfile .
+	docker buildx build --no-cache --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION)-alpine -f AlpineTest.Dockerfile .
 
 .PHONY: dockerimage-plugin-alpine
 dockerimage-plugin-alpine: dockerimage-alpine
-	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
+	docker buildx build --no-cache --platform linux/amd64 -t $(DOCKER):$(VERSION)-plugin-alpine -f AlpineTestPlugin.Dockerfile .
 
 .PHONY: dockerimage-fedora
 dockerimage-fedora: build-amd64 ## Build docker image
-	docker buildx build --no-cache --build-arg HELM_VERSION=$(HELM_VERSION) --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
+	docker buildx build --no-cache --platform linux/amd64 --build-arg HELM_VERSION=$(HELM_VERSION) -t $(DOCKER):$(VERSION)-fedora -f FedoraTest.Dockerfile .
 
 .PHONY: dockerimage-plugin-fedora
 dockerimage-plugin-fedora: dockerimage-fedora
-	docker buildx build --no-cache --build-arg BUILDPLATFORM=amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
+	docker buildx build --no-cache --platform linux/amd64 -t $(DOCKER):$(VERSION)-plugin-fedora -f FedoraTestPlugin.Dockerfile .
 
 .PHONY: test-docker-alpine
 test-docker-alpine: dockerimage-alpine ## Execute 'helm unittests' in container
