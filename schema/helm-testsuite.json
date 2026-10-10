@@ -134,6 +134,8 @@
                 "isNotNullOrEmpty": true,
                 "isEmpty": true,
                 "isNotEmpty": true,
+                "isSome": true,
+                "isNotSome": true,
                 "isSubset": true,
                 "isNotSubset": true,
                 "isType": true,
@@ -851,6 +853,48 @@
                 },
                 {
                   "properties": {
+                    "isSome": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is something, aka non-null (\"\", \"a\", 0, 3.1, [4], {}, {\"a\": 1}, etc.). Fails if the path does not exist.",
+                      "markdownDescription": "**isSome** (object)\n\nAssert the value of specified path is something, aka non-null (\"\", \"a\", 0, 3.1, [4], {}, {\"a\": 1}, etc.). Fails if the path does not exist.",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isSome"
+                  ]
+                },
+                {
+                  "properties": {
+                    "isNotSome": {
+                      "type": "object",
+                      "description": "Assert the value of specified path is NOT something, aka null. Succeeds if the path does not exist.",
+                      "markdownDescription": "**isNotSome** (object)\n\nAssert the value of specified path is NOT something, aka null. Succeeds if the path does not exist.",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/assertion/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isNotSome"
+                  ]
+                },
+                {
+                  "properties": {
                     "lengthEqual": {
                       "type": "object",
                       "description": "Assert the documents count rendered by the template specified. The documentIndex option is ignored here.",
@@ -1233,10 +1277,14 @@
       },
       "oneOf": [
         {
-          "required": ["cmd"]
+          "required": [
+            "cmd"
+          ]
         },
         {
-          "required": ["plugin"]
+          "required": [
+            "plugin"
+          ]
         }
       ],
       "additionalProperties": false

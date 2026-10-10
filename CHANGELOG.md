@@ -1,3 +1,15 @@
+1.3.0 / 2026-10-xx
+==================
+- Fix sha256sum validation (resolves #949, credits @nls-swhetten)
+- Fix support Kubernetes resource quantities in lessOrEqual/greaterOrEqual (resolves #837, credits @AruneshDwivedi)
+- Fix encode secret stringData into data for kubernetesProvider (resolves #768, credits @Semih702)
+- Fix duplicate map keys in values files rejected by strict YAML parser, but accepted by real Helm (resolves #848, credits @anyingiit)
+- Add isSome and isNotSome assertion types (credits @V02460)
+- Add code coverage (resolves #156, credits @pkazi, @alxgomz, @gionn)
+- Update packages to latest versions
+- Update pipeline actions to latest versions
+- Update documentation
+
 1.2.1 / 2026-10-03
 ==================
 - Improve installation script to support Helm 4.3.0 and above with OCI plugin installation

@@ -17,6 +17,7 @@ import (
 // Regression: a coverage-render failure must be logged at Warn or above,
 // since Debug-only logging hides it unless --debugPlugin is set.
 func TestV4RunnerCoverageRenderFailureLogsAtWarn(t *testing.T) {
+	t.Setenv("GOTMPDIR", ".")
 	chartDir := t.TempDir()
 	writeFile := func(rel, content string) {
 		path := filepath.Join(chartDir, rel)
