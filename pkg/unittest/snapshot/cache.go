@@ -8,7 +8,7 @@ import (
 	"github.com/helm-unittest/helm-unittest/internal/common"
 )
 
-// CompareResult result return by Cache.Compare
+// CompareResult result return by Cache.Compare and Recorder.Compare
 type CompareResult struct {
 	Passed         bool
 	Test           string

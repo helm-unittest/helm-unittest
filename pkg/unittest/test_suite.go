@@ -258,9 +258,13 @@ type TestSuite struct {
 	// casePool, when set, runs the test cases concurrently: each case holds one slot
 	// of this pool, shared by all suites of the run, while it executes.
 	casePool chan struct{} `yaml:"-"`
-	// caseStartHook is called when a test case starts on the case pool. It is nil in
-	// normal operation and exists only so tests can observe case concurrency.
-	caseStartHook func() `yaml:"-"`
+	// runStopped, when set, reports that the run no longer needs this suite, such as a
+	// failfast stop in an earlier suite; test cases on the case pool then do not start.
+	runStopped func() bool `yaml:"-"`
+	// caseStartHook is called with the suite name when a test case starts on the case
+	// pool. It is nil in normal operation and exists only so tests can observe case
+	// concurrency.
+	caseStartHook func(suiteName string) `yaml:"-"`
 }
 
 func (s *TestSuite) WithCoverageTracker(tr *coverage.Tracker) {
@@ -450,11 +454,11 @@ func (s *TestSuite) runV4TestJobsParallel(
 			s.casePool <- struct{}{}
 			defer func() { <-s.casePool }()
 
-			if int64(idx) > stopAfter.Load() {
+			if int64(idx) > stopAfter.Load() || (s.runStopped != nil && s.runStopped()) {
 				return
 			}
 			if s.caseStartHook != nil {
-				s.caseStartHook()
+				s.caseStartHook(s.Name)
 			}
 
 			recorder := cache.NewRecorder()

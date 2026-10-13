@@ -116,7 +116,7 @@ type TestRunner struct {
 	// concurrency.
 	suiteStartHook func()
 	// caseStartHook is passed to every suite at test level; see TestSuite.caseStartHook.
-	caseStartHook func()
+	caseStartHook func(suiteName string)
 }
 
 // RunV4 test suites in chart in ChartPaths.
@@ -563,7 +563,7 @@ func (r suiteRunResult) cutShort() bool {
 func (tr *TestRunner) runV4SuitesOfChartSequential(suites []*TestSuite, chart *v2chart.Chart) bool {
 	chartPassed := true
 	for _, group := range groupSuitesBySnapshotFile(suites) {
-		for _, suiteResult := range tr.runSuiteGroup(group, chart, nil) {
+		for _, suiteResult := range tr.runSuiteGroup(group, chart) {
 			for _, result := range suiteResult.toPrint {
 				chartPassed = chartPassed && result.Passed
 				tr.handleSuiteResult(result)
@@ -589,9 +589,18 @@ func (tr *TestRunner) runV4SuitesOfChartSequential(suites []*TestSuite, chart *v
 // The snapshot cache-creation error and the store error are synthesized as extra
 // results that get printed and counted but are kept out of tr.testResults, matching the
 // original sequential path. It never prints or mutates runner counters, so it is safe
-// to call concurrently for groups that do not share a snapshot file. When casePool is
-// set, the test cases of each suite run on that pool.
-func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart, casePool chan struct{}) []suiteRunResult {
+// to call concurrently for groups that do not share a snapshot file.
+func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart) []suiteRunResult {
+	groupResults, snapshotCache := tr.runSuiteGroupUnstored(group, chart, nil, nil)
+	storeGroupSnapshots(group, groupResults, snapshotCache)
+	return groupResults
+}
+
+// runSuiteGroupUnstored runs the suites of a group like runSuiteGroup but leaves
+// storing to the caller. It returns the snapshot cache to store, nil when the group
+// must be left untouched. When casePool is set, the test cases of each suite run on
+// that pool and stop starting once stopped reports true.
+func (tr *TestRunner) runSuiteGroupUnstored(group *suiteGroup, chart *v2chart.Chart, casePool chan struct{}, stopped func() bool) ([]suiteRunResult, *snapshot.Cache) {
 	groupResults := make([]suiteRunResult, 0, len(group.suites))
 
 	snapshotCache, err := snapshot.CreateSnapshotOfSuite(group.snapshotFileUrl, tr.UpdateSnapshot)
@@ -604,12 +613,12 @@ func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart, cas
 				}},
 			})
 		}
-		return groupResults
+		return groupResults, nil
 	}
 
 	completed := true
 	for i, suite := range group.suites {
-		suiteResult := tr.runSingleSuite(suite, chart, snapshotCache, casePool)
+		suiteResult := tr.runSingleSuite(suite, chart, snapshotCache, casePool, stopped)
 		groupResults = append(groupResults, suiteResult)
 		if suiteResult.failFast() && (i < len(group.suites)-1 || suiteResult.cutShort()) {
 			completed = false
@@ -622,17 +631,25 @@ func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart, cas
 	// Storing a cache that only saw part of the group would drop the snapshots of the
 	// suites or test cases that never ran, so a group cut short by --failfast is left
 	// untouched.
-	if completed && len(groupResults) > 0 {
-		if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
-			last := &groupResults[len(groupResults)-1]
-			last.toPrint = append(last.toPrint, &results.TestSuiteResult{
-				FilePath:  group.snapshotFileUrl,
-				ExecError: storeErr,
-			})
-		}
+	if !completed || len(groupResults) == 0 {
+		return groupResults, nil
 	}
+	return groupResults, snapshotCache
+}
 
-	return groupResults
+// storeGroupSnapshots stores the snapshot cache of a group, if any, and reports a
+// store error as an extra result of the group's last suite.
+func storeGroupSnapshots(group *suiteGroup, groupResults []suiteRunResult, snapshotCache *snapshot.Cache) {
+	if snapshotCache == nil {
+		return
+	}
+	if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
+		last := &groupResults[len(groupResults)-1]
+		last.toPrint = append(last.toPrint, &results.TestSuiteResult{
+			FilePath:  group.snapshotFileUrl,
+			ExecError: storeErr,
+		})
+	}
 }
 
 // attributeVanishedSnapshots reports the vanished snapshots of the group on its last
@@ -654,7 +671,7 @@ func attributeVanishedSnapshots(groupResults []suiteRunResult, snapshotCache *sn
 
 // runSingleSuite runs one suite against the snapshot cache of its snapshot file and
 // returns its results. A non-nil casePool runs the suite's test cases on that pool.
-func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v2chart.Chart, snapshotCache *snapshot.Cache, casePool chan struct{}) suiteRunResult {
+func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v2chart.Chart, snapshotCache *snapshot.Cache, casePool chan struct{}, stopped func() bool) suiteRunResult {
 	if tr.suiteStartHook != nil {
 		tr.suiteStartHook()
 	}
@@ -662,6 +679,7 @@ func (tr *TestRunner) runSingleSuite(suite *TestSuite, chart *v2chart.Chart, sna
 	snapshotCache.BeginSuite()
 	suite.skipSchemaValidation = tr.SkipSchemaValidation
 	suite.casePool = casePool
+	suite.runStopped = stopped
 	suite.caseStartHook = tr.caseStartHook
 	result := suite.RunV4(chart, snapshotCache, tr.Failfast, tr.RenderPath, &results.TestSuiteResult{})
 
@@ -715,7 +733,8 @@ func (tr *TestRunner) effectiveWorkers(groupCount int) int {
 // at a time, while keeping all printing, counting and result collection on the main
 // goroutine in discovery order. A non-nil casePool also runs the test cases of every
 // suite on that pool; every group then starts at once, so printing stops where the
-// sequential loop stops under --failfast.
+// sequential loop stops under --failfast, and the snapshot files are stored while
+// printing so the groups after that stop are not stored either.
 func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2chart.Chart, groupLimit int, casePool chan struct{}) bool {
 	if len(groups) == 0 {
 		return true
@@ -723,6 +742,7 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 
 	// Results land in disjoint, preallocated slots so no locking is needed.
 	groupResults := make([][]suiteRunResult, len(groups))
+	pendingStores := make([]*snapshot.Cache, len(groups))
 	done := make([]chan struct{}, len(groups))
 	for i := range done {
 		done[i] = make(chan struct{})
@@ -746,11 +766,17 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 			// always run, whatever order the goroutines are scheduled in, so the
 			// printed groups match the sequential break. Leaving results nil mirrors
 			// the sequential break which leaves later suites unreported.
-			if tr.Failfast && int64(idx) > firstFailedGroup.Load() {
+			stopped := func() bool { return tr.Failfast && int64(idx) > firstFailedGroup.Load() }
+			if stopped() {
 				return
 			}
 
-			out := tr.runSuiteGroup(g, chart, casePool)
+			var out []suiteRunResult
+			if casePool != nil {
+				out, pendingStores[idx] = tr.runSuiteGroupUnstored(g, chart, casePool, stopped)
+			} else {
+				out = tr.runSuiteGroup(g, chart)
+			}
 			for _, suiteResult := range out {
 				// Trigger failfast only on the primary result, matching the
 				// sequential break; synthesized snapshot errors must not stop
@@ -769,6 +795,7 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 printing:
 	for i := range groups {
 		<-done[i]
+		storeGroupSnapshots(groups[i], groupResults[i], pendingStores[i])
 		for _, suiteResult := range groupResults[i] {
 			for _, result := range suiteResult.toPrint {
 				chartPassed = chartPassed && result.Passed

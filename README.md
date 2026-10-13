@@ -258,8 +258,10 @@ workers, so no more than that many test cases render at once. Output, counts and
 snapshot files are identical to a sequential run: results are reported in the order
 the tests are defined, and snapshots are written once per snapshot file after all of
 its suites finished. With `--failfast`, test cases after the first failing one are
-not reported, counted or written to snapshot files, even if they already ran.
-`--parallel-level` has no effect without `--parallel`, and `--debugPlugin` still
+not reported or counted, even if they already ran, and no snapshot file is written
+for test cases that are not reported. Coverage is not buffered per test case, so
+with `--coverage` and `--failfast` the coverage table may include test cases that
+ran but were not reported. `--parallel-level` has no effect without `--parallel`, and `--debugPlugin` still
 forces sequential execution.
 
 ### Code Coverage

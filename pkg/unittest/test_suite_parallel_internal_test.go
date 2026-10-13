@@ -18,7 +18,7 @@ const internalTestCasesChart = "../../test/data/v3/parallel-testcases"
 
 // runFixtureSuite parses the first suite of a fixture test file and runs it against
 // a fresh snapshot cache, on a case pool of the given size when workers > 0.
-func runFixtureSuite(t *testing.T, suiteFile string, workers int, failFast, update bool, hook func()) (*results.TestSuiteResult, *snapshot.Cache) {
+func runFixtureSuite(t *testing.T, suiteFile string, workers int, failFast, update bool, hook func(string)) (*results.TestSuiteResult, *snapshot.Cache) {
 	t.Helper()
 	suite, chart, cache := prepareFixtureSuite(t, suiteFile, workers, update, hook)
 	return suite.RunV4(chart, cache, failFast, "", &results.TestSuiteResult{}), cache
@@ -26,7 +26,7 @@ func runFixtureSuite(t *testing.T, suiteFile string, workers int, failFast, upda
 
 // prepareFixtureSuite loads the fixture chart and the first suite of a test file. It
 // must be called from the test goroutine because it may stop the test.
-func prepareFixtureSuite(t *testing.T, suiteFile string, workers int, update bool, hook func()) (*TestSuite, *v2chart.Chart, *snapshot.Cache) {
+func prepareFixtureSuite(t *testing.T, suiteFile string, workers int, update bool, hook func(string)) (*TestSuite, *v2chart.Chart, *snapshot.Cache) {
 	t.Helper()
 	chart, err := v2loader.Load(internalTestCasesChart)
 	if err != nil {
@@ -126,7 +126,7 @@ func TestRunV4TestJobsParallelRespectsPoolSize(t *testing.T) {
 	const workers = 2
 	started := make(chan struct{}, 16)
 	release := make(chan struct{})
-	hook := func() {
+	hook := func(string) {
 		started <- struct{}{}
 		<-release
 	}
