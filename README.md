@@ -216,6 +216,7 @@ defined in test suite files.
       --skip-schema-validation  skip values schema validation when rendering the chart (default false)
       --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
       --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
+      --parallel-level string   granularity of --parallel: 'suite' runs test suites concurrently, 'test' runs the test cases of all suites in one shared worker pool (only used with --parallel) (default suite)
 ```
 
 By default test suites run sequentially, exactly as in previous releases. Pass
@@ -243,6 +244,23 @@ $ helm unittest --parallel --max-workers 4 ./charts/my-app
 
 `--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
 (the default) means one worker per CPU core.
+
+By default `--parallel` runs whole test suites concurrently. When a chart has a few
+large suites, or many suites sharing one snapshot file, use `--parallel-level test`
+to run individual test cases concurrently instead:
+
+```
+$ helm unittest -t XUnit -o '/Users/mmarszalek/playground/helm-unittest/reports/.heatmap-bash.xml' --parallel --parallel-level test ./charts/my-app
+```
+
+At the `test` level the test cases of all suites share one pool of `--max-workers`
+workers, so no more than that many test cases render at once. Output, counts and
+snapshot files are identical to a sequential run: results are reported in the order
+the tests are defined, and snapshots are written once per snapshot file after all of
+its suites finished. With `--failfast`, test cases after the first failing one are
+not reported, counted or written to snapshot files, even if they already ran.
+`--parallel-level` has no effect without `--parallel`, and `--debugPlugin` still
+forces sequential execution.
 
 ### Code Coverage
 
