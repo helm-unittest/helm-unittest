@@ -250,7 +250,7 @@ large suites, or many suites sharing one snapshot file, use `--parallel-level te
 to run individual test cases concurrently instead:
 
 ```
-$ helm unittest -t XUnit -o '/Users/mmarszalek/playground/helm-unittest/reports/.heatmap-bash.xml' --parallel --parallel-level test ./charts/my-app
+$ helm unittest --parallel --parallel-level test ./charts/my-app
 ```
 
 At the `test` level the test cases of all suites share one pool of `--max-workers`
