@@ -187,15 +187,21 @@ func writeRenderedOutput(renderPath string, outputOfFiles map[string]string) err
 	return nil
 }
 
+// snapshotComparison is implemented by snapshot.Cache, which stores a comparison
+// right away, and by snapshot.Recorder, which buffers it until it is committed.
+type snapshotComparison interface {
+	Compare(test string, idx uint, content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult
+}
+
 type orderedSnapshotComparer struct {
-	cache   *snapshot.Cache
+	target  snapshotComparison
 	test    string
 	counter uint
 }
 
 func (s *orderedSnapshotComparer) CompareToSnapshot(content any, optFns ...func(options *snapshot.CacheOptions) error) *snapshot.CompareResult {
 	s.counter++
-	return s.cache.Compare(s.test, s.counter, content, optFns...)
+	return s.target.Compare(s.test, s.counter, content, optFns...)
 }
 
 type Capabilities struct {
@@ -313,7 +319,11 @@ func (t *TestJob) RunV4(
 		return result
 	}
 
-	snapshotComparer := &orderedSnapshotComparer{cache: t.configOrDefault().cache, test: t.Name}
+	var snapshotTarget snapshotComparison = t.configOrDefault().cache
+	if recorder := t.configOrDefault().snapshotRecorder; recorder != nil {
+		snapshotTarget = recorder
+	}
+	snapshotComparer := &orderedSnapshotComparer{target: snapshotTarget, test: t.Name}
 
 	assertionsConfig := AssertionConfig{
 		templatesResult:        manifestsOfFiles,
