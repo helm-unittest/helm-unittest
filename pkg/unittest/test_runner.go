@@ -728,7 +728,9 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 		done[i] = make(chan struct{})
 	}
 
-	var failed atomic.Bool
+	// Index of the lowest group whose primary result requested a failfast stop.
+	var firstFailedGroup atomic.Int64
+	firstFailedGroup.Store(int64(len(groups)))
 	semaphore := make(chan struct{}, groupLimit)
 	var wg sync.WaitGroup
 
@@ -740,10 +742,11 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 			defer func() { <-semaphore }()
 			semaphore <- struct{}{}
 
-			// Failfast: once a suite has failed, skip scheduling further groups.
-			// Leaving results nil mirrors the sequential break which leaves later
-			// suites unreported.
-			if tr.Failfast && failed.Load() {
+			// Failfast: skip the groups after the first failing one. Groups before it
+			// always run, whatever order the goroutines are scheduled in, so the
+			// printed groups match the sequential break. Leaving results nil mirrors
+			// the sequential break which leaves later suites unreported.
+			if tr.Failfast && int64(idx) > firstFailedGroup.Load() {
 				return
 			}
 
@@ -753,7 +756,7 @@ func (tr *TestRunner) runV4SuiteGroupsParallel(groups []*suiteGroup, chart *v2ch
 				// sequential break; synthesized snapshot errors must not stop
 				// scheduling of later groups.
 				if suiteResult.failFast() {
-					failed.Store(true)
+					lowerAtomic(&firstFailedGroup, int64(idx))
 				}
 			}
 			groupResults[idx] = out
