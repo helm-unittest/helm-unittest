@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -134,4 +135,54 @@ func TestParallelFailfastIgnoresSnapshotErrors(t *testing.T) {
 	assert.Greater(t, withoutFailfast, uint(1), "fixture must have multiple suite groups")
 	assert.Equal(t, withoutFailfast, withFailfast,
 		"cache-creation errors must not make failfast skip later groups")
+}
+
+const internalTestCasesRunnerChart = "../../test/data/v3/parallel-testcases"
+
+// At test level the cases of every suite share one pool: the peak number of cases
+// running at once across the whole chart equals MaxWorkers.
+func TestRunV4TestLevelSharesOnePoolAcrossSuites(t *testing.T) {
+	const workers = 2
+	var running, peak atomic.Int32
+
+	buffer := new(bytes.Buffer)
+	tr := &TestRunner{
+		Printer:       printer.NewPrinter(buffer, nil),
+		TestFiles:     []string{"tests/*_test.yaml"},
+		Parallel:      true,
+		ParallelLevel: ParallelLevelTest,
+		MaxWorkers:    workers,
+	}
+	tr.caseStartHook = func() {
+		now := running.Add(1)
+		for {
+			highest := peak.Load()
+			if now <= highest || peak.CompareAndSwap(highest, now) {
+				break
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+		running.Add(-1)
+	}
+
+	assert.True(t, tr.RunV4([]string{internalTestCasesRunnerChart}), buffer.String())
+	assert.Equal(t, int32(workers), peak.Load())
+}
+
+// --debugPlugin writes rendered files keyed by template path, so test level must fall
+// back to sequential execution and never use the case pool.
+func TestRunV4TestLevelIgnoredWithDebugRender(t *testing.T) {
+	var calls atomic.Int32
+	buffer := new(bytes.Buffer)
+	tr := &TestRunner{
+		Printer:       printer.NewPrinter(buffer, nil),
+		TestFiles:     []string{"tests/*_test.yaml"},
+		Parallel:      true,
+		ParallelLevel: ParallelLevelTest,
+		RenderPath:    t.TempDir(),
+	}
+	tr.caseStartHook = func() { calls.Add(1) }
+
+	tr.RunV4([]string{internalTestCasesRunnerChart})
+	assert.Equal(t, int32(0), calls.Load())
 }

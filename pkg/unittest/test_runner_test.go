@@ -912,3 +912,89 @@ func TestV4RunnerFailfastKeepsSnapshotsOfCasesThatDidNotRun(t *testing.T) {
 	a.NoError(err)
 	a.Equal(string(before), string(after), "failfast must not rewrite the snapshot file")
 }
+
+func testLevel(r *TestRunner) {
+	r.Parallel = true
+	r.ParallelLevel = ParallelLevelTest
+	r.MaxWorkers = 3
+}
+
+func TestV4RunnerTestLevelDeterministicOutput(t *testing.T) {
+	chartDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+
+	_, sequential := runFixture(chartDir, testTestFiles, nil)
+	_, first := runFixture(chartDir, testTestFiles, testLevel)
+	_, second := runFixture(chartDir, testTestFiles, testLevel)
+
+	assert.Equal(t, first, second, "test-level output must be stable across runs")
+	assert.Equal(t, sequential, first, "test-level output must match sequential")
+
+	_, basicSequential := runFixture(testV4BasicChart, testTestFiles, nil)
+	_, basicTestLevel := runFixture(testV4BasicChart, testTestFiles, testLevel)
+	assert.Equal(t, basicSequential, basicTestLevel)
+}
+
+func TestV4RunnerTestLevelUpdateSnapshotMatchesSequential(t *testing.T) {
+	for _, testFiles := range []string{testTestFiles, "tests_dup/*_test.yaml"} {
+		t.Run(testFiles, func(t *testing.T) {
+			seqDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+			parDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+			// Drop committed snapshots so both runs write every file from scratch.
+			assert.NoError(t, os.RemoveAll(filepath.Join(seqDir, "tests", "__snapshot__")))
+			assert.NoError(t, os.RemoveAll(filepath.Join(parDir, "tests", "__snapshot__")))
+
+			seqPassed, seqOut := runFixture(seqDir, testFiles, func(r *TestRunner) { r.UpdateSnapshot = true })
+			parPassed, parOut := runFixture(parDir, testFiles, func(r *TestRunner) {
+				testLevel(r)
+				r.UpdateSnapshot = true
+			})
+			assert.True(t, seqPassed, seqOut)
+			assert.Equal(t, seqPassed, parPassed)
+			// The two runs use different chart directories, which show up in the output.
+			assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+
+			// "tests/*_test.yaml" -> "tests", "tests_dup/*_test.yaml" -> "tests_dup".
+			snapDir := filepath.Dir(testFiles)
+			seqSnaps, err := filepath.Glob(filepath.Join(seqDir, snapDir, "__snapshot__", "*.snap"))
+			assert.NoError(t, err)
+			assert.NotEmpty(t, seqSnaps)
+			for _, seqSnap := range seqSnaps {
+				rel, _ := filepath.Rel(seqDir, seqSnap)
+				seqBytes, _ := os.ReadFile(seqSnap)
+				parBytes, err := os.ReadFile(filepath.Join(parDir, rel))
+				assert.NoError(t, err)
+				assert.Equal(t, string(seqBytes), string(parBytes), rel)
+			}
+		})
+	}
+}
+
+func TestV4RunnerTestLevelFailfastMatchesSequential(t *testing.T) {
+	seqDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+	parDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+
+	seqPassed, seqOut := runFixture(seqDir, testTestFailedFiles, func(r *TestRunner) { r.Failfast = true })
+	parPassed, parOut := runFixture(parDir, testTestFailedFiles, func(r *TestRunner) {
+		testLevel(r)
+		r.Failfast = true
+	})
+
+	assert.False(t, seqPassed)
+	assert.Equal(t, seqPassed, parPassed)
+	// The two runs use different chart directories, which show up in the output.
+	assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+
+	snap := filepath.Join("tests_failed", "__snapshot__", "failfast_test.yaml.snap")
+	_, seqErr := os.Stat(filepath.Join(seqDir, snap))
+	_, parErr := os.Stat(filepath.Join(parDir, snap))
+	assert.Equal(t, os.IsNotExist(seqErr), os.IsNotExist(parErr), "snapshot file presence must match")
+}
+
+func TestV4RunnerTestLevelCoverageMatchesSequential(t *testing.T) {
+	_, sequential := runFixture(testV4BasicChart, testTestFiles, func(r *TestRunner) { r.Coverage = true })
+	_, testLevelOut := runFixture(testV4BasicChart, testTestFiles, func(r *TestRunner) {
+		testLevel(r)
+		r.Coverage = true
+	})
+	assert.Equal(t, sequential, testLevelOut)
+}
