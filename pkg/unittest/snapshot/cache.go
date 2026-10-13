@@ -2,12 +2,10 @@ package snapshot
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
-	"github.com/helm-unittest/helm-unittest/pkg/unittest/valueutils"
 )
 
 // CompareResult result return by Cache.Compare
@@ -91,68 +89,10 @@ func (s *Cache) getCached(test string, idx uint) (string, bool) {
 
 // Compare content to cached last time, return CompareResult
 func (s *Cache) Compare(test string, idx uint, content any, optFns ...func(options *CacheOptions) error) *CompareResult {
-	var options CacheOptions
-	var err error
-	var msg string
-
-	for _, optFn := range optFns {
-		if err = optFn(&options); err != nil {
-			options = CacheOptions{}
-		}
-	}
-
-	s.currentCount++
-	cached, existed := s.getCached(test, idx)
-	if !existed {
-		s.insertedCount++
-	}
-
-	match := true
-
-	newSnapshot := common.TrustedMarshalYAML(content)
-
-	if options.IsRegexEnabled() {
-		if options.MatchRegexPattern != "" {
-			match, err = valueutils.MatchesPattern(newSnapshot, options.MatchRegexPattern)
-			if !match {
-				msg = fmt.Sprintf(" pattern '%s' not found in snapshot", options.MatchRegexPattern)
-			}
-		}
-
-		if options.NotMatchRegexPattern != "" && match {
-			var noMatch bool
-			noMatch, err = valueutils.MatchesPattern(newSnapshot, options.NotMatchRegexPattern)
-			if noMatch {
-				match = false
-				msg = fmt.Sprintf(" pattern '%s' should not be in snapshot", options.NotMatchRegexPattern)
-			}
-		}
-	} else {
-		if existed && newSnapshot != cached {
-			match = false
-			s.updatedCount++
-		}
-	}
-
-	var snapshotToSave string
-	if s.IsUpdating || !existed {
-		snapshotToSave = newSnapshot
-	} else {
-		snapshotToSave = cached
-	}
-	s.setNewSnapshot(test, idx, snapshotToSave)
-
-	match = s.IsUpdating || match
-
-	return &CompareResult{
-		Passed:         match,
-		Test:           test,
-		Index:          idx,
-		CachedSnapshot: cached,
-		NewSnapshot:    newSnapshot,
-		Msg:            msg,
-		Err:            err,
-	}
+	recorder := s.NewRecorder()
+	result := recorder.Compare(test, idx, content, optFns...)
+	s.Commit(recorder)
+	return result
 }
 
 func (s *Cache) setNewSnapshot(test string, idx uint, snapshot string) {
