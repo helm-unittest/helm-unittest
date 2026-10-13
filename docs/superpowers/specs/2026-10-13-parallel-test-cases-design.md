@@ -64,17 +64,24 @@ Rules:
      commit order must be deterministic); each suite's cases fan out into the pool.
   4. The main goroutine waits on groups in discovery order and prints/counts/appends
      results exactly as the existing parallel path does (`done[i]` channels).
-  5. Group-level `--failfast` across groups behaves as in #906: once a suite fails,
-     groups that have not started are skipped.
+  5. Group-level `--failfast` across groups: once a suite fails, groups that have not
+     started are skipped (as in #906). Because all groups start immediately at this
+     level, the main goroutine additionally stops printing after the first suite
+     result that triggers failfast — the same condition the sequential loop breaks
+     on — so printed output and counts equal a sequential failfast run. Groups that
+     were already in flight finish and store their own (complete) snapshot files;
+     this matches #906 and is a documented limitation. The `suite` level keeps its
+     current printing behaviour unchanged.
 
 ### Suite (`pkg/unittest/test_suite.go`, `runV4TestJobs`)
 
 - New optional `pool` parameter. `pool == nil` keeps the current sequential loop;
   each case's snapshot record is committed immediately after the case runs.
 - `pool != nil`:
-  1. Start one goroutine per non-skipped case. Before acquiring a slot it checks an
-     atomic `stopAfter` index; if a lower-index case has already failed under
-     `--failfast`, it does not start.
+  1. Start one goroutine per case. Right after acquiring a slot (so the freshest
+     value is seen after waiting) it checks an atomic `stopAfter` index; if a
+     lower-index case has already failed under `--failfast`, it releases the slot
+     without running.
   2. Inside the slot: clone chart, `WithConfig`, `RunV4`, store the job result and
      the case's snapshot `Recorder` into preallocated `slots[idx]`, release slot.
   3. On a failure with `--failfast`, atomically lower `stopAfter` to `idx` (min).
@@ -148,4 +155,5 @@ Consequences:
 
 - README: describe `--parallel-level`, its interaction with `--parallel`,
   `--max-workers`, `--failfast` and `--debugPlugin`.
-- CHANGELOG entry; plugin version bump.
+- CHANGELOG entries under the unreleased `1.3.0` section. No `plugin.yaml` version
+  bump: the repository bumps versions in its separate "Prepare for release" commits.
