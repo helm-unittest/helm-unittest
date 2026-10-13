@@ -1,0 +1,14 @@
+suite: all skipped
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: skipped one
+    skip:
+      reason: skipped on purpose
+    asserts:
+      - matchSnapshot: {}
+  - it: skipped two
+    skip:
+      reason: skipped on purpose
+    asserts:
+      - matchSnapshot: {}

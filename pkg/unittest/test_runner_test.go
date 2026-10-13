@@ -864,3 +864,51 @@ func TestV4RunnerParallelFailfastStopsScheduling(t *testing.T) {
 	assert.False(t, ffRunner.RunV4([]string{chartDir}), ffBuffer.String())
 	assert.Less(t, countFailedSuites(ffBuffer.String()), fullCount, "failfast must skip unstarted groups")
 }
+
+const testV4ParallelTestCasesChart string = "../../test/data/v3/parallel-testcases"
+
+// copyFixtureToTemp copies a fixture chart into a throwaway directory so runs that
+// write snapshot files never touch the repository.
+func copyFixtureToTemp(t *testing.T, src string) string {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "chart")
+	if err := os.CopyFS(dir, os.DirFS(src)); err != nil {
+		t.Fatalf("failed to copy fixture %s: %v", src, err)
+	}
+	return dir
+}
+
+// runFixture runs the test files of one chart with a runner adjusted by configure and
+// returns whether it passed plus its printed output with the elapsed time masked.
+func runFixture(chartDir, testFiles string, configure func(*TestRunner)) (bool, string) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testFiles},
+	}
+	if configure != nil {
+		configure(&runner)
+	}
+	passed := runner.RunV4([]string{chartDir})
+	return passed, timePattern.ReplaceAllString(buffer.String(), "${1}XX.XXXms")
+}
+
+// A failfast stop inside the last suite of a snapshot group leaves the later cases
+// unrun; their snapshots must not be treated as vanished and deleted.
+func TestV4RunnerFailfastKeepsSnapshotsOfCasesThatDidNotRun(t *testing.T) {
+	a := assert.New(t)
+	chartDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+	snapPath := filepath.Join(chartDir, "tests_failed", "__snapshot__", "failfast_test.yaml.snap")
+
+	runFixture(chartDir, testTestFailedFiles, func(r *TestRunner) { r.UpdateSnapshot = true })
+	before, err := os.ReadFile(snapPath)
+	a.NoError(err)
+	a.Contains(string(before), "passes fourth")
+
+	passed, output := runFixture(chartDir, testTestFailedFiles, func(r *TestRunner) { r.Failfast = true })
+	a.False(passed, output)
+
+	after, err := os.ReadFile(snapPath)
+	a.NoError(err)
+	a.Equal(string(before), string(after), "failfast must not rewrite the snapshot file")
+}

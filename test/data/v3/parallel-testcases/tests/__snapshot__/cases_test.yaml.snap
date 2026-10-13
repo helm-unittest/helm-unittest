@@ -1,0 +1,48 @@
+renders default name:
+  1: |
+    apiVersion: v1
+    data:
+      name: cases
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders name four:
+  1: |
+    apiVersion: v1
+    data:
+      name: four
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders name one:
+  1: |
+    apiVersion: v1
+    data:
+      name: one
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders name three:
+  1: |
+    apiVersion: v1
+    data:
+      name: three
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders name two:
+  1: |
+    apiVersion: v1
+    data:
+      name: two
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+snapshots release name:
+  1: |
+    apiVersion: v1
+    data:
+      name: cases
+    kind: ConfigMap
+    metadata:
+      name: other-release-config

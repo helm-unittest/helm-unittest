@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -526,6 +527,12 @@ func (r suiteRunResult) failFast() bool {
 	return r.toAppend != nil && r.toAppend.FailFast
 }
 
+// cutShort reports whether failfast stopped the suite before all of its test cases
+// ran; the cases that did not run have no result.
+func (r suiteRunResult) cutShort() bool {
+	return r.toAppend != nil && slices.Contains(r.toAppend.TestsResult, nil)
+}
+
 // runV4SuitesOfChartSequential runs the suites one after another, printing as it goes.
 func (tr *TestRunner) runV4SuitesOfChartSequential(suites []*TestSuite, chart *v2chart.Chart) bool {
 	chartPassed := true
@@ -577,7 +584,7 @@ func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart) []s
 	for i, suite := range group.suites {
 		suiteResult := tr.runSingleSuite(suite, chart, snapshotCache)
 		groupResults = append(groupResults, suiteResult)
-		if suiteResult.failFast() && i < len(group.suites)-1 {
+		if suiteResult.failFast() && (i < len(group.suites)-1 || suiteResult.cutShort()) {
 			completed = false
 			break
 		}
@@ -586,7 +593,8 @@ func (tr *TestRunner) runSuiteGroup(group *suiteGroup, chart *v2chart.Chart) []s
 	attributeVanishedSnapshots(groupResults, snapshotCache)
 
 	// Storing a cache that only saw part of the group would drop the snapshots of the
-	// suites that never ran, so a group cut short by --failfast is left untouched.
+	// suites or test cases that never ran, so a group cut short by --failfast is left
+	// untouched.
 	if completed && len(groupResults) > 0 {
 		if _, storeErr := snapshotCache.StoreToFileIfNeeded(); storeErr != nil {
 			last := &groupResults[len(groupResults)-1]

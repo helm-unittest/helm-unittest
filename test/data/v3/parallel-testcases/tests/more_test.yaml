@@ -1,0 +1,21 @@
+suite: more configmap cases
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: renders name five
+    set:
+      name: five
+    asserts:
+      - matchSnapshot: {}
+  - it: renders name six
+    set:
+      name: six
+    asserts:
+      - matchSnapshot: {}
+  - it: renders name seven
+    set:
+      name: seven
+    asserts:
+      - equal:
+          path: data.name
+          value: seven

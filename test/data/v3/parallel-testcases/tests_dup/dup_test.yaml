@@ -1,0 +1,19 @@
+suite: duplicate names
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: same name
+    set:
+      name: first
+    asserts:
+      - matchSnapshot: {}
+  - it: same name
+    set:
+      name: second
+    asserts:
+      - matchSnapshot: {}
+  - it: same name
+    set:
+      name: third
+    asserts:
+      - matchSnapshot: {}
