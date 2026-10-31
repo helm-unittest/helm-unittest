@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/helm-unittest/helm-unittest/internal/build"
@@ -253,6 +255,16 @@ type TestSuite struct {
 	} `yaml:"skip"`
 	// coverageTracker is attached by the runner, not the YAML schema.
 	coverageTracker *coverage.Tracker `yaml:"-"`
+	// casePool, when set, runs the test cases concurrently: each case holds one slot
+	// of this pool, shared by all suites of the run, while it executes.
+	casePool chan struct{} `yaml:"-"`
+	// runStopped, when set, reports that the run no longer needs this suite, such as a
+	// failfast stop in an earlier suite; test cases on the case pool then do not start.
+	runStopped func() bool `yaml:"-"`
+	// caseStartHook is called with the suite name when a test case starts on the case
+	// pool. It is nil in normal operation and exists only so tests can observe case
+	// concurrency.
+	caseStartHook func(suiteName string) `yaml:"-"`
 }
 
 func (s *TestSuite) WithCoverageTracker(tr *coverage.Tracker) {
@@ -399,50 +411,159 @@ func (s *TestSuite) runV4TestJobs(
 	renderPath string,
 	tracker *coverage.Tracker,
 ) *SuiteResult {
-	result := SuiteResult{Pass: false, FailFast: false, Skip: false}
-	jobResults := make([]*results.TestJobResult, len(s.Tests))
-	skipped := 0
+	if s.casePool != nil {
+		return s.runV4TestJobsParallel(chart, cache, failFast, renderPath, tracker)
+	}
 
+	acc := newJobAccumulator(len(s.Tests))
 	for idx, testJob := range s.Tests {
-		// Deep clone of chart
-		chartClone := FullCopyV2Chart(s.chartRoute, chart.Name(), chart)
-
-		var jobResult *results.TestJobResult
-		job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
-
-		if testJob.Skip.Reason != "" {
-			job.Skipped = true
-			skipped++
-			jobResults[idx] = &job
-			if idx == 0 {
-				result.Pass = true
-			}
-		} else {
-			testJob.WithConfig(*NewTestConfig(chartClone, cache,
-				WithRenderPath(renderPath),
-				WithFailFast(failFast),
-				WithPostRendererConfig(s.PostRendererConfig),
-				WithDocumentSelector(testJob.DocumentSelector),
-				WithIncludeCrds(s.IncludeCrds),
-				WithSkipSchemaValidation(s.skipSchemaValidation),
-				WithCoverageTracker(tracker),
-			))
-			jobResult = testJob.RunV4(&job)
-			jobResults[idx] = jobResult
-			if idx == 0 {
-				result.Pass = jobResult.Passed
-			}
-			result.Pass = result.Pass && jobResult.Passed
-		}
-
-		if !result.Pass && failFast {
-			result.FailFast = true
+		jobResult := s.runV4TestJob(idx, testJob, chart, cache, nil, failFast, renderPath, tracker)
+		if acc.add(idx, jobResult, testJob.Skip.Reason != "", failFast) {
 			break
 		}
 	}
-	result.Skip = skipped == len(s.Tests)
-	result.JobResults = jobResults
-	return &result
+	return acc.finish()
+}
+
+// runV4TestJobsParallel runs the test cases on the case pool and then reports them in
+// index order, so results and snapshots equal a sequential run. Under failfast, cases
+// after the first failing one are not started once the failure is known, and are
+// dropped from the report and the snapshot cache if they already ran.
+func (s *TestSuite) runV4TestJobsParallel(
+	chart *v2chart.Chart,
+	cache *snapshot.Cache,
+	failFast bool,
+	renderPath string,
+	tracker *coverage.Tracker,
+) *SuiteResult {
+	type caseOutcome struct {
+		result   *results.TestJobResult
+		recorder *snapshot.Recorder
+	}
+	outcomes := make([]caseOutcome, len(s.Tests))
+
+	// Index of the lowest failing case under failfast; cases above it do not start.
+	var stopAfter atomic.Int64
+	stopAfter.Store(int64(len(s.Tests)))
+
+	var wg sync.WaitGroup
+	for idx, testJob := range s.Tests {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.casePool <- struct{}{}
+			defer func() { <-s.casePool }()
+
+			if int64(idx) > stopAfter.Load() || (s.runStopped != nil && s.runStopped()) {
+				return
+			}
+			if s.caseStartHook != nil {
+				s.caseStartHook(s.Name)
+			}
+
+			recorder := cache.NewRecorder()
+			jobResult := s.runV4TestJob(idx, testJob, chart, cache, recorder, failFast, renderPath, tracker)
+			outcomes[idx] = caseOutcome{result: jobResult, recorder: recorder}
+			if failFast && testJob.Skip.Reason == "" && !jobResult.Passed {
+				lowerAtomic(&stopAfter, int64(idx))
+			}
+		}()
+	}
+	wg.Wait()
+
+	acc := newJobAccumulator(len(s.Tests))
+	for idx, outcome := range outcomes {
+		if outcome.result == nil {
+			break
+		}
+		cache.Commit(outcome.recorder)
+		if acc.add(idx, outcome.result, s.Tests[idx].Skip.Reason != "", failFast) {
+			break
+		}
+	}
+	return acc.finish()
+}
+
+// lowerAtomic stores n in v when n is lower than the current value.
+func lowerAtomic(v *atomic.Int64, n int64) {
+	for {
+		current := v.Load()
+		if n >= current || v.CompareAndSwap(current, n) {
+			return
+		}
+	}
+}
+
+// runV4TestJob runs the test case at idx against its own deep copy of the chart. A
+// case skipped by reason is not rendered. Snapshot comparisons go to the recorder
+// when one is given, otherwise straight to the cache.
+func (s *TestSuite) runV4TestJob(
+	idx int,
+	testJob *TestJob,
+	chart *v2chart.Chart,
+	cache *snapshot.Cache,
+	recorder *snapshot.Recorder,
+	failFast bool,
+	renderPath string,
+	tracker *coverage.Tracker,
+) *results.TestJobResult {
+	job := results.TestJobResult{DisplayName: testJob.Name, Index: idx}
+	if testJob.Skip.Reason != "" {
+		job.Skipped = true
+		return &job
+	}
+
+	chartClone := FullCopyV2Chart(s.chartRoute, chart.Name(), chart)
+	testJob.WithConfig(*NewTestConfig(chartClone, cache,
+		WithRenderPath(renderPath),
+		WithFailFast(failFast),
+		WithPostRendererConfig(s.PostRendererConfig),
+		WithDocumentSelector(testJob.DocumentSelector),
+		WithIncludeCrds(s.IncludeCrds),
+		WithSkipSchemaValidation(s.skipSchemaValidation),
+		WithCoverageTracker(tracker),
+		WithSnapshotRecorder(recorder),
+	))
+	return testJob.RunV4(&job)
+}
+
+// jobAccumulator folds test case results into a SuiteResult in index order. It holds
+// the rules of the sequential loop so the parallel path reports exactly the same.
+type jobAccumulator struct {
+	result  SuiteResult
+	skipped int
+}
+
+func newJobAccumulator(total int) *jobAccumulator {
+	return &jobAccumulator{result: SuiteResult{JobResults: make([]*results.TestJobResult, total)}}
+}
+
+// add records the result of the case at idx and reports whether failfast stops the
+// suite at this case.
+func (a *jobAccumulator) add(idx int, jobResult *results.TestJobResult, skippedByReason, failFast bool) bool {
+	a.result.JobResults[idx] = jobResult
+	if skippedByReason {
+		a.skipped++
+		if idx == 0 {
+			a.result.Pass = true
+		}
+	} else {
+		if idx == 0 {
+			a.result.Pass = jobResult.Passed
+		}
+		a.result.Pass = a.result.Pass && jobResult.Passed
+	}
+
+	if !a.result.Pass && failFast {
+		a.result.FailFast = true
+		return true
+	}
+	return false
+}
+
+func (a *jobAccumulator) finish() *SuiteResult {
+	a.result.Skip = a.skipped == len(a.result.JobResults)
+	return &a.result
 }
 
 // VersionMeetsMinimum check if currentVersion meets the minimumVersion requirement

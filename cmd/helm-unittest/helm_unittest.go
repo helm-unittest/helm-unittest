@@ -28,6 +28,7 @@ type testOptions struct {
 	coverageFormat          string
 	useParallel             bool
 	maxWorkers              int
+	parallelLevel           string
 	testFiles               []string
 	valuesFiles             []string
 	outputFile              string
@@ -106,6 +107,15 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) error {
 		testConfig.testFiles = []string{defaultFilePattern}
 	}
 
+	if testConfig.parallelLevel != unittest.ParallelLevelSuite && testConfig.parallelLevel != unittest.ParallelLevelTest {
+		return fmt.Errorf("invalid --parallel-level %q: must be %q or %q",
+			testConfig.parallelLevel, unittest.ParallelLevelSuite, unittest.ParallelLevelTest)
+	}
+
+	if testConfig.parallelLevel == unittest.ParallelLevelTest && !testConfig.useParallel {
+		log.Warn("--parallel-level=test has no effect without --parallel; running sequentially")
+	}
+
 	if testConfig.coverageFile != "" {
 		testConfig.coverage = true
 	}
@@ -131,6 +141,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) error {
 		CoverageFormat:       testConfig.coverageFormat,
 		Parallel:             testConfig.useParallel,
 		MaxWorkers:           testConfig.maxWorkers,
+		ParallelLevel:        testConfig.parallelLevel,
 		TestFiles:            testConfig.testFiles,
 		ValuesFiles:          testConfig.valuesFiles,
 		OutputFile:           testConfig.outputFile,
@@ -236,6 +247,11 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().IntVar(
 		&testConfig.maxWorkers, "max-workers", 0,
 		"maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel)",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.parallelLevel, "parallel-level", unittest.ParallelLevelSuite,
+		"granularity of --parallel: 'suite' runs test suites concurrently, 'test' runs the test cases of all suites in one shared worker pool (only used with --parallel)",
 	)
 
 	cmd.PersistentFlags().BoolVar(

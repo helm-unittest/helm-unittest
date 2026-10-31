@@ -1,8 +1,10 @@
 package snapshot_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/pkg/unittest/snapshot"
@@ -540,4 +542,95 @@ func TestCacheSharedBetweenSuitesDoesNotVanishOtherSuites(t *testing.T) {
 	a.Equal(uint(0), reread.VanishedCount())
 	a.Equal(uint(0), reread.InsertedCount())
 	a.False(reread.Changed())
+}
+
+func TestRecorderDoesNotTouchCacheUntilCommit(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, true)
+	a.Nil(cache.RestoreFromFile())
+
+	recorder := cache.NewRecorder()
+	result := recorder.Compare(cache_before, 1, content1)
+
+	a.Equal(createCacheResult(1, true, snapshot1, snapshot1), result)
+	verifyCache(a, cache, true, true, 0, 0, 0, 0, 2)
+
+	cache.Commit(recorder)
+	verifyCache(a, cache, true, true, 1, 0, 0, 0, 1)
+}
+
+func TestRecorderMatchesCompare(t *testing.T) {
+	cases := []struct {
+		name     string
+		existed  bool
+		updating bool
+		test     string
+		content  any
+		opts     []func(*CacheOptions) error
+	}{
+		{name: "insert", existed: false, test: "new test", content: content1},
+		{name: "match", existed: true, test: cache_before, content: content1},
+		{name: "mismatch", existed: true, test: cache_before, content: contentNew},
+		{name: "update mismatch", existed: true, updating: true, test: cache_before, content: contentNew},
+		{name: "regex", existed: true, test: cache_before, content: content1,
+			opts: []func(*CacheOptions) error{WithMatchRegexPattern("a:")}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a := assert.New(t)
+			direct := createCache(a, tc.existed)
+			direct.IsUpdating = tc.updating
+			a.Nil(direct.RestoreFromFile())
+			buffered := createCache(a, tc.existed)
+			buffered.IsUpdating = tc.updating
+			a.Nil(buffered.RestoreFromFile())
+
+			directResult := direct.Compare(tc.test, 1, tc.content, tc.opts...)
+			recorder := buffered.NewRecorder()
+			bufferedResult := recorder.Compare(tc.test, 1, tc.content, tc.opts...)
+			buffered.Commit(recorder)
+
+			a.Equal(directResult, bufferedResult)
+			a.Equal(direct.CurrentCount(), buffered.CurrentCount())
+			a.Equal(direct.InsertedCount(), buffered.InsertedCount())
+			a.Equal(direct.UpdatedCount(), buffered.UpdatedCount())
+			a.Equal(direct.FailedCount(), buffered.FailedCount())
+			a.Equal(direct.VanishedCount(), buffered.VanishedCount())
+
+			directStored, directErr := direct.StoreToFileIfNeeded()
+			bufferedStored, bufferedErr := buffered.StoreToFileIfNeeded()
+			a.Nil(directErr)
+			a.Nil(bufferedErr)
+			a.Equal(directStored, bufferedStored)
+			directBytes, _ := os.ReadFile(direct.Filepath)
+			bufferedBytes, _ := os.ReadFile(buffered.Filepath)
+			a.Equal(string(directBytes), string(bufferedBytes))
+		})
+	}
+}
+
+// Recorders only read the restored snapshots, so many test cases may compare at
+// once; this test exists to be run under -race.
+func TestRecorderConcurrentCompare(t *testing.T) {
+	a := assert.New(t)
+	cache := createCache(a, true)
+	a.Nil(cache.RestoreFromFile())
+
+	recorders := make([]*Recorder, 8)
+	var wg sync.WaitGroup
+	for i := range recorders {
+		recorders[i] = cache.NewRecorder()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			recorders[i].Compare(fmt.Sprintf("test %d", i), 1, content1)
+		}()
+	}
+	wg.Wait()
+	for _, recorder := range recorders {
+		cache.Commit(recorder)
+	}
+
+	a.Equal(uint(8), cache.CurrentCount())
+	a.Equal(uint(8), cache.InsertedCount())
 }
