@@ -7,7 +7,7 @@ Issues and PRs are welcome!
 When you find an Issue or Improvement, please check first if it already occurs
 otherwise create a [New Issue](https://github.com/helm-unittest/helm-unittest/issues/new/choose)
 
-If you have a Issue related to security, please follow our [Security Policy](./SECURITY.md)
+If you have an issue related to security, please follow our [Security Policy](./SECURITY.md)
 
 ## Developing
 
@@ -18,7 +18,7 @@ git clone git@github.com:helm-unittest/helm-unittest.git
 cd helm-unittest
 ```
 
-And please make CI passed when request a PR which would check following things:
+Please make sure CI passes when you open a PR. It checks the following:
 
 - `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
 - `go test ./pkg/unittest/...` passed.
