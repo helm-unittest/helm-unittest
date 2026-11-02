@@ -16,7 +16,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yargevad/filepathx v1.0.0
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 	helm.sh/helm/v3 v3.22.0
 	helm.sh/helm/v4 v4.3.0
 	k8s.io/apimachinery v0.37.1
