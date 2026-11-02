@@ -1,0 +1,7 @@
+portNumber: 8080
+portString: "8080"
+ratio: 1.5
+debug: false
+tags:
+  - alpha
+  - beta

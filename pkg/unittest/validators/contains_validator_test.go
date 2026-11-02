@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -35,10 +36,10 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -50,10 +51,10 @@ func TestContainsValidatorWhenOk(t *testing.T) {
 
 func TestContainsValidatorWhenEmptyManifestFail(t *testing.T) {
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{},
@@ -69,10 +70,10 @@ func TestContainsValidatorWhenEmptyManifestFail(t *testing.T) {
 
 func TestContainsValidatorWhenEmptyManifestNegativeOk(t *testing.T) {
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{},
@@ -94,10 +95,10 @@ a:
 	manifest := makeManifest(multiAssertToTestContains)
 
 	validator := ContainsValidator{
-		"$.*",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "$.*",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -112,10 +113,10 @@ func TestMultiManifestContainsValidatorWhenOk(t *testing.T) {
 	manifest2 := makeManifest(docToTestContains2)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest1, manifest2},
@@ -135,10 +136,10 @@ a:
 	manifest := makeManifest(docToTestContainsValueOnly)
 
 	validator := ContainsValidator{
-		"a.b",
-		"VALUE1",
-		nil,
-		false,
+		Path:    "a.b",
+		Content: "VALUE1",
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -158,10 +159,10 @@ a:
 	manifest := makeManifest(docToTestContainsValueOnly)
 
 	validator := ContainsValidator{
-		"a.b",
-		"VALUE1",
-		nil,
-		true,
+		Path:    "a.b",
+		Content: "VALUE1",
+		Count:   nil,
+		Any:     true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -183,10 +184,10 @@ a:
 	manifest := makeManifest(docToTestContainsAny)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"name": "VALUE1"},
-		nil,
-		true,
+		Path:    "a.b",
+		Content: map[string]any{"name": "VALUE1"},
+		Count:   nil,
+		Any:     true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -211,10 +212,10 @@ a:
 	log.SetLevel(log.DebugLevel)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"name": "VALUE3"},
-		nil,
-		true,
+		Path:    "a.b",
+		Content: map[string]any{"name": "VALUE3"},
+		Count:   nil,
+		Any:     true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -250,10 +251,10 @@ a:
 	log.SetLevel(log.DebugLevel)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"name": "VALUE3"},
-		nil,
-		true,
+		Path:    "a.b",
+		Content: map[string]any{"name": "VALUE3"},
+		Count:   nil,
+		Any:     true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest, manifest},
@@ -296,10 +297,10 @@ a:
 	manifest := makeManifest(docToTestContainsAny)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"name": "VALUE3"},
-		nil,
-		true,
+		Path:    "a.b",
+		Content: map[string]any{"name": "VALUE3"},
+		Count:   nil,
+		Any:     true,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -325,10 +326,10 @@ func TestContainsValidatorWhenNegativeAndOk(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "hello bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "hello bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -343,10 +344,10 @@ func TestContainsValidatorWhenFail(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"e": "bar bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"e": "bar bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -378,10 +379,10 @@ a:
 	manifests := []common.K8sManifest{manifest1, manifest2}
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: manifests,
@@ -404,10 +405,10 @@ func TestContainsValidatorMultiManifestWhenBothFail(t *testing.T) {
 	manifests := []common.K8sManifest{manifest1, manifest1}
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"e": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"e": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: manifests,
@@ -442,10 +443,10 @@ func TestContainsValidatorWhenNegativeAndFail(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -472,10 +473,10 @@ func TestContainsValidatorMultiDocsWhenNegativeAndFail(t *testing.T) {
 	manifest2 := makeManifest(docToTestContains3)
 
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest1, manifest2},
@@ -507,10 +508,10 @@ a:
 	manifest := makeManifest(manifestDocNotArray)
 
 	validator := ContainsValidator{
-		"a.b",
-		common.K8sManifest{"d": "foo bar"},
-		nil,
-		false,
+		Path:    "a.b",
+		Content: common.K8sManifest{"d": "foo bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -531,10 +532,10 @@ func TestContainsValidatorWhenInvalidParameter(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b[e]",
-		common.K8sManifest{"e": "bar"},
-		nil,
-		false,
+		Path:    "a.b[e]",
+		Content: common.K8sManifest{"e": "bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -552,10 +553,10 @@ func TestContainsValidatorWhenInvalidParameterFailfast(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b[e]",
-		common.K8sManifest{"e": "bar"},
-		nil,
-		false,
+		Path:    "a.b[e]",
+		Content: common.K8sManifest{"e": "bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -574,10 +575,10 @@ func TestContainsValidatorWhenUnknownPath(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b[5]",
-		common.K8sManifest{"e": "bar"},
-		nil,
-		false,
+		Path:    "a.b[5]",
+		Content: common.K8sManifest{"e": "bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -595,10 +596,10 @@ func TestContainsValidatorWhenUnknownPathFailfast(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b[5]",
-		common.K8sManifest{"e": "bar"},
-		nil,
-		false,
+		Path:    "a.b[5]",
+		Content: common.K8sManifest{"e": "bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest, manifest},
@@ -617,10 +618,10 @@ func TestContainsValidatorWhenUnknownPathNegative(t *testing.T) {
 	manifest := makeManifest(docToTestContains)
 
 	validator := ContainsValidator{
-		"a.b[5]",
-		common.K8sManifest{"e": "bar"},
-		nil,
-		false,
+		Path:    "a.b[5]",
+		Content: common.K8sManifest{"e": "bar"},
+		Count:   nil,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -636,10 +637,10 @@ func TestContainsValidatorWhenMultipleTimesInArray(t *testing.T) {
 
 	counter := 2
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"e": "bar"},
-		&counter,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"e": "bar"},
+		Count:   &counter,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -654,10 +655,10 @@ func TestContainsValidatorInverseWhenNotMultipleTimesInArray(t *testing.T) {
 
 	counter := 1
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"e": "bar"},
-		&counter,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"e": "bar"},
+		Count:   &counter,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -673,10 +674,10 @@ func TestContainsValidatorWhenNotMultipleTimesInArray(t *testing.T) {
 
 	counter := 1
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"e": "bar"},
-		&counter,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"e": "bar"},
+		Count:   &counter,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -700,10 +701,10 @@ func TestContainsValidatorWhenNotFoundMultipleTimesInArray(t *testing.T) {
 
 	counter := 1
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"f": "bar"},
-		&counter,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"f": "bar"},
+		Count:   &counter,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs: []common.K8sManifest{manifest},
@@ -729,10 +730,10 @@ func TestContainsValidatorInverseWhenNotFoundMultipleTimesInArray(t *testing.T) 
 
 	counter := 1
 	validator := ContainsValidator{
-		"a.b",
-		map[string]any{"f": "bar"},
-		&counter,
-		false,
+		Path:    "a.b",
+		Content: map[string]any{"f": "bar"},
+		Count:   &counter,
+		Any:     false,
 	}
 	pass, diff := validator.Validate(&ValidateContext{
 		Docs:     []common.K8sManifest{manifest},
@@ -741,4 +742,228 @@ func TestContainsValidatorInverseWhenNotFoundMultipleTimesInArray(t *testing.T) 
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsValidatorParsedJSONArrayViaInnerPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"host":"a","port":1},{"host":"b","port":2}]}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Content:      map[string]any{"host": "a", "port": 1},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsValidatorParsedTopLevelArray(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  list.json: |
+    ["alpha","beta"]
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["list.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Content:      "beta",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// Numbers in the parsed content must compare equal to the test file's ints,
+// which is what ParseOptions' number normalization guarantees.
+func TestContainsValidatorParsedNumbersMatchIntExpectations(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"ports":[8080,9090]}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "ports"},
+		Content:      8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsValidatorParsedWithCount(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"tags":["a","a","b"]}
+`)
+
+	count := 2
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "tags"},
+		Content:      "a",
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsValidatorParsedWithAnySubset(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"host":"a","port":1,"extra":true}]}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Content:      map[string]any{"host": "a"},
+		Any:          true,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestContainsValidatorParsedYAMLNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    tags:
+      - a
+      - b
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "tags"},
+		Content:      "zzz",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// contains requires an array. A parsed object must report the existing
+// "to be an array" error, showing the DECODED object as the actual, which is
+// what distinguishes this from the unparsed raw-string case.
+func TestContainsValidatorParsedNonArrayReportsError(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server"},
+		Content:      map[string]any{"port": 8080},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "to be an array")
+	assert.Contains(t, joined, "port: 8080",
+		"the actual must be the decoded object, proving parsing ran")
+}
+
+func TestContainsValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"broken": }
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Content:      "x",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), `unable to parse path 'data["config.json"]' as json`)
+}
+
+func TestContainsValidatorParsedUnmatchedInnerPathNamesBothPaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"host":"a"}]}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "missing"},
+		Content:      map[string]any{"host": "a"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "unknown path")
+	assert.Contains(t, joined, `data["config.json"]`)
+	assert.Contains(t, joined, "missing")
+
+	pass, _ = validator.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "an unmatched innerPath passes a negative assertion")
+}
+
+// innerPath may match several arrays; every one must contain the content.
+func TestContainsValidatorParsedFanOut(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"groups":[{"tags":["x","y"]},{"tags":["x","z"]}]}
+`)
+
+	validator := ContainsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "groups[*].tags"},
+		Content:      "x",
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+	assert.True(t, pass, "both tag arrays contain x")
+	assert.Equal(t, []string{}, diff)
+
+	mixed := makeManifest(`
+data:
+  config.json: |
+    {"groups":[{"tags":["x"]},{"tags":["q"]}]}
+`)
+
+	pass, _ = validator.Validate(&ValidateContext{Docs: []common.K8sManifest{mixed}})
+	assert.False(t, pass, "one array lacks x, so the assertion fails")
 }
