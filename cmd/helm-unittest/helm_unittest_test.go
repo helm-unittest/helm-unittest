@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	. "github.com/helm-unittest/helm-unittest/cmd/helm-unittest"
+	log "github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +20,7 @@ func setupTestCmd() *cobra.Command {
 	buf := new(bytes.Buffer)
 	testCmd := &cobra.Command{
 		Use:           "unittest",
-		Run:           RunPlugin,
+		RunE:          RunPlugin,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -478,7 +482,82 @@ func TestValidateUnittestParallelWithDebugFlags(t *testing.T) {
 	}
 }
 
+// --coverage-format is validated before any chart is rendered, so a typo
+// fails the run instead of silently skipping the report file after the full
+// test run has already executed.
+func TestValidateUnittestCoverageFormatFlag(t *testing.T) {
+	a := assert.New(t)
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--coverage", "--coverage-format", "bogus"})
+	err := cmd.Execute()
+
+	if a.Error(err) {
+		a.Contains(err.Error(), "coverage-format")
+	}
+}
+
+func TestValidateUnittestCoverageFormatFlagAcceptsKnownFormats(t *testing.T) {
+	a := assert.New(t)
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--coverage", "--coverage-format", "cobertura,lcov"})
+	err := cmd.Execute()
+
+	a.NoError(err)
+}
+
 // Using %T
 func typeofObject(variable any) string {
 	return fmt.Sprintf("%T", variable)
+}
+
+func TestValidateUnittestParallelLevelFlag(t *testing.T) {
+	a := assert.New(t)
+
+	levels := map[string]string{
+		"":                       "suite",
+		"--parallel-level=suite": "suite",
+		"--parallel-level=test":  "test",
+	}
+	for levelFlag, expected := range levels {
+		cmd := setupTestCmd()
+		args := []string{"--parallel"}
+		if levelFlag != "" {
+			args = append(args, levelFlag)
+		}
+		cmd.SetArgs(args)
+
+		err := cmd.Execute()
+		runner := GetTestRunner()
+
+		a.Nil(err, "flag: %q", levelFlag)
+		a.Equal(expected, runner.ParallelLevel, "flag: %q", levelFlag)
+	}
+}
+
+func TestValidateUnittestParallelLevelFlagRejectsUnknownValue(t *testing.T) {
+	a := assert.New(t)
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--parallel", "--parallel-level", "bogus"})
+	err := cmd.Execute()
+
+	if a.Error(err) {
+		a.Contains(err.Error(), "parallel-level")
+	}
+}
+
+func TestValidateUnittestParallelLevelWithoutParallelWarns(t *testing.T) {
+	a := assert.New(t)
+	hook := logtest.NewGlobal()
+	defer hook.Reset()
+
+	cmd := setupTestCmd()
+	cmd.SetArgs([]string{"--parallel-level=test"})
+	a.Nil(cmd.Execute())
+
+	a.True(slices.ContainsFunc(hook.AllEntries(), func(entry *log.Entry) bool {
+		return entry.Level == log.WarnLevel && strings.Contains(entry.Message, "--parallel-level")
+	}), "expected a warning about --parallel-level without --parallel")
 }

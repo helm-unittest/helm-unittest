@@ -1,0 +1,10 @@
+suite: a-disable-child
+templates:
+  - templates/parent-only.yaml
+tests:
+  - it: parent renders with child disabled
+    set:
+      child.enabled: false
+    asserts:
+      - isKind:
+          of: ConfigMap

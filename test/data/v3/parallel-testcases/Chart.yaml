@@ -1,0 +1,6 @@
+apiVersion: v2
+name: parallel-testcases
+description: A chart with many test cases per suite for parallel test case execution
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

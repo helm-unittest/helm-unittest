@@ -310,3 +310,40 @@ func TestYmlMarshallTestHelper(t *testing.T) {
 	result := YmlMarshallTestHelper(input, t)
 	assert.Contains(t, result, "name: test")
 }
+
+func TestYmlUnmarshalValuesWithDuplicateKeys(t *testing.T) {
+	input := `
+myMap:
+  some-key:
+    field: value-a
+  other: kept
+  some-key:
+    field: value-b
+top: first
+top: second
+list:
+  - name: a
+    name: b
+`
+	out := map[string]any{}
+	err := YmlUnmarshalValues(input, &out)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]any{
+		"myMap": map[string]any{
+			"some-key": map[string]any{"field": "value-b"},
+			"other":    "kept",
+		},
+		"top":  "second",
+		"list": []any{map[string]any{"name": "b"}},
+	}, out)
+}
+
+func TestYmlUnmarshalValuesEmptyAndInvalid(t *testing.T) {
+	out := map[string]any{}
+	assert.NoError(t, YmlUnmarshalValues("", &out))
+	assert.NoError(t, YmlUnmarshalValues("# only a comment\n", &out))
+	assert.Empty(t, out)
+
+	assert.Error(t, YmlUnmarshalValues("key: [unclosed", &out))
+	assert.Error(t, YmlUnmarshalValues("- not\n- a map\n", &out))
+}

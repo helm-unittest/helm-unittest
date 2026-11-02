@@ -94,6 +94,15 @@ The Command containing the commandline parameters.
 | ------ | ----- | ----- |
 | For debugging a deviating name is used | Explicit debugging of the plugin to gather as much information as possible | Helm is passing all parameters to the plugin, except for the debug flag |
 
+#### Coverage
+Opt-in (`--coverage`) per-template coverage. Every template is parsed via `text/template/parse` and instrumented with a `covprobe <idx>` call at each action/branch/loop node; each test job then renders a second time through the instrumented chart, and the runner reports which probes were hit.
+
+| Features/Quirks | The feature | The quirk |
+| ------ | ----- | ----- |
+| `covprobe` records the hit and emits nothing | The coverage render's output is byte-for-byte what the template normally produces, so a helper consumed as data (`include ... \| fromJson`) still gets valid input | Adding a probe wrapper with a leading `{{-` trim (an `if`/`else` block prepended before the real action) can still eat the surrounding whitespace and corrupt that data; none of the current probes do this |
+| Each job renders against its own deep copy of the shared instrumented chart | Helm's render mutates chart state (subchart pruning, metadata rewrite), so a chart shared across jobs would leak coverage between them | Doubles the render cost per job when `--coverage` is set |
+| Report paths are rooted at the chart's actual directory, not its declared `Chart.yaml` name | Codecov/SonarQube/GitLab resolve `filename`/`SF:` paths relative to the working directory | The console table and report files show the directory the chart was loaded from, which can differ from what a chart's own docs call it |
+
 ### Output
 The output is generating the results.
 The testresults can be used to output to console or output to file.

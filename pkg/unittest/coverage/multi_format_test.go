@@ -1,0 +1,165 @@
+package coverage_test
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	. "github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestParseFormats(t *testing.T) {
+	cases := []struct {
+		in   string
+		want []string
+		err  bool
+	}{
+		{in: "", want: []string{FormatCobertura}},
+		{in: "   ", want: []string{FormatCobertura}},
+		{in: "cobertura", want: []string{FormatCobertura}},
+		{in: "cobertura,lcov", want: []string{FormatCobertura, FormatLCOV}},
+		{in: "cobertura , lcov", want: []string{FormatCobertura, FormatLCOV}}, // whitespace tolerated
+
+		{in: "lcov,lcov,lcov", want: []string{FormatLCOV}}, // duplicates collapsed
+		{in: "cobertura,nope", err: true},
+		{in: "json", err: true},
+		{in: "html", err: true},
+		{in: ",,,", err: true}, // nothing usable
+	}
+	for _, c := range cases {
+		got, err := ParseFormats(c.in)
+		if c.err {
+			require.Error(t, err, "input %q should fail", c.in)
+			continue
+		}
+		require.NoError(t, err, "input %q", c.in)
+		assert.Equal(t, c.want, got, "input %q", c.in)
+	}
+}
+
+func TestResolveOutputPaths_SingleFormatVerbatim(t *testing.T) {
+	// One format → user's path is used exactly as given when it already
+	// carries an extension. Preserves the long-standing single-format
+	// behaviour for callers that have always passed a full filename.
+	got := ResolveOutputPaths("coverage.xml", []string{FormatCobertura})
+	require.Len(t, got, 1)
+	assert.Equal(t, "coverage.xml", got[0].Path)
+	assert.Equal(t, FormatCobertura, got[0].Format)
+}
+
+func TestResolveOutputPaths_SingleFormatAppendsExtensionWhenMissing(t *testing.T) {
+	// Extension-less path under a single format gets the format's
+	// conventional extension. Avoids the footgun where the user writes
+	// `--coverage-file ./reports/cov --coverage-format cobertura` and ends
+	// up with an extension-less file no tool can recognise.
+	cases := []struct {
+		in       string
+		format   string
+		wantPath string
+	}{
+		{"./reports/cov", FormatCobertura, "./reports/cov.xml"},
+		{"out", FormatLCOV, "out.info"},
+		// User-provided extension wins, even when it doesn't match the format.
+		{"coverage.report", FormatCobertura, "coverage.report"},
+	}
+	for _, c := range cases {
+		got := ResolveOutputPaths(c.in, []string{c.format})
+		require.Len(t, got, 1, c.in)
+		assert.Equal(t, c.wantPath, got[0].Path, "input %q + %s", c.in, c.format)
+	}
+}
+
+func TestResolveOutputPaths_MultiFormatStem(t *testing.T) {
+	// Multiple formats → path is a stem; each format gets its own extension.
+	got := ResolveOutputPaths("./reports/cov", []string{FormatCobertura, FormatLCOV})
+	want := map[string]string{
+		"./reports/cov.xml":  FormatCobertura,
+		"./reports/cov.info": FormatLCOV,
+	}
+	for _, target := range got {
+		assert.Equal(t, want[target.Path], target.Format, target.Path)
+	}
+	assert.Len(t, got, 2)
+}
+
+func TestResolveOutputPaths_MultiFormatStripsKnownExtension(t *testing.T) {
+	// If the user accidentally passes a path with a known extension, we
+	// strip it so we don't end up writing `coverage.xml.xml`.
+	got := ResolveOutputPaths("coverage.xml", []string{FormatCobertura, FormatLCOV})
+	paths := []string{got[0].Path, got[1].Path}
+	assert.Contains(t, paths, "coverage.xml")
+	assert.Contains(t, paths, "coverage.info")
+}
+
+func TestResolveOutputPaths_MultiFormatUnknownExtensionKept(t *testing.T) {
+	// Unknown extensions are left alone (treated as part of the stem).
+	got := ResolveOutputPaths("custom.cov", []string{FormatCobertura, FormatLCOV})
+	paths := []string{got[0].Path, got[1].Path}
+	assert.Contains(t, paths, "custom.cov.xml")
+	assert.Contains(t, paths, "custom.cov.info")
+}
+
+func TestFormatExt(t *testing.T) {
+	assert.Equal(t, ".xml", FormatExt(FormatCobertura))
+	assert.Equal(t, ".info", FormatExt(FormatLCOV))
+	assert.Equal(t, "", FormatExt("bogus"))
+}
+
+// TestWriteReport_AcceptsAllResolvedFormats verifies the end-to-end multi-
+// format flow: ResolveOutputPaths produces targets, WriteReport dispatches
+// each one, and the resulting files have the right magic.
+func TestWriteReport_AcceptsAllResolvedFormats(t *testing.T) {
+	dir := t.TempDir()
+	stem := filepath.Join(dir, "cov")
+
+	formats, err := ParseFormats("cobertura,lcov")
+	require.NoError(t, err)
+
+	for _, target := range ResolveOutputPaths(stem, formats) {
+		require.NoError(t, WriteReport(target.Path, target.Format, sampleCoverage()),
+			"writing %s to %s", target.Format, target.Path)
+	}
+
+	xml, err := os.ReadFile(stem + ".xml")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(xml), "<?xml"), "cobertura output should be XML")
+
+	info, err := os.ReadFile(stem + ".info")
+	require.NoError(t, err)
+	assert.Contains(t, string(info), "end_of_record", "lcov output should have records")
+}
+
+func TestMergeReports(t *testing.T) {
+	assert.Equal(t, Coverage{}, MergeReports(nil), "empty input merges to an empty report")
+
+	single := Coverage{ChartName: "demo", Files: []FileCoverage{{Name: "demo/templates/cm.yaml"}}}
+	assert.Equal(t, single, MergeReports([]Coverage{single}), "single-chart input is returned unchanged")
+
+	a := Coverage{ChartName: "chart-a", Files: []FileCoverage{{Name: "chart-a/templates/cm.yaml"}}}
+	a.Totals.Actions = CountStat{Covered: 1, Total: 2}
+	b := Coverage{ChartName: "chart-b", Files: []FileCoverage{{Name: "chart-b/templates/cm.yaml"}}}
+	b.Totals.Actions = CountStat{Covered: 3, Total: 4}
+
+	merged := MergeReports([]Coverage{a, b})
+	assert.Equal(t, "chart-a,chart-b", merged.ChartName)
+	require.Len(t, merged.Files, 2)
+	assert.Equal(t, "chart-a/templates/cm.yaml", merged.Files[0].Name)
+	assert.Equal(t, "chart-b/templates/cm.yaml", merged.Files[1].Name)
+	assert.Equal(t, CountStat{Covered: 4, Total: 6}, merged.Totals.Actions, "totals sum across charts")
+}
+
+func TestRemapRoot(t *testing.T) {
+	cov := Coverage{ChartName: "demo", Files: []FileCoverage{{Name: "demo/templates/cm.yaml"}}}
+
+	same := RemapRoot(cov, "demo", "demo")
+	assert.Equal(t, "demo/templates/cm.yaml", same.Files[0].Name, "no-op when reportRoot matches chartName")
+
+	remapped := RemapRoot(cov, "demo", "charts/my-chart-dir")
+	assert.Equal(t, "charts/my-chart-dir/templates/cm.yaml", remapped.Files[0].Name)
+
+	rootless := RemapRoot(cov, "demo", "")
+	assert.Equal(t, "templates/cm.yaml", rootless.Files[0].Name, "empty reportRoot drops the chart prefix entirely")
+}

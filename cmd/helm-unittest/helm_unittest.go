@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/helm-unittest/helm-unittest/pkg/unittest"
+	"github.com/helm-unittest/helm-unittest/pkg/unittest/coverage"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/formatter"
 	"github.com/helm-unittest/helm-unittest/pkg/unittest/printer"
 	"github.com/spf13/cobra"
@@ -22,8 +23,12 @@ type testOptions struct {
 	updateSnapshot          bool
 	withSubChart            bool
 	useSkipSchemaValidation bool
+	coverage                bool
+	coverageFile            string
+	coverageFormat          string
 	useParallel             bool
 	maxWorkers              int
+	parallelLevel           string
 	testFiles               []string
 	valuesFiles             []string
 	outputFile              string
@@ -72,10 +77,10 @@ Check https://github.com/helm-unittest/helm-unittest for more
 details about how to write tests.
 `,
 	Args: cobra.MinimumNArgs(1),
-	Run:  RunPlugin,
+	RunE: RunPlugin,
 }
 
-func RunPlugin(cmd *cobra.Command, chartPaths []string) {
+func RunPlugin(cmd *cobra.Command, chartPaths []string) error {
 	var colored *bool
 	if cmd.PersistentFlags().Changed("color") {
 		if testConfig.colored == "true" || testConfig.colored == "always" {
@@ -102,6 +107,25 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		testConfig.testFiles = []string{defaultFilePattern}
 	}
 
+	if testConfig.parallelLevel != unittest.ParallelLevelSuite && testConfig.parallelLevel != unittest.ParallelLevelTest {
+		return fmt.Errorf("invalid --parallel-level %q: must be %q or %q",
+			testConfig.parallelLevel, unittest.ParallelLevelSuite, unittest.ParallelLevelTest)
+	}
+
+	if testConfig.parallelLevel == unittest.ParallelLevelTest && !testConfig.useParallel {
+		log.Warn("--parallel-level=test has no effect without --parallel; running sequentially")
+	}
+
+	if testConfig.coverageFile != "" {
+		testConfig.coverage = true
+	}
+
+	if testConfig.coverage {
+		if _, err := coverage.ParseFormats(testConfig.coverageFormat); err != nil {
+			return fmt.Errorf("invalid --coverage-format: %w", err)
+		}
+	}
+
 	formatter := formatter.NewFormatter(testConfig.outputFile, testConfig.outputType)
 	printer := printer.NewPrinter(os.Stdout, colored)
 	testRunner = unittest.TestRunner{
@@ -112,8 +136,12 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 		Strict:               testConfig.useStrict,
 		Failfast:             testConfig.useFailfast,
 		SkipSchemaValidation: testConfig.useSkipSchemaValidation,
+		Coverage:             testConfig.coverage,
+		CoverageFile:         testConfig.coverageFile,
+		CoverageFormat:       testConfig.coverageFormat,
 		Parallel:             testConfig.useParallel,
 		MaxWorkers:           testConfig.maxWorkers,
+		ParallelLevel:        testConfig.parallelLevel,
 		TestFiles:            testConfig.testFiles,
 		ValuesFiles:          testConfig.valuesFiles,
 		OutputFile:           testConfig.outputFile,
@@ -131,6 +159,7 @@ func RunPlugin(cmd *cobra.Command, chartPaths []string) {
 	if !passed {
 		os.Exit(1)
 	}
+	return nil
 }
 
 // main to execute execute unittest command
@@ -218,6 +247,26 @@ func InitPluginFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().IntVar(
 		&testConfig.maxWorkers, "max-workers", 0,
 		"maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel)",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.parallelLevel, "parallel-level", unittest.ParallelLevelSuite,
+		"granularity of --parallel: 'suite' runs test suites concurrently, 'test' runs the test cases of all suites in one shared worker pool (only used with --parallel)",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&testConfig.coverage, "coverage", false,
+		"enable code coverage reporting for chart templates",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.coverageFile, "coverage-file", "",
+		"write coverage report to the given path (implies --coverage)",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&testConfig.coverageFormat, "coverage-format", "cobertura",
+		"format(s) for --coverage-file: cobertura | lcov. Comma-separated for multiple (e.g. cobertura,lcov); in that case --coverage-file is used as a path stem and per-format extensions are appended (.xml/.info)",
 	)
 }
 

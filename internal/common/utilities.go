@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"slices"
 	"strings"
 	"testing"
 
@@ -68,6 +69,55 @@ func YamlToJson(in string) ([]byte, error) {
 
 func YmlUnmarshal(in string, out any) error {
 	return yamlv3.Unmarshal([]byte(in), out)
+}
+
+// YmlUnmarshalValues unmarshals a Helm values document. Unlike YmlUnmarshal it
+// accepts duplicate mapping keys, the last occurrence wins, which matches how
+// Helm itself parses values files.
+func YmlUnmarshalValues(in string, out any) error {
+	var node yamlv3.Node
+	if err := yamlv3.Unmarshal([]byte(in), &node); err != nil {
+		return err
+	}
+	if node.Kind == 0 {
+		// Empty document, nothing to decode.
+		return nil
+	}
+	removeDuplicateMappingKeys(&node, map[*yamlv3.Node]bool{})
+	return node.Decode(out)
+}
+
+// removeDuplicateMappingKeys removes all but the last occurrence of every
+// duplicated key in the mapping nodes of the tree.
+func removeDuplicateMappingKeys(node *yamlv3.Node, visited map[*yamlv3.Node]bool) {
+	if node == nil || visited[node] {
+		return
+	}
+	visited[node] = true
+
+	if node.Kind == yamlv3.MappingNode {
+		type mappingKey struct {
+			kind  yamlv3.Kind
+			value string
+		}
+		seen := map[mappingKey]bool{}
+		kept := make([]*yamlv3.Node, 0, len(node.Content))
+		for i := len(node.Content) - 2; i >= 0; i -= 2 {
+			key := mappingKey{node.Content[i].Kind, node.Content[i].Value}
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			kept = append(kept, node.Content[i+1], node.Content[i])
+		}
+		slices.Reverse(kept)
+		node.Content = kept
+	}
+
+	for _, child := range node.Content {
+		removeDuplicateMappingKeys(child, visited)
+	}
+	removeDuplicateMappingKeys(node.Alias, visited)
 }
 
 func YmlMarshall(in any) (string, error) {

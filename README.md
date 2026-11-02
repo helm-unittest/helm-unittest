@@ -47,22 +47,22 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 When not defining any versions, it will install the latest version of binary into helm plugin directory, otherwise it will install the specified version.
 
 Using Helm 3:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest.git
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ```
 
 Using Helm 4<sup>*</sup>:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 ```
 
 Using OCI download<sup>**</sup>:
-```
-$ helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
+```bash
+helm plugin install oci://ghcr.io/helm-unittest/helm-unittest/unittest:latest
 ```
 or using http download<sup>***</sup>:
-```
-$ helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${plugin_version}/unittest-${plugin_version}.tgz
 ```
 
 __Notes:__ </br>
@@ -134,8 +134,8 @@ tests:
 
 and run:
 
-```
-$ helm unittest $YOUR_CHART
+```bash
+helm unittest $YOUR_CHART
 ```
 
 Now there is your first test! ;)
@@ -145,7 +145,7 @@ Now there is your first test! ;)
 The test suite file is written in pure YAML, and default placed under the `tests/` directory of the chart with suffix `_test.yaml`. You can also have your own suite files arrangement with `-f, --file` option of cli set as the glob patterns of test suite files related to chart directory, like:
 
 ```bash
-$ helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
+helm unittest -f 'my-tests/*.yaml' -f 'more-tests/**/*.yaml' my-chart
 ```
 
 Check [DOCUMENT](./DOCUMENT.md) for more details about writing tests.
@@ -185,14 +185,14 @@ we do not look for a file suffix or glob.
 
 The command for the above chart and test configuration would be:
 
-```shell
+```bash
 helm unittest --chart-tests-path tests-chart my-chart
 ```
 
 ## Usage
 
-```
-$ helm unittest [flags] CHART [...]
+```bash
+helm unittest [flags] CHART [...]
 ```
 
 This renders your charts locally (without tiller) and runs tests
@@ -216,6 +216,7 @@ defined in test suite files.
       --skip-schema-validation  skip values schema validation when rendering the chart (default false)
       --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
       --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
+      --parallel-level string   granularity of --parallel: 'suite' runs test suites concurrently, 'test' runs the test cases of all suites in one shared worker pool (only used with --parallel) (default suite)
 ```
 
 By default test suites run sequentially, exactly as in previous releases. Pass
@@ -243,6 +244,99 @@ $ helm unittest --parallel --max-workers 4 ./charts/my-app
 
 `--max-workers` has no effect unless `--parallel` is also set, and a value of `0`
 (the default) means one worker per CPU core.
+
+By default `--parallel` runs whole test suites concurrently. When a chart has a few
+large suites, or many suites sharing one snapshot file, use `--parallel-level test`
+to run individual test cases concurrently instead:
+
+```
+$ helm unittest --parallel --parallel-level test ./charts/my-app
+```
+
+At the `test` level the test cases of all suites share one pool of `--max-workers`
+workers, so no more than that many test cases render at once. Output, counts and
+snapshot files are identical to a sequential run: results are reported in the order
+the tests are defined, and snapshots are written once per snapshot file after all of
+its suites finished. With `--failfast`, test cases after the first failing one are
+not reported or counted, even if they already ran, and no snapshot file is written
+for test cases that are not reported. Coverage is not buffered per test case, so
+with `--coverage` and `--failfast` the coverage table may include test cases that
+ran but were not reported. `--parallel-level` has no effect without `--parallel`, and `--debugPlugin` still
+forces sequential execution.
+
+### Code Coverage
+
+Pass `--coverage` to print a per-template coverage table after the test summary.
+Each chart template is parsed via `text/template/parse` and instrumented with a
+`covprobe <idx>` call at every action, branch and range node; `covprobe` records
+the hit and emits nothing, so a helper whose output is consumed as data (e.g.
+`include "..." | fromJson`) still gets valid input. Each test job then renders a
+second time through the instrumented chart, against its own deep copy so
+coverage from one job can never leak into another. This coverage render is
+isolated from the assertion render, so adding `--coverage` never changes test
+results.
+
+Output columns:
+
+* **Actions** — `{{ ... }}` expressions executed at least once.
+* **Branches** — `if`, `else`, `with`, `with-else` bodies.
+* **Loops** — `range` body / `range-else` entered at least once. The trailing
+  "`N iters`" annotation is the total iteration count summed across every
+  test run, so a `range` over a large list shows real loop volume even when
+  the binary coverage stat is 100%.
+* **Used** — `yes` if the template rendered non-empty content in any test,
+  or (for `_*.tpl` partials) if any of its `define`-block probes were hit
+  via `template` / `include`. `no` flags dead templates that no test
+  exercises, which the action/branch/loop columns alone can't always
+  surface (e.g. a static-YAML template that's never rendered shows `-` for
+  all three but `no` for Used). The footer row shows the rendered count as
+  `used/total`.
+
+Coverage respects the existing `--with-subchart` flag: when it's set to
+`false`, subchart templates are excluded from coverage instrumentation and
+the report. They are still copied into the chart that's rendered for
+coverage so `include "subchart.foo"` calls from the parent chart still
+work, only their probes and report rows are dropped.
+
+Use `--coverage-file path/to/report` to emit a machine-readable report; this
+flag implies `--coverage`. The format is controlled by `--coverage-format`,
+which accepts a single format or a comma-separated list, and is validated
+before any chart is rendered so a typo fails the run immediately instead of
+producing no report file after a full test run:
+
+| Format      | Flag value    | Consumed by                                                          |
+|-------------|---------------|----------------------------------------------------------------------|
+| Cobertura XML (default) | `cobertura` | Codecov, SonarQube, GitLab, Jenkins (Cobertura plugin), Azure DevOps |
+| LCOV          | `lcov`      | Coveralls, Codecov, VS Code "Coverage Gutters", JetBrains import     |
+
+Action probes are reported as line coverage (Cobertura `<line>` / LCOV `DA`);
+branch and loop probes are reported as branches (Cobertura `condition-coverage`
+attribute / LCOV `BRDA`). Templates that failed to parse appear in the report
+with empty counters so consumers still see them in the file list. Report paths
+(Cobertura `filename`, LCOV `SF:`) are rooted at the chart's actual directory
+on disk, not its declared `Chart.yaml` name, so they resolve correctly for
+tools that read them relative to the working directory.
+
+A multi-chart run (`helm unittest chart-a chart-b`) writes one merged report
+per format; each chart's files are already unique (rooted at their own
+directory), so nothing collides.
+
+For a **single** format, `--coverage-file` is the exact output path. For
+**multiple** formats, `--coverage-file` is treated as a path stem; each
+format appends its conventional extension automatically — and a trailing
+known extension on the stem (e.g. `coverage.xml`) is stripped first so you
+don't end up with `coverage.xml.xml`. Example:
+
+```bash
+helm unittest \
+  --coverage-format cobertura,lcov \
+  --coverage-file ./reports/cov \
+  <chart>
+
+# writes:
+#   ./reports/cov.xml    (cobertura)
+#   ./reports/cov.info   (lcov)
+```
 
 ### Yaml JsonPath Support
 
@@ -331,8 +425,8 @@ tests:
 
 The `matchSnapshot` assertion validates the content rendered the same as cached last time. It fails if the content has changed, and you should check and update the cache with `-u, --update-snapshot` option of cli.
 
-```
-$ helm unittest -u my-chart
+```bash
+helm unittest -u my-chart
 ```
 
 The cache files are stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.

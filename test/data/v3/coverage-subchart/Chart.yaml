@@ -1,0 +1,7 @@
+apiVersion: v2
+name: coverage-subchart
+version: 0.1.0
+dependencies:
+  - name: child
+    version: 0.1.0
+    condition: child.enabled
