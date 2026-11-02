@@ -35,7 +35,16 @@ RUN apk upgrade --no-cache && \
       # For Helm 4.3.0 and above and PLUGIN_VERSION >= 1.1.0, use OCI plugin installation \
       if [ $HELM_MAJOR_VERSION -eq 4 ] && [ $HELM_MINOR_VERSION -ge 3 ] && \
          [ "$(printf '%s\n%s' "1.1.0" "${PLUGIN_VERSION}" | sort -V | head -n1)" = "1.1.0" ]; then \
-        helm plugin install "${OCI_PLUGIN_URL}"; \
+        helm plugin install "${OCI_PLUGIN_URL}" && \
+        # OCI packages contain every supported platform; retain only this image's binary. \
+        PLUGIN_DIR="$(helm env HELM_PLUGINS)/unittest" && \
+        test -x "${PLUGIN_DIR}/untt-${TARGETOS}-${TARGETARCH}" && \
+        find "${PLUGIN_DIR}" -maxdepth 1 -type f -name 'untt-*' \
+          ! -name "untt-${TARGETOS}-${TARGETARCH}" -delete && \
+        # Helm also retains the downloaded archive and an extracted plugin cache. \
+        rm -rf "$(helm env HELM_CACHE_HOME)/plugins" && \
+        rm -f "$(helm env HELM_PLUGINS)/unittest-${PLUGIN_VERSION}.tgz" \
+          "$(helm env HELM_PLUGINS)/unittest-${PLUGIN_VERSION}.tgz.prov"; \
       else \
         helm plugin install "${PLUGIN_URL}" --version "${PLUGIN_VERSION}" --verify=false; \
       fi \
