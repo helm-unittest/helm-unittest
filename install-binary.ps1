@@ -3,6 +3,10 @@ $PROJECT_NAME = "helm-unittest"
 $PROJECT_GH = "helm-unittest/$PROJECT_NAME"
 $PROJECT_CHECKSUM_FILE = "$PROJECT_NAME-checksum.sha"
 $HELM_PLUGIN_PATH = $env:HELM_PLUGIN_DIR
+if (-not $HELM_PLUGIN_PATH) {
+    $HELM_PLUGIN_PATH = $PSScriptRoot
+}
+$TEMP_DIST = Join-Path (Get-Item -LiteralPath $env:TEMP).FullName "_dist"
 
 if ($env:SKIP_BIN_INSTALL -eq "1") {
     Write-Host "Skipping binary install"
@@ -104,7 +108,7 @@ function Get-DownloadURL {
 function Get-DownloadFile {
     param($DownloadUrl)
     
-    $tempFolder = "$env:TEMP\_dist"
+    $tempFolder = $TEMP_DIST
     if (Test-Path $tempFolder) {
         Remove-Item $tempFolder -Recurse -Force
     }
@@ -170,7 +174,7 @@ function Install-File {
     Copy-Item -Path *.* -Exclude $fileName -Destination $HELM_PLUGIN_PATH -Force
     Pop-Location
 
-    Remove-Item "$env:TEMP\_dist" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $TEMP_DIST -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"    
 }
 
