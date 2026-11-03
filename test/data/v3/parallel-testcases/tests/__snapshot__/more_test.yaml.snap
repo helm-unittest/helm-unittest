@@ -1,0 +1,16 @@
+renders name five:
+  1: |
+    apiVersion: v1
+    data:
+      name: five
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config
+renders name six:
+  1: |
+    apiVersion: v1
+    data:
+      name: six
+    kind: ConfigMap
+    metadata:
+      name: RELEASE-NAME-config

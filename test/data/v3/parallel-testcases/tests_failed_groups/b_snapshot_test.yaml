@@ -1,0 +1,19 @@
+suite: snapshot group after the failure
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: snapshots one
+    set:
+      name: one
+    asserts:
+      - matchSnapshot: {}
+  - it: snapshots two
+    set:
+      name: two
+    asserts:
+      - matchSnapshot: {}
+  - it: snapshots three
+    set:
+      name: three
+    asserts:
+      - matchSnapshot: {}

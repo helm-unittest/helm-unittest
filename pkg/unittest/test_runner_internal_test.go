@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -134,4 +136,67 @@ func TestParallelFailfastIgnoresSnapshotErrors(t *testing.T) {
 	assert.Greater(t, withoutFailfast, uint(1), "fixture must have multiple suite groups")
 	assert.Equal(t, withoutFailfast, withFailfast,
 		"cache-creation errors must not make failfast skip later groups")
+}
+
+const internalTestCasesRunnerChart = "../../test/data/v3/parallel-testcases"
+
+// At test level the cases of every suite share one pool: the peak number of cases
+// running at once across the whole chart equals MaxWorkers, and cases of different
+// suites run at the same time.
+func TestRunV4TestLevelSharesOnePoolAcrossSuites(t *testing.T) {
+	const workers = 2
+	var mu sync.Mutex
+	running := map[string]int{}
+	total, peak := 0, 0
+	suitesOverlapped := false
+
+	buffer := new(bytes.Buffer)
+	tr := &TestRunner{
+		Printer:       printer.NewPrinter(buffer, nil),
+		TestFiles:     []string{"tests/*_test.yaml"},
+		Parallel:      true,
+		ParallelLevel: ParallelLevelTest,
+		MaxWorkers:    workers,
+	}
+	tr.caseStartHook = func(suiteName string) {
+		mu.Lock()
+		running[suiteName]++
+		total++
+		peak = max(peak, total)
+		for other, count := range running {
+			if other != suiteName && count > 0 {
+				suitesOverlapped = true
+			}
+		}
+		mu.Unlock()
+
+		time.Sleep(20 * time.Millisecond)
+
+		mu.Lock()
+		running[suiteName]--
+		total--
+		mu.Unlock()
+	}
+
+	assert.True(t, tr.RunV4([]string{internalTestCasesRunnerChart}), buffer.String())
+	assert.Equal(t, workers, peak)
+	assert.True(t, suitesOverlapped, "cases of different suites must share the pool")
+}
+
+// --debugPlugin writes rendered files keyed by template path, so test level must fall
+// back to sequential execution and never use the case pool.
+func TestRunV4TestLevelIgnoredWithDebugRender(t *testing.T) {
+	var calls atomic.Int32
+	buffer := new(bytes.Buffer)
+	tr := &TestRunner{
+		Printer:       printer.NewPrinter(buffer, nil),
+		TestFiles:     []string{"tests/*_test.yaml"},
+		Parallel:      true,
+		ParallelLevel: ParallelLevelTest,
+		RenderPath:    t.TempDir(),
+	}
+	tr.caseStartHook = func(string) { calls.Add(1) }
+
+	tr.RunV4([]string{internalTestCasesRunnerChart})
+	assert.Equal(t, int32(0), calls.Load())
 }

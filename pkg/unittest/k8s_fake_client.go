@@ -40,10 +40,37 @@ func convertRuntimeObject(input []map[string]any) []runtime.Object {
 	result := make([]runtime.Object, len(input))
 
 	for k, v := range input {
-		result[k] = &unstructured.Unstructured{Object: normalizeSecret(v)}
+		// copy, the fake client writes into its objects and the test definition is
+		// shared between test jobs that may run concurrently
+		object, _ := deepCopyValue(v).(map[string]any)
+		result[k] = &unstructured.Unstructured{Object: normalizeSecret(object)}
 	}
 
 	return result
+}
+
+// deepCopyValue copies the maps and slices of a decoded YAML value. Unlike
+// runtime.DeepCopyJSON it accepts every scalar type the YAML decoder produces.
+func deepCopyValue(value any) any {
+	switch v := value.(type) {
+	case map[string]any:
+		if v == nil {
+			return v
+		}
+		copied := make(map[string]any, len(v))
+		for key, item := range v {
+			copied[key] = deepCopyValue(item)
+		}
+		return copied
+	case []any:
+		copied := make([]any, len(v))
+		for i, item := range v {
+			copied[i] = deepCopyValue(item)
+		}
+		return copied
+	default:
+		return value
+	}
 }
 
 // coverageLookupFunc mirrors Helm's unexported engine lookup so the coverage render resolves `lookup` against the same fake objects as the primary render.

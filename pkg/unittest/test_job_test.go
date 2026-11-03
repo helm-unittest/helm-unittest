@@ -1433,3 +1433,29 @@ asserts:
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
+
+func TestV4RunJobWithSnapshotRecorderDefersCacheWrites(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
+	manifest := `
+it: should snapshot
+template: templates/configmap.yaml
+asserts:
+  - matchSnapshot: {}
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	cache := &snapshot.Cache{}
+	recorder := cache.NewRecorder()
+	tj.WithConfig(*NewTestConfig(c, cache, WithSnapshotRecorder(recorder)))
+	testResult := tj.RunV4(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.NoError(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(uint(0), cache.CurrentCount(), "snapshots must stay in the recorder until committed")
+
+	cache.Commit(recorder)
+	a.Positive(cache.CurrentCount())
+	a.Equal(cache.CurrentCount(), cache.InsertedCount())
+}

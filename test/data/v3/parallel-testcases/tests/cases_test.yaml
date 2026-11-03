@@ -1,0 +1,55 @@
+suite: configmap cases
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: renders default name
+    asserts:
+      - matchSnapshot: {}
+  - it: renders name one
+    set:
+      name: one
+    asserts:
+      - equal:
+          path: data.name
+          value: one
+      - matchSnapshot: {}
+  - it: renders name two
+    set:
+      name: two
+    asserts:
+      - equal:
+          path: data.name
+          value: two
+      - matchSnapshot: {}
+  - it: is skipped
+    skip:
+      reason: demonstrates a skipped case between running ones
+    asserts:
+      - matchSnapshot: {}
+  - it: renders name three
+    set:
+      name: three
+    asserts:
+      - matchSnapshot: {}
+  - it: renders name four
+    set:
+      name: four
+    asserts:
+      - matchSnapshot: {}
+---
+suite: configmap release cases
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: uses release name
+    release:
+      name: my-release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-config
+  - it: snapshots release name
+    release:
+      name: other-release
+    asserts:
+      - matchSnapshot: {}
