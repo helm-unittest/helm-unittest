@@ -6,6 +6,8 @@
 - Fix duplicate map keys in values files rejected by strict YAML parser, but accepted by real Helm (resolves #848, credits @anyingiit)
 - Add isSome and isNotSome assertion types (credits @V02460)
 - Add code coverage (resolves #156, credits @pkazi, @alxgomz, @gionn)
+- Add opt-in parallel execution of test cases with `--parallel-level test` (credits @michal-marszalek-h2oai)
+- Fix `--failfast` deleting snapshots of test cases that did not run (credits @michal-marszalek-h2oai)
 - Update packages to latest versions
 - Update pipeline actions to latest versions
 - Update documentation

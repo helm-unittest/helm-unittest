@@ -1,0 +1,9 @@
+suite: failing group
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: fails first
+    asserts:
+      - equal:
+          path: data.name
+          value: wrong

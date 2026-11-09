@@ -1,0 +1,22 @@
+suite: failfast cases
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: passes first
+    asserts:
+      - matchSnapshot: {}
+  - it: fails second
+    asserts:
+      - equal:
+          path: data.name
+          value: wrong
+  - it: passes third
+    set:
+      name: third
+    asserts:
+      - matchSnapshot: {}
+  - it: passes fourth
+    set:
+      name: fourth
+    asserts:
+      - matchSnapshot: {}

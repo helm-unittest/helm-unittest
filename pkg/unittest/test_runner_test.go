@@ -864,3 +864,187 @@ func TestV4RunnerParallelFailfastStopsScheduling(t *testing.T) {
 	assert.False(t, ffRunner.RunV4([]string{chartDir}), ffBuffer.String())
 	assert.Less(t, countFailedSuites(ffBuffer.String()), fullCount, "failfast must skip unstarted groups")
 }
+
+const testV4ParallelTestCasesChart string = "../../test/data/v3/parallel-testcases"
+
+// copyFixtureToTemp copies a fixture chart into a throwaway directory so runs that
+// write snapshot files never touch the repository.
+func copyFixtureToTemp(t *testing.T, src string) string {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "chart")
+	if err := os.CopyFS(dir, os.DirFS(src)); err != nil {
+		t.Fatalf("failed to copy fixture %s: %v", src, err)
+	}
+	return dir
+}
+
+// runFixture runs the test files of one chart with a runner adjusted by configure and
+// returns whether it passed plus its printed output with the elapsed time masked.
+func runFixture(chartDir, testFiles string, configure func(*TestRunner)) (bool, string) {
+	buffer := new(bytes.Buffer)
+	runner := TestRunner{
+		Printer:   printer.NewPrinter(buffer, nil),
+		TestFiles: []string{testFiles},
+	}
+	if configure != nil {
+		configure(&runner)
+	}
+	passed := runner.RunV4([]string{chartDir})
+	return passed, timePattern.ReplaceAllString(buffer.String(), "${1}XX.XXXms")
+}
+
+// A failfast stop inside the last suite of a snapshot group leaves the later cases
+// unrun; their snapshots must not be treated as vanished and deleted.
+func TestV4RunnerFailfastKeepsSnapshotsOfCasesThatDidNotRun(t *testing.T) {
+	a := assert.New(t)
+	chartDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+	snapPath := filepath.Join(chartDir, "tests_failed", "__snapshot__", "failfast_test.yaml.snap")
+
+	runFixture(chartDir, testTestFailedFiles, func(r *TestRunner) { r.UpdateSnapshot = true })
+	before, err := os.ReadFile(snapPath)
+	a.NoError(err)
+	a.Contains(string(before), "passes fourth")
+
+	passed, output := runFixture(chartDir, testTestFailedFiles, func(r *TestRunner) { r.Failfast = true })
+	a.False(passed, output)
+
+	after, err := os.ReadFile(snapPath)
+	a.NoError(err)
+	a.Equal(string(before), string(after), "failfast must not rewrite the snapshot file")
+}
+
+func testLevel(r *TestRunner) {
+	r.Parallel = true
+	r.ParallelLevel = ParallelLevelTest
+	r.MaxWorkers = 3
+}
+
+func TestV4RunnerTestLevelDeterministicOutput(t *testing.T) {
+	chartDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+
+	_, sequential := runFixture(chartDir, testTestFiles, nil)
+	_, first := runFixture(chartDir, testTestFiles, testLevel)
+	_, second := runFixture(chartDir, testTestFiles, testLevel)
+
+	assert.Equal(t, first, second, "test-level output must be stable across runs")
+	assert.Equal(t, sequential, first, "test-level output must match sequential")
+
+	_, basicSequential := runFixture(testV4BasicChart, testTestFiles, nil)
+	_, basicTestLevel := runFixture(testV4BasicChart, testTestFiles, testLevel)
+	assert.Equal(t, basicSequential, basicTestLevel)
+}
+
+func TestV4RunnerTestLevelUpdateSnapshotMatchesSequential(t *testing.T) {
+	for _, testFiles := range []string{testTestFiles, "tests_dup/*_test.yaml"} {
+		t.Run(testFiles, func(t *testing.T) {
+			seqDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+			parDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+			// "tests/*_test.yaml" -> "tests", "tests_dup/*_test.yaml" -> "tests_dup".
+			snapDir := filepath.Dir(testFiles)
+			// Drop committed snapshots so both runs write every file from scratch.
+			assert.NoError(t, os.RemoveAll(filepath.Join(seqDir, snapDir, "__snapshot__")))
+			assert.NoError(t, os.RemoveAll(filepath.Join(parDir, snapDir, "__snapshot__")))
+
+			seqPassed, seqOut := runFixture(seqDir, testFiles, func(r *TestRunner) { r.UpdateSnapshot = true })
+			parPassed, parOut := runFixture(parDir, testFiles, func(r *TestRunner) {
+				testLevel(r)
+				r.UpdateSnapshot = true
+			})
+			assert.True(t, seqPassed, seqOut)
+			assert.Equal(t, seqPassed, parPassed)
+			// The two runs use different chart directories, which show up in the output.
+			assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+
+			seqSnaps, err := filepath.Glob(filepath.Join(seqDir, snapDir, "__snapshot__", "*.snap"))
+			assert.NoError(t, err)
+			assert.NotEmpty(t, seqSnaps)
+			for _, seqSnap := range seqSnaps {
+				rel, _ := filepath.Rel(seqDir, seqSnap)
+				seqBytes, _ := os.ReadFile(seqSnap)
+				parBytes, err := os.ReadFile(filepath.Join(parDir, rel))
+				assert.NoError(t, err)
+				assert.Equal(t, string(seqBytes), string(parBytes), rel)
+			}
+		})
+	}
+}
+
+func TestV4RunnerTestLevelFailfastMatchesSequential(t *testing.T) {
+	seqDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+	parDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+
+	seqPassed, seqOut := runFixture(seqDir, testTestFailedFiles, func(r *TestRunner) { r.Failfast = true })
+	parPassed, parOut := runFixture(parDir, testTestFailedFiles, func(r *TestRunner) {
+		testLevel(r)
+		r.Failfast = true
+	})
+
+	assert.False(t, seqPassed)
+	assert.Equal(t, seqPassed, parPassed)
+	// The two runs use different chart directories, which show up in the output.
+	assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+
+	snap := filepath.Join("tests_failed", "__snapshot__", "failfast_test.yaml.snap")
+	_, seqErr := os.Stat(filepath.Join(seqDir, snap))
+	_, parErr := os.Stat(filepath.Join(parDir, snap))
+	assert.Equal(t, os.IsNotExist(seqErr), os.IsNotExist(parErr), "snapshot file presence must match")
+}
+
+func TestV4RunnerTestLevelCoverageMatchesSequential(t *testing.T) {
+	_, sequential := runFixture(testV4BasicChart, testTestFiles, func(r *TestRunner) { r.Coverage = true })
+	_, testLevelOut := runFixture(testV4BasicChart, testTestFiles, func(r *TestRunner) {
+		testLevel(r)
+		r.Coverage = true
+	})
+	assert.Equal(t, sequential, testLevelOut)
+}
+
+// Every v3 fixture chart must report the same at test level as sequentially. Running
+// the cases of one suite concurrently also exposes shared suite state to the race
+// detector, such as the kubernetesProvider objects of with-k8s-fake-client.
+func TestV4RunnerTestLevelMatchesSequentialForEveryFixture(t *testing.T) {
+	chartDirs, err := filepath.Glob("../../test/data/v3/*/tests")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, chartDirs)
+
+	for _, testsDir := range chartDirs {
+		fixture := filepath.Dir(testsDir)
+		t.Run(filepath.Base(fixture), func(t *testing.T) {
+			seqDir := copyFixtureToTemp(t, fixture)
+			parDir := copyFixtureToTemp(t, fixture)
+
+			seqPassed, seqOut := runFixture(seqDir, testTestFiles, nil)
+			parPassed, parOut := runFixture(parDir, testTestFiles, func(r *TestRunner) {
+				testLevel(r)
+				r.MaxWorkers = 4
+			})
+
+			assert.Equal(t, seqPassed, parPassed)
+			// The two runs use different chart directories, which show up in the output.
+			assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+		})
+	}
+}
+
+// Under failfast, a snapshot group after the failing one is never reported, so at test
+// level it must not write its snapshot file either, although its cases may have run.
+func TestV4RunnerTestLevelFailfastSkipsSnapshotsOfLaterGroups(t *testing.T) {
+	const testFiles = "tests_failed_groups/*_test.yaml"
+	snap := filepath.Join("tests_failed_groups", "__snapshot__", "b_snapshot_test.yaml.snap")
+	seqDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+	parDir := copyFixtureToTemp(t, testV4ParallelTestCasesChart)
+
+	seqPassed, seqOut := runFixture(seqDir, testFiles, func(r *TestRunner) { r.Failfast = true })
+	parPassed, parOut := runFixture(parDir, testFiles, func(r *TestRunner) {
+		testLevel(r)
+		r.Failfast = true
+	})
+
+	assert.False(t, seqPassed)
+	assert.Equal(t, seqPassed, parPassed)
+	// The two runs use different chart directories, which show up in the output.
+	assert.Equal(t, seqOut, strings.ReplaceAll(parOut, parDir, seqDir))
+
+	assert.NoFileExists(t, filepath.Join(seqDir, snap))
+	assert.NoFileExists(t, filepath.Join(parDir, snap), "an unreported group must not store its snapshots")
+}
