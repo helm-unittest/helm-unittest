@@ -79,9 +79,11 @@ func (a *Assertion) handleIndexError(result *results.AssertionResult, indexError
 	return result
 }
 
-// shouldSkipAssertion checks if the assertion should be skipped based on the configuration
+// shouldSkipAssertion checks if the assertion should be skipped based on the configuration.
+// A template that failed to render did not render "no documents", so a render error is never skipped:
+// the assertion still runs and reports the error (or matches it with failedTemplate).
 func (a *Assertion) shouldSkipAssertion(selectedTemplates []string) bool {
-	return a.configOrDefault().isSkipEmptyTemplate && len(selectedTemplates) == 0
+	return a.configOrDefault().isSkipEmptyTemplate && a.configOrDefault().renderSucceed && len(selectedTemplates) == 0
 }
 
 // skipAssertion marks the assertion as skipped and sets the reason

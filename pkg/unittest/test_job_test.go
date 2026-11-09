@@ -1434,6 +1434,46 @@ asserts:
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
+
+func TestV4RunJobWithFailWhenSkipEmptyTemplatesAndRenderError(t *testing.T) {
+	c, _ := v2loader.Load(testV4BasicChart)
+	manifest := `
+it: should fail on the render error
+set:
+  ingress.enabled: true
+  service.externalPort: ""
+template: templates/ingress.yaml
+documentSelector:
+  path: kind
+  value: Ingress
+  skipEmptyTemplates: true
+asserts:
+  - exists:
+      path: metadata.name
+`
+	var tj TestJob
+	common.YmlUnmarshalTestHelper(manifest, &tj, t)
+
+	tj.WithConfig(*NewTestConfig(c, &snapshot.Cache{},
+		WithFailFast(true),
+		WithSkipEmptyTemplate(true),
+		WithDocumentSelector(&valueutils.DocumentSelector{
+			Path:               "kind",
+			Value:              "Ingress",
+			SkipEmptyTemplates: true,
+		}),
+	))
+	testResult := tj.RunV4(&results.TestJobResult{})
+
+	a := assert.New(t)
+	a.False(testResult.Passed)
+	a.False(testResult.Skipped)
+	a.Equal(1, len(testResult.AssertsResult))
+	a.False(testResult.AssertsResult[0].Skipped)
+	a.False(testResult.AssertsResult[0].Passed)
+}
+
+
 func TestV4RunJobWithSnapshotRecorderDefersCacheWrites(t *testing.T) {
 	c, _ := v2loader.Load(testV4BasicChart)
 	manifest := `
@@ -1458,4 +1498,5 @@ asserts:
 	cache.Commit(recorder)
 	a.Positive(cache.CurrentCount())
 	a.Equal(cache.CurrentCount(), cache.InsertedCount())
+}
 }
