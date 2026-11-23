@@ -1,6 +1,7 @@
 1.3.0 / 2026-10-xx
 ==================
 - Fix sha256sum validation (resolves #949, credits @nls-swhetten)
+- Fix checksum validation on macOS to use shasum, as the native sha256sum accepts an empty checksum list
 - Fix support Kubernetes resource quantities in lessOrEqual/greaterOrEqual (resolves #837, credits @AruneshDwivedi)
 - Fix encode secret stringData into data for kubernetesProvider (resolves #768, credits @Semih702)
 - Fix duplicate map keys in values files rejected by strict YAML parser, but accepted by real Helm (resolves #848, credits @anyingiit)

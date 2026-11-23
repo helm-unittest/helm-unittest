@@ -110,6 +110,25 @@ downloadFile() {
   fi
 }
 
+# verifyChecksum verifies the SHA256 checksum lines read from stdin.
+verifyChecksum() {
+  # The native macOS sha256sum exits 0 on empty input, so a missing or
+  # unmatched checksum would pass; shasum fails closed and ships with macOS.
+  if [ "$OS" = "macos" ] && type "shasum" >/dev/null 2>&1; then
+    shasum -a 256 -c -s
+  elif type "sha256sum" >/dev/null 2>&1; then
+    if grep -q "ID=alpine" /etc/os-release 2>/dev/null; then
+      sha256sum -c -s || sha256sum -c --status
+    else
+      sha256sum -c --status -
+    fi
+  elif type "shasum" >/dev/null 2>&1; then
+    shasum -a 256 -c -s
+  else
+    echo No Checksum as there is no shasum or sha256sum found.
+  fi
+}
+
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
@@ -119,29 +138,9 @@ installFile() {
   if [ -n "$PROJECT_CHECKSUM" ]; then
     echo Validating Checksum.
     if type "curl" >/dev/null 2>&1; then
-      if type "sha256sum" >/dev/null 2>&1; then
-        if grep -q "ID=alpine" /etc/os-release; then
-          curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
-        else
-          curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status -
-        fi
-      elif type "shasum" >/dev/null 2>&1; then
-        curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
-      else
-        echo No Checksum as there is no shasum or sha256sum found.
-      fi
+      curl --proto "=https" -s -L "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | verifyChecksum
     elif type "wget" >/dev/null 2>&1; then
-      if type "sha256sum" >/dev/null 2>&1; then
-        if grep -q "ID=alpine" /etc/os-release; then
-          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | (sha256sum -c -s || sha256sum -c --status)
-        else
-          wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | sha256sum -c --status -
-        fi
-      elif type "shasum" >/dev/null 2>&1; then
-        wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | shasum -a 256 -c -s
-      else
-        echo No Checksum as there is no shasum or sha256sum found.
-      fi
+      wget -q -O - "$PROJECT_CHECKSUM" | grep "$DOWNLOAD_FILE" | verifyChecksum
     fi
   else
     echo No Checksum validated.
