@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM alpine@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+FROM --platform=$BUILDPLATFORM alpine@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
 # variable "HELM_VERSION" and "PLUGIN_VERSION" must be passed as docker environment variables during the image build
 # docker buildx build --no-cache --platform linux/amd64,linux/arm64 --build-arg HELM_VERSION=3.10.0 --build-arg PLUGIN_VERSION=0.3.0 -t alpine/helm-unittest:3.10.0-0.3.0 .
@@ -48,7 +48,7 @@ RUN apk upgrade --no-cache && \
     addgroup -g 1000 -S helmgroup && \
     adduser -u 1000 -S -G helmgroup helmuser
 
-VOLUME ["/apps"] 
+VOLUME ["/apps"]
 
 USER 1000:1000
 
