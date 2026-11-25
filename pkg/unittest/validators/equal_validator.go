@@ -56,14 +56,14 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 
 	decoded, decodeFailures := a.decodeBase64Actuals(rawActuals, manifestIndex)
 
-	actuals, failureAt, err := a.resolveActualsWithDecodeFailures(decoded, decodeFailures, manifestIndex)
+	actuals, failureAt, err := a.resolveActualsWithDecodeFailures(decoded, decodeFailures)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", a.ParseOptions.describePath(a.Path)))
+			fmt.Sprintf("unknown path %s", a.describePath(a.Path)))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
@@ -151,9 +151,9 @@ func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([
 // When there are no decode failures this is exactly ParseOptions.resolveActuals,
 // preserving its existing behavior (including that a parse error aborts the
 // whole batch) for the common case.
-func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFailures map[int][]string, manifestIndex int) ([]any, map[int][]string, error) {
+func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFailures map[int][]string) ([]any, map[int][]string, error) {
 	if len(decodeFailures) == 0 {
-		actuals, err := a.ParseOptions.resolveActuals(decoded, a.Path)
+		actuals, err := a.resolveActuals(decoded, a.Path)
 		return actuals, nil, err
 	}
 
@@ -167,7 +167,7 @@ func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFa
 			continue
 		}
 
-		parsed, err := a.ParseOptions.resolveParsed(actual, a.Path)
+		parsed, err := a.resolveParsed(actual, a.Path)
 		if err != nil {
 			return nil, nil, err
 		}

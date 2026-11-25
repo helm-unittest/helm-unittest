@@ -1,6 +1,7 @@
 package coverage_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -56,7 +57,7 @@ data:
 			IsInstall: true,
 		}, nil)
 		require.NoError(t, err)
-		out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.Render(instrumented, vals)
+		out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.RenderWithContext(context.Background(), instrumented, vals)
 		require.NoError(t, err)
 		tracker.Absorb(out)
 	}
@@ -98,7 +99,7 @@ data:
 		IsInstall: true,
 	}, nil)
 	require.NoError(t, err)
-	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.Render(instrumented, vals)
+	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.RenderWithContext(context.Background(), instrumented, vals)
 	require.NoError(t, err)
 	tracker.Absorb(out)
 
@@ -139,7 +140,7 @@ metadata:
 		Name: "rel", Namespace: "ns", IsInstall: true,
 	}, nil)
 	require.NoError(t, err)
-	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.Render(instrumented, vals)
+	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.RenderWithContext(context.Background(), instrumented, vals)
 	require.NoError(t, err)
 	tracker.Absorb(out)
 
@@ -189,7 +190,7 @@ metadata:
 		Name: "rel", Namespace: "ns", IsInstall: true,
 	}, nil)
 	require.NoError(t, err)
-	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.Render(instrumented, vals)
+	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.RenderWithContext(context.Background(), instrumented, vals)
 	require.NoError(t, err)
 	tracker.Absorb(out)
 
@@ -260,7 +261,7 @@ metadata:
 		IsInstall: true,
 	}, nil)
 	require.NoError(t, err)
-	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.Render(instrumented, vals)
+	out, err := v4engine.Engine{CustomTemplateFuncs: tracker.ProbeFuncMap()}.RenderWithContext(context.Background(), instrumented, vals)
 	require.NoError(t, err)
 	tracker.Absorb(out)
 

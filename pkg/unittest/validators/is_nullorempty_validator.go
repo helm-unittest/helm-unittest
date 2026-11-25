@@ -36,14 +36,14 @@ func (v IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, ma
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	actual, err = v.resolveActuals(actual, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actual) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
+			fmt.Sprintf("unknown path %s", v.describePath(v.Path)))
 	}
 
 	manifestSuccess := (len(actual) == 0 && context.Negative)

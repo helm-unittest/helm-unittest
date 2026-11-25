@@ -72,16 +72,16 @@ func RenderConsole(p *printer.Printer, cov Coverage) {
 		w = p.Writer
 	}
 
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 	header := fmt.Sprintf("### Coverage [ %s ]", cov.ChartName)
 	if p != nil {
 		header = fmt.Sprintf("### Coverage [ %s ]", p.Highlight("%s", cov.ChartName))
 	}
-	fmt.Fprintln(w, header)
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, header)
+	_, _ = fmt.Fprintln(w)
 
 	if len(cov.Files) == 0 {
-		fmt.Fprintln(w, "(no templates were instrumented)")
+		_, _ = fmt.Fprintln(w, "(no templates were instrumented)")
 		return
 	}
 
@@ -121,20 +121,20 @@ func RenderConsole(p *printer.Printer, cov Coverage) {
 		}
 	}
 	if len(parseErrs) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Templates skipped (parse error):")
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "Templates skipped (parse error):")
 		for _, f := range parseErrs {
-			fmt.Fprintf(w, "  - %s: %v\n", f.Name, f.ParseError)
+			_, _ = fmt.Fprintf(w, "  - %s: %v\n", f.Name, f.ParseError)
 		}
 	}
 	if len(uncovered) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Uncovered lines:")
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "Uncovered lines:")
 		for _, f := range uncovered {
-			fmt.Fprintf(w, "  - %s: %s\n", f.Name, joinInts(f.MissedLines))
+			_, _ = fmt.Fprintf(w, "  - %s: %s\n", f.Name, joinInts(f.MissedLines))
 		}
 	}
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 }
 
 func formatStat(p *printer.Printer, s CountStat, parseErr error) string {
@@ -225,17 +225,17 @@ func printTable(w io.Writer, rows [][]string) {
 				sb.WriteString("  ")
 			}
 		}
-		fmt.Fprintln(w, sb.String())
+		_, _ = fmt.Fprintln(w, sb.String())
 		if ri == 0 {
 			// header separator
 			var sep strings.Builder
-			for i := 0; i < cols; i++ {
+			for i := range cols {
 				sep.WriteString(strings.Repeat("-", widths[i]))
 				if i < cols-1 {
 					sep.WriteString("  ")
 				}
 			}
-			fmt.Fprintln(w, sep.String())
+			_, _ = fmt.Fprintln(w, sep.String())
 		}
 	}
 }

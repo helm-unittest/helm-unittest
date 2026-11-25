@@ -3,6 +3,7 @@ package printer
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -62,11 +63,11 @@ func (p *Printer) setupColor(color *color.Color) {
 
 // Println print a line with indent level.
 func (p *Printer) Println(content string, indentLevel int) {
-	var indent string
+	var indent strings.Builder
 	for range indentLevel {
-		indent += "\t"
+		indent.WriteString("\t")
 	}
-	_, _ = fmt.Fprintln(p.Writer, indent+content)
+	_, _ = fmt.Fprintln(p.Writer, indent.String()+content)
 }
 
 // Success print success.

@@ -881,11 +881,12 @@ const testV4ParallelTestCasesChart string = "../../test/data/v3/parallel-testcas
 // write snapshot files never touch the repository.
 func copyFixtureToTemp(t *testing.T, src string) string {
 	t.Helper()
+	t.Setenv("GOTMPDIR", ".")
 	dir := filepath.Join(t.TempDir(), "chart")
 	if err := os.CopyFS(dir, os.DirFS(src)); err != nil {
 		t.Fatalf("failed to copy fixture %s: %v", src, err)
 	}
-	return dir
+	return filepath.ToSlash(dir)
 }
 
 // runFixture runs the test files of one chart with a runner adjusted by configure and

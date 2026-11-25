@@ -35,7 +35,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}
 
-	actuals, err = v.ParseOptions.resolveActuals(actuals, path)
+	actuals, err = v.resolveActuals(actuals, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}

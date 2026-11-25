@@ -45,7 +45,7 @@ func (v ExistsValidator) validateManifest(manifest common.K8sManifest, manifestI
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), true
 	}
 
-	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	actual, err = v.resolveActuals(actual, v.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), true
 	}

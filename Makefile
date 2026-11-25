@@ -2,7 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 PLUGIN_EMAIL := "helmunittest@gmail.com"
-HELM_VERSION := 4.3.0
+HELM_VERSION := 4.3.1
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 BUILD := ./_build
 DIST := ./_dist
@@ -17,7 +17,9 @@ TEST_NAMES ?=basic \
 	global-double-setting \
 	library-chart \
 	nested_glob \
-	parallel-mulisuite \
+	parallel-multisuite \
+	parallel-testcases \
+	parse-structured \
 	with-crds \
 	with-disabled-subchart-on-condition \
 	with-disabled-subchart-on-tags \
@@ -86,7 +88,7 @@ dist: ## Build distribution packages
 	CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -o untt-linux-ppc64le -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-ppc64le-$(VERSION).tgz untt-linux-ppc64le README.md LICENSE plugin.yaml
 	mv untt-linux-ppc64le $(BUILD)/
-	
+
 	CGO_ENABLED=0 GOOS=linux GOARCH=s390x go build -o untt-linux-s390x -ldflags $(LDFLAGS) ./cmd/helm-unittest
 	tar -zcvf $(DIST)/helm-unittest-linux-s390x-$(VERSION).tgz untt-linux-s390x README.md LICENSE plugin.yaml
 	mv untt-linux-s390x $(BUILD)/
