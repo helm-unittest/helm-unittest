@@ -48,6 +48,7 @@ const testV4WithDisabledSubChartOnConditionChart string = "../../test/data/v3/wi
 const testV4WithDisabledSubChartOnTagsChart string = "../../test/data/v3/with-disabled-subchart-on-tags"
 const testHelmPluginsDir string = "../../test/data/helmplugins"
 const testV4ParallelMultiSuiteChart string = "../../test/data/v3/parallel-multisuite"
+const testV4ParseStructuredChart string = "../../test/data/v3/parse-structured"
 
 var tmpdir, _ = os.MkdirTemp("", testSuiteTests)
 

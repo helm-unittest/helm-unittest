@@ -12,10 +12,11 @@ import (
 
 // ContainsValidator validate whether value of Path is an array and contains Content
 type ContainsValidator struct {
-	Path    string
-	Content any
-	Count   *int
-	Any     bool
+	Path         string
+	Content      any
+	Count        *int
+	Any          bool
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (v ContainsValidator) failInfo(actual any, manifestIndex, assertIndex int, not bool) []string {
@@ -113,8 +114,14 @@ func (v ContainsValidator) validateManifest(manifest common.K8sManifest, manifes
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
+	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
+	}
+
 	if len(actual) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1,
+			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
 	}
 
 	manifestSuccess := (len(actual) == 0 && context.Negative)

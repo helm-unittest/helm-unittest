@@ -11,9 +11,10 @@ import (
 
 // LengthEqualDocumentsValidator validate whether the count of manifests rendered form template is Count
 type LengthEqualDocumentsValidator struct {
-	Paths []string // optional
-	Path  string   // optional
-	Count *int     // optional if paths defined
+	Paths        []string // optional
+	Path         string   // optional
+	Count        *int     // optional if paths defined
+	ParseOptions `mapstructure:",squash"`
 }
 
 func (v LengthEqualDocumentsValidator) failInfo(path, count, actual string, manifestIndex, valueIndex int, not bool) []string {
@@ -30,6 +31,11 @@ func (v LengthEqualDocumentsValidator) failInfo(path, count, actual string, mani
 
 func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, manifestIndex int, context *ValidateContext) (bool, []string, int) {
 	actuals, err := valueutils.GetValueOfSetPath(manifest, path)
+	if err != nil {
+		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
+	}
+
+	actuals, err = v.ParseOptions.resolveActuals(actuals, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}

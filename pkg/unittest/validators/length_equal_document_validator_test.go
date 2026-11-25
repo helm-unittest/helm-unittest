@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -326,4 +327,221 @@ func TestLengthEqualDocumentsValidatorNoManifestNegativeOk(t *testing.T) {
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorParsedSinglePath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2},{"port":3}]}
+`)
+
+	count := 3
+	validator := LengthEqualDocumentsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorParsedTopLevelArray(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  list.json: |
+    ["a","b"]
+`)
+
+	count := 2
+	validator := LengthEqualDocumentsValidator{
+		Path:         `data["list.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON},
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorParsedWrongCountFails(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1}]}
+`)
+
+	count := 3
+	validator := LengthEqualDocumentsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), "1",
+		"the failure must report the decoded array length, proving parsing ran")
+}
+
+// parse applies to every path in Paths; the same innerPath is resolved within
+// each, and the resulting counts are compared across them as before.
+func TestLengthEqualDocumentsValidatorParsedMultiplePaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  a.json: |
+    {"servers":[{"port":1},{"port":2}]}
+  b.json: |
+    {"servers":[{"port":3},{"port":4}]}
+`)
+
+	validator := LengthEqualDocumentsValidator{
+		Paths:        []string{`data["a.json"]`, `data["b.json"]`},
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass, "both parsed documents have equal-length servers arrays")
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestLengthEqualDocumentsValidatorParsedMultiplePathsMismatchFails(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  a.json: |
+    {"servers":[{"port":1},{"port":2}]}
+  b.json: |
+    {"servers":[{"port":3}]}
+`)
+
+	validator := LengthEqualDocumentsValidator{
+		Paths:        []string{`data["a.json"]`, `data["b.json"]`},
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass, "the two parsed arrays differ in length")
+	assert.Contains(t, strings.Join(diff, "\n"), "1",
+		"the failure must report the decoded array length (1), proving parsing ran")
+}
+
+func TestLengthEqualDocumentsValidatorParsedYAML(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    tags:
+      - a
+      - b
+`)
+
+	count := 2
+	validator := LengthEqualDocumentsValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "tags"},
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+// Covers the notLengthEqual antonym path.
+func TestLengthEqualDocumentsValidatorParsedNegative(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":1},{"port":2}]}
+`)
+
+	wrongCount := 5
+	mismatch := LengthEqualDocumentsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Count:        &wrongCount,
+	}
+	pass, _ := mismatch.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.True(t, pass, "the length is not 5, so notLengthEqual holds")
+
+	rightCount := 2
+	matching := LengthEqualDocumentsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Count:        &rightCount,
+	}
+	pass, _ = matching.Validate(&ValidateContext{
+		Docs:     []common.K8sManifest{manifest},
+		Negative: true,
+	})
+	assert.False(t, pass, "the length IS 2, so notLengthEqual must fail")
+}
+
+// lengthEqual needs an array. A parsed object must report the existing
+// "is not array" error rather than being silently accepted.
+//
+// The "is not array" message only ever names the path, never the value, so a
+// single path resolving to a parsed object is indistinguishable in the
+// error text from the same path's raw (unparsed) string content - both are
+// non-arrays and produce byte-identical output. To make this test actually
+// depend on parsing having run, it pairs two paths sharing one innerPath:
+// one whose parsed innerPath value is an array (must succeed, proving
+// decode occurred) and one whose parsed innerPath value is an object (must
+// fail "is not array"). Without parsing, both paths' raw string content is
+// non-array, so the array-path would ALSO fail "is not array" - which this
+// test asserts does not happen.
+func TestLengthEqualDocumentsValidatorParsedNonArrayReportsError(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  arr.json: |
+    {"x":[1,2,3]}
+  obj.json: |
+    {"x":{"y":1}}
+`)
+
+	validator := LengthEqualDocumentsValidator{
+		Paths:        []string{`data["arr.json"]`, `data["obj.json"]`},
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "x"},
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, `data["obj.json"] is not array`,
+		"the object-shaped innerPath value must fail the array check")
+	assert.NotContains(t, joined, `data["arr.json"] is not array`,
+		"the array-shaped innerPath value must have been decoded successfully, proving parsing ran")
+}
+
+func TestLengthEqualDocumentsValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {broken
+`)
+
+	count := 1
+	validator := LengthEqualDocumentsValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers"},
+		Count:        &count,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"),
+		`unable to parse path 'data["config.json"]' as json`)
 }

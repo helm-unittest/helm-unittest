@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/helm-unittest/helm-unittest/internal/common"
@@ -330,4 +331,155 @@ func TestEqualOrGreaterValidatorWhenNoManifestNegativeOk(t *testing.T) {
 
 	assert.True(t, pass)
 	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualOrGreaterValidatorParsedJSONNumber(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"server":{"port":8080}}
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "server.port"},
+		Value:        1024,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualOrGreaterValidatorParsedFloat(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"ratio":2.5}
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "ratio"},
+		Value:        1.5,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass)
+	assert.Equal(t, []string{}, diff)
+}
+
+func TestEqualOrGreaterValidatorParsedYAMLBelowThresholdFails(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.yaml: |
+    server:
+      port: 80
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.yaml"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatYAML, InnerPath: "server.port"},
+		Value:        1024,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"), "80",
+		"the failure must report the decoded number, proving parsing ran")
+}
+
+// Without normalization a parsed JSON number would arrive as float64 and this
+// validator would reject the comparison outright on a type mismatch rather than
+// comparing. This test pins that normalization keeps them comparable.
+func TestEqualOrGreaterValidatorParsedNumberTypeIsComparable(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"port":8080}
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "port"},
+		Value:        8080,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.True(t, pass, "equal values satisfy greaterOrEqual")
+	assert.NotContains(t, strings.Join(diff, "\n"), "types do not match")
+}
+
+func TestEqualOrGreaterValidatorParseFailureReportsPath(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {nope
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "port"},
+		Value:        1,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	assert.Contains(t, strings.Join(diff, "\n"),
+		`unable to parse path 'data["config.json"]' as json`)
+}
+
+func TestEqualOrGreaterValidatorParsedUnmatchedInnerPathNamesBothPaths(t *testing.T) {
+	manifest := makeManifest(`
+data:
+  config.json: |
+    {"a":1}
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "missing"},
+		Value:        1,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{manifest}})
+
+	assert.False(t, pass)
+	joined := strings.Join(diff, "\n")
+	assert.Contains(t, joined, "unknown path")
+	assert.Contains(t, joined, `data["config.json"]`)
+	assert.Contains(t, joined, "missing")
+}
+
+// innerPath may match several nodes; every one must satisfy the comparison.
+func TestEqualOrGreaterValidatorParsedFanOut(t *testing.T) {
+	allAbove := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":9090}]}
+`)
+
+	validator := EqualOrGreaterValidator{
+		Path:         `data["config.json"]`,
+		ParseOptions: ParseOptions{Parse: ParseFormatJSON, InnerPath: "servers[*].port"},
+		Value:        1024,
+	}
+
+	pass, diff := validator.Validate(&ValidateContext{Docs: []common.K8sManifest{allAbove}})
+	assert.True(t, pass, "both ports exceed 1024")
+	assert.Equal(t, []string{}, diff)
+
+	oneBelow := makeManifest(`
+data:
+  config.json: |
+    {"servers":[{"port":8080},{"port":80}]}
+`)
+
+	pass, _ = validator.Validate(&ValidateContext{Docs: []common.K8sManifest{oneBelow}})
+	assert.False(t, pass, "one port is below the threshold, so the assertion fails")
 }
