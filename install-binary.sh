@@ -44,14 +44,14 @@ init_arch() {
     i386) ARCH="386";;
     ppc64le) ARCH="ppc64le";;
     s390x) ARCH="s390x";;
-    *) echo "Unsupported architecture: $ARCH"; exit 1;;
+    # use the initial value
+    *) ;;
   esac
 }
 
 # init_os discovers the operating system for this system.
 init_os() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
-
   case "$OS" in
     # Windows NT
     windows_nt) OS='windows';;
@@ -60,7 +60,8 @@ init_os() {
     # Minimalist GNU for Windows
     mingw*) OS='windows';;
     darwin) OS='macos';;
-    *) echo "Unsupported operating system: $OS"; exit 1;;
+    # use the initial value
+    *) ;;
   esac
 }
 
