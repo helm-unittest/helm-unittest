@@ -87,6 +87,40 @@ Each validator follows a similar pattern on evaluation (happy flow)
 | singleValueValidation also validates inverse checks | | |
 | validations have a failfast option | When a singleValueValidation fails, it stops directly, which can speed-up the test | Not all failures will be shown | 
 
+#### Assert on parsed JSON/YAML
+Validators that embed `ParseOptions` (`validators/parse_options.go`) accept `parse` (`json` | `yaml`) and `innerPath`, so they can assert on serialized content held in a string field (e.g. a ConfigMap `config.json`). This changes the order of execution compared to the happy flow above: the value found at `path` is no longer what is validated. It is first parsed, then `innerPath` is resolved inside it, and the validator loops over the result of that.
+
+It is designed as two optional fields rather than new assertion types, following the `decodeBase64` precedent (an optional field that transforms the actual value before comparison). This way every supported assertion inherits failure formatting, `not`, `documentSelector`, failfast and diff output without changes. When `parse` is omitted, the behaviour is unchanged: `resolveActuals` returns its input as-is. See [#924](https://github.com/helm-unittest/helm-unittest/pull/924) for the full design notes.
+
+Order of execution for an assertion with `parse`:
+
+1. **while loading the test suite** (before any rendering), the assertion options are checked:
+    1. `parse`/`innerPath` on a validator that does not embed `ParseOptions` (e.g. `matchRegex`, `matchSnapshot`, the `Raw` assertions) is an error instead of being silently ignored;
+    1. `parse` must be `json` or `yaml`, `innerPath` requires `parse`, and must not be blank or start with `.`;
+1. retrieve rendered resources (manifests)
+1. for each manifest
+    1. retrieve values of set `path` (the *outer* values)
+    1. `decodeBase64` the outer values when set (only `equal`/`notEqual`), so a Secret holding base64 encoded JSON/YAML can be parsed
+    1. for each outer value
+        1. the value must be a string, otherwise it fails
+        1. parse it as `json` or `yaml`, and normalize numbers (integral → `int`, otherwise `float64`), so both formats produce the same types as an ordinary `path`
+        1. resolve `innerPath` within the parsed content with the same JSONPath engine as `path`; a parsed array or scalar is wrapped under a synthetic root key first, so `innerPath: [0].title` also works. An empty `innerPath` returns the whole parsed document
+    1. flatten all `innerPath` matches of all outer values into a single list of values
+    1. when the list is empty, report `unknown path <path> innerPath <innerPath>` (or succeed for the inverse checks, e.g. `notExists`)
+    1. foreach found value, continue with the normal singleValueValidation
+
+| Features/Quirks | The feature | The quirk |
+| ------ | ----- | ----- |
+| Options are validated when the suite is loaded (`Assertion.UnmarshalYAML`) | A typo in `parse`/`innerPath`, or `parse` on an unsupported assertion, fails directly instead of making the assertion silently pass | It surfaces as a parse error of the test suite file, so none of the tests in that file run |
+| `parse` must be set explicitly to `json` or `yaml`, it is never auto-detected | Malformed JSON is reported as an error | A YAML parser would accept malformed JSON (`{"port": 8080,}`) and turn unstructured text into a plain string, so auto-detection would hide real errors |
+| Numbers are typed by value, not by how they are written: integral → `int`, otherwise `float64` | `parse: json`, `parse: yaml` and an ordinary `path` give the same type for the same value (`8080`, `1.0` and `1e3` are all `int`) | Large integers keep their exact value (`json.Decoder.UseNumber()`), and an integral number beyond the `int64` range stays `float64` instead of overflowing |
+| Decoding happens before parsing, parsing before `innerPath` | `decodeBase64` + `parse` + `innerPath` can be combined on a single field | The order is fixed; it is not possible to parse first and decode a nested field afterwards |
+| Parse errors (not a string, invalid JSON/YAML) are returned before the validation loop | A broken document is always reported | The error is not inverted by `not: true` or the `not*` assertions, so e.g. `notExists` on unparsable content fails instead of passing |
+| `decodeBase64` only exists on `equal`/`notEqual` (and `matchRegex`, which does not support `parse`) | Secrets with base64 encoded JSON/YAML can be asserted with `equal` | Unlike `parse`, an unsupported `decodeBase64` (e.g. on `isType`) is silently ignored at runtime, because `mapstructure.Decode` ignores unknown keys; only the schema flags it |
+| A failed base64 decode only fails that single value | Other outer values are still decoded, parsed and validated | A parse error, in contrast, stops the validation of the whole manifest |
+| `innerPath` matches are flattened into one list | The existing per-value loop, `failfast` and `not` logic are reused unchanged; every match must satisfy the assertion | The value index in failure messages counts across the flattened `innerPath` matches, not the matches of `path` |
+| Supported assertions are derived from embedding `ParseOptions` | The schema (`schema/helm-testsuite.json`), runtime and `schema_parse_fields_test.go` cannot silently drift apart | Adding `parse` support to a validator means embedding `ParseOptions`, calling `resolveActuals` after retrieving the `path` values, and updating the schema, the test list, the fixture chart `test/data/v3/parse-structured` and `DOCUMENT.md` |
+
 #### Command
 The Command containing the commandline parameters.
 

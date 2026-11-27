@@ -17,6 +17,9 @@ Features:
 - [wildcard selection for templates](./DOCUMENT.md#test-suite)
 - [define values and release options](./DOCUMENT.md#test-job)
 - [snapshot testing](#snapshot-testing)
+- [assert on embedded JSON or YAML](./DOCUMENT.md#asserting-on-embedded-json-or-yaml)
+- [parallel execution](#flags)
+- [template code coverage](#code-coverage)
 - [test suite code completion and validation](#test-suite-code-completion-and-validation)
 
 ## Documentation
@@ -30,6 +33,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
   - [Templated Test Suites](#templated-test-suites)
 - [Usage](#usage)
   - [Flags](#flags)
+  - [Code Coverage](#code-coverage)
   - [Yaml JsonPath Support](#yaml-jsonpath-support)
   - [DocumentSelector](#documentselector)
 - [Example](#example)
@@ -201,14 +205,14 @@ defined in test suite files.
 ### Flags
 
 ```
-      --color                   enforce printing colored output even stdout is not a tty. Set to false to disable color
+      --color string            enforce printing colored output even stdout is not a tty. always or true (or just --color) forces color, never or false disables it, auto (or omitting the flag) colors only when stdout is a tty
       --strict                  strict parse the testsuites (default false)
   -d  --debugPlugin             enable debug logging (default false)
   -v, --values stringArray      absolute or glob paths of values files location to override helmchart values
   -f, --file stringArray        glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
   -q, --failfast                directly quit testing, when a test is failed (default false)
   -h, --help                    help for unittest
-  -t, --output-type string      the file format in which test results are written, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -t, --output-type string      the file format in which test results are written, accepted types are (JUnit, NUnit, XUnit, Sonar) (default XUnit)
   -o, --output-file string      the file where test results are written in the specified format, defaults no output is written to file
   -u, --update-snapshot         update the snapshot cached if needed, make sure you review the changes before updating
   -s, --with-subchart charts    include tests of the subcharts within charts folder (default true)
@@ -217,6 +221,9 @@ defined in test suite files.
       --parallel                run test suites in parallel, ignored when --debugPlugin is set (default false)
       --max-workers int         maximum number of parallel workers, 0 means the number of CPU cores (only used with --parallel) (default 0)
       --parallel-level string   granularity of --parallel: 'suite' runs test suites concurrently, 'test' runs the test cases of all suites in one shared worker pool (only used with --parallel) (default suite)
+      --coverage                enable code coverage reporting for chart templates (default false)
+      --coverage-file string    write coverage report to the given path (implies --coverage)
+      --coverage-format string  format(s) for --coverage-file: cobertura | lcov, comma-separated for multiple (default cobertura)
 ```
 
 By default test suites run sequentially, exactly as in previous releases. Pass
