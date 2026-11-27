@@ -19,8 +19,8 @@ type EqualValidator struct {
 	ParseOptions `mapstructure:",squash"`
 }
 
-func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
-	expectedYAML := common.TrustedMarshalYAML(a.Value)
+func (ev EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML(ev.Value)
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"
 
@@ -32,7 +32,7 @@ func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not
 			setFailFormat(not, true, false, false, customMessage),
 			manifestIndex,
 			actualIndex,
-			a.Path,
+			ev.Path,
 			expectedYAML,
 		)
 	}
@@ -41,29 +41,29 @@ func (a EqualValidator) failInfo(actual any, manifestIndex, actualIndex int, not
 		setFailFormat(not, true, true, true, customMessage),
 		manifestIndex,
 		actualIndex,
-		a.Path,
+		ev.Path,
 		expectedYAML,
 		actualYAML,
 		diff(expectedYAML, actualYAML),
 	)
 }
 
-func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	rawActuals, err := valueutils.GetValueOfSetPath(manifest, a.Path)
+func (ev EqualValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	rawActuals, err := valueutils.GetValueOfSetPath(manifest, ev.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	decoded, decodeFailures := a.decodeBase64Actuals(rawActuals, manifestIndex)
+	decoded, decodeFailures := ev.decodeBase64Actuals(rawActuals, manifestIndex)
 
-	actuals, failureAt, err := a.resolveActualsWithDecodeFailures(decoded, decodeFailures)
+	actuals, failureAt, err := ev.resolveActualsWithDecodeFailures(decoded, decodeFailures)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", a.describePath(a.Path)))
+			fmt.Sprintf("unknown path %s", ev.describePath(ev.Path)))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
@@ -78,7 +78,7 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 			// matching the pre-refactor per-actual behavior.
 			validateSingleSuccess, validateSingleErrors = false, failureMessage
 		} else {
-			validateSingleSuccess, validateSingleErrors = a.validateSingleActual(actual, manifestIndex, actualIndex, context)
+			validateSingleSuccess, validateSingleErrors = ev.validateSingleActual(actual, manifestIndex, actualIndex, context)
 		}
 
 		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
@@ -107,8 +107,8 @@ func (a EqualValidator) validateManifest(manifest common.K8sManifest, manifestIn
 // that index. decoded[i] is a meaningless placeholder wherever failures[i] is
 // present; callers must check failures first. When DecodeBase64 is unset,
 // decoded is the input slice unchanged and failures is nil.
-func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([]any, map[int][]string) {
-	if !a.DecodeBase64 {
+func (ev EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([]any, map[int][]string) {
+	if !ev.DecodeBase64 {
 		return actuals, nil
 	}
 
@@ -151,9 +151,9 @@ func (a EqualValidator) decodeBase64Actuals(actuals []any, manifestIndex int) ([
 // When there are no decode failures this is exactly ParseOptions.resolveActuals,
 // preserving its existing behavior (including that a parse error aborts the
 // whole batch) for the common case.
-func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFailures map[int][]string) ([]any, map[int][]string, error) {
+func (ev EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFailures map[int][]string) ([]any, map[int][]string, error) {
 	if len(decodeFailures) == 0 {
-		actuals, err := a.resolveActuals(decoded, a.Path)
+		actuals, err := ev.resolveActuals(decoded, ev.Path)
 		return actuals, nil, err
 	}
 
@@ -167,7 +167,7 @@ func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFa
 			continue
 		}
 
-		parsed, err := a.resolveParsed(actual, a.Path)
+		parsed, err := ev.resolveParsed(actual, ev.Path)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -178,16 +178,16 @@ func (a EqualValidator) resolveActualsWithDecodeFailures(decoded []any, decodeFa
 	return actuals, failureAt, nil
 }
 
-func (a EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	return a.compareActual(actual, manifestIndex, actualIndex, context)
+func (ev EqualValidator) validateSingleActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	return ev.compareActual(actual, manifestIndex, actualIndex, context)
 }
 
 // compareActual performs the equality comparison against a single value.
-func (a EqualValidator) compareActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (ev EqualValidator) compareActual(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	normalized := normalizeActual(actual)
 
-	if reflect.DeepEqual(a.Value, normalized) == context.Negative {
-		return false, a.failInfo(normalized, manifestIndex, actualIndex, context.Negative)
+	if reflect.DeepEqual(ev.Value, normalized) == context.Negative {
+		return false, ev.failInfo(normalized, manifestIndex, actualIndex, context.Negative)
 	}
 
 	return true, []string{}
@@ -224,14 +224,14 @@ func normalizeActual(v any) any {
 }
 
 // Validate implement Validatable
-func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
+func (ev EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		validateManifestSuccess, validateManifestErrors := a.validateManifest(manifest, manifestIndex, context)
+		validateManifestSuccess, validateManifestErrors := ev.validateManifest(manifest, manifestIndex, context)
 		validateErrors = append(validateErrors, validateManifestErrors...)
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, validateManifestSuccess)
 
@@ -241,7 +241,7 @@ func (a EqualValidator) Validate(context *ValidateContext) (bool, []string) {
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := a.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := ev.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

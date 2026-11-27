@@ -21,13 +21,13 @@ type FailedTemplateValidator struct {
 	ErrorPattern string
 }
 
-func (a FailedTemplateValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
+func (ftv FailedTemplateValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	customMessage := " to equal"
-	if a.ErrorPattern != "" {
+	if ftv.ErrorPattern != "" {
 		customMessage = " to match"
 	}
 
-	message := cmp.Or(a.ErrorMessage, a.ErrorPattern)
+	message := cmp.Or(ftv.ErrorMessage, ftv.ErrorPattern)
 
 	log.WithField("validator", "failed_template").Debugln("expected content:", message)
 	log.WithField("validator", "failed_template").Debugln("actual content:", actual)
@@ -50,7 +50,7 @@ func (a FailedTemplateValidator) failInfo(actual any, manifestIndex, actualIndex
 	)
 }
 
-func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifest, context *ValidateContext) (bool, []string) {
+func (ftv FailedTemplateValidator) validateManifests(manifests []common.K8sManifest, context *ValidateContext) (bool, []string) {
 	validateSuccess := true
 	validateErrors := make([]string, 0)
 
@@ -59,16 +59,16 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 		var validateSingleErrors []string
 		actual := manifest[common.RAW]
 
-		if a == (FailedTemplateValidator{}) && !context.Negative {
+		if ftv == (FailedTemplateValidator{}) && !context.Negative {
 			// If the validator is empty and the context is not negative,
 			// continue to the next iteration without throwing an error.
 			continue
 		}
 
-		if a.ErrorPattern != "" {
-			currentSuccess, validateSingleErrors = a.validateErrorPattern(actual, idx, -1, context)
-		} else if a.ErrorMessage != "" {
-			currentSuccess, validateSingleErrors = a.validateErrorMessage(actual, idx, -1, context)
+		if ftv.ErrorPattern != "" {
+			currentSuccess, validateSingleErrors = ftv.validateErrorPattern(actual, idx, -1, context)
+		} else if ftv.ErrorMessage != "" {
+			currentSuccess, validateSingleErrors = ftv.validateErrorMessage(actual, idx, -1, context)
 		} else {
 			currentSuccess = true
 		}
@@ -83,23 +83,23 @@ func (a FailedTemplateValidator) validateManifests(manifests []common.K8sManifes
 
 	if len(manifests) == 0 && !context.Negative {
 		validateSuccess = false
-		errorMessage := a.failInfo("No failed document", -1, -1, context.Negative)
+		errorMessage := ftv.failInfo("No failed document", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	}
 
 	return validateSuccess, validateErrors
 }
 
-func (a FailedTemplateValidator) validateErrorPattern(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	p, err := compilePattern(a.ErrorPattern)
+func (ftv FailedTemplateValidator) validateErrorPattern(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	p, err := compilePattern(ftv.ErrorPattern)
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 	if actual != nil && p.MatchString(actual.(string)) == context.Negative {
-		if metaRegex.MatchString(a.ErrorPattern) {
-			return handleMetaCharacters(a, actual, manifestIndex, actualIndex, context)
+		if metaRegex.MatchString(ftv.ErrorPattern) {
+			return handleMetaCharacters(ftv, actual, manifestIndex, actualIndex, context)
 		}
-		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+		return false, ftv.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 	}
 	return true, []string{}
 }
@@ -114,8 +114,8 @@ func compilePattern(pattern string) (*regexp.Regexp, error) {
 	return p, err
 }
 
-func handleMetaCharacters(a FailedTemplateValidator, actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	escaped := regexp.QuoteMeta(a.ErrorPattern)
+func handleMetaCharacters(ftv FailedTemplateValidator, actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	escaped := regexp.QuoteMeta(ftv.ErrorPattern)
 	log.WithField("validator", "failed_template").Debugln("fallback to escaped regex", escaped)
 	p, err := regexp.Compile(escaped)
 	if err != nil {
@@ -123,14 +123,14 @@ func handleMetaCharacters(a FailedTemplateValidator, actual any, manifestIndex, 
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 	if p.MatchString(actual.(string)) == context.Negative {
-		return false, a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+		return false, ftv.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 	}
 	return true, []string{}
 }
 
-func (a FailedTemplateValidator) validateErrorMessage(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
-	if (actual != nil && reflect.DeepEqual(a.ErrorMessage, actual.(string))) == context.Negative {
-		errorMessage := a.failInfo(actual, manifestIndex, actualIndex, context.Negative)
+func (ftv FailedTemplateValidator) validateErrorMessage(actual any, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+	if (actual != nil && reflect.DeepEqual(ftv.ErrorMessage, actual.(string))) == context.Negative {
+		errorMessage := ftv.failInfo(actual, manifestIndex, actualIndex, context.Negative)
 		return false, errorMessage
 	}
 
@@ -138,12 +138,12 @@ func (a FailedTemplateValidator) validateErrorMessage(actual any, manifestIndex,
 }
 
 // Validate implement Validatable
-func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []string) {
+func (ftv FailedTemplateValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
-	if a.ErrorMessage != "" && a.ErrorPattern != "" {
+	if ftv.ErrorMessage != "" && ftv.ErrorPattern != "" {
 		errorMessage := splitInfof(errorFormat, -1, -1, "single attribute 'errorMessage' or 'errorPattern' supported at the same time")
 		validateErrors = append(validateErrors, errorMessage...)
 		return false, validateErrors
@@ -151,16 +151,16 @@ func (a FailedTemplateValidator) Validate(context *ValidateContext) (bool, []str
 
 	if context.RenderError != nil {
 		// Validating error, when the errorSource is due to rendering errors
-		if a.ErrorPattern != "" {
-			return a.validateErrorPattern(context.RenderError.Error(), -1, -1, context)
-		} else if a.ErrorMessage != "" {
-			return a.validateErrorMessage(context.RenderError.Error(), -1, -1, context)
+		if ftv.ErrorPattern != "" {
+			return ftv.validateErrorPattern(context.RenderError.Error(), -1, -1, context)
+		} else if ftv.ErrorMessage != "" {
+			return ftv.validateErrorMessage(context.RenderError.Error(), -1, -1, context)
 		} else {
 			validateSuccess = true
 		}
 	} else {
 		var errorsToAppend []string
-		validateSuccess, errorsToAppend = a.validateManifests(manifests, context)
+		validateSuccess, errorsToAppend = ftv.validateManifests(manifests, context)
 		validateErrors = append(validateErrors, errorsToAppend...)
 	}
 

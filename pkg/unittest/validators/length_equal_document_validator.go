@@ -17,7 +17,7 @@ type LengthEqualDocumentsValidator struct {
 	ParseOptions `mapstructure:",squash"`
 }
 
-func (v LengthEqualDocumentsValidator) failInfo(path, count, actual string, manifestIndex, valueIndex int, not bool) []string {
+func (ledv LengthEqualDocumentsValidator) failInfo(path, count, actual string, manifestIndex, valueIndex int, not bool) []string {
 	customMessage := " to match count"
 
 	return splitInfof(
@@ -29,13 +29,13 @@ func (v LengthEqualDocumentsValidator) failInfo(path, count, actual string, mani
 		actual)
 }
 
-func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, manifestIndex int, context *ValidateContext) (bool, []string, int) {
+func (ledv LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sManifest, path string, manifestIndex int, context *ValidateContext) (bool, []string, int) {
 	actuals, err := valueutils.GetValueOfSetPath(manifest, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}
 
-	actuals, err = v.resolveActuals(actuals, path)
+	actuals, err = ledv.resolveActuals(actuals, path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error()), 0
 	}
@@ -47,14 +47,14 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	for actualIndex, actual := range actuals {
 		actualSuccess := false
 		actualArray, ok := actual.([]any)
-		if !ok && v.Count == nil {
+		if !ok && ledv.Count == nil {
 			actualErrors := splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("%s is not array", path))
 			manifestErrors = append(manifestErrors, actualErrors...)
 			continue
 		}
 		arrayLength = len(actualArray)
-		if v.Count != nil && (arrayLength == *v.Count == context.Negative) {
-			actualErrors := v.failInfo(path, strconv.Itoa(*v.Count), strconv.Itoa(arrayLength), manifestIndex, -1, context.Negative)
+		if ledv.Count != nil && (arrayLength == *ledv.Count == context.Negative) {
+			actualErrors := ledv.failInfo(path, strconv.Itoa(*ledv.Count), strconv.Itoa(arrayLength), manifestIndex, -1, context.Negative)
 			manifestErrors = append(manifestErrors, actualErrors...)
 		} else {
 			actualSuccess = true
@@ -70,7 +70,7 @@ func (v LengthEqualDocumentsValidator) singleValidateCounts(manifest common.K8sM
 	return manifestSuccess, manifestErrors, arrayLength
 }
 
-func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string]int, manifestIndex int, context *ValidateContext) (bool, []string, int) {
+func (ledv LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string]int, manifestIndex int, context *ValidateContext) (bool, []string, int) {
 	arrayCount := -1
 
 	// Sort alphabetically to get a standardized result
@@ -87,35 +87,35 @@ func (v LengthEqualDocumentsValidator) arraysValidateCounts(pathCount map[string
 			arrayCount = pathCountValue
 		} else if (arrayCount == pathCountValue) == context.Negative {
 			arrayCount = -1
-			return false, v.failInfo(path, "-1", strconv.Itoa(pathCountValue), manifestIndex, -1, context.Negative), arrayCount
+			return false, ledv.failInfo(path, "-1", strconv.Itoa(pathCountValue), manifestIndex, -1, context.Negative), arrayCount
 		}
 	}
 
 	return true, []string{}, arrayCount
 }
 
-func (v LengthEqualDocumentsValidator) validatePathCount() bool {
-	return len(v.Path) > 0 && (v.Count == nil || (v.Count != nil && *v.Count < 0))
+func (ledv LengthEqualDocumentsValidator) validatePathCount() bool {
+	return len(ledv.Path) > 0 && (ledv.Count == nil || (ledv.Count != nil && *ledv.Count < 0))
 }
 
-func (v LengthEqualDocumentsValidator) validatePathPaths() bool {
-	return len(v.Path) > 0 && len(v.Paths) > 0
+func (ledv LengthEqualDocumentsValidator) validatePathPaths() bool {
+	return len(ledv.Path) > 0 && len(ledv.Paths) > 0
 }
 
-func (v LengthEqualDocumentsValidator) validateSingleMode(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	validateSuccess, validateSingleErrors, _ := v.singleValidateCounts(manifest, v.Path, manifestIndex, context)
+func (ledv LengthEqualDocumentsValidator) validateSingleMode(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	validateSuccess, validateSingleErrors, _ := ledv.singleValidateCounts(manifest, ledv.Path, manifestIndex, context)
 	return validateSuccess, validateSingleErrors
 }
 
-func (v LengthEqualDocumentsValidator) validateMultipleMode(manifest common.K8sManifest, idx int, context *ValidateContext) (bool, []string) {
+func (ledv LengthEqualDocumentsValidator) validateMultipleMode(manifest common.K8sManifest, idx int, context *ValidateContext) (bool, []string) {
 	var manifestErrors []string
 	var validateSingleErrors []string
 	pathCount := map[string]int{}
 	optimizeCheck := true
 	validateSuccess := false
 
-	for _, path := range v.Paths {
-		validateSuccess, validateSingleErrors, pathCount[path] = v.singleValidateCounts(manifest, path, idx, context)
+	for _, path := range ledv.Paths {
+		validateSuccess, validateSingleErrors, pathCount[path] = ledv.singleValidateCounts(manifest, path, idx, context)
 		if !validateSuccess {
 			manifestErrors = append(manifestErrors, validateSingleErrors...)
 			optimizeCheck = false
@@ -127,7 +127,7 @@ func (v LengthEqualDocumentsValidator) validateMultipleMode(manifest common.K8sM
 	}
 
 	var arrayCount int
-	validateSuccess, validateSingleErrors, arrayCount = v.arraysValidateCounts(pathCount, idx, context)
+	validateSuccess, validateSingleErrors, arrayCount = ledv.arraysValidateCounts(pathCount, idx, context)
 	if !validateSuccess {
 		manifestErrors = append(manifestErrors, validateSingleErrors...)
 	}
@@ -140,15 +140,15 @@ func (v LengthEqualDocumentsValidator) validateMultipleMode(manifest common.K8sM
 }
 
 // Validate implement Validatable
-func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
-	if v.validatePathCount() {
+func (ledv LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
+	if ledv.validatePathCount() {
 		return false, splitInfof(errorFormat, -1, -1, "'count' field must be set if 'path' is used")
 	}
-	if v.validatePathPaths() {
+	if ledv.validatePathPaths() {
 		return false, splitInfof(errorFormat, -1, -1, "'paths' couldn't be used with 'path'")
 	}
 
-	singleMode := len(v.Path) > 0
+	singleMode := len(ledv.Path) > 0
 	manifests := context.getManifests()
 
 	validateSuccess := false
@@ -158,9 +158,9 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 		currentSuccess := false
 		var validateManifestErrors []string
 		if singleMode {
-			currentSuccess, validateManifestErrors = v.validateSingleMode(manifest, manifestIndex, context)
+			currentSuccess, validateManifestErrors = ledv.validateSingleMode(manifest, manifestIndex, context)
 		} else {
-			currentSuccess, validateManifestErrors = v.validateMultipleMode(manifest, manifestIndex, context)
+			currentSuccess, validateManifestErrors = ledv.validateMultipleMode(manifest, manifestIndex, context)
 		}
 
 		validateErrors = append(validateErrors, validateManifestErrors...)
@@ -172,7 +172,7 @@ func (v LengthEqualDocumentsValidator) Validate(context *ValidateContext) (bool,
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("", "", "no manifest found", -1, -1, context.Negative)
+		errorMessage := ledv.failInfo("", "", "no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

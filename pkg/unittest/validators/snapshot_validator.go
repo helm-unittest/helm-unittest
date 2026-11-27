@@ -25,7 +25,7 @@ type NotMatchRegex struct {
 	Pattern string
 }
 
-func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manifestIndex, actualIndex int, not bool) []string {
+func (sv MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manifestIndex, actualIndex int, not bool) []string {
 	log.WithField("validator", "snapshot").Debugln("expected content:", compared.CachedSnapshot)
 	log.WithField("validator", "snapshot").Debugln("actual content:", compared.NewSnapshot)
 
@@ -50,21 +50,21 @@ func (v MatchSnapshotValidator) failInfo(compared *snapshot.CompareResult, manif
 			setFailFormat(not, true, false, false, msg),
 			manifestIndex,
 			actualIndex,
-			v.Path,
+			sv.Path,
 			infoToShow,
 		)
 	}
 	return result
 }
 
-func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+func (sv MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, sv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actual) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", sv.Path))
 	}
 
 	validateManifestSuccess := len(actual) == 0 && context.Negative
@@ -75,11 +75,11 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 		var validateSingleErrors []string
 		withMatchRegex := snapshot.WithMatchRegexPattern("")
 		withNotMatchRegex := snapshot.WithNotMatchRegexPattern("")
-		if v.MatchRegex != nil && v.MatchRegex.Pattern != "" {
-			withMatchRegex = snapshot.WithMatchRegexPattern(v.MatchRegex.Pattern)
+		if sv.MatchRegex != nil && sv.MatchRegex.Pattern != "" {
+			withMatchRegex = snapshot.WithMatchRegexPattern(sv.MatchRegex.Pattern)
 		}
-		if v.NotMatchRegex != nil && v.NotMatchRegex.Pattern != "" {
-			withNotMatchRegex = snapshot.WithNotMatchRegexPattern(v.NotMatchRegex.Pattern)
+		if sv.NotMatchRegex != nil && sv.NotMatchRegex.Pattern != "" {
+			withNotMatchRegex = snapshot.WithNotMatchRegexPattern(sv.NotMatchRegex.Pattern)
 		}
 		result := context.CompareToSnapshot(singleActual, withMatchRegex, withNotMatchRegex)
 
@@ -88,7 +88,7 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 		}
 
 		if result.Passed == context.Negative {
-			validateSingleErrors = v.failInfo(result, manifestIndex, actualIndex, context.Negative)
+			validateSingleErrors = sv.failInfo(result, manifestIndex, actualIndex, context.Negative)
 		} else {
 			validateSingleSuccess = true
 		}
@@ -104,14 +104,14 @@ func (v MatchSnapshotValidator) validateManifest(manifest common.K8sManifest, ma
 }
 
 // Validate implement Validatable
-func (v MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
+func (sv MatchSnapshotValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := len(manifests) == 0 && !context.Negative
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		validateManifestSuccess, validateManifestErrors := v.validateManifest(manifest, manifestIndex, context)
+		validateManifestSuccess, validateManifestErrors := sv.validateManifest(manifest, manifestIndex, context)
 		validateErrors = append(validateErrors, validateManifestErrors...)
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, validateManifestSuccess)
 

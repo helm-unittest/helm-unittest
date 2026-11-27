@@ -14,8 +14,8 @@ type HasDocumentsValidator struct {
 	FilterAware bool
 }
 
-func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
-	expectedCount := strconv.Itoa(v.Count)
+func (hdv HasDocumentsValidator) failInfo(actual int, not bool) []string {
+	expectedCount := strconv.Itoa(hdv.Count)
 	actualCount := strconv.Itoa(actual)
 	customMessage := " documents count to be"
 
@@ -40,13 +40,13 @@ func (v HasDocumentsValidator) failInfo(actual int, not bool) []string {
 }
 
 // Validate implement Validatable
-func (v HasDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
+func (hdv HasDocumentsValidator) Validate(context *ValidateContext) (bool, []string) {
 	documentsLength := len(context.Docs)
-	if v.FilterAware {
+	if hdv.FilterAware {
 		documentsLength = len(context.getManifests())
 	}
-	if documentsLength == v.Count != context.Negative {
+	if documentsLength == hdv.Count != context.Negative {
 		return true, []string{}
 	}
-	return false, v.failInfo(documentsLength, context.Negative)
+	return false, hdv.failInfo(documentsLength, context.Negative)
 }

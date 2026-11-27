@@ -11,11 +11,11 @@ type IsAPIVersionValidator struct {
 	Of string
 }
 
-func (v IsAPIVersionValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
+func (av IsAPIVersionValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be apiVersion"
 
-	log.WithField("validator", "is_apiversion").Debugln("expected content:", v.Of)
+	log.WithField("validator", "is_apiversion").Debugln("expected content:", av.Of)
 	log.WithField("validator", "is_apiversion").Debugln("actual content:", actualYAML)
 
 	if not {
@@ -23,29 +23,29 @@ func (v IsAPIVersionValidator) failInfo(actual any, manifestIndex, actualIndex i
 			setFailFormat(not, false, false, false, customMessage),
 			manifestIndex,
 			actualIndex,
-			v.Of,
+			av.Of,
 		)
 	}
 	return splitInfof(
 		setFailFormat(not, false, true, false, customMessage),
 		manifestIndex,
 		actualIndex,
-		v.Of,
+		av.Of,
 		actualYAML,
 	)
 }
 
 // Validate implement Validatable
-func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []string) {
+func (iav IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		if kind, ok := manifest["apiVersion"].(string); (ok && kind == v.Of) == context.Negative {
+		if kind, ok := manifest["apiVersion"].(string); (ok && kind == iav.Of) == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(manifest["apiVersion"], manifestIndex, -1, context.Negative)
+			errorMessage := iav.failInfo(manifest["apiVersion"], manifestIndex, -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			if context.FailFast {
 				break
@@ -57,7 +57,7 @@ func (v IsAPIVersionValidator) Validate(context *ValidateContext) (bool, []strin
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := iav.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true
