@@ -22,6 +22,7 @@ var assertionsSupportingParse = []string{
 	"exists", "notExists",
 	"isNullOrEmpty", "isNotNullOrEmpty",
 	"isEmpty", "isNotEmpty",
+	"isSome", "isNotSome",
 	"isType", "isNotType",
 	"lengthEqual", "notLengthEqual",
 	"greaterOrEqual", "notGreaterOrEqual",
