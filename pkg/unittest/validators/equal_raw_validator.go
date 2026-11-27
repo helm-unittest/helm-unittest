@@ -13,8 +13,8 @@ type EqualRawValidator struct {
 	Value string
 }
 
-func (a EqualRawValidator) failInfo(actual any, not bool) []string {
-	expectedYAML := common.TrustedMarshalYAML(a.Value)
+func (erv EqualRawValidator) failInfo(actual any, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML(erv.Value)
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to equal"
 
@@ -41,7 +41,7 @@ func (a EqualRawValidator) failInfo(actual any, not bool) []string {
 }
 
 // Validate implement Validatable
-func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
+func (erv EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
@@ -50,9 +50,9 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 	for idx, manifest := range manifests {
 		actual := uniformContent(manifest[common.RAW])
 
-		if reflect.DeepEqual(a.Value, actual) == context.Negative {
+		if reflect.DeepEqual(erv.Value, actual) == context.Negative {
 			validateSuccess = false
-			errorMessage := a.failInfo(actual, context.Negative)
+			errorMessage := erv.failInfo(actual, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			if context.FailFast {
 				break
@@ -64,7 +64,7 @@ func (a EqualRawValidator) Validate(context *ValidateContext) (bool, []string) {
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := a.failInfo("no manifest found", context.Negative)
+		errorMessage := erv.failInfo("no manifest found", context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

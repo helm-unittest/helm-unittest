@@ -15,8 +15,8 @@ type IsSubsetValidator struct {
 	ParseOptions `mapstructure:",squash"`
 }
 
-func (v IsSubsetValidator) failInfo(actual any, manifestIndex, valueIndex int, not bool) []string {
-	expectedYAML := common.TrustedMarshalYAML(v.Content)
+func (issv IsSubsetValidator) failInfo(actual any, manifestIndex, valueIndex int, not bool) []string {
+	expectedYAML := common.TrustedMarshalYAML(issv.Content)
 	actualYAML := common.TrustedMarshalYAML(actual)
 
 	log.WithField("validator", "is_subset").Debugln("expected content:", expectedYAML)
@@ -26,26 +26,26 @@ func (v IsSubsetValidator) failInfo(actual any, manifestIndex, valueIndex int, n
 		setFailFormat(not, true, true, false, " to contain"),
 		manifestIndex,
 		valueIndex,
-		v.Path,
+		issv.Path,
 		expectedYAML,
 		actualYAML,
 	)
 }
 
-func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+func (issv IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, issv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	actual, err = issv.resolveActuals(actual, issv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actual) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
+			fmt.Sprintf("unknown path %s", issv.describePath(issv.Path)))
 	}
 
 	manifestValidateSuccess := (len(actual) == 0 && context.Negative)
@@ -54,13 +54,13 @@ func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifes
 	for actualIndex, singleActual := range actual {
 		var errorMessage []string
 		actualMap, actualOk := singleActual.(map[string]any)
-		contentMap, contentOk := v.Content.(map[string]any)
+		contentMap, contentOk := issv.Content.(map[string]any)
 
 		if actualOk && contentOk {
 			found := validateSubset(actualMap, contentMap)
 
 			if found == context.Negative {
-				errorMessage = v.failInfo(singleActual, manifestIndex, actualIndex, context.Negative)
+				errorMessage = issv.failInfo(singleActual, manifestIndex, actualIndex, context.Negative)
 			}
 
 			manifestValidateErrors = append(manifestValidateErrors, errorMessage...)
@@ -76,7 +76,7 @@ func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifes
 		actualYAML := common.TrustedMarshalYAML(singleActual)
 		errorMessage = splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf(
 			"expect '%s' to be an object, got:\n%s",
-			v.Path,
+			issv.Path,
 			actualYAML,
 		))
 
@@ -88,14 +88,14 @@ func (v IsSubsetValidator) validateManifest(manifest common.K8sManifest, manifes
 }
 
 // Validate implement Validatable
-func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
+func (issv IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		manifestValidateSuccess, manifestValidateErrors := v.validateManifest(manifest, idx, context)
+		manifestValidateSuccess, manifestValidateErrors := issv.validateManifest(manifest, idx, context)
 		validateErrors = append(validateErrors, manifestValidateErrors...)
 		validateSuccess = determineSuccess(idx, validateSuccess, manifestValidateSuccess)
 
@@ -105,7 +105,7 @@ func (v IsSubsetValidator) Validate(context *ValidateContext) (bool, []string) {
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := issv.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

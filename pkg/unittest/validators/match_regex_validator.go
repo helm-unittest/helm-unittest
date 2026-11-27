@@ -17,24 +17,24 @@ type MatchRegexValidator struct {
 	DecodeBase64 bool
 }
 
-func (v MatchRegexValidator) failInfo(actual string, manifestIndex, actualIndex int, not bool) []string {
+func (mrv MatchRegexValidator) failInfo(actual string, manifestIndex, actualIndex int, not bool) []string {
 
-	log.WithField("validator", "match_regex").Debugln("expected pattern:", v.Pattern)
+	log.WithField("validator", "match_regex").Debugln("expected pattern:", mrv.Pattern)
 	log.WithField("validator", "match_regex").Debugln("actual content:", actual)
 
 	return splitInfof(
 		setFailFormat(not, true, true, false, " to match"),
 		manifestIndex,
 		actualIndex,
-		v.Path,
-		v.Pattern,
+		mrv.Path,
+		mrv.Pattern,
 		actual,
 	)
 }
 
-func (v MatchRegexValidator) validateSingle(actual any, pattern *regexp.Regexp, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
+func (mrv MatchRegexValidator) validateSingle(actual any, pattern *regexp.Regexp, manifestIndex, actualIndex int, context *ValidateContext) (bool, []string) {
 	if s, ok := actual.(string); ok {
-		if v.DecodeBase64 {
+		if mrv.DecodeBase64 {
 			decodedSingleActual, err := base64.StdEncoding.DecodeString(s)
 			if err != nil {
 				return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf("unable to decode base64 expected content %s", actual))
@@ -43,7 +43,7 @@ func (v MatchRegexValidator) validateSingle(actual any, pattern *regexp.Regexp, 
 		}
 
 		if pattern.MatchString(s) == context.Negative {
-			return false, v.failInfo(s, manifestIndex, actualIndex, context.Negative)
+			return false, mrv.failInfo(s, manifestIndex, actualIndex, context.Negative)
 		} else {
 			return true, []string{}
 		}
@@ -51,31 +51,31 @@ func (v MatchRegexValidator) validateSingle(actual any, pattern *regexp.Regexp, 
 
 	return false, splitInfof(errorFormat, manifestIndex, actualIndex, fmt.Sprintf(
 		"expect '%s' to be a string, got:\n%s",
-		v.Path,
+		mrv.Path,
 		common.TrustedMarshalYAML(actual),
 	))
 }
 
-func (v MatchRegexValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actuals, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+func (mrv MatchRegexValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, mrv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	pattern, err := regexp.Compile(v.Pattern)
+	pattern, err := regexp.Compile(mrv.Pattern)
 	if err != nil {
 		return false, splitInfof(errorFormat, -1, -1, err.Error())
 	}
 
 	if len(actuals) == 0 && !context.Negative {
-		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", v.Path))
+		return false, splitInfof(errorFormat, manifestIndex, -1, fmt.Sprintf("unknown path %s", mrv.Path))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)
 	var validateManifestErrors []string
 
 	for actualIndex, actual := range actuals {
-		validateSingleSuccess, validateSingleErrors := v.validateSingle(actual, pattern, manifestIndex, actualIndex, context)
+		validateSingleSuccess, validateSingleErrors := mrv.validateSingle(actual, pattern, manifestIndex, actualIndex, context)
 		validateManifestErrors = append(validateManifestErrors, validateSingleErrors...)
 		validateManifestSuccess = determineSuccess(actualIndex, validateManifestSuccess, validateSingleSuccess)
 
@@ -88,8 +88,8 @@ func (v MatchRegexValidator) validateManifest(manifest common.K8sManifest, manif
 }
 
 // Validate implement Validatable
-func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
-	verr := validateRequiredField(v.Pattern, "pattern")
+func (mrv MatchRegexValidator) Validate(context *ValidateContext) (bool, []string) {
+	verr := validateRequiredField(mrv.Pattern, "pattern")
 	if verr != nil {
 		return false, splitInfof(errorFormat, -1, -1, verr.Error())
 	}
@@ -100,7 +100,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		currentSuccess, validateSingleErrors := v.validateManifest(manifest, manifestIndex, context)
+		currentSuccess, validateSingleErrors := mrv.validateManifest(manifest, manifestIndex, context)
 
 		validateErrors = append(validateErrors, validateSingleErrors...)
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, currentSuccess)
@@ -111,7 +111,7 @@ func (v MatchRegexValidator) Validate(context *ValidateContext) (bool, []string)
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := mrv.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

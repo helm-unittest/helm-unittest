@@ -83,7 +83,7 @@ func parseK8sResourceQuantity(s string) (float64, error) {
 
 	// Parse Kubernetes resource suffixes
 	multipliers := map[string]float64{
-		"m":  0.001,  // millicores
+		"m":  0.001, // millicores
 		"Ki": 1024,
 		"Mi": 1024 * 1024,
 		"Gi": 1024 * 1024 * 1024,
@@ -145,14 +145,14 @@ func (o operatorValidator) validateManifest(manifest common.K8sManifest, manifes
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actuals, err = o.ParseOptions.resolveActuals(actuals, o.Path)
+	actuals, err = o.resolveActuals(actuals, o.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path '%s'", o.ParseOptions.describePath(o.Path)))
+			fmt.Sprintf("unknown path '%s'", o.describePath(o.Path)))
 	}
 
 	validateManifestSuccess := (len(actuals) == 0 && context.Negative)

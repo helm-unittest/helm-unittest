@@ -10,11 +10,11 @@ type IsKindValidator struct {
 	Of string
 }
 
-func (v IsKindValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
+func (ikv IsKindValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 	customMessage := " to be kind"
 
-	log.WithField("validator", "is_kind").Debugln("expected content:", v.Of)
+	log.WithField("validator", "is_kind").Debugln("expected content:", ikv.Of)
 	log.WithField("validator", "is_kind").Debugln("actual content:", actualYAML)
 
 	if not {
@@ -22,29 +22,29 @@ func (v IsKindValidator) failInfo(actual any, manifestIndex, actualIndex int, no
 			setFailFormat(not, false, false, false, customMessage),
 			manifestIndex,
 			actualIndex,
-			v.Of,
+			ikv.Of,
 		)
 	}
 	return splitInfof(
 		setFailFormat(not, false, true, false, customMessage),
 		manifestIndex,
 		actualIndex,
-		v.Of,
+		ikv.Of,
 		actualYAML,
 	)
 }
 
 // Validate implement Validatable
-func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
+func (ikv IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		if kind, ok := manifest["kind"].(string); (ok && kind == v.Of) == context.Negative {
+		if kind, ok := manifest["kind"].(string); (ok && kind == ikv.Of) == context.Negative {
 			validateSuccess = false
-			errorMessage := v.failInfo(manifest["kind"], manifestIndex, -1, context.Negative)
+			errorMessage := ikv.failInfo(manifest["kind"], manifestIndex, -1, context.Negative)
 			validateErrors = append(validateErrors, errorMessage...)
 			if context.FailFast {
 				break
@@ -56,7 +56,7 @@ func (v IsKindValidator) Validate(context *ValidateContext) (bool, []string) {
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := ikv.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

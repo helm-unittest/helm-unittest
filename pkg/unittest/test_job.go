@@ -3,6 +3,7 @@ package unittest
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -383,8 +384,8 @@ func (t *TestJob) renderForCoverage(userValues []byte, tracker *coverage.Tracker
 	if len(t.KubernetesProvider.Objects) > 0 {
 		funcs["lookup"] = coverageLookupFunc(&t.KubernetesProvider)
 	}
-	eng := v4engine.Engine{CustomTemplateFuncs: funcs}
-	return eng.Render(filtered, vals)
+
+	return v4engine.Engine{CustomTemplateFuncs: funcs}.RenderWithContext(context.Background(), filtered, vals)
 }
 
 // prepareRender resolves values and dependencies and returns the chart

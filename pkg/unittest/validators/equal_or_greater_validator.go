@@ -8,12 +8,12 @@ type EqualOrGreaterValidator struct {
 }
 
 // Validate implement Validatable
-func (g EqualOrGreaterValidator) Validate(context *ValidateContext) (bool, []string) {
+func (egv EqualOrGreaterValidator) Validate(context *ValidateContext) (bool, []string) {
 	operatorValidator := operatorValidator{
-		Path:           g.Path,
-		Value:          g.Value,
+		Path:           egv.Path,
+		Value:          egv.Value,
 		ComparisonType: "greater",
-		ParseOptions:   g.ParseOptions,
+		ParseOptions:   egv.ParseOptions,
 	}
 
 	return operatorValidator.Validate(context)

@@ -17,36 +17,36 @@ type IsTypeValidator struct {
 	ParseOptions `mapstructure:",squash"`
 }
 
-func (t IsTypeValidator) failInfo(actual string, manifestIndex, valueIndex int, not bool) []string {
+func (itv IsTypeValidator) failInfo(actual string, manifestIndex, valueIndex int, not bool) []string {
 	customMessage := " to be of type"
 
-	log.WithField("validator", "is_type").Debugln("expected type:", t.Type)
+	log.WithField("validator", "is_type").Debugln("expected type:", itv.Type)
 	log.WithField("validator", "is_type").Debugln("actual type:", actual)
 
 	return splitInfof(
 		setFailFormat(not, true, true, false, customMessage),
 		manifestIndex,
 		valueIndex,
-		t.Path,
-		t.Type,
+		itv.Path,
+		itv.Type,
 		actual,
 	)
 }
 
-func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actuals, err := valueutils.GetValueOfSetPath(manifest, t.Path)
+func (itv IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actuals, err := valueutils.GetValueOfSetPath(manifest, itv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actuals, err = t.ParseOptions.resolveActuals(actuals, t.Path)
+	actuals, err = itv.resolveActuals(actuals, itv.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actuals) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", t.ParseOptions.describePath(t.Path)))
+			fmt.Sprintf("unknown path %s", itv.describePath(itv.Path)))
 	}
 
 	manifestSuccess := (len(actuals) == 0 && context.Negative)
@@ -67,8 +67,8 @@ func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestI
 			actualType = rtoa.String()
 		}
 
-		if (actualType == t.Type) == context.Negative {
-			singleErrors = t.failInfo(actualType, manifestIndex, actualIndex, context.Negative)
+		if (actualType == itv.Type) == context.Negative {
+			singleErrors = itv.failInfo(actualType, manifestIndex, actualIndex, context.Negative)
 		} else {
 			singleSuccess = true
 		}
@@ -85,14 +85,14 @@ func (t IsTypeValidator) validateManifest(manifest common.K8sManifest, manifestI
 }
 
 // Validate implement Validatable
-func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
+func (itv IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for idx, manifest := range manifests {
-		manifestSuccess, manifestErrors := t.validateManifest(manifest, idx, context)
+		manifestSuccess, manifestErrors := itv.validateManifest(manifest, idx, context)
 		validateErrors = append(validateErrors, manifestErrors...)
 		validateSuccess = determineSuccess(idx, validateSuccess, manifestSuccess)
 
@@ -102,7 +102,7 @@ func (t IsTypeValidator) Validate(context *ValidateContext) (bool, []string) {
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := t.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := itv.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

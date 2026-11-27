@@ -8,12 +8,12 @@ type EqualOrLessValidator struct {
 }
 
 // Validate implement Validatable
-func (l EqualOrLessValidator) Validate(context *ValidateContext) (bool, []string) {
+func (elv EqualOrLessValidator) Validate(context *ValidateContext) (bool, []string) {
 	operatorValidator := operatorValidator{
-		Path:           l.Path,
-		Value:          l.Value,
+		Path:           elv.Path,
+		Value:          elv.Value,
 		ComparisonType: "less",
-		ParseOptions:   l.ParseOptions,
+		ParseOptions:   elv.ParseOptions,
 	}
 
 	return operatorValidator.Validate(context)

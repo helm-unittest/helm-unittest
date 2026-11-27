@@ -16,7 +16,7 @@ type IsNullOrEmptyValidator struct {
 	ParseOptions `mapstructure:",squash"`
 }
 
-func (v IsNullOrEmptyValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
+func (inev IsNullOrEmptyValidator) failInfo(actual any, manifestIndex, actualIndex int, not bool) []string {
 	actualYAML := common.TrustedMarshalYAML(actual)
 
 	log.WithField("validator", "is_nullorempty").Debugln("actual content:", actualYAML)
@@ -25,25 +25,25 @@ func (v IsNullOrEmptyValidator) failInfo(actual any, manifestIndex, actualIndex 
 		setFailFormat(not, true, false, false, " to be null or empty, got"),
 		manifestIndex,
 		actualIndex,
-		v.Path,
+		inev.Path,
 		actualYAML,
 	)
 }
 
-func (v IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
-	actual, err := valueutils.GetValueOfSetPath(manifest, v.Path)
+func (inev IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, manifestIndex int, context *ValidateContext) (bool, []string) {
+	actual, err := valueutils.GetValueOfSetPath(manifest, inev.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
-	actual, err = v.ParseOptions.resolveActuals(actual, v.Path)
+	actual, err = inev.resolveActuals(actual, inev.Path)
 	if err != nil {
 		return false, splitInfof(errorFormat, manifestIndex, -1, err.Error())
 	}
 
 	if len(actual) == 0 && !context.Negative {
 		return false, splitInfof(errorFormat, manifestIndex, -1,
-			fmt.Sprintf("unknown path %s", v.ParseOptions.describePath(v.Path)))
+			fmt.Sprintf("unknown path %s", inev.describePath(inev.Path)))
 	}
 
 	manifestSuccess := (len(actual) == 0 && context.Negative)
@@ -66,7 +66,7 @@ func (v IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, ma
 		}
 
 		if isEmpty == context.Negative {
-			singleValidateErrors = v.failInfo(singleActual, manifestIndex, actualIndex, context.Negative)
+			singleValidateErrors = inev.failInfo(singleActual, manifestIndex, actualIndex, context.Negative)
 		} else {
 			singleSuccess = true
 		}
@@ -83,14 +83,14 @@ func (v IsNullOrEmptyValidator) validateManifest(manifest common.K8sManifest, ma
 }
 
 // Validate implement Validatable
-func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
+func (inev IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := false
 	validateErrors := make([]string, 0)
 
 	for manifestIndex, manifest := range manifests {
-		manifestSuccess, manifestValidateErrors := v.validateManifest(manifest, manifestIndex, context)
+		manifestSuccess, manifestValidateErrors := inev.validateManifest(manifest, manifestIndex, context)
 		validateErrors = append(validateErrors, manifestValidateErrors...)
 		validateSuccess = determineSuccess(manifestIndex, validateSuccess, manifestSuccess)
 
@@ -100,7 +100,7 @@ func (v IsNullOrEmptyValidator) Validate(context *ValidateContext) (bool, []stri
 	}
 
 	if len(manifests) == 0 && !context.Negative {
-		errorMessage := v.failInfo("no manifest found", -1, -1, context.Negative)
+		errorMessage := inev.failInfo("no manifest found", -1, -1, context.Negative)
 		validateErrors = append(validateErrors, errorMessage...)
 	} else if len(manifests) == 0 && context.Negative {
 		validateSuccess = true

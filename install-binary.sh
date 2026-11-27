@@ -27,11 +27,11 @@ if [ "$SKIP_BIN_DOWNLOAD" = "1" ]; then
   cp -f untt $HELM_PLUGIN_PATH/untt
   chmod +x $HELM_PLUGIN_PATH/untt
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
-  exit 
+  exit
 fi
 
-# initArch discovers the architecture for this system.
-initArch() {
+# init_arch discovers the architecture for this system.
+init_arch() {
   ARCH=$(uname -m)
   case "$ARCH" in
     armv5*) ARCH="armv5";;
@@ -44,13 +44,14 @@ initArch() {
     i386) ARCH="386";;
     ppc64le) ARCH="ppc64le";;
     s390x) ARCH="s390x";;
+    # use the initial value
+    *) ;;
   esac
 }
 
-# initOS discovers the operating system for this system.
-initOS() {
+# init_os discovers the operating system for this system.
+init_os() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
-
   case "$OS" in
     # Windows NT
     windows_nt) OS='windows';;
@@ -59,12 +60,14 @@ initOS() {
     # Minimalist GNU for Windows
     mingw*) OS='windows';;
     darwin) OS='macos';;
+    # use the initial value
+    *) ;;
   esac
 }
 
-# verifySupported checks that the os/arch combination is supported for
+# verify_supported checks that the os/arch combination is supported for
 # binary builds.
-verifySupported() {
+verify_supported() {
   local supported="linux-amd64\nlinux-arm64\nlinux-s390x\nlinux-ppc64le\nmacos-amd64\nmacos-arm64\nwindows-amd64"
   if ! echo "$supported" | grep -q "$OS-$ARCH"; then
     echo "No prebuilt binary for $OS-$ARCH."
@@ -78,8 +81,8 @@ verifySupported() {
   echo "Support $OS-$ARCH"
 }
 
-# getDownloadURL checks the latest available version.
-getDownloadURL() {
+# get_download_url checks the latest available version.
+get_download_url() {
   # go to the plugin directory
   cd "$HELM_PLUGIN_PATH"
   # Determine last tag based on VCS download
@@ -87,7 +90,7 @@ getDownloadURL() {
   # If no version found (because of no git), try fetch from plugin
   if [ -z "$version" ]; then
     echo "No version found"
-    version=v$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)  
+    version=v$(sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
   fi
 
   # Setup Download Url
@@ -96,9 +99,9 @@ getDownloadURL() {
   PROJECT_CHECKSUM="https://github.com/$PROJECT_GH/releases/download/$version/$PROJECT_CHECKSUM_FILE"
 }
 
-# downloadFile downloads the latest binary package and also the checksum
+# download_file downloads the latest binary package and also the checksum
 # for that binary.
-downloadFile() {
+download_file() {
   PLUGIN_TMP_FOLDER="/tmp/_dist/"
   [ -d "$PLUGIN_TMP_FOLDER" ] && rm -r "$PLUGIN_TMP_FOLDER" >/dev/null
   mkdir -p "$PLUGIN_TMP_FOLDER"
@@ -110,9 +113,9 @@ downloadFile() {
   fi
 }
 
-# installFile verifies the SHA256 for the file, then unpacks and
+# install_file verifies the SHA256 for the file, then unpacks and
 # installs it.
-installFile() {
+install_file() {
   cd /tmp
   DOWNLOAD_FILE=$(find ./_dist -name "*.tgz")
   echo "found: $DOWNLOAD_FILE"
@@ -162,8 +165,8 @@ fail_trap() {
   exit $result
 }
 
-# testVersion tests the installed client to make sure it is working.
-testVersion() {
+# test_version tests the installed client to make sure it is working.
+test_version() {
   # To avoid to keep track of the Windows suffix,
   # call the plugin assuming it is in the PATH
   PATH=$PATH:$HELM_PLUGIN_PATH
@@ -175,13 +178,13 @@ testVersion() {
 #Stop execution on any error
 trap "fail_trap" EXIT
 set -e
-initArch
-initOS
-verifySupported
+init_arch
+init_os
+verify_supported
 # If executables are already present, skip download and install
 if [ ! -f "$HELM_PLUGIN_PATH/untt-${OS}-${ARCH}" ]; then
-  getDownloadURL
-  downloadFile
-  installFile
+  get_download_url
+  download_file
+  install_file
 fi
-testVersion
+test_version

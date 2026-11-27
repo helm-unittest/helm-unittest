@@ -11,7 +11,7 @@ import (
 // MatchSnapshotRawValidator validate snapshot of value of Path the same as cached
 type MatchSnapshotRawValidator struct{}
 
-func (v MatchSnapshotRawValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
+func (msrv MatchSnapshotRawValidator) failInfo(compared *snapshot.CompareResult, not bool) []string {
 	customMessage := " to match snapshot " + strconv.Itoa(int(compared.Index))
 
 	log.WithField("validator", "snapshot_raw").Debugln("expected content:", compared.CachedSnapshot)
@@ -32,7 +32,7 @@ func (v MatchSnapshotRawValidator) failInfo(compared *snapshot.CompareResult, no
 }
 
 // Validate implement Validatable
-func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []string) {
+func (msrv MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []string) {
 	manifests := context.getManifests()
 
 	validateSuccess := len(manifests) == 0 && !context.Negative
@@ -46,7 +46,7 @@ func (v MatchSnapshotRawValidator) Validate(context *ValidateContext) (bool, []s
 		result := context.CompareToSnapshot(actual)
 
 		if result.Passed == context.Negative {
-			errorMessage = v.failInfo(result, context.Negative)
+			errorMessage = msrv.failInfo(result, context.Negative)
 		} else {
 			validateSingleSuccess = true
 		}
